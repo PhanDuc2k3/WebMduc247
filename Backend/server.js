@@ -1,34 +1,20 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const cors = require('cors');
-
-// Load biến môi trường
-dotenv.config();
-
-const app = express();
-
-// Middleware
-app.use(express.json());
-app.use(cors());
-
-// Import routes
+const connectDB = require('./config/db');
+const storeRoutes = require('./routes/StoreRoutes');
 const userRoutes = require('./routes/UserRoutes');
 
-// Routes
+dotenv.config(); // chỉ cần thế này
+
+connectDB();
+
+const app = express();
+app.use(express.json());
+
+app.use('/api/stores', storeRoutes);
 app.use('/api/users', userRoutes);
 
-// Kết nối MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => {
-  console.log('✅ MongoDB connected');
-  app.listen(process.env.PORT || 5000, () => {
-    console.log(`🚀 Server chạy tại http://localhost:${process.env.PORT || 5000}`);
-  });
-})
-.catch(err => {
-  console.error('❌ Lỗi kết nối MongoDB:', err.message);
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
