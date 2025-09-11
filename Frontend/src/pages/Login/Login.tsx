@@ -1,12 +1,15 @@
+
 import React, { useState } from "react";
 import styles from "./Login.module.css";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from 'react-router-dom';
 
 
 const Login: React.FC = () => {
   // State
   const [activeTab, setActiveTab] = useState("login");
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
@@ -51,13 +54,19 @@ const Login: React.FC = () => {
         <div className="flex mb-6 bg-gray-100 rounded-lg overflow-hidden">
           <button
             className={`w-1/2 py-2 text-center font-medium ${activeTab === "login" ? "bg-white" : "bg-gray-100 text-gray-400"}`}
-            onClick={() => setActiveTab("login")}
+            onClick={() => {
+              setActiveTab("login");
+              navigate("/login");
+            }}
           >
             Đăng nhập
           </button>
           <button
             className={`w-1/2 py-2 text-center font-medium ${activeTab === "register" ? "bg-white" : "bg-gray-100 text-gray-400"}`}
-            onClick={() => setActiveTab("register")}
+            onClick={() => {
+              setActiveTab("register");
+              navigate("/register");
+            }}
           >
             Đăng ký
           </button>
