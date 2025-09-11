@@ -1,23 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const {
-    createStore,
-    getStoreByOwner,
-    updateStore,
-    activateStore,
-    deactivateStore,
-    getAllActiveStores,
-    getStoreById
+  createStore,
+  getStoreByOwner,
+  updateStore,
+  activateStore,
+  deactivateStore,
+  getAllActiveStores,
+  getStoreById
 } = require('../controllers/StoreController');
 
-const authMiddleware = require('../middlewares/authMiddleware');    
+const authMiddleware = require('../middlewares/authMiddleware');
+const authorize = require('../middlewares/roleMiddleware');
 
-// Store routes
-router.post('/', authMiddleware, createStore);
-router.get('/owner', authMiddleware, getStoreByOwner);
-router.put('/', authMiddleware, updateStore);
-router.patch('/activate', authMiddleware, activateStore);
-router.patch('/deactivate', authMiddleware, deactivateStore);
+router.post('/', authMiddleware, authorize('seller', 'admin'), createStore);
+router.get('/owner', authMiddleware, authorize('seller', 'admin'), getStoreByOwner);
+router.put('/', authMiddleware, authorize('seller', 'admin'), updateStore);
+router.patch('/activate', authMiddleware, authorize('seller', 'admin'), activateStore);
+router.patch('/deactivate', authMiddleware, authorize('seller', 'admin'), deactivateStore);
 router.get('/', getAllActiveStores);
 router.get('/:id', getStoreById);
 
