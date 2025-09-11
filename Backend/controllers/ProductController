@@ -1,0 +1,130 @@
+const Product = require('../models/Product');
+
+// Tạo sản phẩm mới
+exports.createProduct = async (req, res) => {
+  try {
+    const { name, description, price, brand, category, subCategory, quantity, store } = req.body;
+
+    // Nếu có file upload thì lưu vào images
+    let images = [];
+    if (req.files && req.files.length > 0) {
+      images = req.files.map(file => `/uploads/${file.filename}`);
+    }
+
+    const product = new Product({
+      name,
+      description,
+      price,
+      brand,
+      category,
+      subCategory,
+      quantity,
+      store,
+      images
+    });
+
+    await product.save();
+    res.status(201).json({ success: true, data: product });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+
+// Lấy danh sách sản phẩm (có filter, search, sort, pagination)
+exports.getProducts = async (req, res) => {
+  try {
+    const { category, search, sortBy, limit = 10, page = 1 } = req.query;
+    const filter = {};
+
+    if (category) filter.category = category;
+    if (search) filter.name = { $regex: search, $options: 'i' };
+
+    const skip = (page - 1) * limit;
+
+    let query = Product.find(filter)
+      .populate('store', 'name logoUrl')
+      .skip(Number(skip))
+      .limit(Number(limit));
+
+    // Sort: price_asc, price_desc, rating, newest
+    if (sortBy) {
+      if (sortBy === 'price_asc') query = query.sort({ price: 1 });
+      if (sortBy === 'price_desc') query = query.sort({ price: -1 });
+      if (sortBy === 'rating') query = query.sort({ rating: -1 });
+      if (sortBy === 'newest') query = query.sort({ createdAt: -1 });
+    }
+
+    const products = await query;
+    const total = await Product.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        total,
+        page: Number(page),
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Lấy chi tiết sản phẩm
+exports.getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id).populate('store', 'name logoUrl');
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+    // tăng lượt xem
+    product.viewsCount += 1;
+    await product.save();
+
+    res.json({ success: true, data: product });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// Cập nhật sản phẩm
+exports.updateProduct = async (req, res) => {
+  try {
+    let updateData = { ...req.body };
+
+      if (req.files && req.files.length > 0) {
+      updateData.images = req.files.map(file => `/uploads/${file.filename}`);
+    }
+
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+    res.json({ success: true, data: product });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+
+// Xóa sản phẩm (soft delete bằng isActive)
+exports.deleteProduct = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
+
+    product.isActive = false;
+    await product.save();
+
+    res.json({ success: true, message: 'Product deactivated' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
