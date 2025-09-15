@@ -163,26 +163,29 @@ const Header: React.FC = () => {
                   <svg width="36" height="36" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="#16161a" strokeWidth="1.5"/><path d="M4 20v-2a4 4 0 014-4h8a4 4 0 014 4v2" stroke="#16161a" strokeWidth="1.5"/></svg>
                 )}
               </span>
-              {showDropdown && (
-                <div className={styles.userDropdown}>
-                  <div className={styles.userDropdownRow}>
-                    <span className={styles.userDropdownAvatar}>
-                      {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt="avatar" style={{ width: 32, height: 32, borderRadius: "50%" }} />
-                      ) : (
-                        <svg width="32" height="32" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="#16161a" strokeWidth="1.5"/><path d="M4 20v-2a4 4 0 014-4h8a4 4 0 014 4v2" stroke="#16161a" strokeWidth="1.5"/></svg>
-                      )}
-                    </span>
-                    <span className={styles.userDropdownName}>{user.fullName}</span>
-                  </div>
-                  <button className={styles.userDropdownBtn} onClick={() => { setShowDropdown(false); navigate("/profile"); }}>
-                    <span style={{ marginRight: 8 }}>👤</span> Trang cá nhân
-                  </button>
-                  <button className={styles.userDropdownBtn} onClick={handleLogout}>
-                    <span style={{ marginRight: 8 }}>🚪</span> Đăng xuất
-                  </button>
-                </div>
-              )}
+{showDropdown && (
+  <div className={styles.userDropdown}>
+    <div className={styles.userDropdownRow}>
+      <span className={styles.userDropdownAvatar}>
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt="avatar" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+        ) : (
+          <svg width="32" height="32" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="#16161a" strokeWidth="1.5"/><path d="M4 20v-2a4 4 0 014-4h8a4 4 0 014 4v2" stroke="#16161a" strokeWidth="1.5"/></svg>
+        )}
+      </span>
+      <span className={styles.userDropdownName}>{user.fullName}</span>
+    </div>
+    <button className={styles.userDropdownBtn} onClick={() => { setShowDropdown(false); navigate("/profile"); }}>
+      <span style={{ marginRight: 8 }}>👤</span> Trang cá nhân
+    </button>
+    <button className={styles.userDropdownBtn} onClick={() => { setShowDropdown(false); navigate("/mystore"); }}>
+      <span style={{ marginRight: 8 }}>🏬</span> Cửa hàng của tôi
+    </button>
+    <button className={styles.userDropdownBtn} onClick={handleLogout}>
+      <span style={{ marginRight: 8 }}>🚪</span> Đăng xuất
+    </button>
+  </div>
+)}
             </div>
           ) : (
             <Link to="/login" className={styles.actionItem}>

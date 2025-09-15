@@ -1,8 +1,7 @@
 .footerWrapper {
   background: #fff;
   box-shadow: 0 -2px 8px rgba(127, 90, 240, 0.08);
-  padding-top: 32px;
-  margin-top: 48px;
+  padding-top: 48px;
 }
 .footerTop {
   display: flex;

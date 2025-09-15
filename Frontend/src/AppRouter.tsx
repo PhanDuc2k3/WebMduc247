@@ -4,6 +4,7 @@ import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Home from "./pages/Home/Home";
 import Profile from "./pages/Profile/Profile";
+import MyStore from "./pages/MyStore/MyStore";
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
@@ -15,6 +16,7 @@ const AppRouter = () => (
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/mystore" element={<MyStore />} />
       </Route>
 
       <Route path="/s" element={<Navigate to="/login" />} />
