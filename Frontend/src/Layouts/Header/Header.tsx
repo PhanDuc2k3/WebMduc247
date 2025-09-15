@@ -3,7 +3,7 @@ import styles from "./Header.module.css";
 import { Link, useNavigate } from "react-router-dom";
 
 const Header: React.FC = () => {
-  const [user, setUser] = useState<{ fullName?: string; avatar?: string } | null>(null);
+  const [user, setUser] = useState<{ fullName?: string; avatarUrl?: string } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
 
@@ -157,8 +157,8 @@ const Header: React.FC = () => {
           {user ? (
             <div className={styles.userDropdownWrapper}>
               <span className={styles.userAvatar} onClick={() => setShowDropdown(v => !v)} style={{ cursor: "pointer" }}>
-                {user.avatar ? (
-                  <img src={user.avatar} alt="avatar" style={{ width: 36, height: 36, borderRadius: "50%" }} />
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt="avatar" style={{ width: 36, height: 36, borderRadius: "50%" }} />
                 ) : (
                   <svg width="36" height="36" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="#16161a" strokeWidth="1.5"/><path d="M4 20v-2a4 4 0 014-4h8a4 4 0 014 4v2" stroke="#16161a" strokeWidth="1.5"/></svg>
                 )}
@@ -167,8 +167,8 @@ const Header: React.FC = () => {
                 <div className={styles.userDropdown}>
                   <div className={styles.userDropdownRow}>
                     <span className={styles.userDropdownAvatar}>
-                      {user.avatar ? (
-                        <img src={user.avatar} alt="avatar" style={{ width: 32, height: 32, borderRadius: "50%" }} />
+                      {user.avatarUrl ? (
+                        <img src={user.avatarUrl} alt="avatar" style={{ width: 32, height: 32, borderRadius: "50%" }} />
                       ) : (
                         <svg width="32" height="32" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="#16161a" strokeWidth="1.5"/><path d="M4 20v-2a4 4 0 014-4h8a4 4 0 014 4v2" stroke="#16161a" strokeWidth="1.5"/></svg>
                       )}
