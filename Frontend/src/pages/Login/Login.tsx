@@ -29,7 +29,12 @@ const Login: React.FC = () => {
       if (res.ok) {
         toast.success(data.message || "Đăng nhập thành công");
         localStorage.setItem("token", data.token);
-        // Có thể chuyển hướng hoặc reload tại đây
+        if (data.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+        setTimeout(() => {
+          navigate("/");
+        }, 1200);
       } else {
         toast.error(data.message || "Đăng nhập thất bại");
       }

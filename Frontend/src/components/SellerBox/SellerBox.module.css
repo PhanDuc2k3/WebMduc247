@@ -1,0 +1,61 @@
+.sellerSection {
+  margin: 48px 0 0 0;
+}
+.sellerBox {
+  background: linear-gradient(90deg, #00c6fb 0%, #005bea 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 32px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sellerTitle {
+  font-size: 1.3rem;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.sellerDesc {
+  font-size: 1rem;
+  margin-bottom: 18px;
+}
+.sellerStats {
+  display: flex;
+  gap: 24px;
+  font-size: 1rem;
+  margin-bottom: 18px;
+}
+.sellerActions {
+  display: flex;
+  gap: 18px;
+}
+.sellerBtn {
+  background: #fff;
+  color: #00c6fb;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+.sellerInfoBtn {
+  background: #fff;
+  color: #005bea;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+.sellerIconBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.1);
+  border-radius: 12px;
+  width: 120px;
+  height: 120px;
+}
+.sellerIcon {
+  font-size: 4rem;
+}

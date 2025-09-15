@@ -1,0 +1,88 @@
+.bannerWrapper {
+  display: flex;
+  gap: 32px;
+  margin: 32px 0 0 0;
+}
+.bannerBox {
+  background: linear-gradient(90deg, #3a5ef7 0%, #a259f7 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 32px 40px;
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.bannerTitle {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+}
+.bannerDesc {
+  font-size: 1.1rem;
+  margin-bottom: 24px;
+}
+.bannerBtn {
+  background: #fff;
+  color: #3a5ef7;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  margin-top: 8px;
+}
+.bannerSide {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex: 1;
+}
+.flashSaleBox {
+  background: linear-gradient(90deg, #ff7e5f 0%, #feb47b 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 24px 20px;
+  margin-bottom: 8px;
+}
+.flashTitle {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+.flashTime {
+  font-size: 1rem;
+  margin: 8px 0 16px 0;
+}
+.flashBtn {
+  background: #fff;
+  color: #ff7e5f;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+.shipBox {
+  background: linear-gradient(90deg, #00c6fb 0%, #005bea 100%);
+  color: #fff;
+  border-radius: 16px;
+  padding: 24px 20px;
+}
+.shipTitle {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+.shipDesc {
+  font-size: 1rem;
+  margin: 8px 0 16px 0;
+}
+.shipBtn {
+  background: #fff;
+  color: #00c6fb;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
