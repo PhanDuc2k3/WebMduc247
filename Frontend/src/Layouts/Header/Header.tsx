@@ -213,43 +213,24 @@ const Header: React.FC = () => {
 
       {/* Navbar */}
       <nav className={styles.navBar}>
-        <span className={styles.navCategory}>
-          <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-            <rect
-              x="3"
-              y="6"
-              width="18"
-              height="2"
-              rx="1"
-              fill="#1976d2"
-            />
-            <rect
-              x="3"
-              y="11"
-              width="18"
-              height="2"
-              rx="1"
-              fill="#1976d2"
-            />
-            <rect
-              x="3"
-              y="16"
-              width="18"
-              height="2"
-              rx="1"
-              fill="#1976d2"
-            />
-          </svg>
-          <span className={styles.navCategoryText}>Danh mục</span>
-        </span>
-        <span>Trang chủ</span>
-        <span>Cửa hàng</span>
-        <span>Danh mục</span>
-        <span>Khuyến mãi</span>
-        <span>Thương hiệu</span>
-        <span>Bán chạy</span>
-        <span>Hỗ trợ</span>
-      </nav>
+  <span className={styles.navCategory}>
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+      <rect x="3" y="6" width="18" height="2" rx="1" fill="#1976d2" />
+      <rect x="3" y="11" width="18" height="2" rx="1" fill="#1976d2" />
+      <rect x="3" y="16" width="18" height="2" rx="1" fill="#1976d2" />
+    </svg>
+    <span className={styles.navCategoryText}>Danh mục</span>
+  </span>
+
+  <Link to="/" className={styles.navLink}>Trang chủ</Link>
+  <Link to="/shop" className={styles.navLink}>Cửa hàng</Link>
+  <Link to="/categories" className={styles.navLink}>Danh mục</Link>
+  <Link to="/promotions" className={styles.navLink}>Khuyến mãi</Link>
+  <Link to="/brands" className={styles.navLink}>Thương hiệu</Link>
+  <Link to="/bestsellers" className={styles.navLink}>Bán chạy</Link>
+  <Link to="/support" className={styles.navLink}>Hỗ trợ</Link>
+</nav>
+
       <div className={styles.headerDivider}></div>
     </header>
   );

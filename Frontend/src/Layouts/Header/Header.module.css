@@ -180,12 +180,14 @@
   background-color: #f5f5f5;
 }
 
-/* Hover cho navBar links (Trang chủ, Cửa hàng, ...) */
-.navBar span {
+.navBar .navLink {
   cursor: pointer;
   transition: color 0.2s ease;
+  text-decoration: none;
+  color: #16161a;
+  /* giữ màu chữ mặc định */
 }
 
-.navBar span:hover {
+.navBar .navLink:hover {
   color: #1976d2;
 }
