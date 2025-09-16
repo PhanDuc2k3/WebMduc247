@@ -5,6 +5,7 @@ import Register from "./pages/Register/Register";
 import Home from "./pages/Home/Home";
 import Profile from "./pages/Profile/Profile";
 import MyStore from "./pages/MyStore/MyStore";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
@@ -20,6 +21,7 @@ const AppRouter = () => (
       </Route>
 
       <Route path="/s" element={<Navigate to="/login" />} />
+      <Route path="/admin" element={<AdminDashboard />} />
     </Routes>
   </BrowserRouter>
 );

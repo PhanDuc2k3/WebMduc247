@@ -33,20 +33,23 @@ const userSchema = new mongoose.Schema({
     default: 'buyer'
   },
 
-  // Seller request
+  // Seller request (cửa hàng)
   sellerRequest: {
     status: {
       type: String,
-      enum: ['pending', 'approved', 'rejected'],
-      default: 'pending'
+      enum: ['none','pending', 'approved', 'rejected'],
+      default: 'none'
     },
     requestedAt: { type: Date, default: Date.now },
     store: {
-      name: { type: String, },
-      description: { type: String, },
-        address: { type: String, },
-      logoUrl: { type: String,},
-      category: { type: String, },
+      name: { type: String, required: true },         
+      category: { type: String, required: true },
+      description: { type: String, required: true },   
+      address: { type: String, required: true },     
+      contactPhone: { type: String, required: true },  
+      contactEmail: { type: String, required: true },  
+      logoUrl: { type: String },                       
+      bannerUrl: { type: String },                     
       isActive: { type: Boolean, default: false }
     }
   }
