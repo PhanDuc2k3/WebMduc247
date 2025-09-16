@@ -1,90 +1,86 @@
-import React, { useEffect, useState } from "react";
-import { Package } from "lucide-react";
-import StoreRegisterForm from "../../components/StoreRegisterForm/StoreRegisterForm";
+import React, { useRef, useState } from "react";
 
-const MyStore: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState<any>(null);
-  const [showForm, setShowForm] = useState(false);
+interface StoreRegisterFormProps {
+  onClose?: () => void;
+  onSuccess?: () => void | Promise<void>;
+}
 
-  const token = localStorage.getItem("token");
+const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSuccess }) => {
+  const logoRef = useRef<HTMLInputElement>(null);
+  const bannerRef = useRef<HTMLInputElement>(null);
 
-  // Lấy profile user từ BE
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/users/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setUser(data.user);
-      }
-    } catch (error) {
-      console.error("Lỗi khi lấy profile:", error);
-    } finally {
-      setLoading(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    category: "",
+    description: "",
+    address: "",
+    contactPhone: "",
+    contactEmail: "",
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const token = localStorage.getItem("token");
+
+    const payload = {
+      ...formData,
+      logoUrl: "",   // sau này upload file thì sửa
+      bannerUrl: "",
+    };
+
+    const res = await fetch("http://localhost:5000/api/users/seller-request", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    if (res.ok) {
+      if (onSuccess) await onSuccess(); // ✅ gọi callback để FE load lại profile
+      if (onClose) onClose();
     }
   };
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  if (loading) return <div>Đang tải...</div>;
-
-  // Nếu user đã có cửa hàng được approve
-  if (user?.role === "seller" && user?.sellerRequest?.status === "approved") {
-    return <div>Thông tin cửa hàng của bạn...</div>;
-  }
-
-  // Nếu user đã gửi request nhưng đang chờ duyệt
-  if (user?.sellerRequest?.status === "pending") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <div className="bg-yellow-100 rounded-full w-32 h-32 flex items-center justify-center mb-6">
-          <Package size={64} className="text-yellow-600" />
-        </div>
-        <h2 className="font-bold text-2xl mb-2">Yêu cầu đã được gửi!</h2>
-        <p className="text-gray-600">
-          Vui lòng chờ admin duyệt cửa hàng của bạn. Chúng tôi sẽ thông báo sớm nhất.
-        </p>
-      </div>
-    );
-  }
-
-  // Nếu user chưa từng gửi request
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh]">
-      {!showForm ? (
-        <div className="text-center">
-          <div className="flex justify-center mb-6">
-            <div className="bg-gray-100 rounded-full w-32 h-32 flex items-center justify-center">
-              <Package size={64} className="text-gray-400" />
-            </div>
-          </div>
-
-          <h2 className="font-bold text-2xl mb-2">Bạn chưa có cửa hàng</h2>
-          <p className="text-gray-500 mb-6">
-            Đăng ký mở cửa hàng để bắt đầu bán hàng
-          </p>
-
-          <button
-            onClick={() => setShowForm(true)}
-            className="bg-black text-white px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2 mx-auto hover:bg-gray-800 transition-colors"
-          >
-            <span className="text-xl">+</span> Đăng ký mở cửa hàng
-          </button>
-        </div>
-      ) : (
-        <StoreRegisterForm
-          onClose={() => setShowForm(false)}
-          onSuccess={() => fetchProfile()} // ✅ gọi lại API để cập nhật trạng thái
-        />
-      )}
-    </div>
+    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-lg">
+      {/* các input ... */}
+      <input
+        type="text"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        placeholder="Tên cửa hàng"
+        required
+      />
+      {/* ... các field khác */}
+      <div className="flex gap-4 mt-4">
+        <button
+          type="submit"
+          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 rounded"
+        >
+          Tạo cửa hàng
+        </button>
+        <button
+          type="button"
+          className="flex-1 bg-gray-100 text-gray-700 py-2 rounded"
+          onClick={onClose}
+        >
+          Hủy
+        </button>
+      </div>
+    </form>
   );
 };
 
-export default MyStore;
+export default StoreRegisterForm;
