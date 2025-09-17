@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import ProfileInfo from "../../components/ProfileInfo/ProfileInfo";
-import ProfileTabs from "../../components/ProfileTabs/ProfileTabs";
-import ProfileOrders from "../../components/ProfileOrders/ProfileOrders";
-import ProfileFavorites from "../../components/ProfileFavorite/ProfileFavorites";
-import ProfileSettings from "../../components/ProfileSettings/ProfileSetting";
-import ProfileInfoDetail from "../../components/ProfileInfoDetail/ProfileInfoDetail";
+import ProfileInfo from "../../components/Profile/ProfileInfo/ProfileInfo";
+import ProfileTabs from "../../components/Profile/ProfileTabs/ProfileTabs";
+import ProfileOrders from "../../components/Profile/ProfileOrders/ProfileOrders";
+import ProfileFavorites from "../../components/Profile/ProfileFavorite/ProfileFavorites";
+import ProfileSettings from "../../components/Profile/ProfileSettings/ProfileSetting";
+import ProfileInfoDetail from "../../components/Profile/ProfileInfoDetail/ProfileInfoDetail";
 
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState("info");

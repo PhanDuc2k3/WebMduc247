@@ -29,9 +29,13 @@ router.put('/profile', authMiddleware, upload.single('avatar'), updateProfile);
 router.post(
   '/seller-request',
   authMiddleware,
-  upload.single('logo'), // hoặc upload.fields nếu muốn logo + banner
+  upload.fields([
+    { name: 'logo', maxCount: 1 },
+    { name: 'banner', maxCount: 1 }
+  ]),
   requestSeller
 );
+
 
 // Admin: lấy danh sách yêu cầu mở cửa hàng
 router.get('/seller-requests', authMiddleware, getAllSellerRequests);

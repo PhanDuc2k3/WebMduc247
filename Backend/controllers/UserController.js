@@ -2,7 +2,8 @@ const User = require('../models/users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Store = require('../models/Store');
-
+const path = require('path');
+const fs = require('fs');
 // Register a new user
 exports.register = async (req, res) => {
   try {
@@ -171,29 +172,31 @@ exports.updateUser = async (req, res) => {
   }
 };
 
-// User send request to become seller
 exports.requestSeller = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { 
-      name, 
-      description, 
-      address, 
-      logoUrl, 
-      bannerUrl, 
-      category, 
-      contactPhone, 
-      contactEmail 
-    } = req.body;
+    const { name, description, address, category, contactPhone, contactEmail } = req.body;
 
     const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Không tìm thấy user" });
-    }
+    if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
 
-    // Nếu đã có request đang chờ thì chặn không cho gửi lại
+    // Kiểm tra nếu đã gửi request đang pending
     if (user.sellerRequest && user.sellerRequest.status === "pending") {
       return res.status(400).json({ message: "Bạn đã gửi yêu cầu, vui lòng chờ admin duyệt" });
+    }
+
+    // Lấy file từ req.files (Multer)
+    let logoUrl = '';
+    let bannerUrl = '';
+    const host = req.protocol + '://' + req.get('host');
+
+    if (req.files) {
+      if (req.files['logo'] && req.files['logo'][0]) {
+        logoUrl = host + '/uploads/' + req.files['logo'][0].filename;
+      }
+      if (req.files['banner'] && req.files['banner'][0]) {
+        bannerUrl = host + '/uploads/' + req.files['banner'][0].filename;
+      }
     }
 
     user.sellerRequest = {
@@ -203,19 +206,23 @@ exports.requestSeller = async (req, res) => {
         name,
         description,
         address,
-        logoUrl,
-        bannerUrl,
         category,
         contactPhone,
         contactEmail,
+        logoUrl,
+        bannerUrl,
         isActive: false,
       },
     };
 
     await user.save();
 
-    res.status(200).json({ message: "Yêu cầu mở cửa hàng đã được gửi", user });
+    res.status(200).json({ 
+      message: "Yêu cầu mở cửa hàng đã được gửi", 
+      sellerRequest: user.sellerRequest 
+    });
   } catch (error) {
+    console.error('Lỗi requestSeller:', error);
     res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
   }
 };

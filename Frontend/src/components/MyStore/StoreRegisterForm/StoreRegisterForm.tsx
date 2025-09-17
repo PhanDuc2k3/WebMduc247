@@ -46,46 +46,47 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose }) => {
     }
   };
 
-  // Submit form
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
 
-    // Lấy dữ liệu từ state
-    const payload = {
-      name: formData.name,
-      description: formData.description,
-      address: formData.address,
-      category: formData.category,
-      contactPhone: formData.contactPhone,
-      contactEmail: formData.contactEmail,
-      logoUrl: logoPreview || "",
-      bannerUrl: bannerPreview || "",
-    };
+// Submit form
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const token = localStorage.getItem("token");
 
-    try {
-      const res = await fetch(
-        "http://localhost:5000/api/users/seller-request",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+  const form = new FormData();
+  form.append("name", formData.name);
+  form.append("description", formData.description);
+  form.append("address", formData.address);
+  form.append("category", formData.category);
+  form.append("contactPhone", formData.contactPhone);
+  form.append("contactEmail", formData.contactEmail);
 
-      const data = await res.json();
-      console.log("Phản hồi từ server:", data);
-      alert(data.message);
+  if (logoRef.current?.files?.[0]) {
+    form.append("logo", logoRef.current.files[0]);
+  }
+  if (bannerRef.current?.files?.[0]) {
+    form.append("banner", bannerRef.current.files[0]);
+  }
 
-      if (onClose) onClose();
-    } catch (error) {
-      console.error("Lỗi khi gửi yêu cầu:", error);
-      alert("Có lỗi xảy ra, vui lòng thử lại!");
-    }
-  };
+  try {
+    const res = await fetch("http://localhost:5000/api/users/seller-request", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: form,
+    });
+
+    const data = await res.json();
+    console.log("Phản hồi từ server:", data);
+    alert(data.message);
+
+    if (onClose) onClose();
+  } catch (error) {
+    console.error("Lỗi khi gửi yêu cầu:", error);
+    alert("Có lỗi xảy ra, vui lòng thử lại!");
+  }
+};
+
 
   return (
     <div className="bg-white rounded-2xl shadow-lg max-w-xl mx-auto p-8">
