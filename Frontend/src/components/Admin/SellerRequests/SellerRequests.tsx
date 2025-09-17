@@ -38,24 +38,24 @@ const SellerApproval: React.FC = () => {
   };
 
   // Xử lý duyệt / từ chối
-  const handleAction = async (userId: string, action: "approve" | "reject") => {
-    try {
-      const res = await fetch("http://localhost:5000/api/users/handle-seller-request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ userId, action }),
-      });
+const handleAction = async (userId: string, action: "approve" | "reject") => {
+  try {
+    const res = await fetch("http://localhost:5000/api/users/seller-requests/handle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ userId, action }),
+    });
 
-      const data = await res.json();
-      alert(data.message);
-      fetchRequests(); // reload lại danh sách
-    } catch (error) {
-      console.error("Lỗi xử lý yêu cầu:", error);
-    }
-  };
+    const data = await res.json();
+    alert(data.message);
+    fetchRequests(); // reload lại danh sách
+  } catch (error) {
+    console.error("Lỗi xử lý yêu cầu:", error);
+  }
+};
 
   useEffect(() => {
     fetchRequests();

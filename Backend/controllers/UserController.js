@@ -1,6 +1,7 @@
 const User = require('../models/users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const Store = require('../models/Store');
 
 // Register a new user
 exports.register = async (req, res) => {
@@ -72,19 +73,28 @@ exports.login = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId).select("-password");
+
     if (!user) {
-      return res.status(404).json({ message: 'Người dùng không tồn tại' });
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
     }
-    res.status(200).json(
-      { message: 'Lấy thông tin người dùng thành công', user }
-    );
-  }
-  catch (error) {
-    res.status(500).json({ message: 'Lỗi máy chủ' });
+
+    // nếu role là seller thì tìm store của user
+    let store = null;
+    if (user.role === "seller") {
+      store = await Store.findOne({ owner: user._id });
+    }
+
+    res.status(200).json({
+      message: "Lấy thông tin người dùng thành công",
+      user,
+      store, // trả về luôn store (null nếu chưa có)
+    });
+  } catch (error) {
+    console.error("Lỗi getProfile:", error);
+    res.status(500).json({ message: "Lỗi máy chủ" });
   }
 };
-
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -227,22 +237,58 @@ exports.getAllSellerRequests = async (req, res) => {
 // Admin approve or reject seller request
 exports.handleSellerRequest = async (req, res) => {
   try {
-    const { userId, action } = req.body; // action = 'approve' | 'reject'
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "Không tìm thấy user" });
+    const { userId, action } = req.body;
 
-    if (action === "approve") {
-      user.role = "seller";
-      user.sellerRequest.status = "approved";
-      user.sellerRequest.store.isActive = true;
-    } else {
-      user.sellerRequest.status = "rejected";
+    const user = await User.findById(userId);
+    if (!user || !user.sellerRequest) {
+      return res.status(404).json({ message: "Không tìm thấy yêu cầu" });
     }
 
-    await user.save();
-    res.status(200).json({ message: `Yêu cầu đã được ${action}`, user });
+    if (action === "approve") {
+      const storeData = user.sellerRequest.store;
+
+      // Kiểm tra nếu user đã có store thì không tạo lại
+      let store = await Store.findOne({ owner: user._id });
+      if (!store) {
+        store = new Store({
+          name: storeData.name,
+          description: storeData.description,
+          category: storeData.category,
+          storeAddress: storeData.address, // map address -> storeAddress
+          contactPhone: storeData.contactPhone,
+          contactEmail: storeData.contactEmail,
+          logoUrl: storeData.logoUrl,
+          bannerUrl: storeData.bannerUrl,
+          owner: user._id,
+          isActive: true, // tự động active khi admin duyệt
+        });
+
+        await store.save();
+        user.store = store._id; // Gán store cho user
+      }
+
+      // ✅ cập nhật role thành seller
+      user.role = "seller";
+      user.sellerRequest.status = "approved";
+
+      await user.save();
+
+      return res.json({
+        message: "Đã duyệt và tạo cửa hàng thành công",
+        store,
+      });
+    }
+
+    if (action === "reject") {
+      user.sellerRequest.status = "rejected";
+      await user.save();
+      return res.json({ message: "Đã từ chối yêu cầu" });
+    }
+
+    return res.status(400).json({ message: "Hành động không hợp lệ" });
   } catch (error) {
-    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
+    console.error("Lỗi handleSellerRequest:", error);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };
 

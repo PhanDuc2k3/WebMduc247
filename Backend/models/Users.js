@@ -42,17 +42,23 @@ const userSchema = new mongoose.Schema({
     },
     requestedAt: { type: Date, default: Date.now },
     store: {
-      name: { type: String, required: true },         
-      category: { type: String, required: true },
-      description: { type: String, required: true },   
-      address: { type: String, required: true },     
-      contactPhone: { type: String, required: true },  
-      contactEmail: { type: String, required: true },  
+      name: { type: String },         
+      category: { type: String },
+      description: { type: String },   
+      address: { type: String },     
+      contactPhone: { type: String },  
+      contactEmail: { type: String },  
       logoUrl: { type: String },                       
       bannerUrl: { type: String },                     
       isActive: { type: Boolean, default: false }
     }
+  },
+
+  store: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Store'
   }
+
 }, { timestamps: true });
 
 module.exports = mongoose.models.User || mongoose.model("User", userSchema);

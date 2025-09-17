@@ -1,86 +1,132 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
+import StoreRegisterForm from "../../components/MyStore/StoreRegisterForm/StoreRegisterForm";
+import Overview from "../../components/MyStore/Overview/Overview";
+import ProductManagement from "../../components/MyStore/ProductManagement/ProductManagement";
+import OrderManagement from "../../components/MyStore/OrderManagement/OrderManagement";
+import Statistics from "../../components/MyStore/Statistics/Statistics";
 
-interface StoreRegisterFormProps {
-  onClose?: () => void;
-  onSuccess?: () => void | Promise<void>;
-}
+const tabs = [
+  { key: "overview", label: "Tổng quan" },
+  { key: "products", label: "Sản phẩm" },
+  { key: "orders", label: "Đơn hàng" },
+  { key: "stats", label: "Thống kê" },
+];
 
-const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSuccess }) => {
-  const logoRef = useRef<HTMLInputElement>(null);
-  const bannerRef = useRef<HTMLInputElement>(null);
+const MyStore: React.FC = () => {
+  const [role, setRole] = useState<string>("buyer");
+  const [hasStore, setHasStore] = useState<boolean>(false);
+  const [sellerRequestStatus, setSellerRequestStatus] = useState<string>("none");
+  const [activeTab, setActiveTab] = useState("overview");
+  const [loading, setLoading] = useState(true);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    category: "",
-    description: "",
-    address: "",
-    contactPhone: "",
-    contactEmail: "",
-  });
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setLoading(false);
+          return;
+        }
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+        const res = await fetch("http://localhost:5000/api/users/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
+        // ⚡ Nếu backend trả về user trong object thì đổi data.role -> data.user.role
+        const userRole = data.role || data.user?.role || "buyer";
+        const userStore = data.store || data.user?.store || null;
+        const userSellerRequest = data.sellerRequest || data.user?.sellerRequest || null;
 
-    const payload = {
-      ...formData,
-      logoUrl: "",   // sau này upload file thì sửa
-      bannerUrl: "",
+        setRole(userRole);
+        setHasStore(!!userStore);
+
+        if (userSellerRequest && userSellerRequest.status) {
+          setSellerRequestStatus(userSellerRequest.status);
+        } else {
+          setSellerRequestStatus("none");
+        }
+      } catch (err) {
+        console.error("Lỗi khi fetch profile:", err);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    const res = await fetch("http://localhost:5000/api/users/seller-request", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(payload),
-    });
+    fetchProfile();
+  }, []);
 
-    const data = await res.json();
-    alert(data.message);
+  if (loading) {
+    return <div className="p-6">Đang tải...</div>;
+  }
 
-    if (res.ok) {
-      if (onSuccess) await onSuccess(); // ✅ gọi callback để FE load lại profile
-      if (onClose) onClose();
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl shadow-lg">
-      {/* các input ... */}
-      <input
-        type="text"
-        name="name"
-        value={formData.name}
-        onChange={handleChange}
-        placeholder="Tên cửa hàng"
-        required
-      />
-      {/* ... các field khác */}
-      <div className="flex gap-4 mt-4">
-        <button
-          type="submit"
-          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 rounded"
-        >
-          Tạo cửa hàng
-        </button>
-        <button
-          type="button"
-          className="flex-1 bg-gray-100 text-gray-700 py-2 rounded"
-          onClick={onClose}
-        >
-          Hủy
-        </button>
+  // Buyer mới (chưa có store, chưa có request)
+  if (role === "buyer" && !hasStore && sellerRequestStatus === "none") {
+    return (
+      <div className="bg-[#f8f9fb] min-h-screen px-8 py-6">
+        <StoreRegisterForm onSuccess={() => setSellerRequestStatus("pending")} />
       </div>
-    </form>
+    );
+  }
+
+  // Buyer đã gửi request và đang chờ duyệt
+  if (role === "buyer" && sellerRequestStatus === "pending") {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen text-center">
+        <h2 className="text-xl font-semibold mb-2">Yêu cầu mở cửa hàng đang chờ duyệt</h2>
+        <p className="text-gray-600">Vui lòng chờ admin phê duyệt yêu cầu của bạn.</p>
+      </div>
+    );
+  }
+
+  // Seller đã có store
+  if (role === "seller" && hasStore) {
+    return (
+      <div className="bg-[#f8f9fb] min-h-screen px-8 py-6">
+        <h1 className="font-bold text-xl mb-1">Dashboard Người bán</h1>
+        <p className="text-gray-600 mb-6">Quản lý cửa hàng và sản phẩm của bạn</p>
+
+        <div className="flex gap-2 mb-4">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              className={`px-5 py-2 rounded-full font-medium ${
+                activeTab === tab.key
+                  ? "bg-gray-200 text-black"
+                  : "bg-gray-100 text-gray-500"
+              }`}
+              onClick={() => setActiveTab(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div>
+          {activeTab === "overview" && <Overview />}
+          {activeTab === "products" && <ProductManagement />}
+          {activeTab === "orders" && <OrderManagement />}
+          {activeTab === "stats" && <Statistics />}
+        </div>
+      </div>
+    );
+  }
+
+  // Seller chưa có store
+  if (role === "seller" && !hasStore) {
+    return (
+      <div className="p-6">
+        <p className="text-gray-600">Bạn là seller nhưng chưa có cửa hàng nào.</p>
+      </div>
+    );
+  }
+
+  // Trường hợp còn lại
+  return (
+    <div className="p-6">
+      <p className="text-gray-600">Bạn không có quyền truy cập trang này.</p>
+    </div>
   );
 };
 
-export default StoreRegisterForm;
+export default MyStore;
