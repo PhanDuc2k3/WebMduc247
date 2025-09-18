@@ -24,7 +24,6 @@ const FeaturedStores: React.FC = () => {
       try {
         const res = await fetch("http://localhost:5000/api/stores"); // backend endpoint
         const data = await res.json();
-        // Chuyển đổi data nếu cần
         const mappedStores: StoreType[] = data.stores.map((s: any) => ({
           _id: s._id,
           name: s.name,
@@ -50,13 +49,16 @@ const FeaturedStores: React.FC = () => {
   if (loading) return <div className="p-6 text-center">Đang tải danh sách cửa hàng...</div>;
 
   return (
-    <section className="px-4 py-6">
+    <section className="px-4 py-6 max-w-[1400px] mx-auto">
       <h3 className="text-xl font-semibold mb-1">Tất cả cửa hàng</h3>
       <p className="text-gray-500 mb-4">Xem danh sách tất cả các cửa hàng</p>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {stores.map((store) => (
-          <div key={store._id} className="bg-white rounded-lg shadow flex flex-col overflow-hidden">
+          <div
+            key={store._id}
+            className="bg-white rounded-lg shadow flex flex-col overflow-hidden min-w-[250px]"
+          >
             {/* Banner */}
             <div className="h-32 w-full overflow-hidden">
               <img
@@ -90,7 +92,9 @@ const FeaturedStores: React.FC = () => {
                 ))}
                 <span
                   className={`text-xs px-2 py-1 rounded ${
-                    store.status === "Đang online" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-500"
+                    store.status === "Đang online"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-gray-100 text-gray-500"
                   }`}
                 >
                   {store.status}
