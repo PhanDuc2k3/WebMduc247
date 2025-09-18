@@ -3,33 +3,54 @@ const mongoose = require('mongoose');
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
+
   price: { type: Number, required: true },
   salePrice: { type: Number },
+
   brand: { type: String, required: true },
   category: { type: String, required: true },
-  subCategory: { type: String, required: true },
+  subCategory: { type: String },
 
   quantity: { type: Number, required: true },
   soldCount: { type: Number, default: 0 },
 
+  // Mã sản phẩm / SKU
+  model: { type: String },
+  sku: { type: String, unique: true },
+
+  // Biến thể (màu, size…)
   variations: [
     {
-      color: { type: String, required: true },
-      size: { type: String, required: true },
+      color: { type: String },
+      size: { type: String },
       additionalPrice: { type: Number, default: 0 },
-      stock: { type: Number, required: true }
+      stock: { type: Number, default: 0 }
     }
   ],
 
+  // Hình ảnh
   images: [{ type: String }],
 
+  // Thông số kỹ thuật (Step 3)
+  specifications: [
+    {
+      key: { type: String, required: true },
+      value: { type: String, required: true }
+    }
+  ],
+
+  // Đánh giá
   rating: { type: Number, default: 0, min: 0, max: 5 },
   reviewsCount: { type: Number, default: 0 },
 
-  tags: [{ type: String }],                      
-  isFeatured: { type: Boolean, default: false }, 
-  viewsCount: { type: Number, default: 0 },      
+  // SEO & tags (Step 4)
+  tags: [{ type: String }],
+  seoTitle: { type: String },
+  seoDescription: { type: String },
+  keywords: [{ type: String }],
 
+  isFeatured: { type: Boolean, default: false },
+  viewsCount: { type: Number, default: 0 },
   isActive: { type: Boolean, default: true },
 
   store: {
