@@ -237,3 +237,27 @@ exports.deleteProduct = async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+exports.getFeaturedProducts = async (req, res) => {
+  try {
+    console.log("🔥 [GET FEATURED PRODUCTS] API được gọi lúc:", new Date().toISOString());
+
+    const products = await Product.find({ isActive: true })
+      .sort({ soldCount: -1 }) // sort giảm dần theo soldCount
+      .limit(10)
+      .populate("store", "name");
+
+    console.log("👉 Số lượng sản phẩm tìm được:", products.length);
+    console.log("📌 Danh sách sản phẩm:", products.map(p => ({
+      id: p._id,
+      name: p.name,
+      soldCount: p.soldCount,
+      price: p.price,
+      store: p.store?.name
+    })));
+
+    res.json(products);
+  } catch (err) {
+    console.error("❌ Error in getFeaturedProducts:", err.message);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};

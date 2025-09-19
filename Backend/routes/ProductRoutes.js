@@ -14,6 +14,7 @@ router.post(
   ]),
   productController.createProduct
 );
+router.get('/featured', productController.getFeaturedProducts);
 
 router.get('/', productController.getProducts);
 router.get('/:id', productController.getProductById);
