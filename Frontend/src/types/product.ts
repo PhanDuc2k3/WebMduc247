@@ -33,3 +33,25 @@ export interface ProductType {
   isActive: boolean;
   store: string; // store id
 }
+
+export interface FormDataType {
+  name: string;
+  description: string;
+  price: string | number;
+  originalPrice: string | number;
+  brand: string;
+  category: string;
+  subCategory: string;
+  stock: string | number;
+  model: string;
+  features: string[];
+  specifications: Specification[];
+  seoTitle: string;
+  seoDescription: string;
+  tags: string[];
+  mainImage: File | null;
+  mainImagePreview: string | null;
+  subImages: File[];
+  subImagesPreview: string[];
+  storeId?: string;
+}

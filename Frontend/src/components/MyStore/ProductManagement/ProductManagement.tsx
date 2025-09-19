@@ -15,10 +15,11 @@ const ProductManagement: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      // map quantity -> stock
+
       const mapped = (data.data || []).map((p: any) => ({
         ...p,
-        stock: p.quantity ?? 0,
+        quantity: p.quantity ?? 0,
+        images: (p.images || []).map((img: string) => `http://localhost:5000${img}`), 
       }));
       setProducts(mapped);
     } catch (err) {
@@ -33,7 +34,11 @@ const ProductManagement: React.FC = () => {
   }, []);
 
   const handleAddProduct = (newProduct: ProductType) => {
-    setProducts((prev) => [newProduct, ...prev]);
+    const updatedProduct = {
+      ...newProduct,
+      images: (newProduct.images || []).map((img: string) => `http://localhost:5000${img}`),
+    };
+    setProducts((prev) => [updatedProduct, ...prev]);
   };
 
   if (loading) return <div className="p-6">Đang tải sản phẩm...</div>;
@@ -79,8 +84,8 @@ const ProductManagement: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-4 py-3">{p.price.toLocaleString()}₫</td>
-                <td className={`px-4 py-3 ${p.stock! < 15 ? "text-red-600 font-bold" : ""}`}>
-                  {p.stock}
+                <td className={`px-4 py-3 ${p.quantity < 15 ? "text-red-600 font-bold" : ""}`}>
+                  {p.quantity}
                 </td>
                 <td className="px-4 py-3">{p.soldCount}</td>
                 <td className="px-4 py-3">

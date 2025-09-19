@@ -1,128 +1,130 @@
 import React, { useState } from "react";
-// AddProductPopup.tsx
-import type { ProductType } from "../../../types/product";
+import type { ProductType,FormDataType  } from "../../../types/product";
 
 interface AddProductPopupProps {
   onClose: () => void;
   onAddProduct: (newProduct: ProductType) => void;
 }
 
-
 const AddProductPopup: React.FC<AddProductPopupProps> = ({ onClose, onAddProduct }) => {
-  const [step, setStep] = useState(1);
+ const [step, setStep] = useState(1);
 
-  const [formData, setFormData] = useState<any>({
-    name: "",
-    brand: "",
-    category: "",
-    subCategory: "",
-    price: "",
-    originalPrice: "",
-    stock: "",
-    model: "",
-    description: "",
-    features: [],
-    specifications: [],
-    seoTitle: "",
-    seoDescription: "",
-    tags: [],
-    mainImage: null,
-    mainImagePreview: null,
-    subImages: [],
-    subImagesPreview: [],
-  });
+const [formData, setFormData] = useState<FormDataType>({
+  name: "",
+  brand: "",
+  category: "",
+  subCategory: "",
+  price: "",
+  originalPrice: "",
+  stock: "",
+  model: "",
+  description: "",
+  features: [],
+  specifications: [],
+  seoTitle: "",
+  seoDescription: "",
+  tags: [],
+  mainImage: null,
+  mainImagePreview: null,
+  subImages: [],
+  subImagesPreview: [],
+});
 
-  const [featureInput, setFeatureInput] = useState("");
+const [featureInput, setFeatureInput] = useState("");
 
-  const handleChange = (field: string, value: any) => {
-    setFormData((prev: any) => ({ ...prev, [field]: value }));
-  };
+const handleChange = (field: keyof FormDataType, value: any) => {
+  setFormData((prev: FormDataType) => ({ ...prev, [field]: value }));
+};
 
-  const handleFileChange = (field: string, file: File | null) => {
-    if (file) {
-      const preview = URL.createObjectURL(file);
-      setFormData((prev: any) => ({
-        ...prev,
-        [field]: file,
-        [`${field}Preview`]: preview,
-      }));
-    }
-  };
-
-  const handleMultiFileChange = (field: string, files: File[]) => {
-    const previews = files.map((f) => URL.createObjectURL(f));
-    setFormData((prev: any) => ({
+const handleMainImageChange = (file: File | null) => {
+  if (file) {
+    if (formData.mainImagePreview) URL.revokeObjectURL(formData.mainImagePreview);
+    const preview = URL.createObjectURL(file);
+    setFormData((prev: FormDataType) => ({
       ...prev,
-      [field]: files,
-      [`${field}Preview`]: previews,
+      mainImage: file,
+      mainImagePreview: preview,
     }));
-  };
+  }
+};
 
-  const addFeature = () => {
-    if (featureInput.trim() !== "") {
-      setFormData((prev: any) => ({
-        ...prev,
-        features: [...prev.features, featureInput.trim()],
-      }));
-      setFeatureInput("");
+const handleSubImagesChange = (newFiles: File[]) => {
+  const mergedFiles = [...formData.subImages, ...newFiles].slice(0, 8);
+
+  formData.subImagesPreview.forEach(url => URL.revokeObjectURL(url));
+
+  const previews = mergedFiles.map(f => URL.createObjectURL(f));
+
+  console.log("FILES chọn (merged):", mergedFiles);
+  console.log("PREVIEWS tạo:", previews);
+
+  setFormData((prev: FormDataType) => ({
+    ...prev,
+    subImages: mergedFiles,
+    subImagesPreview: previews,
+  }));
+};
+
+const addFeature = () => {
+  if (featureInput.trim() !== "" && !formData.features.includes(featureInput.trim())) {
+    setFormData((prev: FormDataType) => ({
+      ...prev,
+      features: [...prev.features, featureInput.trim()],
+    }));
+    setFeatureInput("");
+  }
+};
+
+const handleSubmit = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const form = new FormData();
+
+    form.append("name", formData.name);
+    form.append("description", formData.description);
+    form.append("price", String(formData.price));
+    if (formData.originalPrice) form.append("salePrice", String(formData.originalPrice));
+    form.append("brand", formData.brand);
+    form.append("category", formData.category);
+    form.append("subCategory", formData.subCategory);
+    form.append("quantity", String(formData.stock));
+    form.append("model", formData.model);
+    form.append("seoTitle", formData.seoTitle);
+    form.append("seoDescription", formData.seoDescription);
+    form.append("store", formData.storeId ?? "");
+
+    form.append("specifications", JSON.stringify(formData.specifications));
+    form.append("tags", JSON.stringify(formData.tags));
+    form.append("features", JSON.stringify(formData.features));
+
+    if (formData.mainImage) form.append("mainImage", formData.mainImage);
+    formData.subImages.forEach((file: File) => form.append("subImages", file));
+
+    const res = await fetch("http://localhost:5000/api/products", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("✅ Tạo sản phẩm thành công!");
+      onAddProduct(data.data);
+      onClose();
+    } else {
+      alert("❌ Lỗi: " + data.message);
     }
-  };
-
-  const handleSubmit = async () => {
-    try {
-      const token = localStorage.getItem("token");
-
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        price: Number(formData.price),
-        salePrice: formData.originalPrice
-          ? Number(formData.originalPrice)
-          : undefined,
-        brand: formData.brand,
-        category: formData.category,
-        subCategory: formData.subCategory,
-        quantity: Number(formData.stock),
-        model: formData.model,
-        specifications: formData.specifications,
-        tags: formData.tags,
-        seoTitle: formData.seoTitle,
-        seoDescription: formData.seoDescription,
-        store: formData.storeId,
-      };
-
-      const res = await fetch("http://localhost:5000/api/products", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        alert("✅ Tạo sản phẩm thành công!");
-        // gọi onAddProduct để cập nhật bảng bên ProductManagement
-        onAddProduct(data.data); // giả sử API trả về { data: newProduct }
-        onClose();
-      } else {
-        alert("❌ Lỗi: " + data.message);
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Không thể kết nối server");
-    }
-  };
-
-
+  } catch (err) {
+    console.error(err);
+    alert("Không thể kết nối server");
+  }
+};
 
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
       <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 relative">
-        {/* Nút đóng */}
         <button
           className="absolute top-4 right-4 text-gray-400 hover:text-black text-xl"
           onClick={onClose}
@@ -130,36 +132,28 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({ onClose, onAddProduct
           ×
         </button>
 
-        {/* Thanh tiến trình */}
+        {/* Steps */}
         <div className="flex items-center mb-6">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3, 4].map(s => (
             <div key={s} className="flex items-center">
               <div
                 className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                  step >= s
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-gray-400"
+                  step >= s ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-400"
                 }`}
               >
                 {s}
               </div>
               {s < 4 && (
                 <div className="w-10 h-1 bg-gray-200 mx-2 rounded-full">
-                  <div
-                    className={`h-1 rounded-full ${
-                      step > s ? "bg-blue-500" : ""
-                    }`}
-                  ></div>
+                  <div className={`h-1 rounded-full ${step > s ? "bg-blue-500" : ""}`}></div>
                 </div>
               )}
             </div>
           ))}
-          <span className="ml-4 text-gray-500 font-medium">
-            Bước {step}/4
-          </span>
+          <span className="ml-4 text-gray-500 font-medium">Bước {step}/4</span>
         </div>
 
-        {/* Step 1 */}
+{/* Step 1 */}
         {step === 1 && (
           <>
             <div className="font-semibold text-lg mb-4 flex items-center gap-2">
@@ -267,39 +261,36 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({ onClose, onAddProduct
           </>
         )}
 
-        {/* Step 2 */}
+        {/* Step 2: Mô tả & hình ảnh */}
         {step === 2 && (
           <>
             <div className="font-semibold text-lg mb-4 flex items-center gap-2">
               <span>📝</span> Mô tả & Hình ảnh
             </div>
-            <div className="mb-4">
-              <label className="text-sm font-medium">Mô tả sản phẩm *</label>
-              <textarea
-                className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
-                rows={3}
-                placeholder="Mô tả chi tiết..."
-                value={formData.description}
-                onChange={(e) => handleChange("description", e.target.value)}
-              />
-            </div>
+
+            <textarea
+              className="w-full border rounded px-3 py-2 mb-4 bg-gray-50"
+              rows={3}
+              placeholder="Mô tả chi tiết..."
+              value={formData.description}
+              onChange={(e) => handleChange("description", e.target.value)}
+            />
+
             <div className="grid grid-cols-2 gap-4 mb-4">
+              {/* Ảnh chính */}
               <div className="border rounded-lg p-4 flex flex-col items-center">
                 <div className="text-gray-400 mb-2 text-center">
                   Ảnh chính sản phẩm <br />
                   <span className="text-xs">(Tỷ lệ 1:1 khuyến nghị)</span>
                 </div>
-                <label className="bg-gray-100 px-4 py-2 rounded font-medium text-gray-700 hover:bg-gray-200 cursor-pointer">
-                  <span className="mr-2">⬆️</span> Chọn ảnh chính
+                <label className="bg-gray-100 px-4 py-2 rounded cursor-pointer">
+                  ⬆️ Chọn ảnh chính
                   <input
                     type="file"
                     accept="image/*"
                     className="hidden"
                     onChange={(e) =>
-                      handleFileChange(
-                        "mainImage",
-                        e.target.files ? e.target.files[0] : null
-                      )
+                      handleMainImageChange(e.target.files ? e.target.files[0] : null)
                     }
                   />
                 </label>
@@ -311,13 +302,15 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({ onClose, onAddProduct
                   />
                 )}
               </div>
+
               <div className="border rounded-lg p-4 flex flex-col items-center">
                 <div className="text-gray-400 mb-2 text-center">
+                 
                   Ảnh phụ (tùy chọn) <br />
                   <span className="text-xs">(Tối đa 8 ảnh)</span>
                 </div>
-                <label className="bg-gray-100 px-4 py-2 rounded font-medium text-gray-700 hover:bg-gray-200 cursor-pointer">
-                  <span className="mr-2">⬆️</span> Thêm ảnh phụ
+                <label className="bg-gray-100 px-4 py-2 rounded cursor-pointer">
+                  ⬆️ Thêm ảnh phụ
                   <input
                     type="file"
                     accept="image/*"
@@ -325,26 +318,24 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({ onClose, onAddProduct
                     className="hidden"
                     onChange={(e) => {
                       if (e.target.files) {
-                        const files = Array.from(e.target.files).slice(0, 8);
-                        handleMultiFileChange("subImages", files);
+                        handleSubImagesChange(Array.from(e.target.files));
                       }
                     }}
                   />
                 </label>
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {formData.subImagesPreview?.map(
-                    (src: string, idx: number) => (
-                      <img
-                        key={idx}
-                        src={src}
-                        alt={`Sub ${idx}`}
-                        className="w-16 h-16 object-cover rounded border"
-                      />
-                    )
-                  )}
+                  {formData.subImagesPreview?.map((src: string, idx: number) => (
+                    <img
+                      key={idx}
+                      src={src}
+                      alt={`Sub ${idx}`}
+                      className="w-16 h-16 object-cover rounded border"
+                    />
+                  ))}
                 </div>
               </div>
             </div>
+
             <div className="mb-4">
               <label className="text-sm font-medium">Tính năng nổi bật</label>
               <div className="flex gap-2">
@@ -356,7 +347,7 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({ onClose, onAddProduct
                 />
                 <button
                   type="button"
-                  className="bg-gray-100 px-3 py-2 rounded font-medium hover:bg-gray-200"
+                  className="bg-gray-100 px-3 py-2 rounded hover:bg-gray-200"
                   onClick={addFeature}
                 >
                   +
@@ -370,6 +361,7 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({ onClose, onAddProduct
                 </ul>
               )}
             </div>
+
             <div className="flex justify-between mt-6">
               <button
                 className="bg-gray-100 px-4 py-2 rounded font-medium"
@@ -387,82 +379,74 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({ onClose, onAddProduct
           </>
         )}
 
-{/* Step 3 */}
-{/* Step 3 */}
-{step === 3 && (
-  <>
-    <div className="font-semibold text-lg mb-4 flex items-center gap-2">
-      <span>⚙️</span> Thông số kỹ thuật
-    </div>
+        {/* Step 3: Thông số kỹ thuật */}
+        {step === 3 && (
+          <>
+            <div className="font-semibold text-lg mb-4 flex items-center gap-2">
+              <span>⚙️</span> Thông số kỹ thuật
+            </div>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="text-sm font-medium">Màu sắc</label>
+                <input
+                  className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
+                  placeholder="VD: Đen, Trắng..."
+                  value={
+                    formData.specifications?.find((s: any) => s.key === "Màu sắc")?.value || ""
+                  }
+                  onChange={(e) => {
+                    const updated = [
+                      ...(formData.specifications || []).filter(
+                        (s: any) => s.key !== "Màu sắc"
+                      ),
+                      { key: "Màu sắc", value: e.target.value },
+                    ];
+                    handleChange("specifications", updated);
+                  }}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Kích thước</label>
+                <input
+                  className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
+                  placeholder="VD: 160.7 x 77.6 x 7.8 mm"
+                  value={
+                    formData.specifications?.find((s: any) => s.key === "Kích thước")?.value ||
+                    ""
+                  }
+                  onChange={(e) => {
+                    const updated = [
+                      ...(formData.specifications || []).filter(
+                        (s: any) => s.key !== "Kích thước"
+                      ),
+                      { key: "Kích thước", value: e.target.value },
+                    ];
+                    handleChange("specifications", updated);
+                  }}
+                />
+              </div>
+            </div>
 
-    <div className="grid grid-cols-2 gap-4 mb-4">
-      {/* Màu sắc */}
-      <div>
-        <label className="text-sm font-medium">Màu sắc</label>
-        <input
-          className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
-          placeholder="VD: Đen, Trắng..."
-          value={
-            formData.specifications?.find((s: any) => s.key === "Màu sắc")
-              ?.value || ""
-          }
-          onChange={(e) => {
-            const updated = [
-              ...(formData.specifications || []).filter(
-                (s: any) => s.key !== "Màu sắc"
-              ),
-              { key: "Màu sắc", value: e.target.value },
-            ];
-            handleChange("specifications", updated);
-          }}
-        />
-      </div>
+            <div className="flex justify-between mt-6">
+              <button
+                type="button"
+                className="bg-gray-100 px-4 py-2 rounded font-medium"
+                onClick={() => setStep(2)}
+              >
+                Quay lại
+              </button>
+              <button
+                type="button"
+                className="bg-blue-600 text-white px-4 py-2 rounded font-medium"
+                onClick={() => setStep(4)}
+              >
+                Tiếp tục
+              </button>
+            </div>
+          </>
+        )}
 
-      {/* Kích thước */}
-      <div>
-        <label className="text-sm font-medium">Kích thước</label>
-        <input
-          className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
-          placeholder="VD: 160.7 x 77.6 x 7.8 mm"
-          value={
-            formData.specifications?.find((s: any) => s.key === "Kích thước")
-              ?.value || ""
-          }
-          onChange={(e) => {
-            const updated = [
-              ...(formData.specifications || []).filter(
-                (s: any) => s.key !== "Kích thước"
-              ),
-              { key: "Kích thước", value: e.target.value },
-            ];
-            handleChange("specifications", updated);
-          }}
-        />
-      </div>
-    </div>
-
-    <div className="flex justify-between mt-6">
-      <button
-        type="button"
-        className="bg-gray-100 px-4 py-2 rounded font-medium"
-        onClick={() => setStep(2)}
-      >
-        Quay lại
-      </button>
-      <button
-        type="button"
-        className="bg-blue-600 text-white px-4 py-2 rounded font-medium"
-        onClick={() => setStep(4)}
-      >
-        Tiếp tục
-      </button>
-    </div>
-  </>
-)}
-
-
-
-        {/* Step 4 */}
+        {/* Step 4: SEO & Thẻ tìm kiếm */}
         {step === 4 && (
           <>
             <div className="font-semibold text-lg mb-4 flex items-center gap-2">

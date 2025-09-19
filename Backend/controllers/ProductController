@@ -1,116 +1,126 @@
-  const Product = require('../models/Product');
-  const Store = require('../models/Store');
+const Product = require('../models/Product');
+const Store = require('../models/Store');
 
-  // Hàm sinh SKU tự động
-  const generateSKU = (name) => {
-    const timestamp = Date.now();
-    const shortName = name && name.trim() ? name.toUpperCase().replace(/\s+/g, '-') : 'PROD';
-    return `${shortName}-${timestamp}`;
-  };
+const generateSKU = (name) => {
+  const timestamp = Date.now();
+  const shortName = name && name.trim() ? name.toUpperCase().replace(/\s+/g, '-') : 'PROD';
+  return `${shortName}-${timestamp}`;
+};
 
-  // ================== CREATE PRODUCT ==================
-  exports.createProduct = async (req, res) => {
-    try {
-const userId = req.user.userId; // lấy đúng trường từ token
-console.log("2 [CREATE PRODUCT] UserId từ token:", userId);
+// create product
+exports.createProduct = async (req, res) => {
+  try {
+    const userId = req.user.userId; 
+    console.log("2 [CREATE PRODUCT] UserId từ token:", userId);
 
+    const store = await Store.findOne({ owner: userId });
+    console.log("👉 Store tìm theo owner:", store);
 
-      // Tìm store theo owner
-const store = await Store.findOne({ owner: userId });
-console.log("👉 Store tìm theo owner:", store);
-
-      if (!store) {
-        return res.status(400).json({
-          success: false,
-          message: "❌ Không tìm thấy cửa hàng của bạn. Vui lòng tạo cửa hàng trước.",
-        });
-      }
-
-      const {
-        name,
-        description,
-        price,
-        salePrice,
-        brand,
-        category,
-        subCategory,
-        quantity,
-        model,
-        sku,
-        variations,
-        specifications,
-        seoTitle,
-        seoDescription,
-        keywords,
-        tags,
-      } = req.body;
-
-      // Parse các field dạng JSON string
-      const parsedVariations =
-        variations && typeof variations === "string"
-          ? JSON.parse(variations)
-          : variations || [];
-
-      const parsedSpecifications =
-        specifications && typeof specifications === "string"
-          ? JSON.parse(specifications)
-          : specifications || [];
-
-      const parsedTags =
-        tags && typeof tags === "string" ? JSON.parse(tags) : tags || [];
-
-      const parsedKeywords =
-        keywords && typeof keywords === "string"
-          ? JSON.parse(keywords)
-          : keywords || [];
-
-      // Xử lý ảnh nếu có
-      let images = [];
-      if (req.files && req.files.length > 0) {
-        images = req.files.map((file) => `/uploads/${file.filename}`);
-      }
-
-      // Nếu sku chưa có → tự tạo
-      const finalSKU = sku || generateSKU(name);
-
-      // Tạo product
-      const product = new Product({
-        name,
-        description,
-        price,
-        salePrice,
-        brand,
-        category,
-        subCategory,
-        quantity,
-        model,
-        sku: generateSKU(name), // ✅ tự sinh nếu không có
-        variations: parsedVariations,
-        specifications: parsedSpecifications,
-        seoTitle,
-        seoDescription,
-        keywords: parsedKeywords,
-        tags: parsedTags,
-        store: store._id,
-        images,
+    if (!store) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ Không tìm thấy cửa hàng của bạn. Vui lòng tạo cửa hàng trước.",
       });
-
-      console.log("📌 Product chuẩn bị lưu:", product);
-
-      await product.save();
-      console.log("✅ Product đã lưu thành công!");
-
-      return res.status(201).json({ success: true, data: product });
-    } catch (err) {
-      console.error("❌ Lỗi tạo sản phẩm:", err);
-      return res.status(400).json({ success: false, message: err.message });
     }
-  };
+
+    const {
+      name,
+      description,
+      price,
+      salePrice,
+      brand,
+      category,
+      subCategory,
+      quantity,
+      model,
+      sku,
+      variations,
+      specifications,
+      seoTitle,
+      seoDescription,
+      keywords,
+      tags,
+    } = req.body;
+
+    const parsedVariations =
+      variations && typeof variations === "string" ? JSON.parse(variations) : variations || [];
+
+    const parsedSpecifications =
+      specifications && typeof specifications === "string" ? JSON.parse(specifications) : specifications || [];
+
+    const parsedTags =
+      tags && typeof tags === "string" ? JSON.parse(tags) : tags || [];
+
+    const parsedKeywords =
+      keywords && typeof keywords === "string" ? JSON.parse(keywords) : keywords || [];
+
+    let images = [];
+    if (req.files) {
+      console.log("👉 Toàn bộ req.files:", req.files);
+
+      const main = req.files.mainImage ? req.files.mainImage[0] : null;
+      const subs = req.files.subImages || [];
+
+      console.log("👉 mainImage:", main);
+      console.log("👉 subImages:", subs);
+
+      images = [];
+
+      if (main) {
+        console.log("✅ Đã nhận mainImage:", main.originalname, "->", main.filename);
+        images.push(`/uploads/${main.filename}`);
+      }
+
+      if (subs.length > 0) {
+        console.log("✅ Đã nhận", subs.length, "subImages:");
+        subs.forEach((f, i) => {
+          console.log(`   [${i}] ${f.originalname} -> ${f.filename}`);
+        });
+        images.push(...subs.map(f => `/uploads/${f.filename}`));
+      }
+    }
+    console.log("📌 Mảng images sau xử lý:", images);
+
+    const finalSKU = sku || generateSKU(name);
+
+    // Tạo product
+    const product = new Product({
+      name,
+      description,
+      price,
+      salePrice,
+      brand,
+      category,
+      subCategory,
+      quantity,
+      model,
+      sku: finalSKU, 
+      variations: parsedVariations,
+      specifications: parsedSpecifications,
+      seoTitle,
+      seoDescription,
+      keywords: parsedKeywords,
+      tags: parsedTags,
+      store: store._id,
+      images,
+    });
+
+    console.log("📌 Product chuẩn bị lưu:", product);
+
+    await product.save();
+    console.log("✅ Product đã lưu thành công!");
+    console.log("📌 Product.images trong DB:", product.images);
+
+    return res.status(201).json({ success: true, data: product });
+  } catch (err) {
+    console.error("❌ Lỗi tạo sản phẩm:", err);
+    return res.status(400).json({ success: false, message: err.message });
+  }
+};
 
 
 
-
-// ================== GET ALL PRODUCTS ==================
+//getall products with pagination, filtering, sorting
 exports.getProducts = async (req, res) => {
   try {
     const { category, search, sortBy, limit = 10, page = 1 } = req.query;
@@ -126,7 +136,6 @@ exports.getProducts = async (req, res) => {
       .skip(Number(skip))
       .limit(Number(limit));
 
-    // Sort: price_asc, price_desc, rating, newest
     if (sortBy) {
       if (sortBy === "price_asc") query = query.sort({ price: 1 });
       if (sortBy === "price_desc") query = query.sort({ price: -1 });
@@ -151,7 +160,7 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-// ================== GET PRODUCT DETAIL ==================
+// get product by id
 exports.getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id).populate(
@@ -163,7 +172,6 @@ exports.getProductById = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Product not found" });
 
-    // tăng lượt xem
     product.viewsCount += 1;
     await product.save();
 
@@ -173,12 +181,11 @@ exports.getProductById = async (req, res) => {
   }
 };
 
-// ================== UPDATE PRODUCT ==================
+// update product
 exports.updateProduct = async (req, res) => {
   try {
     let updateData = { ...req.body };
 
-    // Parse JSON fields
     if (updateData.variations && typeof updateData.variations === "string") {
       updateData.variations = JSON.parse(updateData.variations);
     }
@@ -192,7 +199,6 @@ exports.updateProduct = async (req, res) => {
       updateData.keywords = JSON.parse(updateData.keywords);
     }
 
-    // Cập nhật images nếu có file upload
     if (req.files && req.files.length > 0) {
       updateData.images = req.files.map((file) => `/uploads/${file.filename}`);
     }
@@ -214,8 +220,7 @@ exports.updateProduct = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
-
-// ================== DELETE PRODUCT (SOFT DELETE) ==================
+// soft delete product
 exports.deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
