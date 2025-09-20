@@ -15,6 +15,7 @@ const upload = require("../middlewares/upload");
 const auth = require("../middlewares/authMiddleware");
 const authorize = require("../middlewares/roleMiddleware");
 
+// Seller thêm sản phẩm
 router.post(
   "/",
   auth,
@@ -27,9 +28,9 @@ router.post(
 );
 
 router.get("/featured", getFeaturedProducts);
+router.get("/my-products", auth, authorize("seller", "admin"), getMyProducts); // đặt trước /:id
 router.get("/", getProducts);
-router.get("/seller/my-products", auth, authorize("seller", "admin"), getMyProducts);
-router.get("/:id", getProductById);
+router.get("/:id", getProductById); // phải sau /my-products
 
 router.put(
   "/:id",

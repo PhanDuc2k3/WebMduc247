@@ -276,24 +276,22 @@ exports.getFeaturedProducts = async (req, res) => {
 // Lấy danh sách sản phẩm của shop (seller)
 exports.getMyProducts = async (req, res) => {
   try {
-    // tìm store theo user đăng nhập
-    const store = await Store.findOne({ owner: req.user.userId });
+    console.log("req.user:", req.user);
+    const userId = req.user.userId;
+
+    const store = await Store.findOne({ owner: userId });
+    console.log("store tìm được:", store);
+
     if (!store) {
-      return res.status(400).json({ success: false, message: "Bạn chưa có cửa hàng" });
+      return res.status(404).json({ message: "Bạn chưa có cửa hàng" });
     }
 
-    // lấy tất cả sản phẩm của store này
-    const products = await Product.find({ store: store._id })
-      .populate("category", "name")
-      .populate("subCategory", "name")
-      .sort({ createdAt: -1 });
+    const products = await Product.find({ store: store._id });
+    console.log("products tìm được:", products.length);
 
-    res.json({
-      success: true,
-      count: products.length,
-      data: products,
-    });
+    return res.json({ data: products });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error("❌ Lỗi getMyProducts:", err);
+    return res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
