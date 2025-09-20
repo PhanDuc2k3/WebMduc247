@@ -1,5 +1,5 @@
 const Store = require('../models/Store');
-const User = require('../models/users');
+const User = require('../models/Users');
 
 // Create a new store
 exports.createStore = async (req, res) => {
