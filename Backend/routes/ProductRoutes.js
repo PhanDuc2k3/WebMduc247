@@ -1,33 +1,45 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const productController = require('../controllers/ProductController');
-const upload = require('../middlewares/upload');
-const auth = require('../middlewares/authMiddleware');
-const authorize = require('../middlewares/roleMiddleware');
-router.post(
-  '/',
-  auth,
-  authorize('seller', 'admin'),
-  upload.fields([
-    { name: 'mainImage', maxCount: 1 },
-    { name: 'subImages', maxCount: 5 }
-  ]),
-  productController.createProduct
-);
-router.get('/featured', productController.getFeaturedProducts);
 
-router.get('/', productController.getProducts);
-router.get('/:id', productController.getProductById);
-router.put(
-  '/:id',
+const {
+  createProduct,
+  getFeaturedProducts,
+  getProducts,
+  getProductById,
+  updateProduct,
+  deleteProduct,
+} = require("../controllers/ProductController");
+
+const upload = require("../middlewares/upload");
+const auth = require("../middlewares/authMiddleware");
+const authorize = require("../middlewares/roleMiddleware");
+
+router.post(
+  "/",
   auth,
-  authorize('seller', 'admin'),
+  authorize("seller", "admin"),
   upload.fields([
-    { name: 'mainImage', maxCount: 1 },
-    { name: 'subImages', maxCount: 5 }
+    { name: "mainImage", maxCount: 1 },
+    { name: "subImages", maxCount: 5 },
   ]),
-  productController.updateProduct
+  createProduct
 );
-router.delete('/:id', auth, authorize('seller', 'admin'), productController.deleteProduct);
+
+router.get("/featured", getFeaturedProducts);
+router.get("/", getProducts);
+router.get("/:id", getProductById);
+
+router.put(
+  "/:id",
+  auth,
+  authorize("seller", "admin"),
+  upload.fields([
+    { name: "mainImage", maxCount: 1 },
+    { name: "subImages", maxCount: 5 },
+  ]),
+  updateProduct
+);
+
+router.delete("/:id", auth, authorize("seller", "admin"), deleteProduct);
 
 module.exports = router;

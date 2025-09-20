@@ -7,6 +7,7 @@ import Profile from "./pages/Profile/Profile";
 import MyStore from "./pages/MyStore/MyStore";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import ProductDetail from "./pages/Product/DetailProduct";
+import Cart from "./pages/Cart/Cart";
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
@@ -20,6 +21,7 @@ const AppRouter = () => (
         <Route path="/profile" element={<Profile />} />
         <Route path="/mystore" element={<MyStore />} />
         <Route path="/product" element={<ProductDetail />} />
+        <Route path="/cart" element={<Cart />} />
       </Route>
 
       <Route path="/s" element={<Navigate to="/login" />} />
