@@ -11,7 +11,7 @@ const ProductManagement: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/products", {
+      const res = await fetch("http://localhost:5000/api/products/my-products", {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -19,7 +19,9 @@ const ProductManagement: React.FC = () => {
       const mapped = (data.data || []).map((p: any) => ({
         ...p,
         quantity: p.quantity ?? 0,
-        images: (p.images || []).map((img: string) => `http://localhost:5000${img}`), 
+        images: (p.images || []).map(
+          (img: string) => `http://localhost:5000${img}`
+        ),
       }));
       setProducts(mapped);
     } catch (err) {
@@ -36,7 +38,9 @@ const ProductManagement: React.FC = () => {
   const handleAddProduct = (newProduct: ProductType) => {
     const updatedProduct = {
       ...newProduct,
-      images: (newProduct.images || []).map((img: string) => `http://localhost:5000${img}`),
+      images: (newProduct.images || []).map(
+        (img: string) => `http://localhost:5000${img}`
+      ),
     };
     setProducts((prev) => [updatedProduct, ...prev]);
   };
@@ -45,7 +49,6 @@ const ProductManagement: React.FC = () => {
 
   return (
     <div className="p-6">
-      {/* Nút thêm sản phẩm */}
       <div className="flex justify-end mb-6">
         <button
           onClick={() => setShowPopup(true)}
@@ -55,7 +58,6 @@ const ProductManagement: React.FC = () => {
         </button>
       </div>
 
-      {/* Bảng sản phẩm */}
       <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
         <table className="w-full text-sm table-auto">
           <thead>
@@ -84,14 +86,20 @@ const ProductManagement: React.FC = () => {
                   </div>
                 </td>
                 <td className="px-4 py-3">{p.price.toLocaleString()}₫</td>
-                <td className={`px-4 py-3 ${p.quantity < 15 ? "text-red-600 font-bold" : ""}`}>
+                <td
+                  className={`px-4 py-3 ${
+                    p.quantity < 15 ? "text-red-600 font-bold" : ""
+                  }`}
+                >
                   {p.quantity}
                 </td>
                 <td className="px-4 py-3">{p.soldCount}</td>
                 <td className="px-4 py-3">
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      p.isActive ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-800"
+                      p.isActive
+                        ? "bg-green-100 text-green-700"
+                        : "bg-yellow-100 text-yellow-800"
                     }`}
                   >
                     {p.isActive ? "Hoạt động" : "Ngừng hoạt động"}
@@ -100,13 +108,22 @@ const ProductManagement: React.FC = () => {
                 <td className="px-4 py-3">{p.viewsCount}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-3 text-lg">
-                    <button title="Xem" className="hover:text-blue-600 transition-colors">
+                    <button
+                      title="Xem"
+                      className="hover:text-blue-600 transition-colors"
+                    >
                       👁️
                     </button>
-                    <button title="Sửa" className="hover:text-green-600 transition-colors">
+                    <button
+                      title="Sửa"
+                      className="hover:text-green-600 transition-colors"
+                    >
                       ✏️
                     </button>
-                    <button title="Xóa" className="hover:text-red-600 transition-colors">
+                    <button
+                      title="Xóa"
+                      className="hover:text-red-600 transition-colors"
+                    >
                       🗑️
                     </button>
                   </div>
@@ -117,9 +134,11 @@ const ProductManagement: React.FC = () => {
         </table>
       </div>
 
-      {/* Popup thêm sản phẩm */}
       {showPopup && (
-        <AddProductPopup onClose={() => setShowPopup(false)} onAddProduct={handleAddProduct} />
+        <AddProductPopup
+          onClose={() => setShowPopup(false)}
+          onAddProduct={handleAddProduct}
+        />
       )}
     </div>
   );

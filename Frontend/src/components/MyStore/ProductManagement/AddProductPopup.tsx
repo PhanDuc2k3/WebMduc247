@@ -199,6 +199,7 @@ const handleSubmit = async () => {
                 >
                   <option value="">Chọn danh mục con</option>
                   <option value="iPhone">iPhone</option>
+                  <option value="iPhone">Samsung</option>
                   <option value="Macbook">Macbook</option>
                 </select>
               </div>

@@ -8,6 +8,7 @@ const {
   getProductById,
   updateProduct,
   deleteProduct,
+  getMyProducts,
 } = require("../controllers/ProductController");
 
 const upload = require("../middlewares/upload");
@@ -27,6 +28,7 @@ router.post(
 
 router.get("/featured", getFeaturedProducts);
 router.get("/", getProducts);
+router.get("/seller/my-products", auth, authorize("seller", "admin"), getMyProducts);
 router.get("/:id", getProductById);
 
 router.put(

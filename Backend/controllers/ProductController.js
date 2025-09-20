@@ -181,9 +181,14 @@ exports.getProductById = async (req, res) => {
   }
 };
 
-// update product
+// update product của chính seller
 exports.updateProduct = async (req, res) => {
   try {
+    const store = await Store.findOne({ owner: req.user.userId });
+    if (!store) {
+      return res.status(400).json({ success: false, message: "Bạn chưa có cửa hàng" });
+    }
+
     let updateData = { ...req.body };
 
     if (updateData.variations && typeof updateData.variations === "string") {
@@ -203,16 +208,14 @@ exports.updateProduct = async (req, res) => {
       updateData.images = req.files.map((file) => `/uploads/${file.filename}`);
     }
 
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id, store: store._id }, // check product có thuộc store của seller không
       updateData,
       { new: true, runValidators: true }
     );
 
     if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+      return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm của bạn" });
     }
 
     res.json({ success: true, data: product });
@@ -220,23 +223,31 @@ exports.updateProduct = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
-// soft delete product
+
+// soft delete product của chính seller
 exports.deleteProduct = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
-    if (!product)
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+    const store = await Store.findOne({ owner: req.user.userId });
+    if (!store) {
+      return res.status(400).json({ success: false, message: "Bạn chưa có cửa hàng" });
+    }
 
-    product.isActive = false;
-    await product.save();
+    const product = await Product.findOneAndUpdate(
+      { _id: req.params.id, store: store._id }, // check quyền sở hữu
+      { isActive: false },
+      { new: true }
+    );
 
-    res.json({ success: true, message: "Product deactivated" });
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm của bạn" });
+    }
+
+    res.json({ success: true, message: "Product deactivated", data: product });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 };
+
 exports.getFeaturedProducts = async (req, res) => {
   try {
     console.log("🔥 [GET FEATURED PRODUCTS] API được gọi lúc:", new Date().toISOString());
@@ -259,5 +270,30 @@ exports.getFeaturedProducts = async (req, res) => {
   } catch (err) {
     console.error("❌ Error in getFeaturedProducts:", err.message);
     res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// Lấy danh sách sản phẩm của shop (seller)
+exports.getMyProducts = async (req, res) => {
+  try {
+    // tìm store theo user đăng nhập
+    const store = await Store.findOne({ owner: req.user.userId });
+    if (!store) {
+      return res.status(400).json({ success: false, message: "Bạn chưa có cửa hàng" });
+    }
+
+    // lấy tất cả sản phẩm của store này
+    const products = await Product.find({ store: store._id })
+      .populate("category", "name")
+      .populate("subCategory", "name")
+      .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      count: products.length,
+      data: products,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
   }
 };
