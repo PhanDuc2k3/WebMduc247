@@ -43,9 +43,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <Heart size={18} />
         </button>
 
-<Link to="/product" className={styles.addToCartBtn}>
-  Thêm vào giỏ
+<Link to={`/products/${product._id}`} className={styles.addToCartBtn}>
+  Xem chi tiết
 </Link>
+
       </div>
 
       <div className={styles.productName}>{product.name}</div>

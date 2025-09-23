@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import type { ProductType,FormDataType  } from "../../../types/product";
+import type { ProductType, FormDataType, VariationOption } from "../../../types/product";
 
 interface AddProductPopupProps {
   onClose: () => void;
@@ -7,120 +7,148 @@ interface AddProductPopupProps {
 }
 
 const AddProductPopup: React.FC<AddProductPopupProps> = ({ onClose, onAddProduct }) => {
- const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1);
 
-const [formData, setFormData] = useState<FormDataType>({
-  name: "",
-  brand: "",
-  category: "",
-  subCategory: "",
-  price: "",
-  originalPrice: "",
-  stock: "",
-  model: "",
-  description: "",
-  features: [],
-  specifications: [],
-  seoTitle: "",
-  seoDescription: "",
-  tags: [],
-  mainImage: null,
-  mainImagePreview: null,
-  subImages: [],
-  subImagesPreview: [],
-});
+  const [formData, setFormData] = useState<FormDataType>({
+    name: "",
+    brand: "",
+    category: "",
+    subCategory: "",
+    price: "",
+    originalPrice: "",
+    model: "",
+    description: "",
+    features: [],
+    specifications: [],
+    seoTitle: "",
+    seoDescription: "",
+    tags: [],
+    mainImage: null,
+    mainImagePreview: null,
+    subImages: [],
+    subImagesPreview: [],
+    variations: [], // ✅ thêm variations
+  });
 
-const [featureInput, setFeatureInput] = useState("");
+  const [featureInput, setFeatureInput] = useState("");
 
-const handleChange = (field: keyof FormDataType, value: any) => {
-  setFormData((prev: FormDataType) => ({ ...prev, [field]: value }));
-};
+  const handleChange = (field: keyof FormDataType, value: any) => {
+    setFormData((prev: FormDataType) => ({ ...prev, [field]: value }));
+  };
 
-const handleMainImageChange = (file: File | null) => {
-  if (file) {
-    if (formData.mainImagePreview) URL.revokeObjectURL(formData.mainImagePreview);
-    const preview = URL.createObjectURL(file);
-    setFormData((prev: FormDataType) => ({
-      ...prev,
-      mainImage: file,
-      mainImagePreview: preview,
-    }));
-  }
-};
-
-const handleSubImagesChange = (newFiles: File[]) => {
-  const mergedFiles = [...formData.subImages, ...newFiles].slice(0, 8);
-
-  formData.subImagesPreview.forEach(url => URL.revokeObjectURL(url));
-
-  const previews = mergedFiles.map(f => URL.createObjectURL(f));
-
-  console.log("FILES chọn (merged):", mergedFiles);
-  console.log("PREVIEWS tạo:", previews);
-
-  setFormData((prev: FormDataType) => ({
-    ...prev,
-    subImages: mergedFiles,
-    subImagesPreview: previews,
-  }));
-};
-
-const addFeature = () => {
-  if (featureInput.trim() !== "" && !formData.features.includes(featureInput.trim())) {
-    setFormData((prev: FormDataType) => ({
-      ...prev,
-      features: [...prev.features, featureInput.trim()],
-    }));
-    setFeatureInput("");
-  }
-};
-
-const handleSubmit = async () => {
-  try {
-    const token = localStorage.getItem("token");
-    const form = new FormData();
-
-    form.append("name", formData.name);
-    form.append("description", formData.description);
-    form.append("price", String(formData.price));
-    if (formData.originalPrice) form.append("salePrice", String(formData.originalPrice));
-    form.append("brand", formData.brand);
-    form.append("category", formData.category);
-    form.append("subCategory", formData.subCategory);
-    form.append("quantity", String(formData.stock));
-    form.append("model", formData.model);
-    form.append("seoTitle", formData.seoTitle);
-    form.append("seoDescription", formData.seoDescription);
-    form.append("store", formData.storeId ?? "");
-
-    form.append("specifications", JSON.stringify(formData.specifications));
-    form.append("tags", JSON.stringify(formData.tags));
-    form.append("features", JSON.stringify(formData.features));
-
-    if (formData.mainImage) form.append("mainImage", formData.mainImage);
-    formData.subImages.forEach((file: File) => form.append("subImages", file));
-
-    const res = await fetch("http://localhost:5000/api/products", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: form,
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      alert("✅ Tạo sản phẩm thành công!");
-      onAddProduct(data.data);
-      onClose();
-    } else {
-      alert("❌ Lỗi: " + data.message);
+  const handleMainImageChange = (file: File | null) => {
+    if (file) {
+      if (formData.mainImagePreview) URL.revokeObjectURL(formData.mainImagePreview);
+      const preview = URL.createObjectURL(file);
+      setFormData((prev: FormDataType) => ({
+        ...prev,
+        mainImage: file,
+        mainImagePreview: preview,
+      }));
     }
-  } catch (err) {
-    console.error(err);
-    alert("Không thể kết nối server");
-  }
+  };
+
+  const handleSubImagesChange = (newFiles: File[]) => {
+    const mergedFiles = [...formData.subImages, ...newFiles].slice(0, 8);
+
+    formData.subImagesPreview.forEach(url => URL.revokeObjectURL(url));
+
+    const previews = mergedFiles.map(f => URL.createObjectURL(f));
+
+    setFormData((prev: FormDataType) => ({
+      ...prev,
+      subImages: mergedFiles,
+      subImagesPreview: previews,
+    }));
+  };
+
+  const addFeature = () => {
+    if (featureInput.trim() !== "" && !formData.features.includes(featureInput.trim())) {
+      setFormData((prev: FormDataType) => ({
+        ...prev,
+        features: [...prev.features, featureInput.trim()],
+      }));
+      setFeatureInput("");
+    }
+  };
+
+  // ✅ Quản lý variations
+  const addColor = () => {
+    setFormData(prev => ({
+      ...prev,
+      variations: [...prev.variations, { color: "", options: [] }],
+    }));
+  };
+
+  const updateColor = (index: number, value: string) => {
+    const newVars = [...formData.variations];
+    newVars[index].color = value;
+    setFormData({ ...formData, variations: newVars });
+  };
+
+  const addOption = (colorIndex: number) => {
+    const newVars = [...formData.variations];
+    newVars[colorIndex].options.push({ name: "", stock: 0, additionalPrice: 0 });
+    setFormData({ ...formData, variations: newVars });
+  };
+
+const updateOption = (
+  colorIndex: number,
+  optIndex: number,
+  field: keyof VariationOption, // chỉ chấp nhận "name" | "stock" | "additionalPrice"
+  value: any
+) => {
+  const newVars = [...formData.variations];
+  (newVars[colorIndex].options[optIndex][field] as any) = value;
+  setFormData({ ...formData, variations: newVars });
 };
 
+
+  const handleSubmit = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const form = new FormData();
+
+      form.append("name", formData.name);
+      form.append("description", formData.description);
+      form.append("price", String(formData.price));
+      if (formData.originalPrice) form.append("salePrice", String(formData.originalPrice));
+      form.append("brand", formData.brand);
+      form.append("category", formData.category);
+      form.append("subCategory", formData.subCategory);
+      form.append("model", formData.model);
+      form.append("seoTitle", formData.seoTitle);
+      form.append("seoDescription", formData.seoDescription);
+      form.append("store", formData.storeId ?? "");
+
+      form.append("specifications", JSON.stringify(formData.specifications));
+      form.append("tags", JSON.stringify(formData.tags));
+      form.append("features", JSON.stringify(formData.features));
+      form.append("variations", JSON.stringify(formData.variations)); // ✅ gửi variations
+
+      if (formData.mainImage) form.append("mainImage", formData.mainImage);
+      formData.subImages.forEach((file: File) => form.append("subImages", file));
+
+      const res = await fetch("http://localhost:5000/api/products", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert("✅ Tạo sản phẩm thành công!");
+        onAddProduct(data.data);
+        onClose();
+      } else {
+        alert("❌ Lỗi: " + data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Không thể kết nối server");
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
@@ -153,7 +181,7 @@ const handleSubmit = async () => {
           <span className="ml-4 text-gray-500 font-medium">Bước {step}/4</span>
         </div>
 
-{/* Step 1 */}
+        {/* Step 1 */}
         {step === 1 && (
           <>
             <div className="font-semibold text-lg mb-4 flex items-center gap-2">
@@ -164,7 +192,7 @@ const handleSubmit = async () => {
                 <label className="text-sm font-medium">Tên sản phẩm *</label>
                 <input
                   className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
-                  placeholder="VD: iPhone 15 Pro Max 256GB"
+                  placeholder="VD: iPhone 15 Pro Max"
                   value={formData.name}
                   onChange={(e) => handleChange("name", e.target.value)}
                 />
@@ -188,20 +216,17 @@ const handleSubmit = async () => {
                   <option value="">Chọn danh mục</option>
                   <option value="Điện thoại">Điện thoại</option>
                   <option value="Laptop">Laptop</option>
+                  <option value="Quần áo">Quần áo</option>
                 </select>
               </div>
               <div>
                 <label className="text-sm font-medium">Danh mục con</label>
-                <select
+                <input
                   className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
+                  placeholder="VD: iPhone, Macbook..."
                   value={formData.subCategory}
                   onChange={(e) => handleChange("subCategory", e.target.value)}
-                >
-                  <option value="">Chọn danh mục con</option>
-                  <option value="iPhone">iPhone</option>
-                  <option value="iPhone">Samsung</option>
-                  <option value="Macbook">Macbook</option>
-                </select>
+                />
               </div>
               <div>
                 <label className="text-sm font-medium">Giá bán *</label>
@@ -220,19 +245,7 @@ const handleSubmit = async () => {
                   className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
                   placeholder="$ 0"
                   value={formData.originalPrice}
-                  onChange={(e) =>
-                    handleChange("originalPrice", e.target.value)
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Số lượng tồn kho</label>
-                <input
-                  type="number"
-                  className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
-                  placeholder="0"
-                  value={formData.stock}
-                  onChange={(e) => handleChange("stock", e.target.value)}
+                  onChange={(e) => handleChange("originalPrice", e.target.value)}
                 />
               </div>
               <div>
@@ -246,10 +259,7 @@ const handleSubmit = async () => {
               </div>
             </div>
             <div className="flex justify-between mt-6">
-              <button
-                className="bg-gray-100 px-4 py-2 rounded font-medium"
-                onClick={onClose}
-              >
+              <button className="bg-gray-100 px-4 py-2 rounded font-medium" onClick={onClose}>
                 Hủy
               </button>
               <button
@@ -306,7 +316,6 @@ const handleSubmit = async () => {
 
               <div className="border rounded-lg p-4 flex flex-col items-center">
                 <div className="text-gray-400 mb-2 text-center">
-                 
                   Ảnh phụ (tùy chọn) <br />
                   <span className="text-xs">(Tối đa 8 ảnh)</span>
                 </div>
@@ -380,52 +389,75 @@ const handleSubmit = async () => {
           </>
         )}
 
-        {/* Step 3: Thông số kỹ thuật */}
+        {/* Step 3: Variations (Màu + dung lượng/kích cỡ) */}
         {step === 3 && (
           <>
             <div className="font-semibold text-lg mb-4 flex items-center gap-2">
-              <span>⚙️</span> Thông số kỹ thuật
+              <span>🎨</span> Biến thể sản phẩm
             </div>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="text-sm font-medium">Màu sắc</label>
-                <input
-                  className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
-                  placeholder="VD: Đen, Trắng..."
-                  value={
-                    formData.specifications?.find((s: any) => s.key === "Màu sắc")?.value || ""
-                  }
-                  onChange={(e) => {
-                    const updated = [
-                      ...(formData.specifications || []).filter(
-                        (s: any) => s.key !== "Màu sắc"
-                      ),
-                      { key: "Màu sắc", value: e.target.value },
-                    ];
-                    handleChange("specifications", updated);
-                  }}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Kích thước</label>
-                <input
-                  className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
-                  placeholder="VD: 160.7 x 77.6 x 7.8 mm"
-                  value={
-                    formData.specifications?.find((s: any) => s.key === "Kích thước")?.value ||
-                    ""
-                  }
-                  onChange={(e) => {
-                    const updated = [
-                      ...(formData.specifications || []).filter(
-                        (s: any) => s.key !== "Kích thước"
-                      ),
-                      { key: "Kích thước", value: e.target.value },
-                    ];
-                    handleChange("specifications", updated);
-                  }}
-                />
-              </div>
+
+            <div className="space-y-4">
+              {formData.variations.map((v, vi) => (
+                <div key={vi} className="border p-3 rounded-lg">
+                  <label className="text-sm font-medium">Màu sắc</label>
+                  <input
+                    className="w-full border rounded px-3 py-2 mt-1 bg-gray-50"
+                    placeholder="VD: Titan Xanh"
+                    value={v.color}
+                    onChange={(e) => updateColor(vi, e.target.value)}
+                  />
+
+                  <div className="mt-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-sm font-medium">Tuỳ chọn (Dung lượng/Kích cỡ)</span>
+                      <button
+                        type="button"
+                        className="bg-gray-100 px-3 py-1 rounded text-sm"
+                        onClick={() => addOption(vi)}
+                      >
+                        + Thêm tuỳ chọn
+                      </button>
+                    </div>
+
+                    {v.options.map((opt, oi) => (
+                      <div key={oi} className="grid grid-cols-3 gap-2 mb-2">
+                        <input
+                          className="border rounded px-2 py-1"
+                          placeholder="Tên (VD: 128GB, XL)"
+                          value={opt.name}
+                          onChange={(e) => updateOption(vi, oi, "name", e.target.value)}
+                        />
+                        <input
+                          type="number"
+                          className="border rounded px-2 py-1"
+                          placeholder="Số lượng"
+                          value={opt.stock}
+                          onChange={(e) =>
+                            updateOption(vi, oi, "stock", Number(e.target.value))
+                          }
+                        />
+                        <input
+                          type="number"
+                          className="border rounded px-2 py-1"
+                          placeholder="Giá thêm"
+                          value={opt.additionalPrice}
+                          onChange={(e) =>
+                            updateOption(vi, oi, "additionalPrice", Number(e.target.value))
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                className="bg-gray-100 px-4 py-2 rounded font-medium"
+                onClick={addColor}
+              >
+                + Thêm màu sắc
+              </button>
             </div>
 
             <div className="flex justify-between mt-6">

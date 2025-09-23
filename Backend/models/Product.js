@@ -12,14 +12,18 @@ const productSchema = new mongoose.Schema({
   soldCount: { type: Number, default: 0 },
   model: { type: String },
   sku: { type: String, unique: true },
-  variations: [
-    {
-      color: { type: String },
-      size: { type: String },
-      additionalPrice: { type: Number, default: 0 },
-      stock: { type: Number, default: 0 }
-    }
-  ],
+variations: [
+  {
+    color: { type: String },
+    options: [
+      {
+        name: { type: String },  
+        stock: { type: Number, default: 0 },
+        additionalPrice: { type: Number, default: 0 }
+      }
+    ]
+  }
+],
   images: [{ type: String }],
   specifications: [
     {

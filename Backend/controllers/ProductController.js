@@ -10,7 +10,7 @@ const generateSKU = (name) => {
 // create product
 exports.createProduct = async (req, res) => {
   try {
-    const userId = req.user.userId; 
+    const userId = req.user.userId;
     console.log("2 [CREATE PRODUCT] UserId từ token:", userId);
 
     const store = await Store.findOne({ owner: userId });
@@ -31,7 +31,6 @@ exports.createProduct = async (req, res) => {
       brand,
       category,
       subCategory,
-      quantity,
       model,
       sku,
       variations,
@@ -43,10 +42,14 @@ exports.createProduct = async (req, res) => {
     } = req.body;
 
     const parsedVariations =
-      variations && typeof variations === "string" ? JSON.parse(variations) : variations || [];
+      variations && typeof variations === "string"
+        ? JSON.parse(variations)
+        : variations || [];
 
     const parsedSpecifications =
-      specifications && typeof specifications === "string" ? JSON.parse(specifications) : specifications || [];
+      specifications && typeof specifications === "string"
+        ? JSON.parse(specifications)
+        : specifications || [];
 
     const parsedTags =
       tags && typeof tags === "string" ? JSON.parse(tags) : tags || [];
@@ -54,6 +57,20 @@ exports.createProduct = async (req, res) => {
     const parsedKeywords =
       keywords && typeof keywords === "string" ? JSON.parse(keywords) : keywords || [];
 
+    let totalQuantity = 0;
+    if (parsedVariations.length > 0) {
+      parsedVariations.forEach(v => {
+        if (v.options && v.options.length > 0) {
+          v.options.forEach(opt => {
+            opt.stock = Number(opt.stock) || 0;
+            opt.additionalPrice = Number(opt.additionalPrice) || 0;
+            totalQuantity += opt.stock;
+          });
+        }
+      });
+    }
+
+    // Xử lý ảnh
     let images = [];
     if (req.files) {
       console.log("👉 Toàn bộ req.files:", req.files);
@@ -61,26 +78,13 @@ exports.createProduct = async (req, res) => {
       const main = req.files.mainImage ? req.files.mainImage[0] : null;
       const subs = req.files.subImages || [];
 
-      console.log("👉 mainImage:", main);
-      console.log("👉 subImages:", subs);
-
-      images = [];
-
-      if (main) {
-        console.log("✅ Đã nhận mainImage:", main.originalname, "->", main.filename);
-        images.push(`/uploads/${main.filename}`);
-      }
-
-      if (subs.length > 0) {
-        console.log("✅ Đã nhận", subs.length, "subImages:");
-        subs.forEach((f, i) => {
-          console.log(`   [${i}] ${f.originalname} -> ${f.filename}`);
-        });
-        images.push(...subs.map(f => `/uploads/${f.filename}`));
-      }
+      if (main) images.push(`/uploads/${main.filename}`);
+      if (subs.length > 0) images.push(...subs.map(f => `/uploads/${f.filename}`));
     }
+
     console.log("📌 Mảng images sau xử lý:", images);
 
+    // SKU tự sinh nếu chưa có
     const finalSKU = sku || generateSKU(name);
 
     // Tạo product
@@ -92,9 +96,9 @@ exports.createProduct = async (req, res) => {
       brand,
       category,
       subCategory,
-      quantity,
+      quantity: totalQuantity,
       model,
-      sku: finalSKU, 
+      sku: finalSKU,
       variations: parsedVariations,
       specifications: parsedSpecifications,
       seoTitle,
@@ -109,7 +113,6 @@ exports.createProduct = async (req, res) => {
 
     await product.save();
     console.log("✅ Product đã lưu thành công!");
-    console.log("📌 Product.images trong DB:", product.images);
 
     return res.status(201).json({ success: true, data: product });
   } catch (err) {
@@ -117,6 +120,9 @@ exports.createProduct = async (req, res) => {
     return res.status(400).json({ success: false, message: err.message });
   }
 };
+
+
+
 
 
 
@@ -160,24 +166,40 @@ exports.getProducts = async (req, res) => {
   }
 };
 
-// get product by id
+// GET /api/products/:id
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id).populate(
-      "store",
-      "name logoUrl"
-    );
-    if (!product)
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+    const { id } = req.params;
+
+    if (!id || !id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid product ID",
+      });
+    }
+
+    let product = await Product.findById(id).populate("store", "name logoUrl");
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
 
     product.viewsCount += 1;
     await product.save();
 
-    res.json({ success: true, data: product });
+    return res.json({
+      success: true,
+      data: product,
+    });
   } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    console.error("❌ getProductById error:", err.message);
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Server error",
+    });
   }
 };
 

@@ -5,21 +5,33 @@ export interface Specification {
   value: string;
 }
 
+// 🔹 Option phụ cho từng màu (VD: dung lượng, size, trọng lượng...)
+export interface VariationOption {
+  name: string;            // VD: "128GB" | "XL" | "500g"
+  stock: number;           // số lượng tồn kho cho option này
+  additionalPrice: number; // giá cộng thêm so với price gốc
+}
+
+// 🔹 Biến thể chính (màu sắc hoặc thuộc tính cha)
+export interface Variation {
+  color: string;              // VD: "Titan Xanh", "Đỏ", "Đen"
+  options: VariationOption[]; // danh sách option con
+}
+
 export interface ProductType {
   _id: string;
   name: string;
   description: string;
   price: number;
-  salePrice?: number; // không bắt buộc
+  salePrice?: number;
   brand: string;
   category: string;
   subCategory: string;
-  quantity: number;
-  stock?: number; // nếu FE cần
+  quantity: number;           // tổng stock = sum(options.stock)
   soldCount: number;
   model: string;
   sku?: string;
-  variations?: any[]; // giữ mảng trống hoặc object tùy backend
+  variations?: Variation[];   // ✅ thay vì any[]
   images: string[];
   specifications: Specification[];
   rating: number;
@@ -42,7 +54,6 @@ export interface FormDataType {
   brand: string;
   category: string;
   subCategory: string;
-  stock: string | number;
   model: string;
   features: string[];
   specifications: Specification[];
@@ -54,4 +65,7 @@ export interface FormDataType {
   subImages: File[];
   subImagesPreview: string[];
   storeId?: string;
+
+  // ✅ thêm variations để FE quản lý
+  variations: Variation[];
 }
