@@ -10,6 +10,7 @@ import ProductDetail from "./pages/Product/DetailProduct";
 import Cart from "./pages/Cart/Cart";
 import VoucherPage from "./pages/Voucher/Voucher";
 import StorePage from "./pages/Store/Store";
+import Checkout from "./pages/Payment/Payment";
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
@@ -26,6 +27,7 @@ const AppRouter = () => (
         <Route path="/cart" element={<Cart />} />
         <Route path="/voucher" element={<VoucherPage />} />
         <Route path="/store/:id" element={<StorePage />} />
+        <Route path="/checkout" element={<Checkout />} />
       </Route>
 
       <Route path="/s" element={<Navigate to="/login" />} />
