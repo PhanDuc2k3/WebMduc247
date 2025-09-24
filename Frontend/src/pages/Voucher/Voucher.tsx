@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type Category = {
   name: string;
@@ -6,54 +6,74 @@ type Category = {
 };
 
 type Voucher = {
+  _id: string;
+  code: string;
   title: string;
   description: string;
   condition: string;
   price: string;
   date: string;
-  store: string;
-  used?: boolean;
-  usage?: number; 
+  store?: { _id: string; name: string; category?: string }; 
+  categories?: string[];   
+  global?: boolean;       
+  used?: boolean;          
+  usagePercent?: number;   
 };
 
 const categories: Category[] = [
-  { name: "Tất cả", count: 89 },
-  { name: "Công nghệ", count: 15 },
-  { name: "Thời trang", count: 23 },
-  { name: "Nhà cửa", count: 18 },
-  { name: "Sách", count: 8 },
-  { name: "Miễn ship", count: 12 },
-];
-
-const vouchers: Voucher[] = [
-  {
-    title: "Giảm 50K cho đơn từ 500K",
-    description: "Áp dụng cho tất cả sản phẩm, không kết hợp với voucher khác",
-    condition: "Từ 500.000 ₫",
-    price: "50.000 ₫",
-    date: "2023-02-15",
-    store: "Tất cả cửa hàng",
-    used: true,
-    usage: 50, 
-  },
-  {
-    title: "Giảm 20K cho đơn từ 200K",
-    description: "Chỉ áp dụng cho ngành hàng thời trang",
-    condition: "Từ 200.000 ₫",
-    price: "20.000 ₫",
-    date: "2023-03-01",
-    store: "Thời trang",
-    usage: 30, 
-  },
+  { name: "Tất cả", count: 0 },
+  { name: "Công nghệ", count: 0 },
+  { name: "Thời trang", count: 0 },
+  { name: "Nhà cửa", count: 0 },
+  { name: "Sách", count: 0 },
+  { name: "Miễn ship", count: 0 },
 ];
 
 export default function VoucherPage() {
   const [activeTab, setActiveTab] = useState<"available" | "mine">("available");
   const [search, setSearch] = useState("");
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchVouchers = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(
+        activeTab === "available"
+          ? "http://localhost:5000/api/vouchers"
+          : "http://localhost:5000/api/vouchers/mine",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Lỗi khi lấy voucher");
+      setVouchers(data);
+    } catch (err) {
+      console.error(err);
+      alert("❌ " + (err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVouchers();
+  }, [activeTab]);
 
   const filteredVouchers = vouchers.filter((v) =>
-    v.title.toLowerCase().includes(search.toLowerCase())
+    v.title.toLowerCase().includes(search.toLowerCase()) ||
+    v.code.toLowerCase().includes(search.toLowerCase())
   );
+
+  const getStoreLabel = (v: Voucher) => {
+    if (v.store?.name) return `Áp dụng cho cửa hàng: ${v.store.name}`;
+    if (v.categories && v.categories.length > 0)
+      return `Áp dụng riêng cho tất cả các cửa hàng thuộc: ${v.categories.join(", ")}`;
+    if (v.global) return `Áp dụng cho toàn bộ cửa hàng`;
+    return "Áp dụng cho toàn bộ cửa hàng";
+  };
 
   return (
     <div className="p-6 max-w-5xl mx-auto font-sans">
@@ -108,44 +128,48 @@ export default function VoucherPage() {
         className="w-full px-4 py-2 mb-6 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
-      <div className="grid gap-6">
-        {filteredVouchers.map((v, i) => (
-          <div
-            key={i}
-            className="border rounded-lg p-5 shadow hover:shadow-md transition bg-white"
-          >
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-xl font-semibold text-blue-700">{v.title}</h2>
-              <span className="text-green-600 font-bold">{v.price}</span>
-            </div>
-            <p className="text-sm text-gray-600 mb-2">{v.description}</p>
-            <div className="text-sm text-gray-700 space-y-1 mb-3">
-              <p>Điều kiện: {v.condition}</p>
-              <p>Ngày áp dụng: {v.date}</p>
-              <p>Cửa hàng: {v.store}</p>
-              {v.used && (
-                <p className="text-red-500 font-medium mt-1">Đã dùng</p>
+      {loading ? (
+        <div>Đang tải voucher...</div>
+      ) : (
+        <div className="grid gap-6">
+          {filteredVouchers.map((v) => (
+            <div
+              key={v._id}
+              className="border rounded-lg p-5 shadow hover:shadow-md transition bg-white"
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h2 className="text-xl font-semibold text-blue-700">{v.title}</h2>
+                <span className="text-green-600 font-bold">{v.code}</span>
+              </div>
+              <p className="text-sm text-gray-600 mb-2">{v.description}</p>
+              <div className="text-sm text-gray-700 space-y-1 mb-3">
+                <p>Điều kiện: {v.condition}</p>
+                <p>Ngày áp dụng: {v.date}</p>
+                <p>{getStoreLabel(v)}</p>
+                {v.used && (
+                  <p className="text-red-500 font-medium mt-1">Bạn đã dùng voucher này</p>
+                )}
+              </div>
+
+              {/* Thanh số lượng đã dùng */}
+              {v.usagePercent !== undefined && (
+                <div className="mb-2">
+                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>Đã sử dụng: {v.usagePercent}%</span>
+                    <span>Còn lại: {100 - v.usagePercent}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-blue-500 h-2 rounded-full"
+                      style={{ width: `${v.usagePercent}%` }}
+                    ></div>
+                  </div>
+                </div>
               )}
             </div>
-
-            {/* 🟢 Thanh tiến trình usage */}
-            {v.usage !== undefined && (
-              <div>
-                <div className="flex justify-between text-xs text-gray-600 mb-1">
-                  <span>Đã sử dụng: {v.usage}%</span>
-                  <span>Còn lại: {100 - v.usage}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-blue-500 h-2 rounded-full"
-                    style={{ width: `${v.usage}%` }}
-                  ></div>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -5,35 +5,37 @@ const voucherSchema = new mongoose.Schema(
     code: { 
       type: String, 
       required: true, 
-      unique: true, // mỗi mã voucher chỉ có 1
-      uppercase: true, // lưu thành chữ in hoa để dễ check
+      unique: true, 
+      uppercase: true, 
       trim: true 
     }, 
-    title: { type: String, required: true },           // tiêu đề hiển thị
-    description: { type: String, required: true },    // mô tả
-    condition: { type: String, required: true },       // ví dụ "Từ 500.000 ₫"
-    
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    condition: { type: String, required: true },
     discountType: {
       type: String,
       enum: ["fixed", "percent"],                     
       default: "fixed"
     },
-    discountValue: { type: Number, required: true }, 
-    minOrderValue: { type: Number, default: 0 },      
-    maxDiscount: { type: Number },                    
+    discountValue: { type: Number, required: true },
+    minOrderValue: { type: Number, default: 0 },
+    maxDiscount: { type: Number },
     store: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Store",                                  
+      ref: "Store",
     },
-    global: { type: Boolean, default: false },      
+    categories: [{ type: String }],
+    global: { type: Boolean, default: false },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
-
     usageLimit: { type: Number, default: 100 },
-    usedCount: { type: Number, default: 0 },          
+    usedCount: { type: Number, default: 0 },
     usersUsed: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-
-    isActive: { type: Boolean, default: true }
+    isActive: { type: Boolean, default: true },
+    price: { type: String },
+    date: { type: String },
+    usagePercent: { type: Number },
+    used: { type: Boolean, default: false }
   },
   { timestamps: true }
 );
