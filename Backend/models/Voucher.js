@@ -2,9 +2,17 @@ const mongoose = require("mongoose");
 
 const voucherSchema = new mongoose.Schema(
   {
-    title: { type: String, required: true },           
-    description: { type: String, required: true },    
-    condition: { type: String, required: true },       
+    code: { 
+      type: String, 
+      required: true, 
+      unique: true, // mỗi mã voucher chỉ có 1
+      uppercase: true, // lưu thành chữ in hoa để dễ check
+      trim: true 
+    }, 
+    title: { type: String, required: true },           // tiêu đề hiển thị
+    description: { type: String, required: true },    // mô tả
+    condition: { type: String, required: true },       // ví dụ "Từ 500.000 ₫"
+    
     discountType: {
       type: String,
       enum: ["fixed", "percent"],                     
@@ -23,7 +31,7 @@ const voucherSchema = new mongoose.Schema(
 
     usageLimit: { type: Number, default: 100 },
     usedCount: { type: Number, default: 0 },          
-    usersUsed: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // user nào đã dùng
+    usersUsed: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
 
     isActive: { type: Boolean, default: true }
   },

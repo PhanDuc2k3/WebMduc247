@@ -13,16 +13,17 @@ const CartItemSchema = new mongoose.Schema({
   },
   name: { type: String, required: true },
   imageUrl: { type: String },
-  price: { type: Number, required: true }, 
-  salePrice: { type: Number },
+  price: { type: Number, required: true },   // giá gốc (có cộng thêm if needed)
+  salePrice: { type: Number },               // giá sale (có cộng thêm if needed)
   quantity: { type: Number, required: true, min: 1 },
 
   variation: {
     color: { type: String },
     size: { type: String },
+    additionalPrice: { type: Number, default: 0 }, // ✅ thêm field này
   },
 
-  subtotal: { type: Number, required: true }, 
+  subtotal: { type: Number, required: true }, // (unitPrice * quantity)
 });
 
 module.exports = CartItemSchema;

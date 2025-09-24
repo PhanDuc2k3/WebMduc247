@@ -1,17 +1,18 @@
 const express = require("express");
 const router = express.Router();
-
 const {
   getAvailableVouchers,
   createVoucher,
   updateVoucher,
   deleteVoucher,
+  previewVoucher,
   applyVoucher,
 } = require("../controllers/VoucherController");
 
 const auth = require("../middlewares/authMiddleware");
 
 router.get("/", auth, getAvailableVouchers);
+router.post("/preview", auth, previewVoucher);
 router.post("/apply", auth, applyVoucher);
 
 router.post("/", auth, createVoucher);

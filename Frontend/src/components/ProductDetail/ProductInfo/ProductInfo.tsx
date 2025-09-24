@@ -11,6 +11,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedStorage, setSelectedStorage] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<any | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const colors: string[] =
     Array.from(new Set(product.variations?.map((v: any) => v.color) || [])) || [];
@@ -41,6 +42,43 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
     }
   };
 
+  // 👉 Hàm thêm vào giỏ hàng bằng API backend
+const handleAddToCart = async () => {
+  if (!selectedColor || !selectedStorage || !selectedOption) {
+    alert("Vui lòng chọn màu sắc và dung lượng trước khi thêm vào giỏ hàng!");
+    return;
+  }
+
+  try {
+    setLoading(true);
+    const res = await fetch("http://localhost:5000/api/cart/add", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: JSON.stringify({
+        productId: product._id,
+        quantity,
+        variation: {
+          color: selectedColor,
+          size: selectedStorage,
+          additionalPrice: selectedOption?.additionalPrice || 0,
+        },
+      }),
+    });
+
+    if (!res.ok) throw new Error("Thêm giỏ hàng thất bại");
+    alert("✅ Đã thêm vào giỏ hàng!");
+  } catch (err) {
+    console.error(err);
+    alert("❌ Có lỗi khi thêm vào giỏ hàng");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
@@ -59,6 +97,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         )}
       </div>
 
+      {/* chọn màu sắc */}
       <div>
         <h3 className="font-medium mb-2">Chọn màu sắc:</h3>
         <div className="flex gap-2 flex-wrap">
@@ -80,6 +119,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         </div>
       </div>
 
+      {/* chọn dung lượng */}
       <div>
         <h3 className="font-medium mb-2">Chọn dung lượng:</h3>
         <div className="flex gap-2 flex-wrap">
@@ -107,6 +147,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         </div>
       </div>
 
+      {/* số lượng */}
       <div>
         <h3 className="font-medium mb-2">Số lượng:</h3>
         <div className="flex items-center gap-2">
@@ -126,13 +167,18 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         </div>
       </div>
 
+      {/* nút hành động */}
       <div className="flex gap-3 flex-wrap">
         <button className="flex items-center gap-1 px-4 py-2 border rounded hover:bg-gray-100">
           <Heart size={18} />
           Yêu thích
         </button>
-        <button className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600">
-          Thêm vào giỏ
+        <button
+          onClick={handleAddToCart}
+          disabled={loading}
+          className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:opacity-50"
+        >
+          {loading ? "Đang thêm..." : "Thêm vào giỏ"}
         </button>
         <button className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
           Mua ngay
