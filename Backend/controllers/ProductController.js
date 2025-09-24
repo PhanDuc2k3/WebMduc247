@@ -317,3 +317,22 @@ exports.getMyProducts = async (req, res) => {
     return res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
+
+
+exports.getProductsByStore = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+
+    // Tìm tất cả product của store
+    const products = await Product.find({ store: storeId }).populate('store', 'name logoUrl');
+
+    if (!products || products.length === 0) {
+      return res.status(404).json({ message: "Không có sản phẩm nào cho cửa hàng này" });
+    }
+
+    res.json(products);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};

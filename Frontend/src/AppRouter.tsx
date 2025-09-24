@@ -9,6 +9,7 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import ProductDetail from "./pages/Product/DetailProduct";
 import Cart from "./pages/Cart/Cart";
 import VoucherPage from "./pages/Voucher/Voucher";
+import StorePage from "./pages/Store/Store";
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
@@ -24,6 +25,7 @@ const AppRouter = () => (
         <Route path="/products/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/voucher" element={<VoucherPage />} />
+        <Route path="/store/:id" element={<StorePage />} />
       </Route>
 
       <Route path="/s" element={<Navigate to="/login" />} />
