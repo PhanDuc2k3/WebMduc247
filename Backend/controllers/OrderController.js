@@ -2,12 +2,17 @@ const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const mongoose = require("mongoose");
 const Voucher = require("../models/Voucher");
+const User = require("../models/Users"); 
 // 🟢 Buyer: Tạo đơn hàng từ giỏ hàng
 // 🟢 Buyer: Tạo đơn hàng từ giỏ hàng
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { shippingAddress, paymentMethod, note, shippingFee = 0, voucherCode } = req.body;
+
+    // Lấy user hiện tại
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "Người dùng không tồn tại" });
 
     // Lấy cart
     const cart = await Cart.findOne({ userId }).populate("items.productId");
@@ -45,6 +50,16 @@ exports.createOrder = async (req, res) => {
     const order = new Order({
       orderCode,
       userId,
+
+      // Thêm userInfo
+      userInfo: {
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        avatarUrl: user.avatarUrl
+      },
+
       items: cart.items.map(item => ({
         productId: item.productId._id,
         storeId: item.storeId,
@@ -56,19 +71,23 @@ exports.createOrder = async (req, res) => {
         variation: item.variation,
         subtotal: item.subtotal,
       })),
+
       shippingAddress: {
         fullName: shippingAddress.fullName,
         phone: shippingAddress.phone,
         address: shippingAddress.address,
       },
+
       shippingInfo: {
         method: shippingFee === 50000 ? "Giao hàng nhanh" : "Giao hàng tiêu chuẩn",
         estimatedDelivery: new Date(Date.now() + (shippingFee === 50000 ? 1 : 3) * 24*60*60*1000),
       },
+
       paymentInfo: {
         method: (paymentMethod || "COD").toUpperCase(),
         status: "pending",
       },
+
       statusHistory: [{ status: "pending", note: "Đơn hàng được tạo", timestamp: new Date() }],
       subtotal: cart.subtotal,
       shippingFee,
@@ -92,6 +111,7 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // 🟢 Buyer: Lấy danh sách đơn hàng của user
 exports.getMyOrders = async (req, res) => {

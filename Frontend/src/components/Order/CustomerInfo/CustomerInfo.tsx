@@ -1,21 +1,31 @@
 import React from "react";
 
-export default function CustomerInfo() {
+interface CustomerInfoProps {
+  customer: {
+    fullName: string;
+    role: string;
+    phone: string;
+    email: string;
+    avatarUrl?: string;
+  };
+}
+
+const CustomerInfo: React.FC<CustomerInfoProps> = ({ customer }) => {
   return (
     <div className="max-w-2xl mx-10 p-6 bg-white rounded-lg shadow-md mt-6 flex items-center space-x-4">
       {/* Avatar */}
       <img
-        src="/avatar.png" // Thay bằng đường dẫn ảnh thật nếu có
+        src={customer.avatarUrl || "/avatar.png"}
         alt="Avatar"
         className="w-16 h-16 rounded-full object-cover"
       />
 
       {/* Customer details */}
       <div className="flex-1">
-        <h2 className="text-lg font-semibold text-gray-800">Nguyễn Văn A</h2>
-        <p className="text-sm text-gray-500">Khách hàng</p>
-        <p className="text-sm text-gray-700 mt-1">📞 0987654321</p>
-        <p className="text-sm text-gray-700">✉️ nguyenvana@email.com</p>
+        <h2 className="text-lg font-semibold text-gray-800">{customer.fullName}</h2>
+        <p className="text-sm text-gray-500">{customer.role}</p>
+        <p className="text-sm text-gray-700 mt-1">📞 {customer.phone}</p>
+        <p className="text-sm text-gray-700">✉️ {customer.email}</p>
       </div>
 
       {/* Actions */}
@@ -29,4 +39,6 @@ export default function CustomerInfo() {
       </div>
     </div>
   );
-}
+};
+
+export default CustomerInfo;

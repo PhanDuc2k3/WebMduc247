@@ -7,6 +7,14 @@ const OrderSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
     items: [CartItemSchema],
+    
+userInfo: {
+  fullName: { type: String, required: true },
+  email: { type: String, required: true },
+  phone: { type: String, required: true },
+  role: { type: String, enum: ["buyer", "seller", "admin"], required: true },
+  avatarUrl: { type: String, default: "/avatar.png" } // thêm trường avatarUrl
+},
 
     shippingAddress: {
       fullName: { type: String, required: true },
