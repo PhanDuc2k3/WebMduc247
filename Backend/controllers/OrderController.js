@@ -1,26 +1,51 @@
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const mongoose = require("mongoose");
-
+const Voucher = require("../models/Voucher");
+// 🟢 Buyer: Tạo đơn hàng từ giỏ hàng
 // 🟢 Buyer: Tạo đơn hàng từ giỏ hàng
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { shippingAddress, paymentMethod, note } = req.body;
+    const { shippingAddress, paymentMethod, note, shippingFee = 0, voucherCode } = req.body;
 
-    // Lấy giỏ hàng
+    // Lấy cart
     const cart = await Cart.findOne({ userId }).populate("items.productId");
-    if (!cart || cart.items.length === 0) {
+    if (!cart || cart.items.length === 0)
       return res.status(400).json({ message: "Giỏ hàng trống" });
+
+    // Xử lý voucher
+    let discount = 0;
+    let voucher = null;
+
+    if (voucherCode) {
+      voucher = await Voucher.findOne({ code: voucherCode.toUpperCase(), isActive: true });
+      if (!voucher) return res.status(400).json({ message: "Voucher không hợp lệ" });
+
+      const now = new Date();
+      if (voucher.startDate > now || voucher.endDate < now)
+        return res.status(400).json({ message: "Voucher chưa bắt đầu hoặc đã hết hạn" });
+
+      if (cart.subtotal < voucher.minOrderValue)
+        return res.status(400).json({ message: `Đơn hàng tối thiểu ${voucher.minOrderValue}₫` });
+
+      discount = voucher.discountType === "fixed"
+        ? voucher.discountValue
+        : Math.min((cart.subtotal * voucher.discountValue) / 100, voucher.maxDiscount || Infinity);
+
+      // Update voucher usage
+      voucher.usedCount += 1;
+      voucher.usersUsed.push(userId);
+      await voucher.save();
     }
 
-    // Tạo mã đơn hàng (ORD-xxx)
-    const orderCode = "ORD-" + new Date().getTime();
+    const total = cart.subtotal - discount + shippingFee;
+    const orderCode = "ORD-" + Date.now();
 
     const order = new Order({
       orderCode,
       userId,
-      items: cart.items.map((item) => ({
+      items: cart.items.map(item => ({
         productId: item.productId._id,
         storeId: item.storeId,
         name: item.name,
@@ -31,41 +56,40 @@ exports.createOrder = async (req, res) => {
         variation: item.variation,
         subtotal: item.subtotal,
       })),
-      shippingAddress,
+      shippingAddress: {
+        fullName: shippingAddress.fullName,
+        phone: shippingAddress.phone,
+        address: shippingAddress.address,
+      },
       shippingInfo: {
-        method: "Giao hàng nhanh",
-        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // +3 ngày
+        method: shippingFee === 50000 ? "Giao hàng nhanh" : "Giao hàng tiêu chuẩn",
+        estimatedDelivery: new Date(Date.now() + (shippingFee === 50000 ? 1 : 3) * 24*60*60*1000),
       },
       paymentInfo: {
-        method: paymentMethod || "COD",
+        method: (paymentMethod || "COD").toUpperCase(),
         status: "pending",
       },
-      statusHistory: [
-        { status: "pending", note: "Đơn hàng được tạo", timestamp: new Date() },
-      ],
+      statusHistory: [{ status: "pending", note: "Đơn hàng được tạo", timestamp: new Date() }],
       subtotal: cart.subtotal,
-      shippingFee: cart.shippingFee,
-      discount: cart.discount,
-      total: cart.total,
-      note,
+      shippingFee,
+      discount,
+      total,
+      voucher: voucher ? voucher._id : null,
+      voucherCode: voucher ? voucher.code : "",
+      note: note || "",
     });
 
     await order.save();
 
-    // Xóa giỏ hàng sau khi đặt đơn
+    // Clear cart
     cart.items = [];
-    cart.subtotal = 0;
-    cart.discount = 0;
-    cart.total = 0;
+    cart.subtotal = cart.total = 0;
     await cart.save();
 
-    res.status(201).json({
-      message: "Tạo đơn hàng thành công",
-      order,
-    });
+    res.status(201).json({ message: "Tạo đơn hàng thành công", order });
   } catch (error) {
-    console.error("Lỗi createOrder:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("🔥 Lỗi createOrder:", error);
+    res.status(500).json({ message: error.message });
   }
 };
 

@@ -1,34 +1,12 @@
 const mongoose = require("mongoose");
-
-const OrderItemSchema = new mongoose.Schema({
-  productId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Product",
-    required: true,
-  },
-  storeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Store",
-    required: true,
-  },
-  name: { type: String, required: true }, 
-  imageUrl: { type: String },           
-  price: { type: Number, required: true }, 
-  salePrice: { type: Number },          
-  quantity: { type: Number, required: true, min: 1 },
-  variation: {
-    color: { type: String },
-    size: { type: String },
-  },
-  subtotal: { type: Number, required: true }, // (salePrice || price) * quantity
-});
+const CartItemSchema = require("./CartItem");
 
 const OrderSchema = new mongoose.Schema(
   {
-    orderCode: { type: String, required: true, unique: true }, 
+    orderCode: { type: String, required: true, unique: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
-    items: [OrderItemSchema],
+    items: [CartItemSchema],
 
     shippingAddress: {
       fullName: { type: String, required: true },
@@ -38,7 +16,7 @@ const OrderSchema = new mongoose.Schema(
 
     shippingInfo: {
       method: { type: String, default: "Giao hàng nhanh" },
-      trackingNumber: { type: String },
+      trackingNumber: { type: String, default: "" },
       estimatedDelivery: { type: Date },
     },
 
@@ -51,7 +29,14 @@ const OrderSchema = new mongoose.Schema(
       {
         status: {
           type: String,
-          enum: ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"],
+          enum: [
+            "pending",
+            "confirmed",
+            "packed",
+            "shipped",
+            "delivered",
+            "cancelled",
+          ],
           required: true,
         },
         note: { type: String },
@@ -59,13 +44,17 @@ const OrderSchema = new mongoose.Schema(
       },
     ],
 
-    // tổng tiền
-    subtotal: { type: Number, required: true },
+    // Tổng tiền
+    subtotal: { type: Number, required: true, default: 0 },
     shippingFee: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
-    total: { type: Number, required: true },
+    total: { type: Number, required: true, default: 0 },
 
-    note: { type: String },
+    // Voucher
+    voucher: { type: mongoose.Schema.Types.ObjectId, ref: "Voucher", default: null },
+    voucherCode: { type: String, default: "" },
+
+    note: { type: String, default: "" },
   },
   { timestamps: true }
 );

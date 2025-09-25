@@ -7,8 +7,7 @@ exports.getCart = async (req, res) => {
     const userId = req.user.userId;
     let cart = await Cart.findOne({ userId })
       .populate("items.productId")
-      .populate("items.storeId", "name logoUrl")
-      .populate("voucher", "code title discountType discountValue");
+      .populate("items.storeId", "name logoUrl");
 
     if (!cart) {
       cart = await Cart.create({ userId, items: [] });
@@ -33,26 +32,21 @@ exports.addToCart = async (req, res) => {
     let cart = await Cart.findOne({ userId });
     if (!cart) cart = await Cart.create({ userId, items: [] });
 
-    // ✅ Tính thêm giá theo variation
+    // Tính thêm giá theo variation
     let extraPrice = 0;
     if (variation?.color && variation?.size) {
       const foundVariation = product.variations.find((v) => v.color === variation.color);
       if (foundVariation) {
         const option = foundVariation.options.find((o) => o.name === variation.size);
-        if (option) {
-          extraPrice = option.additionalPrice || 0;
-        }
+        if (option) extraPrice = option.additionalPrice || 0;
       }
     }
 
     const basePrice = product.price;
     const baseSalePrice = product.salePrice && product.salePrice > 0 ? product.salePrice : null;
+    const unitPrice = (baseSalePrice ?? basePrice) + extraPrice;
 
-    const price = basePrice + extraPrice;
-    const salePrice = baseSalePrice ? baseSalePrice + extraPrice : null;
-    const unitPrice = salePrice ?? price;
-
-    // ✅ Kiểm tra item đã tồn tại chưa (product + variation)
+    // Kiểm tra item đã tồn tại chưa
     const existingItem = cart.items.find(
       (item) =>
         item.productId.toString() === productId &&
@@ -69,8 +63,8 @@ exports.addToCart = async (req, res) => {
         storeId: product.store._id,
         name: product.name,
         imageUrl: product.images[0],
-        price,
-        salePrice,
+        price: basePrice,
+        salePrice: baseSalePrice,
         quantity,
         variation: {
           color: variation?.color || null,
@@ -82,10 +76,10 @@ exports.addToCart = async (req, res) => {
     }
 
     await cart.save();
+
     const populatedCart = await Cart.findById(cart._id)
       .populate("items.productId")
-      .populate("items.storeId", "name logoUrl")
-      .populate("voucher", "code title discountType discountValue");
+      .populate("items.storeId", "name logoUrl");
 
     return res.status(200).json(populatedCart);
   } catch (error) {
@@ -111,10 +105,10 @@ exports.updateQuantity = async (req, res) => {
     item.subtotal = unitPrice * quantity;
 
     await cart.save();
+
     const populatedCart = await Cart.findById(cart._id)
       .populate("items.productId")
-      .populate("items.storeId", "name logoUrl")
-      .populate("voucher", "code title discountType discountValue");
+      .populate("items.storeId", "name logoUrl");
 
     return res.status(200).json(populatedCart);
   } catch (error) {
@@ -135,10 +129,10 @@ exports.removeFromCart = async (req, res) => {
     cart.items = cart.items.filter((item) => item._id.toString() !== itemId);
 
     await cart.save();
+
     const populatedCart = await Cart.findById(cart._id)
       .populate("items.productId")
-      .populate("items.storeId", "name logoUrl")
-      .populate("voucher", "code title discountType discountValue");
+      .populate("items.storeId", "name logoUrl");
 
     return res.status(200).json(populatedCart);
   } catch (error) {

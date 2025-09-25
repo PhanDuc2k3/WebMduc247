@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import CartStoreGroup from "../../components/Cart/CartStoreGroup/CartStoreGroup";
-import VoucherBox from "../../components/Cart/VoucherBox/VoucherBox";
 import OrderSummary from "../../components/Cart/OrderSummary/OrderSummary";
 
 interface CartItem {
@@ -23,15 +22,12 @@ interface Cart {
   discount: number;
   shippingFee: number;
   total: number;
-  couponCode?: string;
 }
 
 export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const [tempDiscount, setTempDiscount] = useState(0);
-  const [voucherCode, setVoucherCode] = useState("");
 
   // Lấy giỏ hàng
   useEffect(() => {
@@ -101,44 +97,10 @@ export default function CartPage() {
     }
   };
 
-  // Tính tổng sản phẩm được chọn
+  if (loading) return <div className="p-6">Đang tải giỏ hàng...</div>;
+
   const selectedTotal =
     cart?.items.reduce((sum, i) => (selectedItems.includes(i._id) ? sum + i.subtotal : sum), 0) || 0;
-
-  // Preview voucher (tạm thời)
-  const handlePreviewVoucher = (discount: number, code: string) => {
-    setTempDiscount(discount);
-    setVoucherCode(code);
-  };
-
-  // Thanh toán / apply voucher thật sự
-  const handleCheckout = async () => {
-    if (!voucherCode || !cart) {
-      alert("Vui lòng chọn voucher trước khi thanh toán!");
-      return;
-    }
-    try {
-      const res = await fetch("http://localhost:5000/api/cart/apply-voucher", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ code: voucherCode, items: selectedItems }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
-      setCart(data.cart);
-      alert("✅ Voucher đã áp dụng thành công khi thanh toán!");
-      setTempDiscount(0);
-      setVoucherCode("");
-    } catch (err) {
-      console.error(err);
-      alert("❌ " + (err as Error).message);
-    }
-  };
-
-  if (loading) return <div className="p-6">Đang tải giỏ hàng...</div>;
 
   // Gom theo store
   const groupedByStore = cart?.items.reduce((acc: any, item) => {
@@ -184,24 +146,15 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* Right: Voucher + Order Summary */}
+        {/* Right: Order Summary */}
         <div className="w-[350px] space-y-4">
           {cart && (
-            <>
-<VoucherBox 
-  subtotal={selectedTotal} 
-  onPreview={handlePreviewVoucher} 
-/>
-
-              <OrderSummary
-                subtotal={selectedTotal}
-                discount={tempDiscount}
-                shippingFee={cart.shippingFee}
-                total={selectedTotal - tempDiscount + cart.shippingFee}
-              />
-
-
-            </>
+            <OrderSummary
+              subtotal={selectedTotal}
+              discount={0} // không còn voucher
+              shippingFee={cart.shippingFee}
+              total={selectedTotal + cart.shippingFee}
+            />
           )}
         </div>
       </div>

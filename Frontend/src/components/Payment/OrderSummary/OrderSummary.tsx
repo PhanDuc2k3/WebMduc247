@@ -1,71 +1,66 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Subtotal from "./Subtotal";
+import CartDiscount from "./CartDiscount"; // chỉ hiển thị voucher
+import ShippingFee from "./ShippingFee";
+import TotalAmount from "./TotalAmount";
 
 interface CartResponse {
   subtotal: number;
-  discount: number;
+  shippingFee: number;
+  total?: number;
 }
 
 interface OrderSummaryProps {
   shippingFee: number;
+  paymentMethod: "cod" | "momo" | "vnpay";
+  addressId: string | null;
+  discount: number; // voucher discount (preview)
+  voucherCode?: string; // voucher code tạm thời
 }
 
-const OrderSummary: React.FC<OrderSummaryProps> = ({ shippingFee }) => {
+interface AddressType {
+  _id: string;
+  fullName: string;
+  phone: string;
+  street: string;
+  city: string;
+  country?: string;
+}
+
+const OrderSummary: React.FC<OrderSummaryProps> = ({
+  shippingFee,
+  paymentMethod,
+  addressId,
+  discount,
+  voucherCode,
+}) => {
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [voucher, setVoucher] = useState<{ voucherId: string | null; discount: number }>({
-    voucherId: null,
-    discount: 0,
-  });
+  const [selectedAddress, setSelectedAddress] = useState<AddressType | null>(null);
 
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   useEffect(() => {
-    // Lấy voucher từ localStorage
-    const savedVoucher = localStorage.getItem("appliedVoucher");
-    if (savedVoucher) {
-      try {
-        const parsed = JSON.parse(savedVoucher);
-        setVoucher({
-          voucherId: parsed.voucherId ?? null,
-          discount: parsed.discount ?? 0,
-        });
-        console.log("🎟️ Voucher lấy từ localStorage:", parsed);
-      } catch (err) {
-        console.error("🔥 Lỗi khi parse voucher từ localStorage:", err);
-      }
-    }
-
     if (!token) {
-      console.warn("⚠️ Chưa đăng nhập, không thể lấy giỏ hàng!");
       setLoading(false);
       return;
     }
 
     const fetchCart = async () => {
       try {
-        console.log("👉 Gọi API giỏ hàng để lấy tóm tắt đơn hàng...");
-
         const res = await fetch("http://localhost:5000/api/cart", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         });
-
-        if (!res.ok) {
-          const errorText = await res.text();
-          throw new Error(`❌ API Error ${res.status}: ${errorText}`);
-        }
-
         const data = await res.json();
-        console.log("✅ Dữ liệu giỏ hàng:", data);
-
         setCart({
           subtotal: data.subtotal ?? 0,
-          discount: data.discount ?? 0,
+          shippingFee: data.shippingFee ?? 0,
+          total: data.subtotal ?? 0,
         });
       } catch (err) {
-        console.error("🔥 Lỗi khi fetch giỏ hàng:", err);
+        console.error("🔥 Lỗi fetch giỏ hàng:", err);
       } finally {
         setLoading(false);
       }
@@ -74,69 +69,85 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ shippingFee }) => {
     fetchCart();
   }, [token]);
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg shadow p-6 text-gray-500">
-        Đang tải tóm tắt đơn hàng...
-      </div>
-    );
-  }
+  useEffect(() => {
+    if (!addressId || !token) {
+      setSelectedAddress(null);
+      return;
+    }
 
-  if (!cart) {
-    return (
-      <div className="bg-white rounded-lg shadow p-6 text-red-500">
-        Không lấy được dữ liệu giỏ hàng
-      </div>
-    );
-  }
+    const fetchAddress = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/address/${addressId}`, {
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        setSelectedAddress(data);
+      } catch (err) {
+        console.error("🔥 Lỗi fetch address:", err);
+        setSelectedAddress(null);
+      }
+    };
 
-  // Áp dụng cả discount từ giỏ hàng và từ voucher
-  const { subtotal, discount: cartDiscount } = cart;
-  const totalDiscount = cartDiscount + (voucher.discount || 0);
-  const total = subtotal - totalDiscount + shippingFee;
+    fetchAddress();
+  }, [addressId, token]);
+
+  if (loading) return <div>Đang tải tóm tắt đơn hàng...</div>;
+  if (!cart) return <div>Không lấy được dữ liệu giỏ hàng</div>;
+
+  const { subtotal: cartSubtotal } = cart;
+  const total = cartSubtotal - discount + shippingFee;
+
+  // ✅ handle thanh toán, gọi /apply voucher nếu có
+const handleCheckout = async () => {
+  if (!token) return alert("Vui lòng đăng nhập!");
+  if (!selectedAddress) return alert("Vui lòng chọn địa chỉ giao hàng!");
+
+  try {
+    const orderPayload = {
+      shippingAddress: {
+        fullName: selectedAddress.fullName,
+        phone: selectedAddress.phone,
+        address: `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`,
+      },
+      paymentMethod,
+      shippingFee,
+      voucherCode, // voucher apply thực sự khi tạo order
+      note: "Giao hàng nhanh giúp mình"
+    };
+
+    const res = await fetch("http://localhost:5000/api/orders", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json", 
+        Authorization: `Bearer ${token}` 
+      },
+      body: JSON.stringify(orderPayload),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Lỗi tạo đơn hàng");
+
+    navigate(`/order/${data.order._id}`);
+  } catch (err) {
+    console.error("🔥 Lỗi handleCheckout:", err);
+    alert("Không thể tạo đơn hàng. Vui lòng thử lại!");
+  }
+};
+
 
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="font-semibold text-lg mb-4">Tóm tắt đơn hàng</div>
 
-      <div className="flex justify-between text-gray-700 mb-2">
-        <span>Tạm tính</span>
-        <span className="font-medium">{subtotal.toLocaleString("vi-VN")}₫</span>
-      </div>
+      <Subtotal subtotal={cartSubtotal} />
+      {discount > 0 && <CartDiscount voucherDiscount={discount} />}
+      <ShippingFee shippingFee={shippingFee} />
+      <TotalAmount total={total} />
 
-      <div className="flex justify-between text-gray-700 mb-2">
-        <span>Giảm giá (giỏ hàng)</span>
-        <span className="text-red-500 font-medium">
-          -{cartDiscount.toLocaleString("vi-VN")}₫
-        </span>
-      </div>
-
-      {voucher.discount > 0 && (
-        <div className="flex justify-between text-gray-700 mb-2">
-          <span>
-            Giảm giá Voucher {voucher.voucherId ? `(${voucher.voucherId})` : ""}
-          </span>
-          <span className="text-red-500 font-medium">
-            -{voucher.discount.toLocaleString("vi-VN")}₫
-          </span>
-        </div>
-      )}
-
-      <div className="flex justify-between text-gray-700 mb-4">
-        <span>Phí vận chuyển</span>
-        <span className="text-green-600 font-medium">
-          {shippingFee > 0
-            ? `${shippingFee.toLocaleString("vi-VN")}₫`
-            : "Miễn phí"}
-        </span>
-      </div>
-
-      <div className="border-t pt-4 flex justify-between items-center text-lg font-bold">
-        <span>Tổng cộng</span>
-        <span className="text-red-500">{total.toLocaleString("vi-VN")}₫</span>
-      </div>
-
-      <button className="w-full mt-6 bg-blue-600 text-white py-3 rounded font-semibold text-lg hover:bg-blue-700 transition">
+      <button
+        onClick={handleCheckout}
+        className="w-full mt-6 bg-blue-600 text-white py-3 rounded font-semibold text-lg hover:bg-blue-700 transition"
+      >
         Thanh toán
       </button>
     </div>
