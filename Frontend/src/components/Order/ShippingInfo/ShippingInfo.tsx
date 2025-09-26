@@ -1,6 +1,7 @@
 import React from "react";
 
 interface ShippingInfoProps {
+  orderCode: string; // thêm orderCode
   shippingAddress: {
     fullName: string;
     phone: string;
@@ -9,13 +10,18 @@ interface ShippingInfoProps {
   };
   shippingInfo: {
     method: string;
-    estimatedDelivery: number;
+    estimatedDelivery: number | { $date: { $numberLong: string } };
     trackingNumber: string;
   };
 }
 
-export default function ShippingInfo({ shippingAddress, shippingInfo }: ShippingInfoProps) {
-  const deliveryDate = new Date(shippingInfo.estimatedDelivery);
+export default function ShippingInfo({ orderCode, shippingAddress, shippingInfo }: ShippingInfoProps) {
+  // Convert estimatedDelivery nếu là object
+  let estimatedDeliveryTime = typeof shippingInfo.estimatedDelivery === "number"
+    ? shippingInfo.estimatedDelivery
+    : parseInt((shippingInfo.estimatedDelivery as any).$date.$numberLong);
+
+  const deliveryDate = new Date(estimatedDeliveryTime);
 
   return (
     <div className="max-w-3xl mx-10 p-6 bg-white rounded-lg shadow-md mt-6 space-y-4">
@@ -36,7 +42,9 @@ export default function ShippingInfo({ shippingAddress, shippingInfo }: Shipping
 
         <div className="flex justify-between">
           <span>Mã vận đơn:</span>
-          <span className="text-gray-600">{shippingInfo.trackingNumber || "Chưa có"}</span>
+          <span className="text-gray-600">
+            {shippingInfo.trackingNumber }  {orderCode}
+          </span>
         </div>
 
         <div className="flex justify-between">

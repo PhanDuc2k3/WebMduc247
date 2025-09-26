@@ -53,6 +53,7 @@ interface UserInfoType {
 
 interface Order {
   _id: string;
+  orderCode: string;
   items: OrderItem[];
   subtotal: number;
   shippingFee: number;
@@ -129,6 +130,7 @@ export default function OrderPage() {
           <ShippingInfo
             shippingAddress={order.shippingAddress}
             shippingInfo={order.shippingInfo}
+            orderCode={order.orderCode}
           />
           <OrderUpdate orderId={order._id} currentStatus={order.statusHistory[order.statusHistory.length - 1].status} />
         </div>
