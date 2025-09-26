@@ -168,7 +168,7 @@ exports.getProducts = async (req, res) => {
 };
 
 // GET /api/products/:id
-// GET /api/products/:id
+
 exports.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -189,19 +189,7 @@ exports.getProductById = async (req, res) => {
       });
     }
 
-    // ✅ tăng viewsCount tổng
-    product.viewsCount += 1;
-    await product.save();
-
-    // ✅ ghi log view theo ngày
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-
-    await ViewLog.findOneAndUpdate(
-      { product: product._id, date: today },
-      { $inc: { count: 1 } },
-      { upsert: true, new: true }
-    );
-
+    // ❌ Bỏ phần tăng view
     return res.json({
       success: true,
       data: product,
@@ -215,6 +203,34 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+// API riêng để tăng view
+exports.increaseView = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ success: false, message: "Product not found" });
+    }
+
+    // ✅ tăng viewsCount tổng
+    product.viewsCount += 1;
+    await product.save();
+
+    // ✅ ghi log view theo ngày
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    await ViewLog.findOneAndUpdate(
+      { product: product._id, date: today },
+      { $inc: { count: 1 } },
+      { upsert: true, new: true }
+    );
+
+    return res.json({ success: true, views: product.viewsCount });
+  } catch (err) {
+    console.error("❌ increaseView error:", err.message);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
 
 // update product của chính seller
 exports.updateProduct = async (req, res) => {

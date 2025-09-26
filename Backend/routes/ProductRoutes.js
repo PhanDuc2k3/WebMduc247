@@ -10,7 +10,8 @@ const {
   deleteProduct,
   getMyProducts,
   getProductsByStore,
-  getViewsStats      // ✅ import controller thống kê views
+  getViewsStats,
+  increaseView// ✅ import controller thống kê views
 } = require("../controllers/ProductController");
 
 const upload = require("../middlewares/upload");
@@ -31,7 +32,7 @@ router.post(
 
 // ✅ Route thống kê view (đặt trước các route có :id)
 router.get("/views-stats", getViewsStats);
-
+router.patch("/:id/view", increaseView);
 router.get("/featured", getFeaturedProducts);
 router.get("/my-products", auth, authorize("seller", "admin"), getMyProducts); // đặt trước /:id
 router.get("/store/:storeId/products", getProductsByStore);

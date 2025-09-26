@@ -1,8 +1,29 @@
 import React, { useState } from "react";
 import { Heart } from "lucide-react";
 
+interface VariationOption {
+  name: string;
+  additionalPrice?: number;
+}
+
+interface Variation {
+  color: string;
+  options: VariationOption[];
+}
+
+interface Product {
+  _id: string;
+  name: string;
+  price: number;
+  salePrice?: number;
+  rating?: number;
+  reviewsCount?: number;
+  store?: { name: string };
+  variations?: Variation[];
+}
+
 interface ProductInfoProps {
-  product: any;
+  product: Product;
   quantity: number;
   setQuantity: (n: number) => void;
 }
@@ -10,77 +31,81 @@ interface ProductInfoProps {
 const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantity }) => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedStorage, setSelectedStorage] = useState<string | null>(null);
-  const [selectedOption, setSelectedOption] = useState<any | null>(null);
+  const [selectedOption, setSelectedOption] = useState<VariationOption | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const colors: string[] =
-    Array.from(new Set(product.variations?.map((v: any) => v.color) || [])) || [];
+  // 👉 danh sách màu
+  const colors: string[] = Array.from(
+    new Set(product.variations?.map((v) => v.color) || [])
+  );
 
-  const storages: string[] =
-    Array.from(
-      new Set(
-        product.variations?.flatMap((v: any) => v.options?.map((opt: any) => opt.name) || []) || []
-      )
-    ) || [];
+  // 👉 danh sách dung lượng (storage) từ tất cả variations
+  const storages: string[] = Array.from(
+    new Set(
+      product.variations?.flatMap((v) =>
+        v.options?.map((opt) => opt.name)
+      ) || []
+    )
+  );
 
-  const basePrice = product.salePrice || product.price;
+  const basePrice = product.salePrice ?? product.price;
 
   const finalPrice = selectedOption
     ? basePrice + (selectedOption.additionalPrice || 0)
     : basePrice;
 
+  // 👉 chọn dung lượng
   const handleSelectStorage = (storage: string) => {
     setSelectedStorage(storage);
     if (selectedColor) {
-      const variation = product.variations.find((v: any) => v.color === selectedColor);
-      if (variation) {
-        const opt = variation.options.find((o: any) => o.name === storage);
-        setSelectedOption(opt || null);
-      }
+      const variation = product.variations?.find((v) => v.color === selectedColor);
+      const opt = variation?.options.find((o) => o.name === storage);
+      setSelectedOption(opt || null);
     } else {
       setSelectedOption(null);
     }
   };
 
-  // 👉 Hàm thêm vào giỏ hàng bằng API backend
-const handleAddToCart = async () => {
-  if (!selectedColor || !selectedStorage || !selectedOption) {
-    alert("Vui lòng chọn màu sắc và dung lượng trước khi thêm vào giỏ hàng!");
-    return;
-  }
+  // 👉 thêm vào giỏ hàng
+  const handleAddToCart = async () => {
+    if (!selectedColor || !selectedStorage || !selectedOption) {
+      alert("Vui lòng chọn màu sắc và dung lượng trước khi thêm vào giỏ hàng!");
+      return;
+    }
 
-  try {
-    setLoading(true);
-    const res = await fetch("http://localhost:5000/api/cart/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
-      body: JSON.stringify({
-        productId: product._id,
-        quantity,
-        variation: {
-          color: selectedColor,
-          size: selectedStorage,
-          additionalPrice: selectedOption?.additionalPrice || 0,
+    try {
+      setLoading(true);
+      const res = await fetch("http://localhost:5000/api/cart/add", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
-      }),
-    });
+        body: JSON.stringify({
+          productId: product._id,
+          quantity,
+          variation: {
+            color: selectedColor,
+            size: selectedStorage,
+            additionalPrice: selectedOption.additionalPrice || 0,
+          },
+        }),
+      });
 
-    if (!res.ok) throw new Error("Thêm giỏ hàng thất bại");
-    alert("✅ Đã thêm vào giỏ hàng!");
-  } catch (err) {
-    console.error(err);
-    alert("❌ Có lỗi khi thêm vào giỏ hàng");
-  } finally {
-    setLoading(false);
-  }
-};
+      if (!res.ok) throw new Error("Thêm giỏ hàng thất bại");
 
+      alert("✅ Đã thêm vào giỏ hàng!");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Có lỗi khi thêm vào giỏ hàng");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* tên và đánh giá */}
       <div>
         <h1 className="text-2xl font-semibold">{product.name}</h1>
         <div className="text-sm text-gray-600 mt-1">
@@ -88,29 +113,32 @@ const handleAddToCart = async () => {
         </div>
       </div>
 
+      {/* giá */}
       <div className="text-red-600 text-xl font-bold">
-        {finalPrice?.toLocaleString("vi-VN")}₫
+        {finalPrice.toLocaleString("vi-VN")}₫
         {product.salePrice && (
           <span className="text-gray-500 line-through text-base ml-2">
-            {product.price?.toLocaleString("vi-VN")}₫
+            {product.price.toLocaleString("vi-VN")}₫
           </span>
         )}
       </div>
 
-      {/* chọn màu sắc */}
+      {/* chọn màu */}
       <div>
         <h3 className="font-medium mb-2">Chọn màu sắc:</h3>
         <div className="flex gap-2 flex-wrap">
-          {colors.map((color, idx) => (
+          {colors.map((color) => (
             <button
-              key={`${color}-${idx}`}
+              key={color}
               onClick={() => {
                 setSelectedColor(color);
                 setSelectedStorage(null);
                 setSelectedOption(null);
               }}
-              className={`px-3 py-1 border rounded focus:outline-none transition ${
-                selectedColor === color ? "border-blue-500 bg-blue-50" : "hover:bg-gray-100"
+              className={`px-3 py-1 border rounded transition ${
+                selectedColor === color
+                  ? "border-blue-500 bg-blue-50"
+                  : "hover:bg-gray-100"
               }`}
             >
               {color}
@@ -123,25 +151,28 @@ const handleAddToCart = async () => {
       <div>
         <h3 className="font-medium mb-2">Chọn dung lượng:</h3>
         <div className="flex gap-2 flex-wrap">
-          {storages.map((s, idx) => (
+          {storages.map((s) => (
             <button
-              key={`${s}-${idx}`}
+              key={s}
               onClick={() => handleSelectStorage(s)}
-              className={`px-3 py-1 border rounded focus:outline-none transition ${
-                selectedStorage === s ? "border-blue-500 bg-blue-50" : "hover:bg-gray-100"
+              className={`px-3 py-1 border rounded transition ${
+                selectedStorage === s
+                  ? "border-blue-500 bg-blue-50"
+                  : "hover:bg-gray-100"
               }`}
             >
               {s}
-              {selectedColor &&
-                (() => {
-                  const variation = product.variations.find((v: any) => v.color === selectedColor);
-                  const opt = variation?.options.find((o: any) => o.name === s);
-                  return opt?.additionalPrice > 0 ? (
-                    <span className="ml-1 text-sm text-gray-500">
-                      (+{opt.additionalPrice.toLocaleString("vi-VN")}₫)
-                    </span>
-                  ) : null;
-                })()}
+              {selectedColor && (() => {
+                const variation = product.variations?.find(
+                  (v) => v.color === selectedColor
+                );
+                const opt = variation?.options.find((o) => o.name === s);
+                return opt?.additionalPrice ? (
+                  <span className="ml-1 text-sm text-gray-500">
+                    (+{opt.additionalPrice.toLocaleString("vi-VN")}₫)
+                  </span>
+                ) : null;
+              })()}
             </button>
           ))}
         </div>
@@ -186,7 +217,8 @@ const handleAddToCart = async () => {
       </div>
 
       <div className="text-sm text-gray-600">
-        Người bán: <span className="font-medium">{product.store?.name || "Không rõ"}</span>
+        Người bán:{" "}
+        <span className="font-medium">{product.store?.name || "Không rõ"}</span>
       </div>
     </div>
   );
