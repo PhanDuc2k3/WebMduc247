@@ -97,7 +97,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const { subtotal: cartSubtotal } = cart;
   const total = cartSubtotal - discount + shippingFee;
 
-  // ✅ handle thanh toán, gọi /apply voucher nếu có
 const handleCheckout = async () => {
   if (!token) return alert("Vui lòng đăng nhập!");
   if (!selectedAddress) return alert("Vui lòng chọn địa chỉ giao hàng!");
@@ -111,7 +110,7 @@ const handleCheckout = async () => {
       },
       paymentMethod,
       shippingFee,
-      voucherCode, // voucher apply thực sự khi tạo order
+      voucherCode, 
       note: "Giao hàng nhanh giúp mình"
     };
 
