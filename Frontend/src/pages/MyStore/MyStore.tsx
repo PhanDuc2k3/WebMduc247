@@ -15,6 +15,7 @@ const tabs = [
 const MyStore: React.FC = () => {
   const [role, setRole] = useState<string>("buyer");
   const [hasStore, setHasStore] = useState<boolean>(false);
+  const [storeId, setStoreId] = useState<string | null>(null);
   const [sellerRequestStatus, setSellerRequestStatus] = useState<string>("none");
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
@@ -33,13 +34,13 @@ const MyStore: React.FC = () => {
         });
         const data = await res.json();
 
-        // ⚡ Nếu backend trả về user trong object thì đổi data.role -> data.user.role
         const userRole = data.role || data.user?.role || "buyer";
         const userStore = data.store || data.user?.store || null;
         const userSellerRequest = data.sellerRequest || data.user?.sellerRequest || null;
 
         setRole(userRole);
         setHasStore(!!userStore);
+        setStoreId(userStore?._id || null);
 
         if (userSellerRequest && userSellerRequest.status) {
           setSellerRequestStatus(userSellerRequest.status);
@@ -60,7 +61,6 @@ const MyStore: React.FC = () => {
     return <div className="p-6">Đang tải...</div>;
   }
 
-  // Buyer mới (chưa có store, chưa có request)
   if (role === "buyer" && !hasStore && sellerRequestStatus === "none") {
     return (
       <div className="bg-[#f8f9fb] min-h-screen px-8 py-6">
@@ -69,7 +69,6 @@ const MyStore: React.FC = () => {
     );
   }
 
-  // Buyer đã gửi request và đang chờ duyệt
   if (role === "buyer" && sellerRequestStatus === "pending") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-center">
@@ -79,7 +78,6 @@ const MyStore: React.FC = () => {
     );
   }
 
-  // Seller đã có store
   if (role === "seller" && hasStore) {
     return (
       <div className="bg-[#f8f9fb] min-h-screen px-8 py-6">
@@ -106,13 +104,12 @@ const MyStore: React.FC = () => {
           {activeTab === "overview" && <Overview />}
           {activeTab === "products" && <ProductManagement />}
           {activeTab === "orders" && <OrderManagement />}
-          {activeTab === "stats" && <Statistics />}
+          {activeTab === "stats" && storeId && <Statistics storeId={storeId} />}
         </div>
       </div>
     );
   }
 
-  // Seller chưa có store
   if (role === "seller" && !hasStore) {
     return (
       <div className="p-6">
@@ -121,7 +118,6 @@ const MyStore: React.FC = () => {
     );
   }
 
-  // Trường hợp còn lại
   return (
     <div className="p-6">
       <p className="text-gray-600">Bạn không có quyền truy cập trang này.</p>

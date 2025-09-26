@@ -1,3 +1,4 @@
+// models/Product.js
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
@@ -12,18 +13,20 @@ const productSchema = new mongoose.Schema({
   soldCount: { type: Number, default: 0 },
   model: { type: String },
   sku: { type: String, unique: true },
-variations: [
-  {
-    color: { type: String },
-    options: [
-      {
-        name: { type: String },  
-        stock: { type: Number, default: 0 },
-        additionalPrice: { type: Number, default: 0 }
-      }
-    ]
-  }
-],
+
+  variations: [
+    {
+      color: { type: String },
+      options: [
+        {
+          name: { type: String },
+          stock: { type: Number, default: 0 },
+          additionalPrice: { type: Number, default: 0 }
+        }
+      ]
+    }
+  ],
+
   images: [{ type: String }],
   specifications: [
     {
@@ -31,14 +34,18 @@ variations: [
       value: { type: String, required: true }
     }
   ],
+
   rating: { type: Number, default: 0, min: 0, max: 5 },
   reviewsCount: { type: Number, default: 0 },
   tags: [{ type: String }],
   seoTitle: { type: String },
   seoDescription: { type: String },
-  keywords: [{ type: String }],
+  keywords: [{ type: [String] }],
   isFeatured: { type: Boolean, default: false },
+
+  // ✅ tổng view tất cả thời gian
   viewsCount: { type: Number, default: 0 },
+
   isActive: { type: Boolean, default: true },
 
   store: {

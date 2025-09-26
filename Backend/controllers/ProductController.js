@@ -1,5 +1,6 @@
 const Product = require('../models/Product');
 const Store = require('../models/Store');
+const ViewLog = require('../models/ViewLog'); 
 
 const generateSKU = (name) => {
   const timestamp = Date.now();
@@ -167,6 +168,7 @@ exports.getProducts = async (req, res) => {
 };
 
 // GET /api/products/:id
+// GET /api/products/:id
 exports.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -178,7 +180,7 @@ exports.getProductById = async (req, res) => {
       });
     }
 
-    let product = await Product.findById(id).populate("store", "name logoUrl");
+    const product = await Product.findById(id).populate("store", "name logoUrl");
 
     if (!product) {
       return res.status(404).json({
@@ -187,8 +189,18 @@ exports.getProductById = async (req, res) => {
       });
     }
 
+    // ✅ tăng viewsCount tổng
     product.viewsCount += 1;
     await product.save();
+
+    // ✅ ghi log view theo ngày
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+    await ViewLog.findOneAndUpdate(
+      { product: product._id, date: today },
+      { $inc: { count: 1 } },
+      { upsert: true, new: true }
+    );
 
     return res.json({
       success: true,
@@ -202,6 +214,7 @@ exports.getProductById = async (req, res) => {
     });
   }
 };
+
 
 // update product của chính seller
 exports.updateProduct = async (req, res) => {
@@ -333,6 +346,70 @@ exports.getProductsByStore = async (req, res) => {
     res.json(products);
   } catch (error) {
     console.error(error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// GET /api/stats/views?storeId=xxx&range=7
+exports.getViewsStats = async (req, res) => {
+  try {
+    const { storeId, range } = req.query;
+    const days = parseInt(range) || 7;
+
+    // Tính ngày bắt đầu
+    const startDate = new Date();
+    startDate.setHours(0, 0, 0, 0);
+    startDate.setDate(startDate.getDate() - (days - 1));
+
+    // Lấy tất cả sản phẩm của store
+    const products = await Product.find({ store: storeId }, { _id: 1 });
+    const productIds = products.map(p => p._id);
+
+    if (productIds.length === 0) {
+      return res.json(Array.from({ length: days }).map((_, i) => {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + i);
+        return { date: d.toISOString().slice(0, 10), views: 0 };
+      }));
+    }
+
+    // Gom dữ liệu view từ ViewLog
+    const rawViews = await ViewLog.aggregate([
+      {
+        $match: {
+          product: { $in: productIds },
+          date: { $gte: startDate.toISOString().slice(0, 10) }
+        }
+      },
+      {
+        $group: {
+          _id: "$date",
+          totalViews: { $sum: "$count" }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Map để dễ lấy
+    const viewMap = new Map();
+    rawViews.forEach(v => viewMap.set(v._id, v.totalViews));
+
+    // Đảm bảo đủ ngày
+    const result = [];
+    for (let i = 0; i < days; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+      const key = d.toISOString().slice(0, 10);
+
+      result.push({
+        date: key,
+        views: viewMap.get(key) || 0
+      });
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("❌ getViewsStats error:", err.message);
     res.status(500).json({ message: "Lỗi server" });
   }
 };

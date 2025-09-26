@@ -10,6 +10,9 @@ const cartRoutes = require('./routes/CartRoutes');
 const voucherRoutes = require('./routes/VoucherRoutes');
 const orderRoutes = require('./routes/OrderRoutes');
 const addressRoutes = require('./routes/AdressRoutes');
+const StatisticsRoutes = require('./routes/StatisticsRoutes');
+console.log("StatisticsRoutes = ", StatisticsRoutes); // debug
+
 dotenv.config();
 
 connectDB();
@@ -29,6 +32,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/vouchers', voucherRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/address', addressRoutes);
+app.use('/api/statistics', StatisticsRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
