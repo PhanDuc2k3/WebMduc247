@@ -184,3 +184,27 @@ exports.getOrderById = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+// 🟢 Seller: Lấy đơn hàng của cửa hàng mình
+exports.getOrdersBySeller = async (req, res) => {
+  try {
+    const sellerId = req.user.userId;
+
+    // Lấy storeId của seller
+    const seller = await User.findById(sellerId).populate("store");
+    if (!seller || !seller.store) {
+      return res.status(400).json({ message: "Bạn chưa có cửa hàng" });
+    }
+    const storeId = seller.store._id;
+
+    // Tìm các order có chứa sản phẩm thuộc store này
+    const orders = await Order.find({ "items.storeId": storeId })
+      .sort({ createdAt: -1 })
+      .populate("userId", "fullName email phone");
+
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error("Lỗi getOrdersBySeller:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
