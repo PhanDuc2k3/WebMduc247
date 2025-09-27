@@ -12,6 +12,7 @@ import VoucherPage from "./pages/Voucher/Voucher";
 import StorePage from "./pages/Store/Store";
 import Checkout from "./pages/Payment/Payment";
 import OrderPage from "./pages/Order/Order";
+import PaymentSuccess from "./components/Payment/PaymentSuccess/PaymentSuccess";
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
@@ -30,6 +31,8 @@ const AppRouter = () => (
         <Route path="/store/:id" element={<StorePage />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/order/:orderId" element={<OrderPage />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+
       </Route>
 
       <Route path="/s" element={<Navigate to="/login" />} />

@@ -7,14 +7,14 @@ const OrderSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
 
     items: [CartItemSchema],
-    
-userInfo: {
-  fullName: { type: String, required: true },
-  email: { type: String, required: true },
-  phone: { type: String, required: true },
-  role: { type: String, enum: ["buyer", "seller", "admin"], required: true },
-  avatarUrl: { type: String, default: "/avatar.png" } // thêm trường avatarUrl
-},
+
+    userInfo: {
+      fullName: { type: String, required: true },
+      email: { type: String, required: true },
+      phone: { type: String, required: true },
+      role: { type: String, enum: ["buyer", "seller", "admin"], required: true },
+      avatarUrl: { type: String, default: "/avatar.png" } // giữ nguyên
+    },
 
     shippingAddress: {
       fullName: { type: String, required: true },
@@ -31,6 +31,7 @@ userInfo: {
     paymentInfo: {
       method: { type: String, enum: ["COD", "MOMO", "VNPAY"], default: "COD" },
       status: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
+      paymentId: { type: String, default: "" }, // THÊM: lưu paymentId từ MoMo/VNPAY
     },
 
     statusHistory: [
