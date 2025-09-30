@@ -17,11 +17,11 @@ const CartItem: React.FC<CartItemProps> = ({
 }) => {
   return (
     <div className="flex items-center px-6 py-4 border-b last:border-b-0">
-      {/* Checkbox chọn sản phẩm */}
+      {/* Checkbox */}
       <input
         type="checkbox"
         checked={selected}
-        onChange={() => onSelect(item._id)}
+        onChange={() => onSelect(item._id)}   // ✅ dùng _id của item
         className="mr-4 w-5 h-5"
       />
 
@@ -53,7 +53,7 @@ const CartItem: React.FC<CartItemProps> = ({
 
       <div className="flex items-center gap-2 mx-6">
         <button
-          onClick={() => onUpdateQty(item._id, item.quantity - 1)}
+          onClick={() => onUpdateQty(item._id, Math.max(item.quantity - 1, 1))}  // ✅
           className="w-8 h-8 border rounded text-lg text-gray-600 hover:bg-gray-100"
         >
           -
@@ -68,7 +68,7 @@ const CartItem: React.FC<CartItemProps> = ({
       </div>
 
       <button
-        onClick={() => onRemove(item._id)}
+        onClick={() => onRemove(item._id)}     // ✅ dùng _id của item
         className="ml-4 text-gray-400 hover:text-red-500"
       >
         ✕

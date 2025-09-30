@@ -6,7 +6,8 @@ interface OrderSummaryProps {
   discount: number;
   shippingFee: number;
   total: number;
-  voucherId?: string; // thêm props voucherId nếu có
+  voucherId?: string;
+  selectedItems: string[]; // ✅ nhận từ CartPage
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -15,20 +16,29 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   shippingFee,
   total,
   voucherId,
+  selectedItems,
 }) => {
   const navigate = useNavigate();
 
   const handleCheckout = () => {
-    // Lưu dữ liệu vào localStorage
+    if (!selectedItems || selectedItems.length === 0) {
+      alert("Vui lòng chọn ít nhất một sản phẩm để thanh toán!");
+      return;
+    }
+
+    // ✅ Lưu voucher (nếu có)
     const voucherData = {
       voucherId: voucherId || null,
-      discount,
+      discount: discount || 0,
     };
-
     localStorage.setItem("appliedVoucher", JSON.stringify(voucherData));
-    console.log("Voucher saved:", voucherData);
+    console.log("📦 Voucher saved:", voucherData);
 
-    // Chuyển hướng sang trang checkout
+    // ✅ Lưu danh sách sản phẩm được chọn
+    localStorage.setItem("checkoutItems", JSON.stringify(selectedItems));
+    console.log("🛒 Selected items saved:", selectedItems);
+
+    // ✅ Điều hướng sang trang Checkout
     navigate("/checkout");
   };
 
@@ -51,9 +61,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <div className="flex justify-between text-gray-700 mb-4">
         <span>Phí vận chuyển</span>
         <span className="text-green-600 font-medium">
-          {shippingFee > 0
-            ? `${shippingFee.toLocaleString("vi-VN")}₫`
-            : "Miễn phí"}
+          {shippingFee > 0 ? `${shippingFee.toLocaleString("vi-VN")}₫` : "Miễn phí"}
         </span>
       </div>
 

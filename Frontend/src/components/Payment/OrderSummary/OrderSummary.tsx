@@ -38,9 +38,11 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedAddress, setSelectedAddress] = useState<AddressType | null>(null);
+  const [selectedCartSubtotal, setSelectedCartSubtotal] = useState<number>(0); // ✅ Subtotal các sản phẩm chọn
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
+  // 📦 Lấy giỏ hàng đầy đủ
   useEffect(() => {
     if (!token) {
       setLoading(false);
@@ -67,6 +69,36 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     fetchCart();
   }, [token]);
 
+  // 📦 Lấy subtotal các sản phẩm đã chọn
+  useEffect(() => {
+    if (!token) return;
+
+    const fetchSelectedSubtotal = async () => {
+      try {
+        const saved = localStorage.getItem("checkoutItems");
+        const selectedIds: string[] = saved ? JSON.parse(saved) : [];
+
+        const res = await fetch("http://localhost:5000/api/cart", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) throw new Error("Không thể lấy giỏ hàng");
+
+        const data = await res.json();
+        const subtotal = data.items
+          .filter((item: any) => selectedIds.includes(item._id))
+          .reduce((sum: number, item: any) => sum + item.subtotal, 0);
+
+        setSelectedCartSubtotal(subtotal);
+      } catch (err) {
+        console.error(err);
+        setSelectedCartSubtotal(0);
+      }
+    };
+
+    fetchSelectedSubtotal();
+  }, [token]);
+
+  // 📦 Lấy địa chỉ
   useEffect(() => {
     if (!addressId || !token) {
       setSelectedAddress(null);
@@ -87,77 +119,81 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     fetchAddress();
   }, [addressId, token]);
 
-  const total = (cart?.subtotal || 0) - discount + shippingFee;
+  const total = selectedCartSubtotal - discount + shippingFee;
 
-const handleCheckout = async () => {
-  if (!token) return alert("Vui lòng đăng nhập!");
-  if (!selectedAddress) return alert("Vui lòng chọn địa chỉ giao hàng!");
+  // ✅ FIX: Thêm selectedItems từ localStorage
+  const handleCheckout = async () => {
+    if (!token) return alert("Vui lòng đăng nhập!");
+    if (!selectedAddress) return alert("Vui lòng chọn địa chỉ giao hàng!");
 
-  try {
-    // 1️⃣ Tạo đơn hàng
-    const orderPayload = {
-      shippingAddress: {
-        fullName: selectedAddress.fullName,
-        phone: selectedAddress.phone,
-        address: `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`,
-      },
-      paymentMethod,
-      shippingFee,
-      voucherCode,
-      note: "Giao hàng nhanh giúp mình",
-    };
+    const selectedItemsSaved = localStorage.getItem("checkoutItems");
+    const selectedItems = selectedItemsSaved ? JSON.parse(selectedItemsSaved) : [];
+    if (!selectedItems.length) return alert("Không có sản phẩm nào để thanh toán");
 
-    const orderRes = await fetch("http://localhost:5000/api/orders", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(orderPayload),
-    });
+    try {
+      const orderPayload = {
+        shippingAddress: {
+          fullName: selectedAddress.fullName,
+          phone: selectedAddress.phone,
+          address: `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`,
+        },
+        paymentMethod,
+        shippingFee,
+        voucherCode,
+        note: "Giao hàng nhanh giúp mình",
+        selectedItems, // ✅ Gửi danh sách sản phẩm được chọn
+      };
 
-    const orderData = await orderRes.json();
-    if (!orderRes.ok) throw new Error(orderData.message || "Lỗi tạo đơn hàng");
-
-    // 👉 Lưu id và code vào localStorage
-    localStorage.setItem("lastOrderId", orderData.order._id);
-    localStorage.setItem("lastOrderCode", orderData.order.orderCode);
-
-    // 2️⃣ Nếu chọn MoMo thì gọi API tạo link thanh toán
-    if (paymentMethod === "momo") {
-      const payRes = await fetch("http://localhost:5000/api/payment/momo", {
+      const orderRes = await fetch("http://localhost:5000/api/orders", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          amount: orderData.order.total,
-          orderInfo: `Thanh toán đơn hàng #${orderData.order.orderCode}`,
-          orderCode: orderData.order.orderCode, // gửi cho BE để đính kèm vào redirectUrl
-        }),
+        body: JSON.stringify(orderPayload),
       });
 
-      const payData = await payRes.json();
-      if (!payRes.ok || !payData.payUrl) throw new Error("Không lấy được payUrl từ MoMo");
+      const orderData = await orderRes.json();
+      if (!orderRes.ok) throw new Error(orderData.message || "Lỗi tạo đơn hàng");
 
-      // 3️⃣ Redirect qua MoMo
-      window.location.href = payData.payUrl;
-      return;
+      localStorage.setItem("lastOrderId", orderData.order._id);
+      localStorage.setItem("lastOrderCode", orderData.order.orderCode);
+
+      // ✅ Xóa checkoutItems sau khi thanh toán
+      localStorage.removeItem("checkoutItems");
+
+      if (paymentMethod === "momo") {
+        const payRes = await fetch("http://localhost:5000/api/payment/momo", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            amount: orderData.order.total,
+            orderInfo: `Thanh toán đơn hàng #${orderData.order.orderCode}`,
+            orderCode: orderData.order.orderCode,
+          }),
+        });
+
+        const payData = await payRes.json();
+        if (!payRes.ok || !payData.payUrl) throw new Error("Không lấy được payUrl từ MoMo");
+
+        window.location.href = payData.payUrl;
+        return;
+      }
+
+      if (paymentMethod === "vnpay") {
+        alert("Chức năng thanh toán VNPay đang phát triển!");
+        return;
+      }
+
+      alert("Tạo đơn hàng thành công!");
+      navigate(`/order/${orderData.order._id}`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Có lỗi xảy ra khi thanh toán");
     }
-
-    if (paymentMethod === "vnpay") {
-      alert("Chức năng thanh toán VNPay đang phát triển!");
-      return;
-    }
-
-    alert("Tạo đơn hàng thành công!");
-    navigate(`/order/${orderData.order._id}`);
-  } catch (err) {
-    alert(err instanceof Error ? err.message : "Có lỗi xảy ra khi thanh toán");
-  }
-};
-
+  };
 
   if (loading) return <div>Đang tải tóm tắt đơn hàng...</div>;
   if (!cart) return <div>Không lấy được dữ liệu giỏ hàng</div>;
@@ -165,7 +201,9 @@ const handleCheckout = async () => {
   return (
     <div className="bg-white rounded-lg shadow p-6">
       <div className="font-semibold text-lg mb-4">Tóm tắt đơn hàng</div>
-      <Subtotal subtotal={cart.subtotal} />
+      {/* ✅ Subtotal chỉ tính các sản phẩm đã chọn */}
+      <Subtotal subtotal={selectedCartSubtotal} />
+      {/* ✅ Voucher giảm giá */}
       {discount > 0 && <CartDiscount voucherDiscount={discount} />}
       <ShippingFee shippingFee={shippingFee} />
       <TotalAmount total={total} />

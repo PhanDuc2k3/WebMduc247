@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import CartStoreGroup from "../../components/Cart/CartStoreGroup/CartStoreGroup";
 import OrderSummary from "../../components/Cart/OrderSummary/OrderSummary";
+import { useNavigate } from "react-router-dom"; // ✅ ADDED
 
 interface CartItem {
   _id: string;
@@ -28,6 +29,7 @@ export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const navigate = useNavigate(); // ✅ ADDED
 
   // Lấy giỏ hàng
   useEffect(() => {
@@ -61,7 +63,10 @@ export default function CartPage() {
   // Update số lượng
   const updateQuantity = async (itemId: string, newQty: number) => {
     if (!cart || newQty < 1) return;
+
     try {
+      console.log("📤 Gửi PUT update:", { itemId, newQty });
+
       const res = await fetch("http://localhost:5000/api/cart/update", {
         method: "PUT",
         headers: {
@@ -70,11 +75,23 @@ export default function CartPage() {
         },
         body: JSON.stringify({ itemId, quantity: newQty }),
       });
-      if (!res.ok) throw new Error("Lỗi khi cập nhật số lượng");
-      const data: Cart = await res.json();
-      setCart(data);
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("❌ Lỗi response:", text);
+        throw new Error("Lỗi khi cập nhật số lượng");
+      }
+
+      const result = await res.json();
+      console.log("✅ API trả về:", result);
+
+      if (result && result.cart) {
+        setCart(result.cart);
+      } else {
+        console.error("⚠️ Dữ liệu trả về không có cart");
+      }
     } catch (err) {
-      console.error(err);
+      console.error("❌ Lỗi updateQuantity:", err);
     }
   };
 
@@ -99,10 +116,11 @@ export default function CartPage() {
 
   if (loading) return <div className="p-6">Đang tải giỏ hàng...</div>;
 
+  // Tổng tiền các sản phẩm được chọn
   const selectedTotal =
     cart?.items.reduce((sum, i) => (selectedItems.includes(i._id) ? sum + i.subtotal : sum), 0) || 0;
 
-  // Gom theo store
+  // Gom sản phẩm theo store
   const groupedByStore = cart?.items.reduce((acc: any, item) => {
     const storeKey = typeof item.storeId === "string" ? item.storeId : item.storeId._id;
     if (!acc[storeKey]) {
@@ -114,6 +132,18 @@ export default function CartPage() {
     acc[storeKey].items.push(item);
     return acc;
   }, {});
+
+  // ✅ ADDED: Xử lý nút Thanh toán
+  const handleCheckout = () => {
+    if (selectedItems.length === 0) {
+      alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán");
+      return;
+    }
+    // Lưu sản phẩm được chọn vào localStorage
+    localStorage.setItem("checkoutItems", JSON.stringify(selectedItems));
+    // Chuyển sang trang checkout
+    navigate("/checkout");
+  };
 
   return (
     <div className="bg-gray-100 min-h-screen py-8 font-sans">
@@ -151,11 +181,15 @@ export default function CartPage() {
           {cart && (
             <OrderSummary
               subtotal={selectedTotal}
-              discount={0} // không còn voucher
+              discount={0} // chưa tính voucher
               shippingFee={cart.shippingFee}
               total={selectedTotal + cart.shippingFee}
+              selectedItems={selectedItems}  // ✅ truyền selectedItems
             />
           )}
+
+          {/* ✅ ADDED: Nút Thanh toán */}
+
         </div>
       </div>
     </div>

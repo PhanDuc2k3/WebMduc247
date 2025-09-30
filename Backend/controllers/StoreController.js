@@ -1,7 +1,6 @@
 const Store = require('../models/Store');
 const User = require('../models/Users');
 
-// Create a new store
 exports.createStore = async (req, res) => {
     try {
         const { name, description, storeAddress, logoUrl, category, customCategory } = req.body;
@@ -30,14 +29,11 @@ exports.createStore = async (req, res) => {
     }
 };
 
-// Get store by owner
 exports.getStoreByOwner = async (req, res) => {
     try {
         const userId = req.user.userId;
         const store = await Store.findOne({ owner: userId });
-        if (!store) {
-            return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
-        }
+        if (!store) return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
         res.status(200).json({ message: 'Lấy thông tin cửa hàng thành công', store });
     }
     catch (error) {
@@ -45,18 +41,14 @@ exports.getStoreByOwner = async (req, res) => {
     }
 };
 
-// Update store details
 exports.updateStore = async (req, res) => {
     try {
         const userId = req.user.userId;
         const { name, description, storeAddress, logoUrl, category, customCategory } = req.body;
 
         const store = await Store.findOne({ owner: userId });
-        if (!store) {
-            return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
-        }
+        if (!store) return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
 
-        // update có điều kiện
         if (name) store.name = name;
         if (description) store.description = description;
         if (storeAddress) store.storeAddress = storeAddress;
@@ -71,14 +63,11 @@ exports.updateStore = async (req, res) => {
     }
 };
 
-// Activate store
 exports.activateStore = async (req, res) => {
     try {
         const userId = req.user.userId;
         const store = await Store.findOne({ owner: userId });
-        if (!store) {
-            return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
-        }
+        if (!store) return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
         store.isActive = true;
         await store.save();
         res.status(200).json({ message: 'Kích hoạt cửa hàng thành công', store });
@@ -88,14 +77,11 @@ exports.activateStore = async (req, res) => {
     }
 };
 
-// Deactivate store
 exports.deactivateStore = async (req, res) => {
     try {
         const userId = req.user.userId;
         const store = await Store.findOne({ owner: userId });
-        if (!store) {
-            return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
-        }
+        if (!store) return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
         store.isActive = false;
         await store.save();
         res.status(200).json({ message: 'Vô hiệu hóa cửa hàng thành công', store });
@@ -105,7 +91,6 @@ exports.deactivateStore = async (req, res) => {
     }
 };
 
-// Get all active stores
 exports.getAllActiveStores = async (req, res) => {
     try {
         const stores = await Store.find({ isActive: true }).populate('owner', 'fullName email');
@@ -116,14 +101,11 @@ exports.getAllActiveStores = async (req, res) => {
     }
 };
 
-// Get store by ID
 exports.getStoreById = async (req, res) => {
     try {
         const storeId = req.params.id;
         const store = await Store.findById(storeId).populate('owner', 'fullName email');
-        if (!store || !store.isActive) {
-            return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
-        }
+        if (!store || !store.isActive) return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
         res.status(200).json({ message: 'Lấy thông tin cửa hàng thành công', store });
     }
     catch (error) {

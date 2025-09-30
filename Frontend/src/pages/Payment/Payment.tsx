@@ -11,39 +11,62 @@ const CheckoutPage: React.FC = () => {
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "momo" | "vnpay">("cod");
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
 
-  // Cart subtotal để tính voucher
+  // chỉ giữ subtotal cho OrderSummary và VoucherBox
   const [cartSubtotal, setCartSubtotal] = useState<number>(0);
 
-  // Voucher state
+  // mảng id các sản phẩm được chọn
+  const [selectedItemsIds, setSelectedItemsIds] = useState<string[]>([]);
+
+  // voucher
   const [voucherDiscount, setVoucherDiscount] = useState<number>(0);
   const [selectedVoucherCode, setSelectedVoucherCode] = useState<string | undefined>(undefined);
 
   const token = localStorage.getItem("token");
 
-  // Lấy subtotal từ cart
   useEffect(() => {
     if (!token) return;
 
     const fetchCart = async () => {
       try {
+        // lấy danh sách id sản phẩm được chọn từ Cart
+        const saved = localStorage.getItem("checkoutItems");
+        const selectedIds = saved ? JSON.parse(saved) : [];
+        console.log("🟢 checkoutItems:", selectedIds);
+
+        setSelectedItemsIds(selectedIds); // ✅ lưu lại để truyền vào Product
+
+        // lấy cart từ API
         const res = await fetch("http://localhost:5000/api/cart", {
           headers: { Authorization: `Bearer ${token}` },
         });
+        if (!res.ok) throw new Error("Không thể lấy giỏ hàng");
+
         const data = await res.json();
-        setCartSubtotal(data.subtotal ?? 0);
+
+        // lọc sản phẩm được chọn
+        const filtered = data.items.filter((item: any) =>
+          selectedIds.includes(item._id)
+        );
+
+        // tính subtotal từ danh sách lọc
+        const subtotal = filtered.reduce((sum: number, item: any) => sum + item.subtotal, 0);
+
+        console.log("🟢 Sản phẩm được chọn:", filtered);
+        console.log("🟢 Subtotal:", subtotal);
+
+        setCartSubtotal(subtotal);
       } catch (err) {
-        console.error("Lỗi fetch cart subtotal:", err);
+        console.error("❌ Lỗi fetch cart:", err);
       }
     };
 
     fetchCart();
   }, [token]);
 
-  // Callback khi VoucherBox preview thành công
   const handleVoucherPreview = (discountValue: number, code: string) => {
     setVoucherDiscount(discountValue);
     setSelectedVoucherCode(code);
-    console.log(`Voucher ${code} áp dụng, giảm ${discountValue}₫`);
+    console.log(`✅ Voucher ${code} áp dụng, giảm ${discountValue}₫`);
   };
 
   return (
@@ -54,7 +77,8 @@ const CheckoutPage: React.FC = () => {
         {/* Cột trái */}
         <div className="flex-1 space-y-6">
           <Address onSelect={setSelectedAddressId} />
-          <Product />
+          {/* ✅ truyền selectedItemsIds vào Product */}
+          <Product selectedItems={selectedItemsIds} />
           <Delivery onChange={setShippingFee} />
         </div>
 
@@ -66,8 +90,9 @@ const CheckoutPage: React.FC = () => {
             shippingFee={shippingFee}
             paymentMethod={paymentMethod}
             addressId={selectedAddressId}
-            discount={voucherDiscount} // voucher discount
+            discount={voucherDiscount}
             voucherCode={selectedVoucherCode}
+            // không thêm prop nào khác
           />
         </div>
       </div>

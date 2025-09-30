@@ -4,12 +4,10 @@ const mongoose = require("mongoose");
 const Voucher = require("../models/Voucher");
 const User = require("../models/Users"); 
 
-// 🟢 Buyer: Tạo đơn hàng từ giỏ hàng
-// 🟢 Buyer: Tạo đơn hàng từ giỏ hàng
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { shippingAddress, paymentMethod, note, shippingFee = 0, voucherCode } = req.body;
+    const { shippingAddress, paymentMethod, note, shippingFee = 0, voucherCode, selectedItems } = req.body;
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "Người dùng không tồn tại" });
@@ -18,28 +16,38 @@ exports.createOrder = async (req, res) => {
     if (!cart || cart.items.length === 0)
       return res.status(400).json({ message: "Giỏ hàng trống" });
 
-    // Voucher
+    let filteredItems = cart.items;
+    if (selectedItems && Array.isArray(selectedItems)) {
+      filteredItems = cart.items.filter(item => selectedItems.includes(item._id.toString()));
+    }
+    if (filteredItems.length === 0)
+      return res.status(400).json({ message: "Không có sản phẩm nào được chọn" });
+
     let discount = 0;
     let voucher = null;
     if (voucherCode) {
       voucher = await Voucher.findOne({ code: voucherCode.toUpperCase(), isActive: true });
       if (!voucher) return res.status(400).json({ message: "Voucher không hợp lệ" });
+
       const now = new Date();
       if (voucher.startDate > now || voucher.endDate < now)
         return res.status(400).json({ message: "Voucher chưa bắt đầu hoặc đã hết hạn" });
-      if (cart.subtotal < voucher.minOrderValue)
+
+      const subtotalFiltered = filteredItems.reduce((sum, item) => sum + item.subtotal, 0);
+      if (subtotalFiltered < voucher.minOrderValue)
         return res.status(400).json({ message: `Đơn hàng tối thiểu ${voucher.minOrderValue}₫` });
 
       discount = voucher.discountType === "fixed"
         ? voucher.discountValue
-        : Math.min((cart.subtotal * voucher.discountValue) / 100, voucher.maxDiscount || Infinity);
+        : Math.min((subtotalFiltered * voucher.discountValue) / 100, voucher.maxDiscount || Infinity);
 
       voucher.usedCount += 1;
       voucher.usersUsed.push(userId);
       await voucher.save();
     }
 
-    const total = cart.subtotal - discount + shippingFee;
+    const subtotal = filteredItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const total = subtotal - discount + shippingFee;
     const orderCode = "ORD-" + Date.now();
 
     const order = new Order({
@@ -52,7 +60,7 @@ exports.createOrder = async (req, res) => {
         role: user.role,
         avatarUrl: user.avatarUrl
       },
-      items: cart.items.map(item => ({
+      items: filteredItems.map(item => ({
         productId: item.productId._id,
         storeId: item.storeId,
         name: item.name,
@@ -74,10 +82,10 @@ exports.createOrder = async (req, res) => {
       },
       paymentInfo: {
         method: (paymentMethod || "COD").toUpperCase(),
-        status: paymentMethod === "cod" ? "pending" : "pending", // online vẫn pending trước khi callback
+        status: "pending",
       },
       statusHistory: [{ status: "pending", note: "Đơn hàng được tạo", timestamp: new Date() }],
-      subtotal: cart.subtotal,
+      subtotal,
       shippingFee,
       discount,
       total,
@@ -88,20 +96,19 @@ exports.createOrder = async (req, res) => {
 
     await order.save();
 
-    // Clear cart
-    cart.items = [];
-    cart.subtotal = cart.total = 0;
+    cart.items = cart.items.filter(item => !filteredItems.find(fi => fi._id.toString() === item._id.toString()));
+    cart.subtotal = cart.items.reduce((sum, item) => sum + item.subtotal, 0);
+    cart.total = cart.subtotal;
     await cart.save();
 
-    res.status(201).json({ message: "Tạo đơn hàng thành công", order });
+    res.status(201).json({ message: "Tạo đơn hàng thành công", order, cart });
+
   } catch (error) {
-    console.error("🔥 Lỗi createOrder:", error);
+    console.error("Lỗi createOrder:", error);
     res.status(500).json({ message: error.message });
   }
 };
 
-
-// 🟢 Buyer: Lấy danh sách đơn hàng của user
 exports.getMyOrders = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -113,7 +120,6 @@ exports.getMyOrders = async (req, res) => {
   }
 };
 
-// 🟢 Admin: Lấy tất cả đơn hàng
 exports.getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find().populate("userId", "fullName email");
@@ -124,42 +130,28 @@ exports.getAllOrders = async (req, res) => {
   }
 };
 
-// 🟢 Admin/Seller: Cập nhật trạng thái đơn hàng
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status, note } = req.body;
 
-    if (
-      !["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"].includes(
-        status
-      )
-    ) {
+    if (!["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"].includes(status)) {
       return res.status(400).json({ message: "Trạng thái không hợp lệ" });
     }
 
     const order = await Order.findById(id);
     if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
 
-    order.statusHistory.push({
-      status,
-      note,
-      timestamp: new Date(),
-    });
-
+    order.statusHistory.push({ status, note, timestamp: new Date() });
     await order.save();
 
-    res.status(200).json({
-      message: "Cập nhật trạng thái thành công",
-      order,
-    });
+    res.status(200).json({ message: "Cập nhật trạng thái thành công", order });
   } catch (error) {
     console.error("Lỗi updateOrderStatus:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-// 🟢 Buyer/Admin: Xem chi tiết đơn hàng
 exports.getOrderById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -173,19 +165,15 @@ exports.getOrderById = async (req, res) => {
   }
 };
 
-// 🟢 Seller: Lấy đơn hàng của cửa hàng mình
 exports.getOrdersBySeller = async (req, res) => {
   try {
     const sellerId = req.user.userId;
-
-    // Lấy storeId của seller
     const seller = await User.findById(sellerId).populate("store");
     if (!seller || !seller.store) {
       return res.status(400).json({ message: "Bạn chưa có cửa hàng" });
     }
     const storeId = seller.store._id;
 
-    // Tìm các order có chứa sản phẩm thuộc store này
     const orders = await Order.find({ "items.storeId": storeId })
       .sort({ createdAt: -1 })
       .populate("userId", "fullName email phone");
@@ -196,6 +184,7 @@ exports.getOrdersBySeller = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 exports.getOrderByCode = async (req, res) => {
   try {
     const { orderCode } = req.params;
@@ -203,38 +192,26 @@ exports.getOrderByCode = async (req, res) => {
     if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
     res.status(200).json(order);
   } catch (error) {
-    console.error("🔥 Lỗi getOrderByCode:", error);
+    console.error("Lỗi getOrderByCode:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-// POST /api/orders/:id/pay
 exports.markOrderPaid = async (req, res) => {
   try {
     const orderId = req.params.id;
     const order = await Order.findById(orderId);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
-    // Cập nhật trạng thái thanh toán
     order.paymentInfo.status = "paid";
-    order.paymentInfo.paymentId = req.body.paymentId || "ONLINE_PAYMENT"; // có thể nhận từ body
-    order.statusHistory.push({
-      status: "paid",
-      note: "Thanh toán online thành công",
-      timestamp: new Date(),
-    });
+    order.paymentInfo.paymentId = req.body.paymentId || "ONLINE_PAYMENT";
+    order.statusHistory.push({ status: "paid", note: "Thanh toán online thành công", timestamp: new Date() });
 
     await order.save();
 
-    console.log(`[${new Date().toISOString()}] ✅ Order ${order._id} marked PAID`);
-
-    return res.json({
-      message: "Order marked as paid",
-      orderId: order._id,
-      paymentInfo: order.paymentInfo,
-    });
+    return res.json({ message: "Order marked as paid", orderId: order._id, paymentInfo: order.paymentInfo });
   } catch (err) {
-    console.error(`[${new Date().toISOString()}] ❌ Error marking order as paid:`, err);
+    console.error("Lỗi markOrderPaid:", err);
     return res.status(500).json({ message: "Server error", details: err.message });
   }
 };
