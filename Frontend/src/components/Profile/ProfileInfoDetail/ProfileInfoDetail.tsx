@@ -56,6 +56,8 @@ const ProfileInfoDetail: React.FC<ProfileInfoDetailProps> = ({
       .then((res) => res.json())
       .then((data) => {
         if (onUpdated) onUpdated(data.user); // báo về cha
+          window.dispatchEvent(new Event("userUpdated"));
+
       })
       .catch((err) => console.error("Lỗi cập nhật:", err));
   };
