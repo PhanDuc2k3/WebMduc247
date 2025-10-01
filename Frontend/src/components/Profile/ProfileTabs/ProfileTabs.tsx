@@ -11,14 +11,14 @@ const ProfileTabs: React.FC<{
   activeTab: string;
   setActiveTab: (tab: string) => void;
 }> = ({ activeTab, setActiveTab }) => (
-  <div className="flex gap-2 mb-4">
-    {tabs.map(tab => (
+  <div className="flex gap-3 mb-6">
+    {tabs.map((tab) => (
       <button
         key={tab.key}
-        className={`px-5 py-2 rounded-full font-medium ${
+        className={`px-6 py-3 rounded-full text-base font-medium transition-colors duration-200 ${
           activeTab === tab.key
             ? "bg-gray-200 text-black"
-            : "bg-gray-100 text-gray-500"
+            : "bg-gray-100 text-gray-500 hover:bg-gray-200"
         }`}
         onClick={() => setActiveTab(tab.key)}
       >

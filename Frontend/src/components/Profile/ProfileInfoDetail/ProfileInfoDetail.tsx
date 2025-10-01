@@ -28,7 +28,7 @@ const ProfileInfoDetail: React.FC<ProfileInfoDetailProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPreviewAvatar(reader.result as string); // chỉ để preview
+        setPreviewAvatar(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
@@ -55,9 +55,8 @@ const ProfileInfoDetail: React.FC<ProfileInfoDetailProps> = ({
     })
       .then((res) => res.json())
       .then((data) => {
-        if (onUpdated) onUpdated(data.user); // báo về cha
-          window.dispatchEvent(new Event("userUpdated"));
-
+        if (onUpdated) onUpdated(data.user);
+        window.dispatchEvent(new Event("userUpdated"));
       })
       .catch((err) => console.error("Lỗi cập nhật:", err));
   };
@@ -69,15 +68,15 @@ const ProfileInfoDetail: React.FC<ProfileInfoDetailProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow p-6 mb-6">
-      <div className="font-semibold mb-4">Thông tin cá nhân</div>
+    <div className="bg-white rounded-xl shadow p-8 mb-6">
+      <div className="text-xl font-semibold mb-6">Thông tin cá nhân</div>
 
       {isEditing && (
         <div className="flex flex-col items-center mb-6">
           <img
             src={previewAvatar || "/default-avatar.png"}
             alt="avatar"
-            className="w-24 h-24 rounded-full object-cover border mb-2"
+            className="w-32 h-32 rounded-full object-cover border mb-3"
           />
           <input
             type="file"
@@ -88,62 +87,61 @@ const ProfileInfoDetail: React.FC<ProfileInfoDetailProps> = ({
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-1 bg-gray-100 rounded hover:bg-gray-200 text-sm font-medium"
+            className="px-6 py-2 bg-gray-100 rounded hover:bg-gray-200 text-base font-medium"
           >
             Chọn ảnh
           </button>
         </div>
       )}
 
-      {/* Các field khác */}
       <div className="grid grid-cols-2 gap-8">
         <div>
-          <div className="mb-2">
-            <span className="text-gray-500">Họ và tên</span>
+          <div className="mb-3">
+            <span className="text-base text-gray-500">Họ và tên</span>
             {isEditing ? (
               <input
                 type="text"
                 name="fullName"
                 value={formData.fullName || ""}
                 onChange={handleChange}
-                className="border rounded px-2 py-1 w-full"
+                className="border rounded px-3 py-2 w-full text-lg"
               />
             ) : (
-              <div className="font-medium">{user.fullName}</div>
+              <div className="text-lg font-medium">{user.fullName}</div>
             )}
           </div>
-          <div className="mb-2">
-            <span className="text-gray-500">Email</span>
-            <div className="font-medium">{user.email}</div>
+          <div className="mb-3">
+            <span className="text-base text-gray-500">Email</span>
+            <div className="text-lg font-medium">{user.email}</div>
           </div>
           <div>
-            <span className="text-gray-500">Số điện thoại</span>
+            <span className="text-base text-gray-500">Số điện thoại</span>
             {isEditing ? (
               <input
                 type="text"
                 name="phone"
                 value={formData.phone || ""}
                 onChange={handleChange}
-                className="border rounded px-2 py-1 w-full"
+                className="border rounded px-3 py-2 w-full text-lg"
               />
             ) : (
-              <div className="font-medium">{user.phone}</div>
+              <div className="text-lg font-medium">{user.phone}</div>
             )}
           </div>
         </div>
 
         <div>
-          <div className="mb-2">
-            <span className="text-gray-500">Ngày tham gia</span>
-            <div className="font-medium">
+          <div className="mb-3">
+            <span className="text-base text-gray-500">Ngày tham gia</span>
+            <div className="text-lg font-medium">
               {new Date(user.createdAt).toLocaleDateString("vi-VN")}
             </div>
           </div>
           <div>
-            <span className="text-gray-500">Trạng thái tài khoản</span>
+            <span className="text-base text-gray-500">Trạng thái tài khoản</span>
             <div>
               {user.role && (
-                <span className="bg-black text-white px-3 py-1 rounded text-xs font-medium inline-block mt-1">
+                <span className="bg-black text-white px-4 py-1 rounded text-sm font-medium inline-block mt-1">
                   {user.role === "buyer"
                     ? "Người mua"
                     : user.role === "seller"
@@ -157,16 +155,16 @@ const ProfileInfoDetail: React.FC<ProfileInfoDetailProps> = ({
       </div>
 
       {isEditing && (
-        <div className="flex gap-2 mt-4">
+        <div className="flex gap-4 mt-6">
           <button
             onClick={handleUpdate}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 text-base font-medium"
           >
             Cập nhật
           </button>
           <button
             onClick={handleCancel}
-            className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
+            className="px-6 py-2 bg-gray-300 rounded hover:bg-gray-400 text-base font-medium"
           >
             Hủy
           </button>

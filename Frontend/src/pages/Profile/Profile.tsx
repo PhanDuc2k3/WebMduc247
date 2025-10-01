@@ -85,7 +85,7 @@ const Profile: React.FC = () => {
 
   return (
     <div className="bg-[#f8f9fb] min-h-screen py-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <ProfileInfo user={user} onEdit={() => setIsEditing(true)} />
         <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
