@@ -12,6 +12,7 @@ const orderRoutes = require('./routes/OrderRoutes');
 const addressRoutes = require('./routes/AdressRoutes');
 const StatisticsRoutes = require('./routes/StatisticsRoutes');
 const PaymentRoutes = require('./routes/Payment');
+const ReviewRoutes = require('./routes/ReviewRoutes');
 console.log("StatisticsRoutes = ", StatisticsRoutes); // debug
 
 dotenv.config();
@@ -35,6 +36,7 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/statistics', StatisticsRoutes);
 app.use('/api/payment', PaymentRoutes);
+app.use('/api/review', ReviewRoutes); 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);

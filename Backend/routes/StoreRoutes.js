@@ -7,7 +7,8 @@ const {
   activateStore,
   deactivateStore,
   getAllActiveStores,
-  getStoreById
+  getStoreById,
+  getMyStore
 } = require('../controllers/StoreController');
 
 const authMiddleware = require('../middlewares/authMiddleware');
@@ -18,6 +19,8 @@ router.get('/owner', authMiddleware, getStoreByOwner);
 router.put('/', authMiddleware, updateStore);
 router.patch('/activate', authMiddleware, activateStore);
 router.patch('/deactivate', authMiddleware, deactivateStore);
+router.get('/me', authMiddleware, getMyStore);
+
 router.get('/', getAllActiveStores);
 router.get('/:id', getStoreById);
 

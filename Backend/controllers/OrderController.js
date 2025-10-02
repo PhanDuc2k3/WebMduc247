@@ -3,6 +3,7 @@ const Cart = require("../models/Cart");
 const mongoose = require("mongoose");
 const Voucher = require("../models/Voucher");
 const User = require("../models/Users"); 
+const Product = require("../models/Product");
 
 exports.createOrder = async (req, res) => {
   try {
@@ -135,14 +136,32 @@ exports.updateOrderStatus = async (req, res) => {
     const { id } = req.params;
     const { status, note } = req.body;
 
-    if (!["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"].includes(status)) {
+    // Kiểm tra trạng thái hợp lệ
+    const validStatuses = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"];
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Trạng thái không hợp lệ" });
     }
 
     const order = await Order.findById(id);
     if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
 
+    // Thêm lịch sử trạng thái
     order.statusHistory.push({ status, note, timestamp: new Date() });
+
+    // ✅ Nếu trạng thái là delivered, tăng soldCount cho tất cả sản phẩm
+    if (status === "delivered") {
+      const bulkOps = order.items.map(item => ({
+        updateOne: {
+          filter: { _id: item.productId },
+          update: { $inc: { soldCount: item.quantity } }
+        }
+      }));
+
+      if (bulkOps.length > 0) {
+        await Product.bulkWrite(bulkOps);
+      }
+    }
+
     await order.save();
 
     res.status(200).json({ message: "Cập nhật trạng thái thành công", order });

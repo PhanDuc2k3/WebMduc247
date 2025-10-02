@@ -5,6 +5,7 @@ import ProfileOrders from "../../components/Profile/ProfileOrders/ProfileOrders"
 import ProfileFavorites from "../../components/Profile/ProfileFavorite/ProfileFavorites";
 import ProfileSettings from "../../components/Profile/ProfileSettings/ProfileSetting";
 import ProfileInfoDetail from "../../components/Profile/ProfileInfoDetail/ProfileInfoDetail";
+import ProductReview from "../Review/Review"; // ✅ import modal review
 
 // Types
 interface OrderItem {
@@ -12,14 +13,21 @@ interface OrderItem {
   qty: number;
   price: string;
   imgUrl: string;
+  productId: string;
+}
+
+interface StatusHistory {
+  status: string;
+  note?: string;
+  timestamp: string;
 }
 
 interface Order {
-  id: string;
+  _id: string;
   date: string;
-  status: string;
   total: string;
   items: OrderItem[];
+  statusHistory: StatusHistory[];
 }
 
 const Profile: React.FC = () => {
@@ -29,13 +37,16 @@ const Profile: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
+  // ✅ State modal review
+  const [reviewProductId, setReviewProductId] = useState<string | null>(null);
+  const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
+
   const token = localStorage.getItem("token");
   const serverHost = "http://localhost:5000";
 
   // Fetch user info
   useEffect(() => {
     if (!token) return;
-
     fetch(`${serverHost}/api/users/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -56,19 +67,41 @@ const Profile: React.FC = () => {
         if (!res.ok) throw new Error("Không lấy được đơn hàng");
         const data = await res.json();
 
-        const mappedOrders: Order[] = data.map((order: any) => ({
-          id: order.orderCode,
-          date: new Date(order.createdAt).toLocaleDateString("vi-VN"),
-          status:
-            order.paymentInfo?.status === "pending" ? "Chưa thanh toán" : "Đã giao",
-          total: order.total.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
-          items: order.items.map((item: any) => ({
-            name: item.name,
-            qty: item.quantity,
-            price: item.price.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
-            imgUrl: item.imageUrl,
-          })),
-        }));
+        const mappedOrders: Order[] = data.map((order: any) => {
+          const statusHistory: StatusHistory[] = [
+            {
+              status:
+                order.paymentInfo?.status === "pending"
+                  ? "pending"
+                  : "delivered",
+              note:
+                order.paymentInfo?.status === "pending"
+                  ? "Chưa thanh toán"
+                  : "Đã giao",
+              timestamp: order.createdAt,
+            },
+          ];
+
+          return {
+            _id: order._id,
+            date: new Date(order.createdAt).toLocaleDateString("vi-VN"),
+            total: order.total.toLocaleString("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            }),
+            items: order.items.map((item: any) => ({
+              name: item.name,
+              qty: item.quantity,
+              price: item.price.toLocaleString("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              }),
+              imgUrl: item.imageUrl,
+              productId: item.productId,
+            })),
+            statusHistory,
+          };
+        });
 
         setOrders(mappedOrders);
       } catch (err) {
@@ -101,13 +134,48 @@ const Profile: React.FC = () => {
               user={user}
             />
           )}
+
           {activeTab === "orders" && (
-            <ProfileOrders orders={orders} loading={loadingOrders} />
+            <ProfileOrders
+              orders={orders}
+              loading={loadingOrders}
+              onReview={(productId: string, orderId: string) => {
+                setReviewProductId(productId);
+                setReviewOrderId(orderId);
+              }}
+            />
           )}
+
           {activeTab === "favorites" && <ProfileFavorites />}
           {activeTab === "settings" && <ProfileSettings />}
         </div>
       </div>
+
+      {/* ✅ Modal review chỉ hiển thị ở Profile */}
+      {reviewProductId && reviewOrderId && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg w-full max-w-2xl p-6 relative">
+            <button
+              onClick={() => {
+                setReviewProductId(null);
+                setReviewOrderId(null);
+              }}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 font-bold text-lg"
+            >
+              ✕
+            </button>
+
+            <ProductReview
+              productId={reviewProductId}
+              orderId={reviewOrderId}
+              onClose={() => {
+                setReviewProductId(null);
+                setReviewOrderId(null);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

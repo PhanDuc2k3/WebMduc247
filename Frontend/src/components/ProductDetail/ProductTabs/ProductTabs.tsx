@@ -1,15 +1,41 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
-const ProductTabs: React.FC = () => {
-  // Quản lý tab đang được chọn
+interface Review {
+  _id: string;
+  userInfo: {
+    fullName: string;
+    avatarUrl?: string;
+  };
+  rating: number;
+  comment: string;
+  images?: string[];
+  createdAt: string;
+}
+
+const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
   const [active, setActive] = useState<"mo-ta" | "thong-so" | "danh-gia">("mo-ta");
+  const [reviews, setReviews] = useState<Review[]>([]);
 
-  // Danh sách tab
+  useEffect(() => {
+    if (active === "danh-gia") {
+      fetch(`http://localhost:5000/api/review/${productId}/reviews`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Không fetch được reviews");
+          return res.json();
+        })
+        .then((data) => setReviews(data))
+        .catch((err) => console.error("Lỗi khi fetch reviews:", err));
+    }
+  }, [active, productId]);
+
   const tabs = [
     { id: "mo-ta", label: "Mô tả" },
     { id: "thong-so", label: "Thông số" },
     { id: "danh-gia", label: "Đánh giá" },
   ] as const;
+
+  const getFullUrl = (path?: string) =>
+    path?.startsWith("http") ? path : `http://localhost:5000${path}`;
 
   return (
     <div className="w-full max-w-screen-xl mx-auto mt-10">
@@ -76,33 +102,58 @@ const ProductTabs: React.FC = () => {
           <div className="space-y-6">
             <h3 className="font-semibold text-lg text-gray-800">Đánh giá từ khách hàng</h3>
 
-            {[1, 2, 3].map((id) => (
-              <div key={id} className="border-b pb-4">
-                <div className="flex items-start gap-4">
-                  {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">
-                    {`K${id}`}
-                  </div>
+            {reviews.length === 0 ? (
+              <p className="text-gray-500">Chưa có đánh giá nào</p>
+            ) : (
+              reviews.map((r) => (
+                <div key={r._id} className="border-b pb-4">
+                  <div className="flex items-start gap-4">
+                    {/* Avatar */}
+                    {r.userInfo.avatarUrl ? (
+                      <img
+                        src={getFullUrl(r.userInfo.avatarUrl)}
+                        alt={r.userInfo.fullName}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white font-bold">
+                        {r.userInfo.fullName[0]}
+                      </div>
+                    )}
 
-                  <div className="flex-1">
-                    {/* Tên + sao */}
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-gray-800">Khách hàng #{id}</span>
-                      <span className="text-yellow-500 text-sm">⭐⭐⭐⭐⭐</span>
+                    <div className="flex-1">
+                      {/* Tên + sao */}
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-800">{r.userInfo.fullName}</span>
+                        <span className="text-yellow-500 text-sm">{"⭐".repeat(r.rating)}</span>
+                      </div>
+
+                      {/* Nội dung đánh giá */}
+                      <p className="text-gray-700 text-sm mt-1">{r.comment}</p>
+
+                      {/* Ảnh trong đánh giá */}
+                      {(r.images ?? []).length > 0 && (
+                        <div className="flex gap-2 mt-2">
+                          {(r.images ?? []).map((img, i) => (
+                            <img
+                              key={i}
+                              src={getFullUrl(img)}
+                              alt="review"
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Thời gian */}
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(r.createdAt).toLocaleDateString("vi-VN")}
+                      </p>
                     </div>
-
-                    {/* Nội dung đánh giá */}
-                    <p className="text-gray-700 text-sm mt-1">
-                      Sản phẩm tuyệt vời, chất lượng đúng như mô tả. Giao hàng nhanh, đóng gói cẩn
-                      thận.
-                    </p>
-
-                    {/* Thời gian */}
-                    <p className="text-xs text-gray-500 mt-1">2 ngày trước</p>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         )}
       </div>

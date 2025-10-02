@@ -250,7 +250,7 @@ useEffect(() => {
           <span className="text-[#1976d2]">Danh mục</span>
         </span>
         <Link to="/" className="hover:text-[#1976d2] transition-colors">Trang chủ</Link>
-        <Link to="/shop" className="hover:text-[#1976d2] transition-colors">Cửa hàng</Link>
+        <Link to="/stores" className="hover:text-[#1976d2] transition-colors">Cửa hàng</Link>
         <Link to="/categories" className="hover:text-[#1976d2] transition-colors">Danh mục</Link>
         <Link to="/promotions" className="hover:text-[#1976d2] transition-colors">Khuyến mãi</Link>
         <Link to="/brands" className="hover:text-[#1976d2] transition-colors">Thương hiệu</Link>

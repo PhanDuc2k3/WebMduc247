@@ -76,7 +76,7 @@ const ProductDetail: React.FC = () => {
         />
       </div>
 
-      <ProductTabs />
+      <ProductTabs productId={product?._id} />
     </div>
   );
 };

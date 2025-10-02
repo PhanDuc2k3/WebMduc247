@@ -1,7 +1,7 @@
 import React from "react";
 
 interface ShippingInfoProps {
-  orderCode: string; // thêm orderCode
+  orderCode: string;
   shippingAddress: {
     fullName: string;
     phone: string;
@@ -10,16 +10,22 @@ interface ShippingInfoProps {
   };
   shippingInfo: {
     method: string;
-    estimatedDelivery: number | { $date: { $numberLong: string } };
-    trackingNumber: string;
+    estimatedDelivery?: number | { $date?: { $numberLong?: string } };
+    trackingNumber?: string;
   };
 }
 
 export default function ShippingInfo({ orderCode, shippingAddress, shippingInfo }: ShippingInfoProps) {
-  // Convert estimatedDelivery nếu là object
-  let estimatedDeliveryTime = typeof shippingInfo.estimatedDelivery === "number"
-    ? shippingInfo.estimatedDelivery
-    : parseInt((shippingInfo.estimatedDelivery as any).$date.$numberLong);
+  // Convert estimatedDelivery nếu là object, nếu không có thì fallback thành now
+  let estimatedDeliveryTime = Date.now();
+
+  if (shippingInfo.estimatedDelivery) {
+    if (typeof shippingInfo.estimatedDelivery === "number") {
+      estimatedDeliveryTime = shippingInfo.estimatedDelivery;
+    } else if (shippingInfo.estimatedDelivery.$date?.$numberLong) {
+      estimatedDeliveryTime = parseInt(shippingInfo.estimatedDelivery.$date.$numberLong);
+    }
+  }
 
   const deliveryDate = new Date(estimatedDeliveryTime);
 

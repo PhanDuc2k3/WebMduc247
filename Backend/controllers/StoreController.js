@@ -104,11 +104,32 @@ exports.getAllActiveStores = async (req, res) => {
 exports.getStoreById = async (req, res) => {
     try {
         const storeId = req.params.id;
-        const store = await Store.findById(storeId).populate('owner', 'fullName email');
-        if (!store || !store.isActive) return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
+        // Populate đủ các trường cần thiết cho frontend
+        const store = await Store.findById(storeId).populate('owner', 'fullName email phone avatarUrl');
+        if (!store || !store.isActive)
+            return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
+
         res.status(200).json({ message: 'Lấy thông tin cửa hàng thành công', store });
-    }
-    catch (error) {
+    } catch (error) {
         res.status(500).json({ message: 'Lỗi khi lấy cửa hàng', error: error.message });
     }
+};
+// Lấy cửa hàng của người bán hiện tại
+exports.getMyStore = async (req, res) => {
+  try {
+    console.log('👉 userId từ token:', req.user); // log thông tin user
+
+    const store = await Store.findOne({ owner: req.user.userId });
+
+    if (!store) {
+      console.log('❌ Không tìm thấy cửa hàng cho user', req.user.userId);
+      return res.status(404).json({ message: 'Bạn chưa có cửa hàng' });
+    }
+
+    console.log('✅ Tìm thấy cửa hàng:', store._id);
+    res.status(200).json({ store });
+  } catch (error) {
+    console.error('🔥 Lỗi getMyStore:', error);
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
 };
