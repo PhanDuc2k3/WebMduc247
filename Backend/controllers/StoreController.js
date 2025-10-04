@@ -92,14 +92,17 @@ exports.deactivateStore = async (req, res) => {
 };
 
 exports.getAllActiveStores = async (req, res) => {
-    try {
-        const stores = await Store.find({ isActive: true }).populate('owner', 'fullName email');
-        res.status(200).json({ message: 'Lấy danh sách cửa hàng thành công', stores });
-    }
-    catch (error) {
-        res.status(500).json({ message: 'Lỗi khi lấy danh sách cửa hàng', error: error.message });
-    }
+  try {
+    const stores = await Store.find({ isActive: true })
+      .populate('owner', 'fullName email');
+      
+    res.status(200).json({ message: 'Lấy danh sách cửa hàng thành công', stores });
+  }
+  catch (error) {
+    res.status(500).json({ message: 'Lỗi khi lấy danh sách cửa hàng', error: error.message });
+  }
 };
+
 
 exports.getStoreById = async (req, res) => {
     try {

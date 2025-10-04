@@ -35,7 +35,7 @@ const AppRouter = () => (
         <Route path="/order/:orderId" element={<OrderPage />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/stores" element={<StoreList />} />
-        <Route path="/messages" element={<Message />} />
+        <Route path="/messages/:id" element={<Message />} />
       </Route>
 
       <Route path="/s" element={<Navigate to="/login" />} />

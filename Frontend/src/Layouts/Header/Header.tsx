@@ -148,7 +148,7 @@ useEffect(() => {
           </Link>
 
           {/* Tin nhắn */}
-          <Link to="/messages" className="flex items-center gap-1 font-medium cursor-pointer px-2 py-1 rounded transition hover:bg-gray-100">
+          <Link to="/message/:id" className="flex items-center gap-1 font-medium cursor-pointer px-2 py-1 rounded transition hover:bg-gray-100">
             <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
               <path
                 d="M21 11.5a8.38 8.38 0 01-.9 3.8c-.6 1.2-1.6 2.2-2.8 

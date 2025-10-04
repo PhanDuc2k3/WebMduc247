@@ -3,6 +3,7 @@ import StoreCard from "../../components/Home/FeaturedStores/StoreCard";
 
 interface StoreType {
   _id: string;
+  owner: { _id: string }; // ✅ Thêm owner với _id
   name: string;
   description: string;
   join: string;
@@ -74,7 +75,8 @@ const StoreList: React.FC = () => {
         {stores.map((store) => (
           <StoreCard
             key={store._id}
-            id={store._id}
+            storeId={store._id}               // id của cửa hàng
+            ownerId={store.owner._id}         // ✅ id của chủ shop (User)
             name={store.name}
             description={store.description}
             join={store.join}
