@@ -1,7 +1,6 @@
 import React from "react";
 import { Heart } from "lucide-react";
-import styles from "./FeaturedProducts.module.css";
-import { Link } from "react-router-dom"; 
+import { Link } from "react-router-dom";
 
 interface Product {
   _id: string;
@@ -22,65 +21,76 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
-    <div className={styles.productItem}>
-      <div className={styles.imageWrapper}>
+    // 👉 Thêm class `group`
+    <div className="group bg-white rounded-lg shadow-md p-3 relative transition-all duration-300 hover:shadow-lg">
+      {/* Ảnh sản phẩm */}
+      <div className="relative overflow-hidden rounded-md">
         <img
           src={`http://localhost:5000${product.images?.[0] || "/no-image.png"}`}
           alt={product.name}
-          className={styles.productImage}
+          className="w-full h-[180px] object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
         />
 
+        {/* Giảm giá & HOT */}
         {product.salePrice && (
           <>
-            <span className={styles.productDiscount}>
+            <span className="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded">
               -{Math.round((1 - product.salePrice / product.price) * 100)}%
             </span>
-            <span className={styles.hotTag}>HOT</span>
+            <span className="absolute top-10 left-2 bg-orange-500 text-white text-xs px-2 py-1 rounded font-semibold">
+              HOT
+            </span>
           </>
         )}
 
-        <button className={styles.favoriteBtn}>
-          <Heart size={18} />
+        {/* Nút yêu thích */}
+        <button className="absolute top-2 right-2 bg-white rounded-full p-1.5 shadow hover:bg-gray-100 transition">
+          <Heart size={18} className="text-red-500" />
         </button>
 
-<Link to={`/products/${product._id}`} className={styles.addToCartBtn}>
-  Xem chi tiết
-</Link>
-
+        {/* Nút xem chi tiết → Hiện khi hover */}
+        <Link
+          to={`/products/${product._id}`}
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 
+                     bg-orange-500 text-white text-sm px-4 py-1.5 rounded-full 
+                     opacity-0 transition duration-300 
+                     group-hover:opacity-100 hover:bg-orange-600"
+        >
+          Xem chi tiết
+        </Link>
       </div>
 
-      <div className={styles.productName}>{product.name}</div>
+      {/* Tên sản phẩm */}
+      <div className="mt-3 text-sm font-semibold text-gray-800 line-clamp-2">
+        {product.name}
+      </div>
 
-      <div className={styles.productPrice}>
-        {(product.salePrice || product.price).toLocaleString("vi-VN")}₫{" "}
+      {/* Giá */}
+      <div className="mt-1 text-red-600 font-bold">
+        {(product.salePrice || product.price).toLocaleString("vi-VN")}₫
         {product.salePrice && (
-          <span className={styles.productOldPrice}>
+          <span className="ml-2 text-gray-400 line-through text-sm">
             {product.price.toLocaleString("vi-VN")}₫
           </span>
         )}
       </div>
 
-      <div className={styles.productMetaSplit}>
-        <div className={styles.metaLeft}>
-          <span>⭐ {product.rating || 0}</span>
-          <span>({product.reviewsCount || 0})</span>
+      {/* Đánh giá & đã bán */}
+      <div className="flex justify-between mt-2 text-gray-600 text-sm">
+        <div className="flex gap-1">
+          ⭐ {product.rating || 0} <span>({product.reviewsCount || 0})</span>
         </div>
-        <div className={styles.metaRight}>
-          <span>Đã bán {product.soldCount || 0}</span>
-        </div>
+        <div>Đã bán {product.soldCount || 0}</div>
       </div>
 
-      <div className={styles.productMetaSplit}>
-        <div className={styles.metaLeft}>
-          <span>
-            {typeof product.store === "string"
-              ? product.store
-              : product.store?.name}
-          </span>
+      {/* Cửa hàng & địa điểm */}
+      <div className="flex justify-between mt-2 text-gray-500 text-sm">
+        <div>
+          {typeof product.store === "string"
+            ? product.store
+            : product.store?.name}
         </div>
-        <div className={styles.metaRight}>
-          <span>{product.location || "VN"}</span>
-        </div>
+        <div>{product.location || "VN"}</div>
       </div>
     </div>
   );

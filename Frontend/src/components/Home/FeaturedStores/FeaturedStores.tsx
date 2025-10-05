@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import StoreCard from "./StoreCard";
 
 interface StoreType {
-  _id: string;           // id của cửa hàng
-  owner: string;         // id chủ shop (để chat)
+  _id: string;           
+  owner: string;         
   name: string;
   desc: string;
   join: string;
@@ -21,17 +21,14 @@ const FeaturedStores: React.FC = () => {
     const fetchStores = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/stores");
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const data = await res.json();
         console.log("📦 [FE] Dữ liệu stores từ API:", data);
 
-        // Map dữ liệu từ API sang StoreType
         const mappedStores: StoreType[] = data.stores.map((s: any) => ({
           _id: s._id,
-          owner: s.owner, // 🟢 Lấy id chủ shop để chat
+          owner: s.owner,
           name: s.name,
           desc: s.description,
           join: `Tham gia từ ${new Date(s.createdAt).getFullYear()}`,
@@ -61,20 +58,22 @@ const FeaturedStores: React.FC = () => {
   }
 
   return (
-    <section className="mt-12 px-4 max-w-[1400px] mx-auto">
-      <h3 className="text-xl font-semibold mb-2 text-gray-900">
+    <section className="p-6 bg-gray-50 rounded-lg max-w-[1400px] mx-auto">
+      {/* ⭐ Tiêu đề & mô tả giống FeaturedProducts / Categories */}
+      <h3 className="text-[22px] font-bold mb-1 text-gray-900">
         Tất cả cửa hàng
       </h3>
-      <p className="text-gray-500 mb-6 text-base">
-        Xem danh sách tất cả các cửa hàng
+      <p className="text-sm text-gray-600 mb-6">
+        Xem danh sách tất cả các cửa hàng nổi bật
       </p>
 
+      {/* Grid hiển thị các cửa hàng */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {stores.map((store) => (
           <StoreCard
             key={store._id}
-            storeId={store._id}         // 🟢 id cửa hàng
-            ownerId={store.owner}      // 🟢 id chủ shop (dùng cho chat)
+            storeId={store._id}
+            ownerId={store.owner}
             name={store.name}
             description={store.desc}
             join={store.join}
@@ -84,6 +83,11 @@ const FeaturedStores: React.FC = () => {
             bannerUrl={store.bannerUrl}
           />
         ))}
+      </div>
+
+      {/* Nút xem thêm */}
+      <div className="text-center mt-6 font-medium text-blue-600 cursor-pointer hover:underline">
+        Xem thêm cửa hàng →
       </div>
     </section>
   );

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import styles from "./FeaturedProducts.module.css";
 import ProductCard from "./ProductCard";
 
 interface Product {
@@ -46,15 +45,21 @@ const FeaturedProducts: React.FC = () => {
   if (loading) return <p>⏳ Đang tải sản phẩm...</p>;
 
   return (
-    <section className={styles.productsSection}>
-      <h3 className={styles.sectionTitle}>Sản phẩm nổi bật</h3>
-      <p className={styles.sectionDesc}>Những sản phẩm được yêu thích nhất</p>
-      <div className={styles.productList}>
+    <section className="p-6 bg-gray-50">
+      <h3 className="text-[22px] font-bold mb-1 text-gray-900">Sản phẩm nổi bật</h3>
+      <p className="text-sm text-gray-600 mb-4">
+        Những sản phẩm được yêu thích nhất
+      </p>
+
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
         {products.map((prod) => (
           <ProductCard key={prod._id} product={prod} />
         ))}
       </div>
-      <div className={styles.moreLink}>Xem thêm sản phẩm →</div>
+
+      <div className="text-center mt-6 font-medium text-blue-600 cursor-pointer hover:underline">
+        Xem thêm sản phẩm →
+      </div>
     </section>
   );
 };
