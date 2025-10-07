@@ -9,9 +9,7 @@ module.exports = (io) => {
       console.log(`📥 User joined conversation ${conversationId}`);
     });
 
-    // Chỉ broadcast message
     socket.on("sendMessage", (msg) => {
-      // Phát về tất cả user trong room, kể cả chính client
       io.to(msg.conversationId).emit("receiveMessage", msg);
     });
 

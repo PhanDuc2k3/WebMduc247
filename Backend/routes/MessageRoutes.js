@@ -7,7 +7,7 @@ const {
   getUserConversations,
 } = require("../controllers/Messages");
 
-// ⚠️ Có thể thêm middleware auth nếu cần, ví dụ:
+
 // const { protect } = require("../middlewares/authMiddleware");
 
 // Lấy danh sách conversation của 1 user

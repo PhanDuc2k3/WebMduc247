@@ -11,14 +11,13 @@ const {
   getMyProducts,
   getProductsByStore,
   getViewsStats,
-  increaseView// ✅ import controller thống kê views
+  increaseView
 } = require("../controllers/ProductController");
 
 const upload = require("../middlewares/upload");
 const auth = require("../middlewares/authMiddleware");
 const authorize = require("../middlewares/roleMiddleware");
 
-// Seller thêm sản phẩm
 router.post(
   "/",
   auth,
@@ -30,14 +29,13 @@ router.post(
   createProduct
 );
 
-// ✅ Route thống kê view (đặt trước các route có :id)
 router.get("/views-stats", getViewsStats);
 router.patch("/:id/view", increaseView);
 router.get("/featured", getFeaturedProducts);
-router.get("/my-products", auth, authorize("seller", "admin"), getMyProducts); // đặt trước /:id
+router.get("/my-products", auth, authorize("seller", "admin"), getMyProducts); 
 router.get("/store/:storeId/products", getProductsByStore);
 router.get("/", getProducts);
-router.get("/:id", getProductById); // phải sau /my-products
+router.get("/:id", getProductById); 
 
 router.put(
   "/:id",

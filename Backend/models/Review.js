@@ -8,13 +8,13 @@ const ReviewSchema = new mongoose.Schema(
 
     userInfo: {
       fullName: { type: String, required: true },
-      avatarUrl: { type: String }, // ❌ bỏ default "/avatar.png" → luôn lấy từ User
+      avatarUrl: { type: String }, 
     },
 
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, default: "" },
 
-    images: [{ type: String }], // danh sách đường dẫn ảnh upload
+    images: [{ type: String }], 
   },
   { timestamps: true }
 );
