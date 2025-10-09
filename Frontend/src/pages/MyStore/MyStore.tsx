@@ -4,12 +4,13 @@ import Overview from "../../components/MyStore/Overview/Overview";
 import ProductManagement from "../../components/MyStore/ProductManagement/ProductManagement";
 import OrderManagement from "../../components/MyStore/OrderManagement/OrderManagement";
 import Statistics from "../../components/MyStore/Statistics/Statistics";
-
+import VoucherManagement from "../../components/MyStore/VoucherManagement/VoucherManagement";
 const tabs = [
   { key: "overview", label: "Tổng quan" },
   { key: "products", label: "Sản phẩm" },
   { key: "orders", label: "Đơn hàng" },
   { key: "stats", label: "Thống kê" },
+  { key: "voucher", label:"Voucher"},
 ];
 
 const MyStore: React.FC = () => {
@@ -105,6 +106,7 @@ const MyStore: React.FC = () => {
           {activeTab === "products" && <ProductManagement />}
           {activeTab === "orders" && <OrderManagement />}
           {activeTab === "stats" && storeId && <Statistics storeId={storeId} />}
+          {activeTab === "voucher" && <VoucherManagement/>  }
         </div>
       </div>
     );

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { DollarSign, ShoppingCart, Package, Eye } from "lucide-react";
 
 interface Order {
   _id: string;
@@ -26,6 +27,7 @@ const Overview: React.FC = () => {
         const token = localStorage.getItem("token");
         if (!token) return;
 
+        // Lấy profile để tìm storeId
         const profileRes = await fetch("http://localhost:5000/api/users/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -33,12 +35,14 @@ const Overview: React.FC = () => {
         const storeId = profile.store?._id || profile.user?.store?._id;
         if (!storeId) return;
 
+        // Lấy danh sách đơn hàng
         const ordersRes = await fetch("http://localhost:5000/api/orders/seller", {
           headers: { Authorization: `Bearer ${token}` },
         });
         const ordersData = await ordersRes.json();
         setOrders(ordersData);
 
+        // Lấy danh sách sản phẩm
         const productsRes = await fetch(
           `http://localhost:5000/api/products/store/${storeId}/products`,
           {
@@ -67,33 +71,35 @@ const Overview: React.FC = () => {
 
   return (
     <div>
+      {/* Thống kê */}
       <div className="grid grid-cols-4 gap-6 mb-8">
         <StatBox
           title="Doanh thu"
           value={`${revenue.toLocaleString("vi-VN")}₫`}
           percent="+12.5%"
-          icon="💰"
+          icon={<DollarSign className="w-6 h-6 text-gray-700" />}
         />
         <StatBox
           title="Đơn hàng"
           value={totalOrders.toString()}
           percent="+8.2%"
-          icon="🛒"
+          icon={<ShoppingCart className="w-6 h-6 text-gray-700" />}
         />
         <StatBox
           title="Sản phẩm"
           value={totalProducts.toString()}
           percent="+5.3%"
-          icon="📦"
+          icon={<Package className="w-6 h-6 text-gray-700" />}
         />
         <StatBox
           title="Lượt xem"
           value={totalViews.toString()}
           percent="-2.1%"
-          icon="👁️"
+          icon={<Eye className="w-6 h-6 text-gray-700" />}
         />
       </div>
 
+      {/* Đơn hàng gần đây */}
       <div className="bg-white rounded-xl shadow p-6">
         <div className="font-semibold text-lg mb-6">Đơn hàng gần đây</div>
         <table className="w-full text-sm">
@@ -146,11 +152,11 @@ const StatBox: React.FC<{
   title: string;
   value: string;
   percent: string;
-  icon: string;
+  icon: React.ReactNode;
 }> = ({ title, value, percent, icon }) => (
   <div className="bg-white rounded-lg shadow flex flex-col justify-between p-6 h-32">
     <div className="flex items-center gap-2 mb-2">
-      <span className="text-2xl">{icon}</span>
+      {icon}
       <span className="font-medium text-gray-600">{title}</span>
     </div>
     <div className="font-bold text-2xl">{value}</div>

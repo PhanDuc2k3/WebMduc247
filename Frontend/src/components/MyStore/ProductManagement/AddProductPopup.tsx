@@ -185,7 +185,7 @@ const updateOption = (
         {step === 1 && (
           <>
             <div className="font-semibold text-lg mb-4 flex items-center gap-2">
-              <span>📦</span> Thông tin cơ bản
+              <span></span> Thông tin cơ bản
             </div>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>

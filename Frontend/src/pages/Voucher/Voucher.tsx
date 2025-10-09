@@ -13,11 +13,11 @@ type Voucher = {
   condition: string;
   price: string;
   date: string;
-  store?: { _id: string; name: string; category?: string }; 
-  categories?: string[];   
-  global?: boolean;       
-  used?: boolean;          
-  usagePercent?: number;   
+  store?: { _id: string; name: string; category?: string };
+  categories?: string[];
+  global?: boolean;
+  used?: boolean;
+  usagePercent?: number;
 };
 
 const categories: Category[] = [
@@ -76,16 +76,19 @@ export default function VoucherPage() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto font-sans">
-      <h1 className="text-3xl font-bold mb-2 text-blue-700">Kho Voucher</h1>
-      <p className="text-gray-600 mb-6 text-lg">
+    <div className="p-6 max-w-6xl mx-auto font-sans">
+      {/* 🔥 Tiêu đề & mô tả giống FeaturedProducts */}
+      <h3 className="text-[22px] font-bold mb-1 text-gray-900">Kho Voucher</h3>
+      <p className="text-sm text-gray-600 mb-4">
         Tận hưởng ưu đãi tốt nhất từ các cửa hàng
       </p>
 
+      {/* Banner Flash Sale */}
       <div className="bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500 text-white p-4 rounded-lg mb-6 text-center font-semibold">
         🎉 Flash Sale | Giảm đến 50% | Miễn phí ship | Voucher hot
       </div>
 
+      {/* Tabs */}
       <div className="flex space-x-4 mb-6">
         <button
           onClick={() => setActiveTab("available")}
@@ -109,6 +112,7 @@ export default function VoucherPage() {
         </button>
       </div>
 
+      {/* Categories */}
       <div className="flex flex-wrap gap-3 mb-6">
         {categories.map((cat) => (
           <span
@@ -120,6 +124,7 @@ export default function VoucherPage() {
         ))}
       </div>
 
+      {/* Search */}
       <input
         type="text"
         placeholder="Tìm kiếm voucher..."
@@ -128,6 +133,7 @@ export default function VoucherPage() {
         className="w-full px-4 py-2 mb-6 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
       />
 
+      {/* Danh sách Voucher */}
       {loading ? (
         <div>Đang tải voucher...</div>
       ) : (
@@ -147,7 +153,9 @@ export default function VoucherPage() {
                 <p>Ngày áp dụng: {v.date}</p>
                 <p>{getStoreLabel(v)}</p>
                 {v.used && (
-                  <p className="text-red-500 font-medium mt-1">Bạn đã dùng voucher này</p>
+                  <p className="text-red-500 font-medium mt-1">
+                    Bạn đã dùng voucher này
+                  </p>
                 )}
               </div>
 

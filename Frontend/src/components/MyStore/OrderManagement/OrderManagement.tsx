@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Eye, Trash2 } from "lucide-react";
 
 interface OrderItem {
   productId: string;
@@ -41,7 +42,7 @@ const OrderManagement: React.FC = () => {
         }
 
         const data = await res.json();
-        setOrders(data);
+        setOrders(Array.isArray(data) ? data : data.data || []);
       } catch (err: any) {
         setError(err.message || "Lỗi khi tải đơn hàng");
       } finally {
@@ -57,6 +58,7 @@ const OrderManagement: React.FC = () => {
 
   return (
     <div>
+      {/* Thanh công cụ */}
       <div className="flex justify-end mb-4 gap-2">
         <button className="bg-black text-white px-5 py-2 rounded-lg font-semibold">
           Xuất báo cáo
@@ -66,6 +68,7 @@ const OrderManagement: React.FC = () => {
         </button>
       </div>
 
+      {/* Bảng đơn hàng */}
       <div className="bg-white rounded-xl shadow p-6 overflow-x-auto">
         <table className="w-full table-auto text-base">
           <thead>
@@ -120,11 +123,17 @@ const OrderManagement: React.FC = () => {
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-3">
-                        <button title="Xem" className="hover:text-blue-600">
-                          👁️
+                        <button
+                          title="Xem chi tiết"
+                          className="text-blue-600 hover:text-blue-800 transition"
+                        >
+                          <Eye size={18} />
                         </button>
-                        <button title="Xóa" className="hover:text-red-600">
-                          🗑️
+                        <button
+                          title="Xóa đơn hàng"
+                          className="text-red-600 hover:text-red-800 transition"
+                        >
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>
