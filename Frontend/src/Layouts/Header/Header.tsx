@@ -252,10 +252,9 @@ useEffect(() => {
         <Link to="/" className="hover:text-[#1976d2] transition-colors">Trang chủ</Link>
         <Link to="/stores" className="hover:text-[#1976d2] transition-colors">Cửa hàng</Link>
         <Link to="/categories" className="hover:text-[#1976d2] transition-colors">Danh mục</Link>
-        <Link to="/promotions" className="hover:text-[#1976d2] transition-colors">Khuyến mãi</Link>
-        <Link to="/brands" className="hover:text-[#1976d2] transition-colors">Thương hiệu</Link>
-        <Link to="/bestsellers" className="hover:text-[#1976d2] transition-colors">Bán chạy</Link>
+        <Link to="/new" className="hover:text-[#1976d2] transition-colors">Khuyến mãi</Link>
         <Link to="/support" className="hover:text-[#1976d2] transition-colors">Hỗ trợ</Link>
+        <Link to="/chatbot" className="hover:text-[#1976d2] transition-colors">Chatbot</Link>
       </nav>
 
       <div className="border-b-2 border-[#f0f0f0] mx-8 mt-2"></div>

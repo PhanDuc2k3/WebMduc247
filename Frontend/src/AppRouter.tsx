@@ -16,6 +16,8 @@ import PaymentSuccess from "./components/Payment/PaymentSuccess/PaymentSuccess";
 import StoreList from "./pages/StoreList/StoreList";
 import Message from "./pages/Messages/Message";
 import Product from "./pages/ProductList/ProductList";
+import NewPage from "./pages/New/NewPage"
+import SupportPage from "./pages/Support/SupportPage"
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
@@ -37,7 +39,9 @@ const AppRouter = () => (
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/stores" element={<StoreList />} />
         <Route path="/messages/:id" element={<Message />} />
-        <Route path="/categories" element={<Product />}/>
+        <Route path="/categories" element={<Product />} />
+        <Route path="/new" element={<NewPage />} />
+        <Route path="/support" element={<SupportPage/>}/>
       </Route>
 
       <Route path="/s" element={<Navigate to="/login" />} />

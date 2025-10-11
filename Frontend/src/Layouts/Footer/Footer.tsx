@@ -8,8 +8,8 @@ const Footer: React.FC = () => {
         <div className={styles.footerBrand}>
           <span className={styles.logoGradient}>ShopMduc247</span>
           <p className={styles.brandDesc}>Sàn thương mại điện tử hàng đầu Việt Nam với hàng triệu sản phẩm chất lượng và dịch vụ tốt nhất.</p>
-          <div className={styles.socials}>
-            <a href="#"><i className="fab fa-facebook-f" /></a>
+          <div className={styles.socials}>fab fa-faceboo
+            <a href="#"><i className="k-f" /></a>
             <a href="#"><i className="fab fa-instagram" /></a>
             <a href="#"><i className="fab fa-twitter" /></a>
             <a href="#"><i className="fab fa-youtube" /></a>
