@@ -11,28 +11,29 @@ interface Props {
   currentUserId: string;
   selectedChat: Chat | null;
   onSelectChat: (chat: Chat) => void;
+    disabled?: boolean; // thêm
+
 }
 
-export default function ChatList({ currentUserId, selectedChat, onSelectChat }: Props) {
+export default function ChatList({ currentUserId, selectedChat, onSelectChat, disabled }: Props) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-const fetchChats = async () => {
-  try {
-    const res = await fetch(`http://localhost:5000/api/messages/conversations/${currentUserId}`);
-    if (!res.ok) throw new Error("Lỗi khi lấy danh sách cuộc trò chuyện");
+    const fetchChats = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/messages/conversations/${currentUserId}`);
+        if (!res.ok) throw new Error("Lỗi khi lấy danh sách cuộc trò chuyện");
 
-    const data = await res.json();
-    console.log("Danh sách conversations:", data); // để debug
-    setChats(data);
-  } catch (err) {
-    console.error("❌ Lỗi fetchChats:", err);
-  } finally {
-    setLoading(false);
-  }
-};
-
+        const data = await res.json();
+        console.log("Danh sách conversations:", data); // để debug
+        setChats(data);
+      } catch (err) {
+        console.error("❌ Lỗi fetchChats:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     if (currentUserId) fetchChats();
   }, [currentUserId]);
@@ -49,12 +50,10 @@ const fetchChats = async () => {
         chats.map((chat) => (
           <div
             key={chat.conversationId}
-            onClick={() => onSelectChat(chat)}
+            onClick={() => !disabled && onSelectChat(chat)} // disable khi không có user
             className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-100 ${
-              selectedChat?.conversationId === chat.conversationId
-                ? "bg-gray-200"
-                : ""
-            }`}
+              selectedChat?.conversationId === chat.conversationId ? "bg-gray-200" : ""
+            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`} // style khi disabled
           >
             <img
               src={chat.avatarUrl || "/default-avatar.png"}
@@ -71,3 +70,4 @@ const fetchChats = async () => {
     </div>
   );
 }
+

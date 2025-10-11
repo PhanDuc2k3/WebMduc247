@@ -38,7 +38,9 @@ const AppRouter = () => (
         <Route path="/order/:orderId" element={<OrderPage />} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/stores" element={<StoreList />} />
-        <Route path="/messages/:id" element={<Message />} />
+        <Route path="/messages/:id?" element={<Message />} />
+        <Route path="/message" element={<Navigate to="/messages" replace />} />
+
         <Route path="/categories" element={<Product />} />
         <Route path="/new" element={<NewPage />} />
         <Route path="/support" element={<SupportPage/>}/>

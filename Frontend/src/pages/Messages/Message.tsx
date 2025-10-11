@@ -36,34 +36,29 @@ export default function ChatInterface() {
   }, []);
 
   return (
-<div className="flex" style={{ height: "calc(100vh - 110px)" }}>
-  {/* Chat List */}
-  {currentUserId ? (
-    <ChatList
-      currentUserId={currentUserId}
-      selectedChat={selectedChat}
-      onSelectChat={setSelectedChat}
-    />
-  ) : (
-    <div className="flex-1 flex items-center justify-center text-gray-500">
-      Đang tải thông tin người dùng...
-    </div>
-  )}
-
-  {/* Chat Window */}
-  <div className="flex-1">
-    {selectedChat ? (
-      <ChatWindow
-        conversationId={selectedChat.conversationId}
+    <div className="flex" style={{ height: "calc(100vh - 110px)" }}>
+      {/* Chat List */}
+      <ChatList
         currentUserId={currentUserId}
+        selectedChat={selectedChat}
+        onSelectChat={setSelectedChat}
+        disabled={!currentUserId} // disable nếu chưa có user
       />
-    ) : (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        Chọn một cuộc trò chuyện để bắt đầu
-      </div>
-    )}
-  </div>
-</div>
 
+      {/* Chat Window */}
+      <div className="flex-1">
+        {selectedChat ? (
+          <ChatWindow
+            conversationId={selectedChat.conversationId}
+            currentUserId={currentUserId}
+            disabled={!currentUserId} // disable input khi chưa login
+          />
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-400">
+            Chọn một cuộc trò chuyện để bắt đầu
+          </div>
+        )}
+      </div>
+    </div>
   );
-} 
+}

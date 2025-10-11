@@ -5,6 +5,7 @@ import { io, Socket } from "socket.io-client";
 interface ChatWindowProps {
   conversationId: string;
   currentUserId: string;
+  disabled?: boolean; // thêm disable
 }
 
 interface Message {
@@ -24,7 +25,7 @@ interface Message {
 const SOCKET_URL = "http://localhost:5000";
 const API_URL = "http://localhost:5000/api/messages";
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId, disabled }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const socketRef = useRef<Socket | null>(null);
@@ -93,7 +94,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId }
 
   // Gửi tin nhắn
   const handleSend = async () => {
-    if (!newMessage.trim() || !conversationId || !socketRef.current) return;
+    if (!newMessage.trim() || !conversationId || !socketRef.current || disabled) return;
 
     const msgData = {
       sender: currentUserId,
@@ -112,7 +113,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId }
 
       const savedMessage: Message = await res.json();
       socketRef.current.emit("sendMessage", savedMessage);
-      // KHÔNG setMessages ở đây, để socket cập nhật
     } catch (err) {
       console.error("❌ Lỗi gửi tin nhắn:", err);
     }
@@ -136,15 +136,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId }
           const isMine = msg.sender === currentUserId;
           return (
             <div key={msg._id + Math.random()} className="space-y-1">
-              {/* Thời gian */}
               <div className={`text-sm text-gray-500 ${isMine ? "text-right" : ""}`}>
                 {new Date(msg.createdAt).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
               </div>
-
-              {/* Bubble */}
               <div
                 className={`p-3 rounded-lg w-fit max-w-md break-words ${
                   isMine ? "ml-auto bg-green-100" : "bg-blue-100"
@@ -179,24 +176,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId }
       </div>
 
       {/* Input bar */}
-      <div className="flex-none p-4 border-t flex items-center gap-2 bg-white">
-        <button className="p-2 rounded hover:bg-gray-200">
+      <div className={`flex-none p-4 border-t flex items-center gap-2 bg-white ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
+        <button className="p-2 rounded hover:bg-gray-200" disabled={disabled}>
           <PhotoIcon className="h-6 w-6 text-gray-600" />
         </button>
-        <button className="p-2 rounded hover:bg-gray-200">
+        <button className="p-2 rounded hover:bg-gray-200" disabled={disabled}>
           <PaperClipIcon className="h-6 w-6 text-gray-600" />
         </button>
         <input
           type="text"
-          placeholder="Nhập tin nhắn..."
+          placeholder={disabled ? "Bạn cần đăng nhập để chat..." : "Nhập tin nhắn..."}
           className="flex-1 p-3 border rounded-lg focus:outline-none"
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          disabled={disabled}
         />
         <button
           onClick={handleSend}
           className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          disabled={disabled}
         >
           Gửi
         </button>
