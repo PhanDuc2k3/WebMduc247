@@ -13,6 +13,9 @@
     "moduleDetection": "force",
     "noEmit": true,
 
+    /* ✅ Thêm dòng này để TypeScript hiểu module Node như 'path', 'fs', v.v. */
+    "types": ["node"],
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,

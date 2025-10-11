@@ -79,7 +79,7 @@ const StoreCard: React.FC<StoreCardProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col overflow-hidden min-w-[250px]">
+<div className="bg-white border border-gray-400 rounded-xl shadow-sm hover:shadow-md hover:border-gray-500 hover:bg-gray-50 transition-all duration-200 p-6 flex flex-col overflow-hidden min-w-[250px]">
       {/* Banner */}
       {bannerUrl && (
         <div className="h-32 w-full overflow-hidden rounded-lg mb-4">

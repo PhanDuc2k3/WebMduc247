@@ -15,8 +15,12 @@ import {
 const ProductManagement: React.FC = () => {
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showPopup, setShowPopup] = useState(false);
 
+  // Popup thêm / sửa
+  const [showPopup, setShowPopup] = useState(false);
+  const [editProduct, setEditProduct] = useState<ProductType | null>(null);
+
+  // 🔹 Lấy danh sách sản phẩm
   const fetchProducts = async () => {
     try {
       setLoading(true);
@@ -29,9 +33,7 @@ const ProductManagement: React.FC = () => {
       const mapped = (data.data || []).map((p: any) => ({
         ...p,
         quantity: p.quantity ?? 0,
-        images: (p.images || []).map(
-          (img: string) => `http://localhost:5000${img}`
-        ),
+        images: (p.images || []).map((img: string) => `http://localhost:5000${img}`),
       }));
       setProducts(mapped);
     } catch (err) {
@@ -45,38 +47,63 @@ const ProductManagement: React.FC = () => {
     fetchProducts();
   }, []);
 
-  const handleAddProduct = (newProduct: ProductType) => {
-    const updatedProduct = {
+  // 🔹 Xử lý thêm / sửa sản phẩm từ backend trả về
+  const handleAddOrUpdateProduct = (newProduct: ProductType, isEdit: boolean) => {
+    const mapped = {
       ...newProduct,
-      images: (newProduct.images || []).map(
-        (img: string) => `http://localhost:5000${img}`
-      ),
+      images: (newProduct.images || []).map((img: string) => `http://localhost:5000${img}`),
     };
-    setProducts((prev) => [updatedProduct, ...prev]);
+    if (isEdit) {
+      setProducts((prev) =>
+        prev.map((p) => (p._id === mapped._id ? mapped : p))
+      );
+    } else {
+      setProducts((prev) => [mapped, ...prev]);
+    }
+  };
+
+  // 🔹 Xử lý mở popup sửa
+  const handleEditClick = (product: ProductType) => {
+    setEditProduct(product);
+    setShowPopup(true);
+  };
+
+  // 🔹 Xử lý xóa sản phẩm
+  const handleDeleteProduct = async (id: string) => {
+    if (!window.confirm("Bạn có chắc muốn xóa sản phẩm này không?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Lỗi xóa sản phẩm");
+      setProducts((prev) => prev.filter((p) => p._id !== id));
+    } catch (err) {
+      console.error("❌ Xóa thất bại:", err);
+    }
   };
 
   if (loading) return <div className="p-6">Đang tải sản phẩm...</div>;
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen font-sans relative">
-      {/* Popup thêm sản phẩm */}
+      {/* Popup thêm / sửa sản phẩm */}
       {showPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-          <div className="relative w-full max-w-2xl">
-            <div className="absolute top-[-30px] right-0">
-              <button
-                onClick={() => setShowPopup(false)}
-                className="text-white bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded-lg"
-              >
-                ✕ Đóng
-              </button>
-            </div>
-            <AddProductPopup
-              onClose={() => setShowPopup(false)}
-              onAddProduct={handleAddProduct}
-            />
-          </div>
-        </div>
+        <AddProductPopup
+          open={showPopup}
+          onClose={() => {
+            setShowPopup(false);
+            setEditProduct(null);
+          }}
+          onSubmit={(newProduct) => {
+            const isEdit = Boolean(editProduct?._id);
+            handleAddOrUpdateProduct(newProduct, isEdit);
+            setShowPopup(false);
+            setEditProduct(null);
+          }}
+          editProduct={editProduct}
+        />
       )}
 
       {/* Ô thống kê */}
@@ -88,7 +115,7 @@ const ProductManagement: React.FC = () => {
           icon={<Package className="w-6 h-6 text-gray-700" />}
         />
         <StatBox
-          title="Sản phẩm tồn kho thấp"
+          title="Tồn kho thấp"
           value={products.filter((p) => p.quantity < 15).length.toString()}
           percent="-5%"
           icon={<Warehouse className="w-6 h-6 text-gray-700" />}
@@ -119,7 +146,10 @@ const ProductManagement: React.FC = () => {
           className="w-full max-w-md px-4 py-2 border rounded shadow-sm focus:outline-none focus:ring"
         />
         <button
-          onClick={() => setShowPopup(true)}
+          onClick={() => {
+            setEditProduct(null);
+            setShowPopup(true);
+          }}
           className="bg-black text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 hover:bg-gray-800 transition"
         >
           <Plus size={18} /> Thêm sản phẩm mới
@@ -156,14 +186,10 @@ const ProductManagement: React.FC = () => {
                       <div className="text-xs text-gray-500">{p._id}</div>
                     </div>
                   </td>
-                  <td className="px-4 py-3">
-                    {p.price.toLocaleString("vi-VN")}₫
-                  </td>
+                  <td className="px-4 py-3">{p.price.toLocaleString("vi-VN")}₫</td>
                   <td
                     className={`px-4 py-3 ${
-                      p.quantity < 15
-                        ? "text-red-600 font-semibold"
-                        : "text-gray-800"
+                      p.quantity < 15 ? "text-red-600 font-semibold" : "text-gray-800"
                     }`}
                   >
                     {p.quantity}
@@ -172,9 +198,7 @@ const ProductManagement: React.FC = () => {
                   <td className="px-4 py-3">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        p.isActive
-                          ? "bg-green-100 text-green-700"
-                          : "bg-yellow-100 text-yellow-700"
+                        p.isActive ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
                       }`}
                     >
                       {p.isActive ? "Hoạt động" : "Ngừng hoạt động"}
@@ -185,10 +209,16 @@ const ProductManagement: React.FC = () => {
                     <button className="text-blue-600 hover:text-blue-800">
                       <Eye size={18} />
                     </button>
-                    <button className="text-green-600 hover:text-green-800">
+                    <button
+                      className="text-green-600 hover:text-green-800"
+                      onClick={() => handleEditClick(p)}
+                    >
                       <Edit size={18} />
                     </button>
-                    <button className="text-red-600 hover:text-red-800">
+                    <button
+                      className="text-red-600 hover:text-red-800"
+                      onClick={() => handleDeleteProduct(p._id)}
+                    >
                       <Trash2 size={18} />
                     </button>
                   </td>
@@ -196,10 +226,7 @@ const ProductManagement: React.FC = () => {
               ))
             ) : (
               <tr>
-                <td
-                  colSpan={7}
-                  className="text-center py-6 text-gray-500 font-medium"
-                >
+                <td colSpan={7} className="text-center py-6 text-gray-500 font-medium">
                   Chưa có sản phẩm nào
                 </td>
               </tr>
@@ -211,6 +238,7 @@ const ProductManagement: React.FC = () => {
   );
 };
 
+// 🔹 Component thống kê nhỏ
 const StatBox: React.FC<{
   title: string;
   value: string;
@@ -223,11 +251,7 @@ const StatBox: React.FC<{
       <span className="font-medium text-gray-600">{title}</span>
     </div>
     <div className="font-bold text-2xl">{value}</div>
-    <div
-      className={`text-sm ${
-        percent.startsWith("-") ? "text-red-600" : "text-green-600"
-      }`}
-    >
+    <div className={`text-sm ${percent.startsWith("-") ? "text-red-600" : "text-green-600"}`}>
       {percent}
     </div>
   </div>

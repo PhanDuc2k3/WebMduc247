@@ -1,5 +1,6 @@
-// types/product.ts
+// src/types/product.ts
 
+// 🔹 Cấu hình thông số kỹ thuật (ví dụ: CPU, RAM, Kích thước)
 export interface Specification {
   key: string;
   value: string;
@@ -18,6 +19,7 @@ export interface Variation {
   options: VariationOption[]; // danh sách option con
 }
 
+// 🔹 Dữ liệu sản phẩm trả về từ backend
 export interface ProductType {
   _id: string;
   name: string;
@@ -31,7 +33,7 @@ export interface ProductType {
   soldCount: number;
   model: string;
   sku?: string;
-  variations?: Variation[];   // ✅ thay vì any[]
+  variations?: Variation[];
   images: string[];
   specifications: Specification[];
   rating: number;
@@ -46,6 +48,7 @@ export interface ProductType {
   store: string; // store id
 }
 
+// 🔹 Dữ liệu form tạm trong frontend
 export interface FormDataType {
   name: string;
   description: string;
@@ -65,7 +68,5 @@ export interface FormDataType {
   subImages: File[];
   subImagesPreview: string[];
   storeId?: string;
-
-  // ✅ thêm variations để FE quản lý
   variations: Variation[];
 }

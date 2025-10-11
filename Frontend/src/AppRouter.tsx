@@ -13,8 +13,9 @@ import StorePage from "./pages/Store/Store";
 import Checkout from "./pages/Payment/Payment";
 import OrderPage from "./pages/Order/Order";
 import PaymentSuccess from "./components/Payment/PaymentSuccess/PaymentSuccess";
-import StoreList from "./pages/Home/StoreList";
+import StoreList from "./pages/StoreList/StoreList";
 import Message from "./pages/Messages/Message";
+import Product from "./pages/ProductList/ProductList";
 const AppRouter = () => (
   <BrowserRouter>
     <Routes>
@@ -23,7 +24,7 @@ const AppRouter = () => (
         <Route path="/register" element={<Register />} />
 
 
-      <Route element={<Layout />}>
+      <Route element={<Layout />}>  
         <Route path="/" element={<Home />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/mystore" element={<MyStore />} />
@@ -36,6 +37,7 @@ const AppRouter = () => (
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/stores" element={<StoreList />} />
         <Route path="/messages/:id" element={<Message />} />
+        <Route path="/categories" element={<Product />}/>
       </Route>
 
       <Route path="/s" element={<Navigate to="/login" />} />

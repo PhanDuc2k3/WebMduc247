@@ -195,19 +195,19 @@ useEffect(() => {
                     className="w-full bg-white text-[#16161a] rounded-lg py-3 text-base font-medium mb-2 flex items-center px-2 hover:bg-[#f5f7fe] transition"
                     onClick={() => { setShowDropdown(false); navigate("/profile"); }}
                   >
-                    <span className="mr-2">👤</span> Trang cá nhân
+                    <span className="mr-2"></span> Trang cá nhân
                   </button>
                   <button
                     className="w-full bg-white text-[#16161a] rounded-lg py-3 text-base font-medium mb-2 flex items-center px-2 hover:bg-[#f5f7fe] transition"
                     onClick={() => { setShowDropdown(false); navigate("/mystore"); }}
                   >
-                    <span className="mr-2">🏬</span> Cửa hàng của tôi
+                    <span className="mr-2"></span> Cửa hàng của tôi
                   </button>
                   <button
                     className="w-full bg-white text-[#16161a] rounded-lg py-3 text-base font-medium flex items-center px-2 hover:bg-[#f5f7fe] transition"
                     onClick={handleLogout}
                   >
-                    <span className="mr-2">🚪</span> Đăng xuất
+                    <span className="mr-2"></span> Đăng xuất
                   </button>
                 </div>
               )}
