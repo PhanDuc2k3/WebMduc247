@@ -1,7 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown } from "lucide-react";
 
-const ProductFilters: React.FC = () => {
+interface ProductFiltersProps {
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+}
+
+const ProductFilters: React.FC<ProductFiltersProps> = ({
+  searchTerm,
+  setSearchTerm,
+}) => {
   const [ratingOpen, setRatingOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -48,6 +56,8 @@ const ProductFilters: React.FC = () => {
         <input
           type="text"
           placeholder="Tìm kiếm cửa hàng..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full outline-none text-sm placeholder-gray-500"
         />
       </div>

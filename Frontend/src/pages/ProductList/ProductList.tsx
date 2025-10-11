@@ -9,6 +9,7 @@ const ProductList: React.FC = () => {
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPrice, setSelectedPrice] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -16,11 +17,8 @@ const ProductList: React.FC = () => {
         const res = await fetch("http://localhost:5000/api/products");
         const data = await res.json();
 
-        console.log("Dữ liệu trả về:", data);
-
         const list = data.data || data.products || [];
         if (!Array.isArray(list)) {
-          console.error("API không trả về mảng hợp lệ:", list);
           setProducts([]);
           return;
         }
@@ -62,23 +60,28 @@ const ProductList: React.FC = () => {
     fetchProducts();
   }, []);
 
-  // ✅ Lọc theo giá được chọn
-const filteredProducts = products.filter((p) => {
-  if (!selectedPrice) return true;
+  // ✅ Lọc sản phẩm theo giá + tên
+  const filteredProducts = products
+    .filter((p) => {
+      if (!selectedPrice) return true;
 
-  const range = selectedPrice.split("-");
-  if (range.length === 2) {
-    const [min, max] = range.map(Number);
-    return p.price >= min && p.price <= max;
-  }
+      const range = selectedPrice.split("-");
+      if (range.length === 2) {
+        const [min, max] = range.map(Number);
+        return p.price >= min && p.price <= max;
+      }
 
-  if (selectedPrice === "duoi1tr") return p.price < 1_000_000;
-  if (selectedPrice === "1-5tr") return p.price >= 1_000_000 && p.price <= 5_000_000;
-  if (selectedPrice === "5-10tr") return p.price > 5_000_000 && p.price <= 10_000_000;
-  if (selectedPrice === "tren10tr") return p.price > 10_000_000;
+      if (selectedPrice === "duoi1tr") return p.price < 1_000_000;
+      if (selectedPrice === "1-5tr") return p.price >= 1_000_000 && p.price <= 5_000_000;
+      if (selectedPrice === "5-10tr") return p.price > 5_000_000 && p.price <= 10_000_000;
+      if (selectedPrice === "tren10tr") return p.price > 10_000_000;
 
-  return true;
-});
+      return true;
+    })
+    .filter((p) => {
+      if (!searchTerm) return true;
+      return p.name.toLowerCase().includes(searchTerm.toLowerCase());
+    });
 
   if (loading) return <ProductLoading />;
 
@@ -89,48 +92,34 @@ const filteredProducts = products.filter((p) => {
         Khám phá các sản phẩm nổi bật được nhiều người yêu thích
       </p>
 
-      {/* 🔍 Thanh tìm kiếm (giữ nguyên) */}
-      <ProductFilters />
+      {/* 🔍 Thanh tìm kiếm & bộ lọc */}
+      <ProductFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
       {/* 🧩 Bố cục 2 cột: 20% bộ lọc - 80% danh sách */}
       <div className="flex flex-col lg:flex-row gap-6 mt-6">
-        {/* ✅ Bộ lọc giá */}
+        {/* Bộ lọc giá */}
         <div className="lg:w-1/5 bg-white p-4 rounded-xl shadow-sm border h-fit">
-          <h2 className="text-lg font-semibold mb-3 text-gray-800">
-            Lọc theo giá
-          </h2>
-          <PriceFilter
-            selectedPrice={selectedPrice}
-            setSelectedPrice={setSelectedPrice}
-          />
+          <h2 className="text-lg font-semibold mb-3 text-gray-800">Lọc theo giá</h2>
+          <PriceFilter selectedPrice={selectedPrice} setSelectedPrice={setSelectedPrice} />
         </div>
 
-        {/* ✅ Danh sách sản phẩm */}
-
-<div className="lg:w-4/5">
-  <div
-    className="
-      grid gap-6 
-      grid-cols-[repeat(auto-fit,minmax(250px,1fr))]
-    "
-  >
-    {filteredProducts.length > 0 ? (
-      filteredProducts.map((p) => (
-        <div
-          key={p._id}
-          className="w-full max-w-xs" // giữ card không quá to
-        >
-          <ProductCard product={p} />
-        </div>
-      ))
-    ) : (
-      <p className="text-gray-500 col-span-full text-center">
-        Không có sản phẩm nào để hiển thị.
-      </p>
-    )}
-  </div>
+        {/* Danh sách sản phẩm */}
+        <div className="lg:w-4/5">
+<div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
+  {filteredProducts.length > 0 ? (
+    filteredProducts.map((p) => (
+      <div key={p._id} className="w-full">
+        <ProductCard product={p} />
+      </div>
+    ))
+  ) : (
+    <p className="text-gray-500 col-span-full text-center">
+      Không có sản phẩm nào để hiển thị.
+    </p>
+  )}
 </div>
 
+        </div>
       </div>
     </div>
   );

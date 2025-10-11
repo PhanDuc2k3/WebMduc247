@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, ChevronDown } from "lucide-react";
 
-const StoreFilters: React.FC = () => {
+interface StoreFiltersProps {
+  searchTerm: string;
+  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+}
+
+const StoreFilters: React.FC<StoreFiltersProps> = ({ searchTerm, setSearchTerm }) => {
   const [ratingOpen, setRatingOpen] = useState(false);
   const [regionOpen, setRegionOpen] = useState(false);
   const [categoryOpen, setCategoryOpen] = useState(false);
@@ -29,7 +34,7 @@ const StoreFilters: React.FC = () => {
     "Khác",
   ];
 
-  // ✅ Tự đóng dropdown khi click ra ngoài
+  // Tự đóng dropdown khi click ra ngoài
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (ratingRef.current && !ratingRef.current.contains(e.target as Node)) setRatingOpen(false);
@@ -49,33 +54,26 @@ const StoreFilters: React.FC = () => {
           type="text"
           placeholder="Tìm kiếm cửa hàng..."
           className="w-full outline-none text-sm placeholder-gray-500"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
       {/* Bộ lọc đánh giá */}
       <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={ratingRef}>
         <button
-          onClick={() => {
-            setRatingOpen(!ratingOpen);
-            setRegionOpen(false);
-            setCategoryOpen(false);
-          }}
+          onClick={() => { setRatingOpen(!ratingOpen); setRegionOpen(false); setCategoryOpen(false); }}
           className="w-full flex justify-between items-center border border-gray-300 rounded-md px-4 py-2.5 bg-white text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:border-gray-500 transition"
         >
           {rating}
-          <ChevronDown
-            className={`w-4 h-4 text-gray-500 transition-transform ${ratingOpen ? "rotate-180" : ""}`}
-          />
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${ratingOpen ? "rotate-180" : ""}`} />
         </button>
         {ratingOpen && (
           <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-md overflow-hidden animate-fadeIn">
             {ratingOptions.map((opt) => (
               <div
                 key={opt}
-                onClick={() => {
-                  setRating(opt);
-                  setRatingOpen(false);
-                }}
+                onClick={() => { setRating(opt); setRatingOpen(false); }}
                 className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
               >
                 {opt}
@@ -88,27 +86,18 @@ const StoreFilters: React.FC = () => {
       {/* Bộ lọc khu vực */}
       <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={regionRef}>
         <button
-          onClick={() => {
-            setRegionOpen(!regionOpen);
-            setRatingOpen(false);
-            setCategoryOpen(false);
-          }}
+          onClick={() => { setRegionOpen(!regionOpen); setRatingOpen(false); setCategoryOpen(false); }}
           className="w-full flex justify-between items-center border border-gray-300 rounded-md px-4 py-2.5 bg-white text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:border-gray-500 transition"
         >
           {region}
-          <ChevronDown
-            className={`w-4 h-4 text-gray-500 transition-transform ${regionOpen ? "rotate-180" : ""}`}
-          />
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${regionOpen ? "rotate-180" : ""}`} />
         </button>
         {regionOpen && (
           <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-md overflow-hidden animate-fadeIn">
             {regionOptions.map((opt) => (
               <div
                 key={opt}
-                onClick={() => {
-                  setRegion(opt);
-                  setRegionOpen(false);
-                }}
+                onClick={() => { setRegion(opt); setRegionOpen(false); }}
                 className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
               >
                 {opt}
@@ -121,27 +110,18 @@ const StoreFilters: React.FC = () => {
       {/* Bộ lọc ngành hàng */}
       <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={categoryRef}>
         <button
-          onClick={() => {
-            setCategoryOpen(!categoryOpen);
-            setRegionOpen(false);
-            setRatingOpen(false);
-          }}
+          onClick={() => { setCategoryOpen(!categoryOpen); setRegionOpen(false); setRatingOpen(false); }}
           className="w-full flex justify-between items-center border border-gray-300 rounded-md px-4 py-2.5 bg-white text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:border-gray-500 transition"
         >
           {category}
-          <ChevronDown
-            className={`w-4 h-4 text-gray-500 transition-transform ${categoryOpen ? "rotate-180" : ""}`}
-          />
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${categoryOpen ? "rotate-180" : ""}`} />
         </button>
         {categoryOpen && (
           <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-md overflow-hidden animate-fadeIn max-h-60 overflow-y-auto">
             {categoryOptions.map((opt) => (
               <div
                 key={opt}
-                onClick={() => {
-                  setCategory(opt);
-                  setCategoryOpen(false);
-                }}
+                onClick={() => { setCategory(opt); setCategoryOpen(false); }}
                 className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
               >
                 {opt}
