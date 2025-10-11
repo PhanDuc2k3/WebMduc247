@@ -3,7 +3,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
-    }
+    },
+    "jsx": "react-jsx",           // ✅ dùng JSX transform mới (React 17+)
+    "noUnusedLocals": false,      // ✅ tắt cảnh báo biến import/khai báo không dùng
+    "noUnusedParameters": false   // ✅ tắt cảnh báo param không dùng
   },
   "files": [],
   "references": [
