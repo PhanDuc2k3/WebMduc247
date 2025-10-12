@@ -26,7 +26,7 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'https://webmduc247.onrender.com',  
-  'https://web-mduc247.vercel.app/', 
+  'https://web-mduc247.vercel.app', 
 ];
 
 // ✅ Cấu hình CORS đúng cách
