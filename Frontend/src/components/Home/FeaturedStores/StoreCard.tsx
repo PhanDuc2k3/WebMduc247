@@ -1,16 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import axiosClient from "../../../api/axiosClient";
+import type { StoreType } from "../../../types/store";
 
-interface StoreCardProps {
-  storeId: string;               // id của cửa hàng (để xem cửa hàng)
-  ownerId: string;               // id của chủ shop (receiverId để chat)
-  name: string;
-  description: string;
-  join: string;
-  status?: "Đang online" | "Offline";
-  tags?: string[];
-  logoUrl?: string;
-  bannerUrl?: string;
+interface StoreCardProps extends Partial<StoreType> {
+  storeId: string;
+  ownerId: string;
 }
 
 const StoreCard: React.FC<StoreCardProps> = ({
@@ -18,78 +13,56 @@ const StoreCard: React.FC<StoreCardProps> = ({
   ownerId,
   name,
   description,
-  join,
-  status = "Offline",
-  tags = [],
   logoUrl,
   bannerUrl,
+  createdAt,
+  isActive,
+  customCategory,
 }) => {
   const navigate = useNavigate();
 
-  // 🟢 Xử lý nút "Chat ngay"
   const handleChatNow = async () => {
     try {
-      // Lấy user hiện tại
       const stored = localStorage.getItem("user");
-      console.log("📦 [FE] storedUser từ localStorage:", stored);
-
       if (!stored) {
         alert("Vui lòng đăng nhập để chat với cửa hàng");
         return;
       }
 
       const currentUser = JSON.parse(stored);
-      // Lấy id từ localStorage (có thể là _id hoặc id tùy backend)
       const senderId = currentUser._id || currentUser.id;
-      const receiverId = ownerId; // id chủ shop
+      const receiverId = ownerId;
 
-      if (!senderId) {
-        alert("Không tìm thấy ID người dùng đăng nhập. Vui lòng đăng nhập lại.");
+      if (!senderId || !receiverId) {
+        alert("Không tìm thấy ID người dùng hoặc chủ cửa hàng");
         return;
       }
 
-      if (!receiverId) {
-        alert("Không tìm thấy ID chủ cửa hàng.");
-        return;
-      }
-
-      console.log("📤 [FE] Gọi API tạo/lấy conversation:", { senderId, receiverId });
-
-      // Gọi API tạo hoặc lấy conversation
-      const res = await fetch("http://localhost:5000/api/messages/conversation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ senderId, receiverId }),
+      const res = await axiosClient.post("/api/messages/conversation", {
+        senderId,
+        receiverId,
       });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`HTTP ${res.status}: ${errorText}`);
-      }
-
-      const conversation = await res.json();
-      console.log("✅ [FE] Conversation nhận được:", conversation);
-
-      // Chuyển hướng tới trang message
-      navigate(`/messages/${conversation._id}`);
+      navigate(`/messages/${res.data._id}`);
     } catch (err) {
-      console.error("❌ [FE] Lỗi khi tạo conversation:", err);
+      console.error(err);
       alert("Không thể mở cuộc trò chuyện. Vui lòng thử lại.");
     }
   };
 
+  const joinDate = createdAt ? new Date(createdAt).toLocaleDateString() : "—";
+  const statusText = isActive ? "Đang online" : "Offline";
+  const tags = customCategory ? [customCategory] : [];
+
   return (
-<div className="bg-white border border-gray-400 rounded-xl shadow-sm hover:shadow-md hover:border-gray-500 hover:bg-gray-50 transition-all duration-200 p-6 flex flex-col overflow-hidden min-w-[250px]">
-      {/* Banner */}
+    <div className="bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-md hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 p-6 flex flex-col overflow-hidden min-w-[250px]">
       {bannerUrl && (
         <div className="h-32 w-full overflow-hidden rounded-lg mb-4">
           <img src={bannerUrl} alt={name} className="w-full h-full object-cover" />
         </div>
       )}
 
-      {/* Info */}
       <div className="flex flex-col flex-1">
-        {/* Logo + tên */}
         <div className="flex items-center gap-3 mb-2">
           {logoUrl && (
             <img
@@ -100,14 +73,12 @@ const StoreCard: React.FC<StoreCardProps> = ({
           )}
           <div>
             <div className="text-lg font-semibold text-gray-900">{name}</div>
-            <div className="text-xs text-gray-500">{join}</div>
+            <div className="text-xs text-gray-500">{joinDate}</div>
           </div>
         </div>
 
-        {/* Mô tả */}
         <div className="text-gray-600 text-sm mb-3 flex-1">{description}</div>
 
-        {/* Tags + trạng thái */}
         <div className="flex flex-wrap gap-2 mb-3">
           {tags.map((tag, i) => (
             <span
@@ -119,16 +90,13 @@ const StoreCard: React.FC<StoreCardProps> = ({
           ))}
           <span
             className={`text-xs px-2 py-1 rounded font-medium ${
-              status === "Đang online"
-                ? "bg-green-100 text-green-700"
-                : "bg-gray-200 text-gray-600"
+              isActive ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
             }`}
           >
-            {status}
+            {statusText}
           </span>
         </div>
 
-        {/* Nút hành động */}
         <div className="mt-auto flex gap-3">
           <button
             onClick={() => navigate(`/store/${storeId}`)}

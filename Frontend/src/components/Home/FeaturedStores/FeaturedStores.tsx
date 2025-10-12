@@ -1,17 +1,7 @@
 import React, { useEffect, useState } from "react";
 import StoreCard from "./StoreCard";
-
-interface StoreType {
-  _id: string;           
-  owner: string;         
-  name: string;
-  desc: string;
-  join: string;
-  status: "Đang online" | "Offline";
-  tags: string[];
-  logoUrl: string;
-  bannerUrl: string;
-}
+import storeApi from "../../../api/storeApi";
+import type { StoreType } from "../../../types/store";
 
 const FeaturedStores: React.FC = () => {
   const [stores, setStores] = useState<StoreType[]>([]);
@@ -19,28 +9,22 @@ const FeaturedStores: React.FC = () => {
 
   useEffect(() => {
     const fetchStores = async () => {
+      setLoading(true);
       try {
-        const res = await fetch("http://localhost:5000/api/stores");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-        const data = await res.json();
-        console.log("📦 [FE] Dữ liệu stores từ API:", data);
-
+        const { data } = await storeApi.getAllActiveStores();
         const mappedStores: StoreType[] = data.stores.map((s: any) => ({
-          _id: s._id,
-          owner: s.owner,
-          name: s.name,
-          desc: s.description,
-          join: `Tham gia từ ${new Date(s.createdAt).getFullYear()}`,
-          status: s.isActive ? "Đang online" : "Offline",
-          tags: s.category ? [s.category] : [],
-          logoUrl: s.logoUrl,
-          bannerUrl: s.bannerUrl,
+          ...s,
+          // mapping các field optional/fallback
+          rating: s.rating ?? 0,
+          products: s.products ?? 0,
+          followers: s.followers ?? 0,
+          responseRate: s.responseRate ?? 0,
+          responseTime: s.responseTime ?? "—",
+          joinDate: s.joinDate ?? new Date(s.createdAt).toLocaleDateString(),
         }));
-
         setStores(mappedStores);
       } catch (err) {
-        console.error("❌ [FE] Lỗi khi fetch stores:", err);
+        console.error("Lỗi khi fetch stores:", err);
       } finally {
         setLoading(false);
       }
@@ -57,9 +41,16 @@ const FeaturedStores: React.FC = () => {
     );
   }
 
+  if (!stores.length) {
+    return (
+      <div className="p-6 text-center text-gray-500">
+        Không có cửa hàng nào.
+      </div>
+    );
+  }
+
   return (
     <section className="p-6 bg-gray-50 rounded-lg max-w-[1400px] mx-auto">
-      {/* ⭐ Tiêu đề & mô tả giống FeaturedProducts / Categories */}
       <h3 className="text-[22px] font-bold mb-1 text-gray-900">
         Tất cả cửa hàng
       </h3>
@@ -67,25 +58,23 @@ const FeaturedStores: React.FC = () => {
         Xem danh sách tất cả các cửa hàng nổi bật
       </p>
 
-      {/* Grid hiển thị các cửa hàng */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {stores.map((store) => (
           <StoreCard
             key={store._id}
             storeId={store._id}
-            ownerId={store.owner}
+            ownerId={typeof store.owner === "string" ? store.owner : store.owner._id} 
             name={store.name}
-            description={store.desc}
-            join={store.join}
-            status={store.status}
-            tags={store.tags}
+            description={store.description}
             logoUrl={store.logoUrl}
             bannerUrl={store.bannerUrl}
+            createdAt={store.createdAt}
+            isActive={store.isActive}
+            customCategory={store.customCategory}
           />
         ))}
       </div>
 
-      {/* Nút xem thêm */}
       <div className="text-center mt-6 font-medium text-blue-600 cursor-pointer hover:underline">
         Xem thêm cửa hàng →
       </div>

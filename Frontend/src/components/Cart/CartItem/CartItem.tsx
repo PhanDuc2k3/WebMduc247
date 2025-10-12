@@ -1,7 +1,24 @@
 import React from "react";
 
+interface Variation {
+  color?: string;
+  size?: string;
+  additionalPrice?: number;
+}
+
+export interface CartItemType {
+  _id: string;
+  name: string;
+  imageUrl?: string;
+  price: number;
+  salePrice?: number;
+  quantity: number;
+  subtotal: number;
+  variation?: Variation;
+}
+
 interface CartItemProps {
-  item: any;
+  item: CartItemType;
   selected: boolean;
   onSelect: (id: string) => void;
   onUpdateQty: (id: string, qty: number) => void;
@@ -15,33 +32,39 @@ const CartItem: React.FC<CartItemProps> = ({
   onUpdateQty,
   onRemove,
 }) => {
+  const getFullUrl = (path?: string) => {
+    const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
+    return path?.startsWith("http") ? path : `${baseUrl}${path}`;
+  };
+
   return (
     <div className="flex items-center px-6 py-4 border-b last:border-b-0">
       {/* Checkbox */}
       <input
         type="checkbox"
         checked={selected}
-        onChange={() => onSelect(item._id)}   // ✅ dùng _id của item
+        onChange={() => onSelect(item._id)}
         className="mr-4 w-5 h-5"
       />
 
+      {/* Product image */}
       <img
-        src={`http://localhost:5000${item.imageUrl}`}
+        src={getFullUrl(item.imageUrl)}
         alt={item.name}
         className="w-20 h-20 object-cover rounded border mr-4"
       />
 
+      {/* Product info */}
       <div className="flex-1">
         <div className="font-medium text-gray-900">{item.name}</div>
         <div className="text-sm text-gray-500">
           {item.variation?.color && <span>Màu: {item.variation.color} </span>}
           {item.variation?.size && <span>| {item.variation.size}</span>}
-          {item.variation?.additionalPrice &&
-            item.variation.additionalPrice > 0 && (
-              <span className="ml-1 text-gray-500">
-                (+{item.variation.additionalPrice.toLocaleString("vi-VN")}₫)
-              </span>
-            )}
+          {item.variation?.additionalPrice && item.variation.additionalPrice > 0 && (
+            <span className="ml-1 text-gray-500">
+              (+{item.variation.additionalPrice.toLocaleString("vi-VN")}₫)
+            </span>
+          )}
         </div>
         <div className="text-red-500 font-bold">
           Đơn giá: {(item.salePrice ?? item.price).toLocaleString("vi-VN")}₫
@@ -51,25 +74,28 @@ const CartItem: React.FC<CartItemProps> = ({
         </div>
       </div>
 
+      {/* Quantity controls */}
       <div className="flex items-center gap-2 mx-6">
         <button
-          onClick={() => onUpdateQty(item._id, Math.max(item.quantity - 1, 1))}  // ✅
-          className="w-8 h-8 border rounded text-lg text-gray-600 hover:bg-gray-100"
+          onClick={() => onUpdateQty(item._id, item.quantity - 1)}
+          disabled={item.quantity <= 1}
+          className="w-8 h-8 border rounded text-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
         >
           -
         </button>
         <span className="w-8 text-center">{item.quantity}</span>
         <button
           onClick={() => onUpdateQty(item._id, item.quantity + 1)}
-          className="w-8 h-8 border rounded text-lg text-gray-600 hover:bg-gray-100"
+          className="w-8 h-8 border rounded text-lg text-gray-600 hover:bg-gray-100 transition"
         >
           +
         </button>
       </div>
 
+      {/* Remove button */}
       <button
-        onClick={() => onRemove(item._id)}     // ✅ dùng _id của item
-        className="ml-4 text-gray-400 hover:text-red-500"
+        onClick={() => onRemove(item._id)}
+        className="ml-4 text-gray-400 hover:text-red-500 transition"
       >
         ✕
       </button>

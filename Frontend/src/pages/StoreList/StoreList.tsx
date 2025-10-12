@@ -3,6 +3,7 @@ import StoreFilters from "../../components/StoreList/StoreFilters";
 import StoreGrid from "../../components/StoreList/StoreGrid";
 import StoreLoading from "../../components/StoreList/StoreLoading";
 import type { StoreType } from "../../types/store";
+import storeApi from "../../api/storeApi"; // dùng API đã tách
 
 const StoreList: React.FC = () => {
   const [stores, setStores] = useState<StoreType[]>([]);
@@ -12,8 +13,9 @@ const StoreList: React.FC = () => {
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/stores");
-        const data = await res.json();
+        const res = await storeApi.getAllActiveStores();
+        const data = res.data; // axios trả về data trong res.data
+
         const mappedStores: StoreType[] = data.stores.map((s: any) => ({
           _id: s._id,
           owner: { _id: s.owner?._id || "" },
@@ -25,6 +27,7 @@ const StoreList: React.FC = () => {
           logoUrl: s.logoUrl,
           bannerUrl: s.bannerUrl,
         }));
+
         setStores(mappedStores);
       } catch (err) {
         console.error("Lỗi khi fetch stores:", err);
@@ -32,12 +35,12 @@ const StoreList: React.FC = () => {
         setLoading(false);
       }
     };
+
     fetchStores();
   }, []);
 
   if (loading) return <StoreLoading />;
 
-  // Filter theo tên tìm kiếm
   const filteredStores = stores.filter((s) =>
     s.name.toLowerCase().includes(searchTerm.toLowerCase())
   );

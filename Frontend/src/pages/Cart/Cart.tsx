@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import CartStoreGroup from "../../components/Cart/CartStoreGroup/CartStoreGroup";
 import OrderSummary from "../../components/Cart/OrderSummary/OrderSummary";
-import { useNavigate } from "react-router-dom"; // ✅ ADDED
+import { useNavigate } from "react-router-dom";
+import cartApi from "../../api/cartApi"; // ✅ dùng axiosClient
 
 interface CartItem {
   _id: string;
@@ -29,27 +30,21 @@ export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
-  const navigate = useNavigate(); // ✅ ADDED
+  const navigate = useNavigate();
 
   // Lấy giỏ hàng
+  const fetchCart = async () => {
+    try {
+      const res = await cartApi.getCart();
+      setCart(res.data);
+    } catch (err) {
+      console.error("Lỗi khi lấy giỏ hàng:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/cart", {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        });
-        if (!res.ok) throw new Error("Không thể lấy giỏ hàng");
-        const data: Cart = await res.json();
-        setCart(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchCart();
   }, []);
 
@@ -60,38 +55,14 @@ export default function CartPage() {
     );
   };
 
-  // Update số lượng
+  // Cập nhật số lượng
   const updateQuantity = async (itemId: string, newQty: number) => {
     if (!cart || newQty < 1) return;
-
     try {
-      console.log("📤 Gửi PUT update:", { itemId, newQty });
-
-      const res = await fetch("http://localhost:5000/api/cart/update", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ itemId, quantity: newQty }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        console.error("❌ Lỗi response:", text);
-        throw new Error("Lỗi khi cập nhật số lượng");
-      }
-
-      const result = await res.json();
-      console.log("✅ API trả về:", result);
-
-      if (result && result.cart) {
-        setCart(result.cart);
-      } else {
-        console.error("⚠️ Dữ liệu trả về không có cart");
-      }
+      const res = await cartApi.updateQuantity(itemId, newQty);
+      setCart(res.data.cart);
     } catch (err) {
-      console.error("❌ Lỗi updateQuantity:", err);
+      console.error("Lỗi updateQuantity:", err);
     }
   };
 
@@ -99,22 +70,13 @@ export default function CartPage() {
   const removeItem = async (itemId: string) => {
     if (!cart) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/cart/${itemId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-      });
-      if (!res.ok) throw new Error("Lỗi khi xóa sản phẩm");
-      const data: Cart = await res.json();
-      setCart(data);
+      const res = await cartApi.removeFromCart(itemId);
+      setCart(res.data);
       setSelectedItems((prev) => prev.filter((id) => id !== itemId));
     } catch (err) {
-      console.error(err);
+      console.error("Lỗi removeItem:", err);
     }
   };
-
-  if (loading) return <div className="p-6">Đang tải giỏ hàng...</div>;
 
   // Tổng tiền các sản phẩm được chọn
   const selectedTotal =
@@ -133,17 +95,17 @@ export default function CartPage() {
     return acc;
   }, {});
 
-  // ✅ ADDED: Xử lý nút Thanh toán
+  // Checkout
   const handleCheckout = () => {
     if (selectedItems.length === 0) {
       alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán");
       return;
     }
-    // Lưu sản phẩm được chọn vào localStorage
     localStorage.setItem("checkoutItems", JSON.stringify(selectedItems));
-    // Chuyển sang trang checkout
     navigate("/checkout");
   };
+
+  if (loading) return <div className="p-6">Đang tải giỏ hàng...</div>;
 
   return (
     <div className="bg-gray-100 min-h-screen py-8 font-sans">
@@ -157,9 +119,7 @@ export default function CartPage() {
 
           <div className="space-y-6">
             {!cart || cart.items.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-6 text-gray-600">
-                Giỏ hàng trống
-              </div>
+              <div className="bg-white rounded-lg shadow p-6 text-gray-600">Giỏ hàng trống</div>
             ) : (
               Object.entries(groupedByStore || {}).map(([storeId, group]: any) => (
                 <CartStoreGroup
@@ -179,17 +139,18 @@ export default function CartPage() {
         {/* Right: Order Summary */}
         <div className="w-[350px] space-y-4">
           {cart && (
-            <OrderSummary
-              subtotal={selectedTotal}
-              discount={0} // chưa tính voucher
-              shippingFee={cart.shippingFee}
-              total={selectedTotal + cart.shippingFee}
-              selectedItems={selectedItems}  // ✅ truyền selectedItems
-            />
+            <>
+<OrderSummary
+  subtotal={selectedTotal}
+  discount={0}
+  shippingFee={cart.shippingFee ?? 0} // fallback
+  total={selectedTotal + (cart.shippingFee ?? 0)} // fallback
+  selectedItems={selectedItems}
+/>
+
+
+            </>
           )}
-
-          {/* ✅ ADDED: Nút Thanh toán */}
-
         </div>
       </div>
     </div>

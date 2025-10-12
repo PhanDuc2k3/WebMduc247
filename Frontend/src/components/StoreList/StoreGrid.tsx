@@ -13,14 +13,14 @@ const StoreGrid: React.FC<Props> = ({ stores }) => {
         <StoreCard
           key={store._id}
           storeId={store._id}
-          ownerId={store.owner._id}
+          ownerId={typeof store.owner === "string" ? store.owner : store.owner._id}
           name={store.name}
           description={store.description}
-          join={store.join}
-          status={store.status}
-          tags={store.tags}
           logoUrl={store.logoUrl}
           bannerUrl={store.bannerUrl}
+          createdAt={store.createdAt}
+          isActive={store.isActive}
+          customCategory={store.customCategory}
         />
       ))}
     </div>

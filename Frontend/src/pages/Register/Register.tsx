@@ -2,54 +2,55 @@ import React, { useState } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from "react-router-dom";
-import axiosClient from "../../api/axiosClient";
+import userApi from "../../api/userApi";
 
 const Register: React.FC = () => {
-	const [activeTab, setActiveTab] = useState("register");
-	const navigate = useNavigate();
-	const [fullName, setFullName] = useState("");
-	const [phone, setPhone] = useState("");
-	const [email, setEmail] = useState("");
-	const [password, setPassword] = useState("");
-	const [confirmPassword, setConfirmPassword] = useState("");
-	const [acceptTerms, setAcceptTerms] = useState(false);
-	const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("register");
+  const navigate = useNavigate();
 
-const handleRegister = async (e: React.FormEvent) => {
-  e.preventDefault();
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  if (!acceptTerms) {
-    toast.error("Bạn phải đồng ý với điều khoản sử dụng và chính sách bảo mật");
-    return;
-  }
-  if (!fullName || !phone || !email || !password || !confirmPassword) {
-    toast.error("Vui lòng nhập đầy đủ thông tin");
-    return;
-  }
-  if (password !== confirmPassword) {
-    toast.error("Mật khẩu xác nhận không khớp");
-    return;
-  }
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  setLoading(true);
-  try {
-    const res = await axiosClient.post("/api/users/register", {
-      fullName,
-      phone,
-      email,
-      password,
-    });
+    if (!acceptTerms) {
+      toast.error("Bạn phải đồng ý với điều khoản sử dụng và chính sách bảo mật");
+      return;
+    }
+    if (!fullName || !phone || !email || !password || !confirmPassword) {
+      toast.error("Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Mật khẩu xác nhận không khớp");
+      return;
+    }
 
-    toast.success(res.data.message || "Đăng ký thành công");
-    navigate("/login");
-  } catch (err: any) {
-    toast.error(
-      err.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại"
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+    try {
+      // ✅ Gọi API qua userApi
+      const res = await userApi.register({
+        fullName,
+        phone,
+        email,
+        password,
+      });
+
+      toast.success(res.data.message || "Đăng ký thành công 🎉");
+      navigate("/login");
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
 
 

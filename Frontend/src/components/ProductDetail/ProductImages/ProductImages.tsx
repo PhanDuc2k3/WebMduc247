@@ -1,16 +1,12 @@
 import React from "react";
 
 interface ProductImagesProps {
-    productId?: string;  
+  productId?: string;  
   images: string[];
   mainImage: string;
   setMainImage: (img: string) => void;
 }
 
-const getImageUrl = (path: string) => {
-  if (!path) return "/no-image.png";
-  return path.startsWith("http") ? path : `http://localhost:5000${path}`;
-};
 
 const ProductImages: React.FC<ProductImagesProps> = ({
   images,
@@ -23,7 +19,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
       <div className="w-full max-w-sm mb-5">
         {mainImage ? (
           <img
-            src={getImageUrl(mainImage)}
+            src={mainImage}
             alt="product"
             className="w-full aspect-[3/4] object-contain rounded-md border"
           />
@@ -39,7 +35,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
         {images.map((img, idx) => (
           <img
             key={idx}
-            src={getImageUrl(img)}
+            src={img}
             alt={`thumb-${idx}`}
             className={`w-16 h-16 object-contain rounded-md border cursor-pointer transition ${
               mainImage === img ? "border-blue-500" : "hover:border-gray-400"

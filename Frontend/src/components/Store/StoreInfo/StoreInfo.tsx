@@ -1,6 +1,7 @@
+// StoreOverview.tsx
 import React from "react";
 
-const StoreInfo: React.FC = () => (
+const StoreOverview: React.FC = () => (
   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-6">
     <div>
       <p className="font-semibold">Đánh giá:</p>
@@ -21,4 +22,4 @@ const StoreInfo: React.FC = () => (
   </div>
 );
 
-export default StoreInfo;
+export default StoreOverview;

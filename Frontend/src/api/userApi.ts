@@ -1,8 +1,14 @@
 import axiosClient from "./axiosClient";
-import { LoginRequest, LoginResponse } from "../types/user";
+import type { LoginRequest, LoginResponse, RegisterRequest, RegisterResponse } from "../types/user";
 
 const userApi = {
-  login: (data: LoginRequest) => axiosClient.post<LoginResponse>("/api/users/login", data),
+  // Đăng nhập
+  login: (data: LoginRequest) =>
+    axiosClient.post<LoginResponse>("/api/users/login", data),
+
+  // Đăng ký
+  register: (data: RegisterRequest) =>
+    axiosClient.post<RegisterResponse>("/api/users/register", data),
 };
 
 export default userApi;

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import ProductCard from "../../Home/FeaturedProducts/ProductCard";
+import productApi from "../../../api/productApi"; // đường dẫn đúng tới folder api
 
 interface Product {
   _id: string;
@@ -27,12 +28,10 @@ const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        // ✅ URL backend đúng
-        const res = await fetch(`http://localhost:5000/api/products/store/${storeId}/products`);
-        if (!res.ok) throw new Error("Không thể lấy sản phẩm");
-        const data: Product[] = await res.json();
+        // Dùng axios từ productApi
+        const res = await productApi.getProductsByStore(storeId);
+        const data: Product[] = res.data;
 
-        // Map image chính từ images[0]
         const mappedProducts = data.map(p => ({
           ...p,
           image: p.images?.[0] || "/fallback-image.png"

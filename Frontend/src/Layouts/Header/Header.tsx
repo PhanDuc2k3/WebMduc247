@@ -1,49 +1,33 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import axiosClient from "../../api/axiosClient"; // hoặc userApi nếu bạn tạo endpoint profile
 
 const Header: React.FC = () => {
   const [user, setUser] = useState<{ fullName?: string; avatarUrl?: string } | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
 
-useEffect(() => {
-  const fetchUser = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await axiosClient.get("/api/users/profile"); // axios tự add token từ interceptor
+        const data = res.data;
+
+        setUser({
+          fullName: data.fullName || data.user?.fullName,
+          avatarUrl: data.avatarUrl || data.user?.avatarUrl,
+        });
+      } catch (error) {
+        console.error("Fetch user error:", error);
         setUser(null);
-        return;
       }
+    };
 
-      // Gọi API lấy user từ DB
-      const res = await fetch("http://localhost:5000/api/users/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    fetchUser();
 
-      if (!res.ok) {
-        throw new Error("Không thể lấy thông tin user");
-      }
-
-      const data = await res.json();
-      setUser({
-        fullName: data.fullName || data.user?.fullName,
-        avatarUrl: data.avatarUrl || data.user?.avatarUrl, // field avatar từ DB
-      });
-    } catch (error) {
-      console.error("Fetch user error:", error);
-      setUser(null);
-    }
-  };
-
-  fetchUser();
-
-  // 🟢 Lắng nghe sự kiện update avatar
-  window.addEventListener("userUpdated", fetchUser);
-  return () => window.removeEventListener("userUpdated", fetchUser);
-}, []);
-
+    window.addEventListener("userUpdated", fetchUser);
+    return () => window.removeEventListener("userUpdated", fetchUser);
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("token");

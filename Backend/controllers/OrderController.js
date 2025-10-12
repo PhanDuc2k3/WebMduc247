@@ -8,7 +8,14 @@ const Product = require("../models/Product");
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { shippingAddress, paymentMethod, note, shippingFee = 0, voucherCode, selectedItems } = req.body;
+    const {
+      shippingAddress,
+      paymentMethod,
+      note,
+      shippingFee = 0,
+      voucherCode,
+      selectedItems,
+    } = req.body;
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "Người dùng không tồn tại" });
@@ -17,6 +24,7 @@ exports.createOrder = async (req, res) => {
     if (!cart || cart.items.length === 0)
       return res.status(400).json({ message: "Giỏ hàng trống" });
 
+    // Lọc các sản phẩm được chọn
     let filteredItems = cart.items;
     if (selectedItems && Array.isArray(selectedItems)) {
       filteredItems = cart.items.filter(item => selectedItems.includes(item._id.toString()));
@@ -24,6 +32,7 @@ exports.createOrder = async (req, res) => {
     if (filteredItems.length === 0)
       return res.status(400).json({ message: "Không có sản phẩm nào được chọn" });
 
+    // Voucher
     let discount = 0;
     let voucher = null;
     if (voucherCode) {
@@ -42,9 +51,21 @@ exports.createOrder = async (req, res) => {
         ? voucher.discountValue
         : Math.min((subtotalFiltered * voucher.discountValue) / 100, voucher.maxDiscount || Infinity);
 
-      voucher.usedCount += 1;
+      voucher.usedCount = (voucher.usedCount || 0) + 1;
+      voucher.usersUsed = voucher.usersUsed || [];
       voucher.usersUsed.push(userId);
       await voucher.save();
+    }
+
+    // Fallback shippingAddress
+    const sa = shippingAddress || {};
+    const shipping = {
+      fullName: sa.fullName || user.fullName,
+      phone: sa.phone || user.phone,
+      address: sa.address || `${sa.street || ""}, ${sa.city || ""}`.trim(),
+    };
+    if (!shipping.fullName || !shipping.phone || !shipping.address) {
+      return res.status(400).json({ message: "Vui lòng cung cấp đầy đủ thông tin giao hàng" });
     }
 
     const subtotal = filteredItems.reduce((sum, item) => sum + item.subtotal, 0);
@@ -59,7 +80,7 @@ exports.createOrder = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        avatarUrl: user.avatarUrl
+        avatarUrl: user.avatarUrl,
       },
       items: filteredItems.map(item => ({
         productId: item.productId._id,
@@ -72,11 +93,7 @@ exports.createOrder = async (req, res) => {
         variation: item.variation,
         subtotal: item.subtotal,
       })),
-      shippingAddress: {
-        fullName: shippingAddress.fullName,
-        phone: shippingAddress.phone,
-        address: shippingAddress.address,
-      },
+      shippingAddress: shipping,
       shippingInfo: {
         method: shippingFee === 50000 ? "Giao hàng nhanh" : "Giao hàng tiêu chuẩn",
         estimatedDelivery: new Date(Date.now() + (shippingFee === 50000 ? 1 : 3) * 24*60*60*1000),
@@ -97,6 +114,7 @@ exports.createOrder = async (req, res) => {
 
     await order.save();
 
+    // Xóa các item đã đặt ra khỏi cart
     cart.items = cart.items.filter(item => !filteredItems.find(fi => fi._id.toString() === item._id.toString()));
     cart.subtotal = cart.items.reduce((sum, item) => sum + item.subtotal, 0);
     cart.total = cart.subtotal;
@@ -109,7 +127,6 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 exports.getMyOrders = async (req, res) => {
   try {
     const userId = req.user.userId;

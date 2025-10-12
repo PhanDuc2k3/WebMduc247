@@ -7,7 +7,7 @@ interface OrderSummaryProps {
   shippingFee: number;
   total: number;
   voucherId?: string;
-  selectedItems: string[]; // ✅ nhận từ CartPage
+  selectedItems: string[];
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -26,48 +26,48 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       return;
     }
 
-    // ✅ Lưu voucher (nếu có)
-    const voucherData = {
-      voucherId: voucherId || null,
-      discount: discount || 0,
-    };
-    localStorage.setItem("appliedVoucher", JSON.stringify(voucherData));
-    console.log("📦 Voucher saved:", voucherData);
+    // Lưu voucher nếu có
+    localStorage.setItem(
+      "appliedVoucher",
+      JSON.stringify({
+        voucherId: voucherId || null,
+        discount: discount || 0,
+      })
+    );
 
-    // ✅ Lưu danh sách sản phẩm được chọn
+    // Lưu sản phẩm được chọn
     localStorage.setItem("checkoutItems", JSON.stringify(selectedItems));
-    console.log("🛒 Selected items saved:", selectedItems);
 
-    // ✅ Điều hướng sang trang Checkout
+    // Điều hướng sang trang checkout
     navigate("/checkout");
   };
 
+  const formatPrice = (value: number) => value.toLocaleString("vi-VN") + "₫";
+
   return (
     <div className="bg-white rounded-lg shadow p-6">
-      <div className="font-semibold text-lg mb-4">Tóm tắt đơn hàng</div>
+      <h2 className="font-semibold text-lg mb-4">Tóm tắt đơn hàng</h2>
 
       <div className="flex justify-between text-gray-700 mb-2">
         <span>Tạm tính</span>
-        <span className="font-medium">{subtotal.toLocaleString("vi-VN")}₫</span>
+        <span className="font-medium">{formatPrice(subtotal)}</span>
       </div>
 
       <div className="flex justify-between text-gray-700 mb-2">
         <span>Giảm giá</span>
-        <span className="text-red-500 font-medium">
-          -{discount.toLocaleString("vi-VN")}₫
-        </span>
+        <span className="text-red-500 font-medium">-{formatPrice(discount)}</span>
       </div>
 
       <div className="flex justify-between text-gray-700 mb-4">
         <span>Phí vận chuyển</span>
-        <span className="text-green-600 font-medium">
-          {shippingFee > 0 ? `${shippingFee.toLocaleString("vi-VN")}₫` : "Miễn phí"}
+        <span className={`font-medium ${shippingFee > 0 ? "text-green-600" : ""}`}>
+          {shippingFee > 0 ? formatPrice(shippingFee) : "Miễn phí"}
         </span>
       </div>
 
       <div className="border-t pt-4 flex justify-between items-center text-lg font-bold">
         <span>Tổng cộng</span>
-        <span className="text-red-500">{total.toLocaleString("vi-VN")}₫</span>
+        <span className="text-red-500">{formatPrice(total)}</span>
       </div>
 
       <button

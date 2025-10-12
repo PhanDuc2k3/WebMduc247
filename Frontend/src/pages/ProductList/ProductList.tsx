@@ -4,6 +4,7 @@ import ProductLoading from "../../components/ProductList/ProductLoading";
 import ProductCard from "../../components/Home/FeaturedProducts/ProductCard";
 import PriceFilter from "../../components/ProductList/PriceFilter";
 import type { ProductType } from "../../types/product";
+import productApi from "../../api/productApi";
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<ProductType[]>([]);
@@ -14,14 +15,8 @@ const ProductList: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/products");
-        const data = await res.json();
-
-        const list = data.data || data.products || [];
-        if (!Array.isArray(list)) {
-          setProducts([]);
-          return;
-        }
+        const res = await productApi.getProducts();
+        const list = res.data.data || res.data.products || [];
 
         const mapped: ProductType[] = list.map((p: any) => ({
           _id: p._id,
@@ -60,7 +55,7 @@ const ProductList: React.FC = () => {
     fetchProducts();
   }, []);
 
-  // ✅ Lọc sản phẩm theo giá + tên
+  // 🔎 Lọc sản phẩm theo giá + tên
   const filteredProducts = products
     .filter((p) => {
       if (!selectedPrice) return true;
@@ -78,10 +73,7 @@ const ProductList: React.FC = () => {
 
       return true;
     })
-    .filter((p) => {
-      if (!searchTerm) return true;
-      return p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    });
+    .filter((p) => !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   if (loading) return <ProductLoading />;
 
@@ -92,10 +84,8 @@ const ProductList: React.FC = () => {
         Khám phá các sản phẩm nổi bật được nhiều người yêu thích
       </p>
 
-      {/* 🔍 Thanh tìm kiếm & bộ lọc */}
       <ProductFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
-      {/* 🧩 Bố cục 2 cột: 20% bộ lọc - 80% danh sách */}
       <div className="flex flex-col lg:flex-row gap-6 mt-6">
         {/* Bộ lọc giá */}
         <div className="lg:w-1/5 bg-white p-4 rounded-xl shadow-sm border h-fit">
@@ -105,20 +95,19 @@ const ProductList: React.FC = () => {
 
         {/* Danh sách sản phẩm */}
         <div className="lg:w-4/5">
-<div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
-  {filteredProducts.length > 0 ? (
-    filteredProducts.map((p) => (
-      <div key={p._id} className="w-full">
-        <ProductCard product={p} />
-      </div>
-    ))
-  ) : (
-    <p className="text-gray-500 col-span-full text-center">
-      Không có sản phẩm nào để hiển thị.
-    </p>
-  )}
-</div>
-
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map((p) => (
+                <div key={p._id} className="w-full">
+                  <ProductCard product={p} />
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 col-span-full text-center">
+                Không có sản phẩm nào để hiển thị.
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </div>

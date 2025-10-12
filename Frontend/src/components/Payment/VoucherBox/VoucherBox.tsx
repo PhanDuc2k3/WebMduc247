@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import voucherApi from "../../../api/voucherApi";
+import type { VoucherPreviewRequest, VoucherPreviewResponse } from "../../../api/voucherApi";
+
 
 interface VoucherBoxProps {
   subtotal: number;
@@ -24,43 +27,35 @@ const VoucherBox: React.FC<VoucherBoxProps> = ({ subtotal, onPreview }) => {
     }
 
     try {
-      // gọi API preview voucher
-      const res = await fetch("http://localhost:5000/api/vouchers/preview", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({ code: voucher }), // chỉ gửi code
-      });
+      const reqData: VoucherPreviewRequest = {
+        code: voucher,
+        orderTotal: subtotal,
+      };
 
-      const data = await res.json();
+      // Gọi API preview voucher qua axios
+      const res = await voucherApi.previewVoucher(reqData);
+      const data: VoucherPreviewResponse = res.data;
 
-      if (!res.ok) {
+      if (data.discountAmount === undefined) {
         alert(data.message || "❌ Voucher không hợp lệ hoặc lỗi server");
         return;
       }
 
-      // Tạo info voucher để hiển thị
       const vInfo: VoucherInfo = {
-        code: data.voucher.code,
-        title: data.voucher.title,
-        description: data.voucher.description,
-        minOrderValue: data.voucher.minOrderValue || 0,
-        valid: subtotal >= (data.voucher.minOrderValue || 0),
+        code: data.code,
+        title: `Giảm ${data.discountAmount.toLocaleString("vi-VN")}₫`, // hiển thị tạm
+        description: "Voucher áp dụng cho đơn hàng",
+        minOrderValue: 0, // nếu backend trả minOrderValue có thể lấy
+        valid: subtotal >= (data.finalTotal + data.discountAmount), // kiểm tra đơn hàng đạt điều kiện
       };
 
       setInfo(vInfo);
 
       if (vInfo.valid) {
-        onPreview(data.discount, vInfo.code); // gửi discount tạm thời lên parent
+        onPreview(data.discountAmount, vInfo.code);
         alert("✅ Voucher hợp lệ, đã áp dụng tạm thời!");
       } else {
-        alert(
-          `Đơn hàng chưa đạt ${vInfo.minOrderValue.toLocaleString(
-            "vi-VN"
-          )}₫, không thể áp dụng voucher`
-        );
+        alert(`Đơn hàng chưa đạt điều kiện, không thể áp dụng voucher`);
       }
     } catch (err) {
       console.error(err);

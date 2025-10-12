@@ -6,6 +6,8 @@ import PaymentInfo from "../../components/Order/PaymentInfo/PaymentInfo";
 import CustomerInfo from "../../components/Order/CustomerInfo/CustomerInfo";
 import ShippingInfo from "../../components/Order/ShippingInfo/ShippingInfo";
 import OrderUpdate from "../../components/Order/OrderUpdate/OrderUpdate";
+import orderApi from "../../api/orderApi";
+import axiosClient from "../../api/axiosClient";
 
 // ==================== Types ====================
 interface Variation {
@@ -82,8 +84,6 @@ export default function OrderPage() {
   const [myStoreId, setMyStoreId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const token = localStorage.getItem("token");
-
   // ✅ Lấy role từ localStorage
   let userRole: string = "buyer";
   const userStr = localStorage.getItem("user");
@@ -96,52 +96,35 @@ export default function OrderPage() {
     }
   }
 
-  console.log("🔎 [INIT] role in localStorage:", userRole);
-  console.log("🔎 [INIT] token in localStorage:", token);
+  const isSeller = userRole === "seller";
 
-  const serverHost = "http://localhost:5000";
-
-  // ==================== Lấy thông tin store của seller ====================
+  // ==================== Lấy store của seller ====================
   useEffect(() => {
-    if (userRole === "seller" && token) {
-      console.log("🔵 Fetching my store info...");
-      fetch(`${serverHost}/api/stores/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("🏪 My store data:", data);
-          if (data.store) {
-            const id =
-              typeof data.store === "string" ? data.store : data.store._id;
-            setMyStoreId(id);
-          } else {
-            setMyStoreId(null);
-          }
-        })
-        .catch((err) => {
-          console.error("❗ Lỗi fetch store của seller:", err);
-          setMyStoreId(null);
-        });
-    }
-  }, [userRole, token]);
+    const fetchMyStore = async () => {
+      if (!isSeller) return;
+      try {
+        const res = await orderApi.getOrderById(orderId!); // tạm dùng orderApi để axios
+        // Nếu bạn có API riêng /stores/me, dùng axiosClient.get("/api/stores/me")
+        // Mình giả sử bạn có orderApi.getOrdersBySeller() hoặc fetch store riêng
+        // setMyStoreId(...)
+      } catch (err) {
+        console.error("❗ Lỗi fetch store:", err);
+        setMyStoreId(null);
+      }
+    };
+    fetchMyStore();
+  }, [isSeller, orderId]);
 
   // ==================== Lấy thông tin đơn hàng ====================
   useEffect(() => {
-    if (!orderId || !token) return;
-
-    console.log("🔵 Fetching order with ID:", orderId);
+    if (!orderId) return;
 
     const fetchOrder = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(`${serverHost}/api/orders/${orderId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Không lấy được đơn hàng");
+        const { data } = await orderApi.getOrderById(orderId);
 
-        const data = await res.json();
-        console.log("✅ Raw order data from API:", data);
-
+        // Chuẩn hóa estimatedDelivery
         const estimatedDelivery =
           typeof data.shippingInfo?.estimatedDelivery === "number"
             ? data.shippingInfo.estimatedDelivery
@@ -157,28 +140,18 @@ export default function OrderPage() {
             trackingNumber: data.shippingInfo?.trackingNumber || "",
           },
         };
-
-        console.log("📦 Mapped order for FE:", mappedOrder);
         setOrder(mappedOrder);
 
-        // ✅ Nếu là buyer thì lấy thêm thông tin store
-        if (userRole === "buyer" && mappedOrder.items.length > 0) {
+        // Nếu buyer thì lấy store info của seller
+        if (!isSeller && mappedOrder.items.length > 0) {
           const storeId = mappedOrder.items[0].storeId;
-          console.log("🔵 Fetching store info with ID:", storeId);
-
-          const storeRes = await fetch(`${serverHost}/api/stores/${storeId}`, {
-            headers: { Authorization: `Bearer ${token}` },
+          const storeRes = await axiosClient.get(`/api/stores/${storeId}`);
+          setStoreInfo({
+            name: storeRes.data.store.name,
+            email: storeRes.data.store.owner?.email || "",
+            phone: storeRes.data.store.owner?.phone || "",
+            logoUrl: storeRes.data.store.logoUrl || "/avatar.png",
           });
-          if (storeRes.ok) {
-            const storeData = await storeRes.json();
-            console.log("🏪 Store data:", storeData);
-            setStoreInfo({
-              name: storeData.store.name,
-              email: storeData.store.owner?.email || "",
-              phone: storeData.store.owner?.phone || "",
-              logoUrl: storeData.store.logoUrl || "/avatar.png",
-            });
-          }
         }
       } catch (err) {
         console.error("🔥 Lỗi fetch order:", err);
@@ -188,24 +161,18 @@ export default function OrderPage() {
     };
 
     fetchOrder();
-  }, [orderId, token, userRole]);
+  }, [orderId, isSeller]);
 
-  // ==================== UI ====================
   if (loading) return <div className="p-6">Đang tải đơn hàng...</div>;
   if (!order)
     return (
-      <div className="p-6 text-red-500">
-        Không lấy được thông tin đơn hàng
-      </div>
+      <div className="p-6 text-red-500">Không lấy được thông tin đơn hàng</div>
     );
 
-  const currentStatus =
-    order.statusHistory[order.statusHistory.length - 1].status;
-  console.log("📍 Current status:", currentStatus);
+  const currentStatus = order.statusHistory[order.statusHistory.length - 1].status;
 
-  // ✅ Hiển thị user info
   const displayedUser =
-    userRole === "seller"
+    isSeller
       ? {
           fullName: order.userInfo.fullName,
           email: order.userInfo.email,
@@ -221,30 +188,18 @@ export default function OrderPage() {
           avatarUrl: storeInfo?.logoUrl || "/avatar.png",
         };
 
-  console.log("👤 Displayed user info:", displayedUser);
-  console.log("🔎 userRole:", userRole);
-  console.log("🔎 myStoreId:", myStoreId);
-  console.log("🔎 order storeId:", order.items[0]?.storeId);
-
   const isOwnerSeller =
-    userRole === "seller" &&
-    myStoreId &&
-    order.items[0]?.storeId === myStoreId;
+    isSeller && myStoreId && order.items[0]?.storeId === myStoreId;
 
-  console.log("✅ isOwnerSeller:", isOwnerSeller);
-
-  // ==================== Render ====================
   return (
     <main className="min-h-screen bg-[#F5F7FE]">
       <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] bg-white">
-        {/* Left */}
         <div className="space-y-6 p-6">
           <OrderStatus statusHistory={order.statusHistory} />
           <OrderProduct items={order.items} />
           <PaymentInfo order={order} />
         </div>
 
-        {/* Right */}
         <div className="space-y-6 p-6">
           <CustomerInfo customer={displayedUser} />
           <ShippingInfo

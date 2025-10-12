@@ -1,9 +1,12 @@
 import axios, { type AxiosInstance } from "axios";
 
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || "https://webmduc247.onrender.com";
+
 const axiosClient: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
-  withCredentials: true, // ⚠️ thêm dòng này nếu dùng credentials
+  withCredentials: true,
 });
 
 axiosClient.interceptors.request.use((config) => {
@@ -11,8 +14,12 @@ axiosClient.interceptors.request.use((config) => {
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
-    }
-    console.log("🌍 API base URL:", import.meta.env.VITE_API_URL);
+  }
+
+  // Log URL chỉ trong môi trường dev
+  if (import.meta.env.DEV) {
+    console.log(" API base URL:", API_BASE_URL);
+  }
 
   return config;
 });

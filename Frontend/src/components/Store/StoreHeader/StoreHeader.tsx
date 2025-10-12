@@ -1,48 +1,19 @@
+// components/Store/StoreInfo.tsx
 import React, { useEffect, useState } from "react";
+import storeApi from "../../../api/storeApi";
+import type { StoreType } from "../../../types/store";
 
-interface Store {
-  name: string;
-  description: string;
-  storeAddress: string;
-  logoUrl: string;
-  bannerUrl?: string;
-  contactPhone?: string;
-  contactEmail?: string;
-  category: string;
-  customCategory?: string;
-  rating?: number;
-  products?: number;
-  followers?: number;
-  responseRate?: number;
-  responseTime?: string;
-  joinDate?: string;
+interface StoreInfoProps {
+  store: StoreType; // dùng store đã fetch sẵn từ StorePage
 }
 
-const StoreInfo: React.FC<{ storeId: string }> = ({ storeId }) => {
-  const [store, setStore] = useState<Store | null>(null);
-
-  // ✅ Call API
-  useEffect(() => {
-    const fetchStore = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/stores/${storeId}`);
-        const data = await res.json();
-        console.log("Store Info nhận:", data);
-        setStore(data.store); // nhớ backend trả { store: {...} }
-      } catch (error) {
-        console.error("Lỗi fetch store:", error);
-      }
-    };
-    fetchStore();
-  }, [storeId]);
-
-  if (!store) return <p>Đang tải thông tin cửa hàng...</p>;
+const StoreInfo: React.FC<StoreInfoProps> = ({ store }) => {
+  if (!store) return <p>Không tìm thấy cửa hàng</p>;
 
   return (
     <div className="w-full relative">
-      {/* Banner full width */}
       {store.bannerUrl && (
-        <div className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] h-48 md:h-64 overflow-hidden">
+        <div className="w-screen relative left-1/2 -ml-[50vw] h-48 md:h-64 overflow-hidden">
           <img
             src={store.bannerUrl}
             alt="Store Banner"
@@ -51,11 +22,9 @@ const StoreInfo: React.FC<{ storeId: string }> = ({ storeId }) => {
         </div>
       )}
 
-      {/* Container chính đè lên banner */}
       <div className="max-w-6xl mx-auto relative -mt-12">
         <div className="bg-white rounded-lg shadow p-6">
           <div className="flex justify-between items-start">
-            {/* Trái: logo + thông tin */}
             <div className="flex gap-4">
               <img
                 src={store.logoUrl}
@@ -79,7 +48,6 @@ const StoreInfo: React.FC<{ storeId: string }> = ({ storeId }) => {
               </div>
             </div>
 
-            {/* Phải: button */}
             <div className="flex gap-2">
               <button className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm">
                 Chat ngay
@@ -90,30 +58,25 @@ const StoreInfo: React.FC<{ storeId: string }> = ({ storeId }) => {
             </div>
           </div>
 
-          {/* Stats hàng ngang */}
           <div className="grid grid-cols-3 md:grid-cols-6 gap-4 text-sm text-gray-700 mt-6 text-center">
             <div>
-              ⭐ {(store.rating ?? 0).toFixed(1)}
+              ⭐ {store.rating.toFixed(1)}
               <p className="text-gray-500">Đánh giá</p>
             </div>
             <div>
-              {store.products ?? 0}
+              {store.products}
               <p className="text-gray-500">Sản phẩm</p>
             </div>
             <div>
-              {(store.followers ?? 0).toLocaleString()}
-              <p className="text-gray-500">Người theo dõi</p>
-            </div>
-            <div>
-              {store.responseRate ?? 0}%
+              {store.responseRate}%
               <p className="text-gray-500">Tỉ lệ phản hồi</p>
             </div>
             <div>
-              {store.responseTime ?? "—"}
+              {store.responseTime}
               <p className="text-gray-500">Phản hồi</p>
             </div>
             <div>
-              {store.joinDate ?? "—"}
+              {store.joinDate}
               <p className="text-gray-500">Tham gia</p>
             </div>
           </div>
@@ -124,3 +87,5 @@ const StoreInfo: React.FC<{ storeId: string }> = ({ storeId }) => {
 };
 
 export default StoreInfo;
+
+

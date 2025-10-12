@@ -3,6 +3,8 @@ import { useParams } from "react-router-dom";
 import ProductImages from "../../components/ProductDetail/ProductImages/ProductImages";
 import ProductInfo from "../../components/ProductDetail/ProductInfo/ProductInfo";
 import ProductTabs from "../../components/ProductDetail/ProductTabs/ProductTabs";
+import productApi from "../../api/productApi"; // import API đã tách riêng
+import axiosClient from "../../api/axiosClient"; // lấy baseURL
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,25 +14,25 @@ const ProductDetail: React.FC = () => {
   const [mainImage, setMainImage] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
 
-  // ✅ biến cờ để tránh tăng view nhiều lần
   const hasCounted = useRef(false);
 
-  // fetch product
+  // Fetch product bằng axios
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/products/${id}`);
-        const data = await res.json();
-        if (res.ok) {
-          setProduct(data.data);
-          if (data.data.images?.length > 0) {
-            setMainImage(data.data.images[0]);
-          }
-        } else {
-          console.error("❌ Lỗi:", data.message);
-        }
+        setLoading(true);
+        const res = await productApi.getProductById(id!);
+        const data = res.data.data; // backend trả về { data: product }
+
+        // Map path thành URL đầy đủ (dùng baseURL từ axiosClient)
+        const imagesWithUrl = (data.images || []).map((img: string) =>
+          img.startsWith("http") ? img : `${axiosClient.defaults.baseURL}${img}`
+        );
+
+        setProduct({ ...data, images: imagesWithUrl });
+        if (imagesWithUrl.length > 0) setMainImage(imagesWithUrl[0]);
       } catch (err) {
-        console.error("❌ Fetch error:", err);
+        console.error("❌ Lỗi fetch product:", err);
       } finally {
         setLoading(false);
       }
@@ -39,13 +41,11 @@ const ProductDetail: React.FC = () => {
     if (id) fetchProduct();
   }, [id]);
 
-  // ✅ tăng view chỉ 1 lần khi load page
+  // Tăng view chỉ 1 lần
   useEffect(() => {
     const increaseView = async () => {
       try {
-        await fetch(`http://localhost:5000/api/products/${id}/view`, {
-          method: "PATCH",
-        });
+        await productApi.increaseView(id!);
       } catch (err) {
         console.error("❌ Lỗi tăng view:", err);
       }
@@ -64,7 +64,7 @@ const ProductDetail: React.FC = () => {
     <div className="max-w-6xl mx-auto p-4 bg-white rounded-lg shadow-md">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ProductImages
-          images={product.images || []}
+          images={product.images}
           mainImage={mainImage}
           setMainImage={setMainImage}
         />
@@ -76,7 +76,7 @@ const ProductDetail: React.FC = () => {
         />
       </div>
 
-      <ProductTabs productId={product?._id} />
+      <ProductTabs productId={product._id} />
     </div>
   );
 };

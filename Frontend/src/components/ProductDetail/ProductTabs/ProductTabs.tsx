@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import reviewApi from "../../../api/apiReview"; // import reviewApi
 
 interface Review {
   _id: string;
@@ -15,17 +16,22 @@ interface Review {
 const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
   const [active, setActive] = useState<"mo-ta" | "thong-so" | "danh-gia">("mo-ta");
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   useEffect(() => {
-    if (active === "danh-gia") {
-      fetch(`http://localhost:5000/api/review/${productId}/reviews`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Không fetch được reviews");
-          return res.json();
-        })
-        .then((data) => setReviews(data))
-        .catch((err) => console.error("Lỗi khi fetch reviews:", err));
-    }
+    const fetchReviews = async () => {
+      if (active !== "danh-gia") return;
+      try {
+        setLoadingReviews(true);
+        const res = await reviewApi.getReviewsByProduct(productId);
+        setReviews(res.data);
+      } catch (err) {
+        console.error("Lỗi khi fetch reviews:", err);
+      } finally {
+        setLoadingReviews(false);
+      }
+    };
+    fetchReviews();
   }, [active, productId]);
 
   const tabs = [
@@ -59,7 +65,6 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
 
       {/* Nội dung tab */}
       <div className="p-6 bg-white border rounded-lg shadow text-sm text-gray-800 leading-relaxed">
-        {/* Tab Mô tả */}
         {active === "mo-ta" && (
           <>
             <p className="mb-3">
@@ -76,39 +81,27 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
           </>
         )}
 
-        {/* Tab Thông số */}
         {active === "thong-so" && (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8">
-            <p>
-              <span className="font-medium">Màn hình:</span> 6.7 inch, Super Retina XDR OLED
-            </p>
-            <p>
-              <span className="font-medium">Chip:</span> A17 Pro
-            </p>
-            <p>
-              <span className="font-medium">Camera:</span> 48MP + 12MP ultra wide + 12MP telephoto
-            </p>
-            <p>
-              <span className="font-medium">Pin:</span> 4441 mAh
-            </p>
-            <p>
-              <span className="font-medium">Hệ điều hành:</span> iOS 17
-            </p>
+            <p><span className="font-medium">Màn hình:</span> 6.7 inch, Super Retina XDR OLED</p>
+            <p><span className="font-medium">Chip:</span> A17 Pro</p>
+            <p><span className="font-medium">Camera:</span> 48MP + 12MP ultra wide + 12MP telephoto</p>
+            <p><span className="font-medium">Pin:</span> 4441 mAh</p>
+            <p><span className="font-medium">Hệ điều hành:</span> iOS 17</p>
           </div>
         )}
 
-        {/* Tab Đánh giá */}
         {active === "danh-gia" && (
           <div className="space-y-6">
             <h3 className="font-semibold text-lg text-gray-800">Đánh giá từ khách hàng</h3>
-
-            {reviews.length === 0 ? (
+            {loadingReviews ? (
+              <p>Đang tải đánh giá...</p>
+            ) : reviews.length === 0 ? (
               <p className="text-gray-500">Chưa có đánh giá nào</p>
             ) : (
               reviews.map((r) => (
                 <div key={r._id} className="border-b pb-4">
                   <div className="flex items-start gap-4">
-                    {/* Avatar */}
                     {r.userInfo.avatarUrl ? (
                       <img
                         src={getFullUrl(r.userInfo.avatarUrl)}
@@ -122,16 +115,13 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
                     )}
 
                     <div className="flex-1">
-                      {/* Tên + sao */}
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-gray-800">{r.userInfo.fullName}</span>
                         <span className="text-yellow-500 text-sm">{"⭐".repeat(r.rating)}</span>
                       </div>
 
-                      {/* Nội dung đánh giá */}
                       <p className="text-gray-700 text-sm mt-1">{r.comment}</p>
 
-                      {/* Ảnh trong đánh giá */}
                       {(r.images ?? []).length > 0 && (
                         <div className="flex gap-2 mt-2">
                           {(r.images ?? []).map((img, i) => (
@@ -145,7 +135,6 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
                         </div>
                       )}
 
-                      {/* Thời gian */}
                       <p className="text-xs text-gray-500 mt-1">
                         {new Date(r.createdAt).toLocaleDateString("vi-VN")}
                       </p>
