@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from "react-router-dom";
+import axiosClient from "../../api/axiosClient";
 
 const Register: React.FC = () => {
 	const [activeTab, setActiveTab] = useState("register");
@@ -14,39 +15,42 @@ const Register: React.FC = () => {
 	const [acceptTerms, setAcceptTerms] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	const handleRegister = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!acceptTerms) {
-			toast.error("Bạn phải đồng ý với điều khoản sử dụng và chính sách bảo mật");
-			return;
-		}
-		if (!fullName || !phone || !email || !password || !confirmPassword) {
-			toast.error("Vui lòng nhập đầy đủ thông tin");
-			return;
-		}
-		if (password !== confirmPassword) {
-			toast.error("Mật khẩu xác nhận không khớp");
-			return;
-		}
-		setLoading(true);
-		try {
-			const res = await fetch("http://localhost:5000/api/users/register", {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ fullName, phone, email, password })
-			});
-			const data = await res.json();
-			if (res.ok) {
-				toast.success(data.message || "Đăng ký thành công");
-				// Có thể chuyển hướng sang login tại đây
-			} else {
-				toast.error(data.message || "Đăng ký thất bại");
-			}
-		} catch (err) {
-			toast.error("Lỗi kết nối server");
-		}
-		setLoading(false);
-	};
+const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!acceptTerms) {
+    toast.error("Bạn phải đồng ý với điều khoản sử dụng và chính sách bảo mật");
+    return;
+  }
+  if (!fullName || !phone || !email || !password || !confirmPassword) {
+    toast.error("Vui lòng nhập đầy đủ thông tin");
+    return;
+  }
+  if (password !== confirmPassword) {
+    toast.error("Mật khẩu xác nhận không khớp");
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const res = await axiosClient.post("/api/users/register", {
+      fullName,
+      phone,
+      email,
+      password,
+    });
+
+    toast.success(res.data.message || "Đăng ký thành công");
+    navigate("/login");
+  } catch (err: any) {
+    toast.error(
+      err.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
 
 
 		return (
