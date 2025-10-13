@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-
+import userApi from "../../../api/userApi"
 interface ProfileInfoDetailProps {
   isEditing: boolean;
   onCancel: () => void;
@@ -34,32 +34,28 @@ const ProfileInfoDetail: React.FC<ProfileInfoDetailProps> = ({
     }
   };
 
-  const handleUpdate = () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+const handleUpdate = async () => {
+  try {
+    if (!formData) return;
 
-    const formDataToSend = new FormData();
-    formDataToSend.append("fullName", formData.fullName || "");
-    formDataToSend.append("phone", formData.phone || "");
+    // Lấy file avatar nếu có
+    const avatarFile = fileInputRef.current?.files?.[0];
 
-    if (fileInputRef.current?.files?.[0]) {
-      formDataToSend.append("avatar", fileInputRef.current.files[0]);
-    }
+    // Gọi API axios
+    const res = await userApi.updateProfile(
+      { fullName: formData.fullName, phone: formData.phone },
+      avatarFile
+    );
 
-    fetch("http://localhost:5000/api/users/profile", {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formDataToSend,
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (onUpdated) onUpdated(data.user);
-        window.dispatchEvent(new Event("userUpdated"));
-      })
-      .catch((err) => console.error("Lỗi cập nhật:", err));
-  };
+    // res.data.user là user mới trả về từ server
+    if (onUpdated) onUpdated(res.data.user);
+
+    window.dispatchEvent(new Event("userUpdated"));
+  } catch (err) {
+    console.error("❌ Lỗi cập nhật:", err);
+  }
+};
+
 
   const handleCancel = () => {
     setFormData(user);

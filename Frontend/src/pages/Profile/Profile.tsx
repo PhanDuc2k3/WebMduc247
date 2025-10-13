@@ -5,9 +5,9 @@ import ProfileOrders from "../../components/Profile/ProfileOrders/ProfileOrders"
 import ProfileFavorites from "../../components/Profile/ProfileFavorite/ProfileFavorites";
 import ProfileSettings from "../../components/Profile/ProfileSettings/ProfileSetting";
 import ProfileInfoDetail from "../../components/Profile/ProfileInfoDetail/ProfileInfoDetail";
-import ProductReview from "../Review/Review"; // ✅ import modal review
+import ProductReview from "../Review/Review";
+import userApi from "../../api/userApi";
 
-// Types
 interface OrderItem {
   name: string;
   qty: number;
@@ -30,38 +30,43 @@ interface Order {
   statusHistory: StatusHistory[];
 }
 
+interface User {
+  id?: string;
+  email: string;
+  fullName: string;
+  phone?: string;
+  role?: string;
+  avatarUrl?: string;
+}
+
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState("info");
   const [isEditing, setIsEditing] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
-  // ✅ State modal review
   const [reviewProductId, setReviewProductId] = useState<string | null>(null);
   const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
 
-  const token = localStorage.getItem("token");
-  const serverHost = "http://localhost:5000";
-
-  // Fetch user info
   useEffect(() => {
-    if (!token) return;
-    fetch(`${serverHost}/api/users/profile`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => setUser(data.user))
-      .catch((err) => console.error("Lỗi fetch user:", err));
-  }, [token]);
+    const fetchUser = async () => {
+      try {
+        const res = await userApi.getProfile();
+        setUser(res.data.user);
+      } catch (error) {
+        console.error("Lỗi fetch user:", error);
+      }
+    };
+    fetchUser();
+  }, []);
 
-  // Fetch orders of current user
   useEffect(() => {
-    if (!token) return;
-
     const fetchOrders = async () => {
       try {
-        const res = await fetch(`${serverHost}/api/orders/my`, {
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const res = await fetch("http://localhost:5000/api/orders/my", {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) throw new Error("Không lấy được đơn hàng");
@@ -110,9 +115,8 @@ const Profile: React.FC = () => {
         setLoadingOrders(false);
       }
     };
-
     fetchOrders();
-  }, [token]);
+  }, []);
 
   if (!user) return <div>Đang tải...</div>;
 
@@ -136,14 +140,14 @@ const Profile: React.FC = () => {
           )}
 
           {activeTab === "orders" && (
-            <ProfileOrders
-              orders={orders}
-              loading={loadingOrders}
-              onReview={(productId: string, orderId: string) => {
-                setReviewProductId(productId);
-                setReviewOrderId(orderId);
-              }}
-            />
+  <ProfileOrders
+    orders={orders}              // truyền danh sách đơn hàng
+    loading={loadingOrders}      // trạng thái loading
+    onReview={(productId, orderId) => {
+      setReviewProductId(productId);
+      setReviewOrderId(orderId);
+    }}                           // mở popup review
+  />
           )}
 
           {activeTab === "favorites" && <ProfileFavorites />}
@@ -151,7 +155,6 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
-      {/* ✅ Modal review chỉ hiển thị ở Profile */}
       {reviewProductId && reviewOrderId && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg w-full max-w-2xl p-6 relative">

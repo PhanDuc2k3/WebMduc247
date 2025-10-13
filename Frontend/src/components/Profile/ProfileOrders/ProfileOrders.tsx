@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import reviewApi from "../../../api/apiReview";
 
 interface OrderItem {
   name: string;
@@ -38,9 +39,12 @@ interface ProfileOrdersProps {
   onReview: (productId: string, orderId: string) => void;
 }
 
-const ProfileOrders: React.FC<ProfileOrdersProps> = ({ orders, loading, onReview }) => {
+const ProfileOrders: React.FC<ProfileOrdersProps> = ({
+  orders,
+  loading,
+  onReview,
+}) => {
   const navigate = useNavigate();
-  const serverHost = "http://localhost:5000";
 
   // state chứa reviews theo productId
   const [reviews, setReviews] = useState<Record<string, Review[]>>({});
@@ -48,10 +52,8 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({ orders, loading, onReview
   // fetch reviews theo productId
   const fetchReviews = async (productId: string) => {
     try {
-      const res = await fetch(`${serverHost}/api/reviews/product/${productId}`);
-      if (!res.ok) throw new Error("Không lấy được reviews");
-      const data = await res.json();
-      setReviews((prev) => ({ ...prev, [productId]: data }));
+      const res = await reviewApi.getReviewsByProduct(productId);
+      setReviews((prev) => ({ ...prev, [productId]: res.data }));
     } catch (err) {
       console.error("❌ Lỗi fetch reviews:", err);
     }
@@ -83,8 +85,12 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({ orders, loading, onReview
     return map[latest] || latest;
   };
 
-  if (loading) return <div className="p-6 text-lg">Đang tải đơn hàng...</div>;
-  if (!orders.length) return <div className="p-6 text-gray-500 text-lg">Chưa có đơn hàng nào</div>;
+  if (loading)
+    return <div className="p-6 text-lg">Đang tải đơn hàng...</div>;
+  if (!orders.length)
+    return (
+      <div className="p-6 text-gray-500 text-lg">Chưa có đơn hàng nào</div>
+    );
 
   return (
     <div className="bg-white rounded-xl shadow p-8">
@@ -97,19 +103,19 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({ orders, loading, onReview
         >
           {/* Bên trái */}
           <div className="flex-1">
-            <div className="font-medium text-lg mb-2">Đơn hàng #{order._id}</div>
-            <div className="text-gray-500 text-base mb-4">Ngày đặt: {order.date}</div>
+            <div className="font-medium text-lg mb-2">
+              Đơn hàng #{order._id}
+            </div>
+            <div className="text-gray-500 text-base mb-4">
+              Ngày đặt: {order.date}
+            </div>
 
             {/* Danh sách sản phẩm */}
             {order.items.map((item, idx) => (
               <div key={`${item.productId}-${idx}`} className="mb-6">
                 <div className="flex items-center gap-4">
                   <img
-                    src={
-                      item.imgUrl?.startsWith("/uploads")
-                        ? `${serverHost}${item.imgUrl}`
-                        : item.imgUrl
-                    }
+                    src={item.imgUrl || "/default-avatar.png"}
                     alt={item.name}
                     className="w-20 h-20 rounded object-cover"
                   />
@@ -122,42 +128,44 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({ orders, loading, onReview
                 </div>
 
                 {/* Hiển thị reviews nếu có */}
-                {reviews[item.productId] && reviews[item.productId].length > 0 && (
-                  <div className="mt-3 ml-6 space-y-3">
-                    {reviews[item.productId].map((rv) => (
-                      <div key={rv._id} className="p-3 border rounded bg-gray-50">
-                        <div className="flex items-center gap-2 mb-1">
-                          <img
-                            src={
-                              rv.userInfo?.avatarUrl
-                                ? `${serverHost}${rv.userInfo.avatarUrl}`
-                                : "/default-avatar.png"
-                            }
-                            alt="avatar"
-                            className="w-8 h-8 rounded-full"
-                          />
-                          <span className="font-semibold">{rv.userInfo?.fullName || "Ẩn danh"}</span>
-                          <span className="text-yellow-400 ml-2">
-                            {"★".repeat(rv.rating)}
-                          </span>
-                        </div>
-                        <p className="text-gray-700 text-sm">{rv.comment}</p>
-                        {rv.images?.length > 0 && (
-                          <div className="flex gap-2 mt-2">
-                            {rv.images.map((img, idx) => (
-                              <img
-                                key={idx}
-                                src={`${serverHost}${img}`}
-                                alt="review"
-                                className="w-16 h-16 object-cover rounded"
-                              />
-                            ))}
+                {reviews[item.productId] &&
+                  reviews[item.productId].length > 0 && (
+                    <div className="mt-3 ml-6 space-y-3">
+                      {reviews[item.productId].map((rv) => (
+                        <div
+                          key={rv._id}
+                          className="p-3 border rounded bg-gray-50"
+                        >
+                          <div className="flex items-center gap-2 mb-1">
+                            <img
+                              src={rv.userInfo?.avatarUrl || "/default-avatar.png"}
+                              alt="avatar"
+                              className="w-8 h-8 rounded-full"
+                            />
+                            <span className="font-semibold">
+                              {rv.userInfo?.fullName || "Ẩn danh"}
+                            </span>
+                            <span className="text-yellow-400 ml-2">
+                              {"★".repeat(rv.rating)}
+                            </span>
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          <p className="text-gray-700 text-sm">{rv.comment}</p>
+                          {rv.images?.length > 0 && (
+                            <div className="flex gap-2 mt-2">
+                              {rv.images.map((img, idx) => (
+                                <img
+                                  key={idx}
+                                  src={img}
+                                  alt="review"
+                                  className="w-16 h-16 object-cover rounded"
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
               </div>
             ))}
           </div>
@@ -193,7 +201,9 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({ orders, loading, onReview
 
               {order.items[0]?.productId && (
                 <button
-                  onClick={() => navigate(`/products/${order.items[0].productId}`)}
+                  onClick={() =>
+                    navigate(`/products/${order.items[0].productId}`)
+                  }
                   className="bg-gray-100 px-4 py-2 rounded text-sm font-medium hover:bg-gray-200"
                 >
                   Mua lại
