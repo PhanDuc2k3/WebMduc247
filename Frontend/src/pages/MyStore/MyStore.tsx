@@ -5,12 +5,14 @@ import ProductManagement from "../../components/MyStore/ProductManagement/Produc
 import OrderManagement from "../../components/MyStore/OrderManagement/OrderManagement";
 import Statistics from "../../components/MyStore/Statistics/Statistics";
 import VoucherManagement from "../../components/MyStore/VoucherManagement/VoucherManagement";
+import axiosClient from "../../api/axiosClient";
+
 const tabs = [
   { key: "overview", label: "Tổng quan" },
   { key: "products", label: "Sản phẩm" },
   { key: "orders", label: "Đơn hàng" },
   { key: "stats", label: "Thống kê" },
-  { key: "voucher", label:"Voucher"},
+  { key: "voucher", label: "Voucher" },
 ];
 
 const MyStore: React.FC = () => {
@@ -24,16 +26,8 @@ const MyStore: React.FC = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetch("http://localhost:5000/api/users/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
+        const res = await axiosClient.get("/api/users/profile");
+        const data = res.data;
 
         const userRole = data.role || data.user?.role || "buyer";
         const userStore = data.store || data.user?.store || null;
@@ -42,12 +36,7 @@ const MyStore: React.FC = () => {
         setRole(userRole);
         setHasStore(!!userStore);
         setStoreId(userStore?._id || null);
-
-        if (userSellerRequest && userSellerRequest.status) {
-          setSellerRequestStatus(userSellerRequest.status);
-        } else {
-          setSellerRequestStatus("none");
-        }
+        setSellerRequestStatus(userSellerRequest?.status || "none");
       } catch (err) {
         console.error("Lỗi khi fetch profile:", err);
       } finally {
@@ -58,9 +47,7 @@ const MyStore: React.FC = () => {
     fetchProfile();
   }, []);
 
-  if (loading) {
-    return <div className="p-6">Đang tải...</div>;
-  }
+  if (loading) return <div className="p-6">Đang tải...</div>;
 
   if (role === "buyer" && !hasStore && sellerRequestStatus === "none") {
     return (
@@ -106,7 +93,7 @@ const MyStore: React.FC = () => {
           {activeTab === "products" && <ProductManagement />}
           {activeTab === "orders" && <OrderManagement />}
           {activeTab === "stats" && storeId && <Statistics storeId={storeId} />}
-          {activeTab === "voucher" && <VoucherManagement/>  }
+          {activeTab === "voucher" && <VoucherManagement />}
         </div>
       </div>
     );

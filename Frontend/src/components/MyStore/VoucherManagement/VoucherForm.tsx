@@ -1,8 +1,23 @@
 import React, { useState } from "react";
-import { X } from "lucide-react"; // icon đóng gọn, đẹp
+import { X } from "lucide-react";
+import type { VoucherType } from "../../../api/voucherApi";
+import voucherApi from "../../../api/voucherApi";
 
-const VoucherForm: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
-  const [formData, setFormData] = useState({
+interface VoucherFormProps {
+  onClose?: () => void;
+  onSuccess?: () => void;
+}
+
+// Mở rộng VoucherType để dùng trong form
+interface VoucherFormData extends VoucherType {
+  title?: string;
+  condition?: string;
+  categories: string[]; // dùng array
+  global: boolean;      // dùng trong form, không gửi lên API
+}
+
+const VoucherForm: React.FC<VoucherFormProps> = ({ onClose, onSuccess }) => {
+  const [formData, setFormData] = useState<VoucherFormData>({
     code: "",
     title: "",
     description: "",
@@ -15,53 +30,72 @@ const VoucherForm: React.FC<{ onClose?: () => void }> = ({ onClose }) => {
     startDate: "",
     endDate: "",
     usageLimit: 100,
-    categories: "",
+    categories: [],
   });
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
-  ) => {
-    const { name, value, type } = e.target;
-    const newValue =
-      type === "checkbox" && "checked" in e.target
-        ? (e.target as HTMLInputElement).checked
-        : value;
+  // Xử lý input
+const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+) => {
+  const { name, type, value } = e.target;
 
+  let newValue: string | number | boolean;
+
+  if (type === "checkbox") {
+    // Cast e.target thành HTMLInputElement để lấy checked
+    newValue = (e.target as HTMLInputElement).checked;
+  } else if (type === "number") {
+    newValue = Number(value);
+  } else if (name === "discountType") {
+    newValue = value === "percentage" ? "percentage" : "fixed";
+  } else if (name === "categories") {
+    // Chuyển string input thành array
+    const val = value as string;
     setFormData((prev) => ({
       ...prev,
-      [name]: newValue,
+      categories: val.split(",").map((c) => c.trim()),
     }));
-  };
+    return; // return để tránh gán sai type
+  } else {
+    newValue = value;
+  }
 
+  setFormData((prev) => ({
+    ...prev,
+    [name]: newValue,
+  }));
+};
+
+
+  // Submit form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
 
     try {
-      const dataToSend = {
-        ...formData,
-        categories: formData.categories
-          ? formData.categories.split(",").map((c) => c.trim())
-          : [],
+      // Chuẩn hóa data gửi lên API
+      const dataToSend: VoucherType = {
+        code: formData.code,
+        description: formData.description,
+        discountType: formData.discountType,
+        discountValue: formData.discountValue,
+        minOrderValue: formData.minOrderValue,
+        maxDiscount: formData.maxDiscount,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        usageLimit: formData.usageLimit,
       };
 
-const res = await fetch("http://localhost:5000/api/vouchers", {
-  method: "POST",
-  headers: { 
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${localStorage.getItem("token")}`, // 👈 thêm dòng này
-  },
-  body: JSON.stringify(dataToSend),
-});
+      // Nếu backend hỗ trợ categories
+      if (formData.categories.length > 0) {
+        (dataToSend as any).categories = formData.categories;
+      }
 
-
-      if (!res.ok) throw new Error("Server error");
+      await voucherApi.createVoucher(dataToSend);
 
       setMessage("✅ Tạo voucher thành công!");
       setFormData({
@@ -77,9 +111,12 @@ const res = await fetch("http://localhost:5000/api/vouchers", {
         startDate: "",
         endDate: "",
         usageLimit: 100,
-        categories: "",
+        categories: [],
       });
-    } catch {
+
+      onSuccess?.();
+    } catch (err) {
+      console.error(err);
       setMessage("❌ Lỗi khi tạo voucher");
     } finally {
       setLoading(false);
@@ -89,21 +126,19 @@ const res = await fetch("http://localhost:5000/api/vouchers", {
   return (
     <div className="relative max-w-lg mx-auto bg-white shadow-xl rounded-xl p-5 mt-6 h-[600px] overflow-y-auto">
       {/* Nút đóng */}
-  {onClose && (
-    <button
-      type="button"
-      onClick={onClose}
-      className="absolute top-3 right-3 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition"
-    >
-      <X size={18} />
-    </button>
-  )}
+      {onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-3 right-3 p-1.5 rounded-full bg-red-500 text-white hover:bg-red-600 transition"
+        >
+          <X size={18} />
+        </button>
+      )}
 
       <h2 className="text-2xl font-bold mb-4 text-center">Tạo Voucher Mới</h2>
 
-      {message && (
-        <div className="mb-3 text-center text-sm font-medium">{message}</div>
-      )}
+      {message && <div className="mb-3 text-center text-sm font-medium">{message}</div>}
 
       <form onSubmit={handleSubmit} className="space-y-3 text-sm">
         <div>
@@ -164,7 +199,7 @@ const res = await fetch("http://localhost:5000/api/vouchers", {
               className="w-full border rounded-lg p-2"
             >
               <option value="fixed">Giảm cố định</option>
-              <option value="percent">Giảm theo %</option>
+              <option value="percentage">Giảm theo %</option>
             </select>
           </div>
           <div>
@@ -181,9 +216,7 @@ const res = await fetch("http://localhost:5000/api/vouchers", {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block font-semibold mb-1">
-              Đơn hàng tối thiểu
-            </label>
+            <label className="block font-semibold mb-1">Đơn hàng tối thiểu</label>
             <input
               type="number"
               name="minOrderValue"
@@ -193,9 +226,7 @@ const res = await fetch("http://localhost:5000/api/vouchers", {
             />
           </div>
           <div>
-            <label className="block font-semibold mb-1">
-              Giảm tối đa (nếu %)
-            </label>
+            <label className="block font-semibold mb-1">Giảm tối đa (nếu %)</label>
             <input
               type="number"
               name="maxDiscount"
@@ -211,7 +242,7 @@ const res = await fetch("http://localhost:5000/api/vouchers", {
           <input
             type="text"
             name="categories"
-            value={formData.categories}
+            value={formData.categories.join(", ")}
             onChange={handleChange}
             className="w-full border rounded-lg p-2"
             placeholder="VD: Mỹ phẩm, Thời trang"

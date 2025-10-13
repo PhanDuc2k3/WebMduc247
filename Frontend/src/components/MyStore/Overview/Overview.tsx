@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { DollarSign, ShoppingCart, Package, Eye } from "lucide-react";
+import userApi from "../../../api/userApi";
+import orderApi from "../../../api/orderApi";
+import productApi from "../../../api/productApi";
 
 interface Order {
   _id: string;
@@ -20,39 +23,31 @@ const Overview: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        // Lấy profile để tìm storeId
-        const profileRes = await fetch("http://localhost:5000/api/users/profile", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const profile = await profileRes.json();
+        const profileRes = await userApi.getProfile();
+        const profile = profileRes.data;
         const storeId = profile.store?._id || profile.user?.store?._id;
-        if (!storeId) return;
 
-        // Lấy danh sách đơn hàng
-        const ordersRes = await fetch("http://localhost:5000/api/orders/seller", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const ordersData = await ordersRes.json();
-        setOrders(ordersData);
+        if (!storeId) {
+          setError("Bạn chưa có cửa hàng.");
+          return;
+        }
 
-        // Lấy danh sách sản phẩm
-        const productsRes = await fetch(
-          `http://localhost:5000/api/products/store/${storeId}/products`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        const productsData = await productsRes.json();
-        setProducts(productsData);
-      } catch (err) {
+        // Lấy đơn hàng và sản phẩm song song
+        const [ordersRes, productsRes] = await Promise.all([
+          orderApi.getOrdersBySeller(),
+          productApi.getProductsByStore(storeId),
+        ]);
+
+        setOrders(ordersRes.data || []);
+        setProducts(productsRes.data || []);
+      } catch (err: any) {
         console.error("Lỗi khi lấy dữ liệu:", err);
+        setError(err.response?.data?.message || "Lỗi khi tải dữ liệu");
       } finally {
         setLoading(false);
       }
@@ -61,9 +56,10 @@ const Overview: React.FC = () => {
     fetchData();
   }, []);
 
-  if (loading) return <p>Đang tải...</p>;
+  if (loading) return <p className="p-6">Đang tải...</p>;
+  if (error) return <p className="p-6 text-red-500">{error}</p>;
 
-  const revenue = orders.reduce((sum, o) => sum + o.total, 0);
+  const revenue = orders.reduce((sum, o) => sum + (o.total || 0), 0);
   const totalOrders = orders.length;
   const totalProducts = products.length;
   const totalViews = products.reduce((sum, p) => sum + (p.viewsCount || 0), 0);
@@ -73,30 +69,10 @@ const Overview: React.FC = () => {
     <div>
       {/* Thống kê */}
       <div className="grid grid-cols-4 gap-6 mb-8">
-        <StatBox
-          title="Doanh thu"
-          value={`${revenue.toLocaleString("vi-VN")}₫`}
-          percent="+12.5%"
-          icon={<DollarSign className="w-6 h-6 text-gray-700" />}
-        />
-        <StatBox
-          title="Đơn hàng"
-          value={totalOrders.toString()}
-          percent="+8.2%"
-          icon={<ShoppingCart className="w-6 h-6 text-gray-700" />}
-        />
-        <StatBox
-          title="Sản phẩm"
-          value={totalProducts.toString()}
-          percent="+5.3%"
-          icon={<Package className="w-6 h-6 text-gray-700" />}
-        />
-        <StatBox
-          title="Lượt xem"
-          value={totalViews.toString()}
-          percent="-2.1%"
-          icon={<Eye className="w-6 h-6 text-gray-700" />}
-        />
+        <StatBox title="Doanh thu" value={`${revenue.toLocaleString("vi-VN")}₫`} percent="+12.5%" icon={<DollarSign className="w-6 h-6 text-gray-700" />} />
+        <StatBox title="Đơn hàng" value={totalOrders.toString()} percent="+8.2%" icon={<ShoppingCart className="w-6 h-6 text-gray-700" />} />
+        <StatBox title="Sản phẩm" value={totalProducts.toString()} percent="+5.3%" icon={<Package className="w-6 h-6 text-gray-700" />} />
+        <StatBox title="Lượt xem" value={totalViews.toString()} percent="-2.1%" icon={<Eye className="w-6 h-6 text-gray-700" />} />
       </div>
 
       {/* Đơn hàng gần đây */}
@@ -112,35 +88,25 @@ const Overview: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {recentOrders.map((order) => {
-              const latestStatus =
-                order.statusHistory?.[order.statusHistory.length - 1]?.status ||
-                "pending";
+            {recentOrders.length > 0 ? recentOrders.map(order => {
+              const latestStatus = order.statusHistory?.[order.statusHistory.length - 1]?.status || "pending";
               return (
                 <tr key={order._id} className="border-b hover:bg-gray-50">
                   <td className="px-4 py-3">{order.orderCode}</td>
+                  <td className="px-4 py-3">{(order.total || 0).toLocaleString("vi-VN")}₫</td>
                   <td className="px-4 py-3">
-                    {order.total.toLocaleString("vi-VN")}₫
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        latestStatus === "delivered"
-                          ? "bg-black text-white"
-                          : latestStatus === "shipped"
-                          ? "bg-yellow-100 text-yellow-800"
-                          : "bg-gray-200 text-gray-800"
-                      }`}
-                    >
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${latestStatus === "delivered" ? "bg-black text-white" : latestStatus === "shipped" ? "bg-yellow-100 text-yellow-800" : "bg-gray-200 text-gray-800"}`}>
                       {latestStatus}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    {new Date(order.createdAt).toLocaleDateString("vi-VN")}
-                  </td>
+                  <td className="px-4 py-3">{new Date(order.createdAt).toLocaleDateString("vi-VN")}</td>
                 </tr>
               );
-            })}
+            }) : (
+              <tr>
+                <td colSpan={4} className="text-center py-4">Chưa có đơn hàng nào</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -148,25 +114,11 @@ const Overview: React.FC = () => {
   );
 };
 
-const StatBox: React.FC<{
-  title: string;
-  value: string;
-  percent: string;
-  icon: React.ReactNode;
-}> = ({ title, value, percent, icon }) => (
+const StatBox: React.FC<{ title: string; value: string; percent: string; icon: React.ReactNode }> = ({ title, value, percent, icon }) => (
   <div className="bg-white rounded-lg shadow flex flex-col justify-between p-6 h-32">
-    <div className="flex items-center gap-2 mb-2">
-      {icon}
-      <span className="font-medium text-gray-600">{title}</span>
-    </div>
+    <div className="flex items-center gap-2 mb-2">{icon}<span className="font-medium text-gray-600">{title}</span></div>
     <div className="font-bold text-2xl">{value}</div>
-    <div
-      className={`text-sm ${
-        percent.startsWith("-") ? "text-red-600" : "text-green-600"
-      }`}
-    >
-      {percent}
-    </div>
+    <div className={`text-sm ${percent.startsWith("-") ? "text-red-600" : "text-green-600"}`}>{percent}</div>
   </div>
 );
 

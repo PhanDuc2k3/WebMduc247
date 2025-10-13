@@ -4,6 +4,7 @@ import Step2Images from "./Step2Images";
 import Step3Variations from "./Step3Details";
 import Step4SEO from "./Step4SEO";
 import type { FormDataType, ProductType } from "../../../../types/product";
+import productApi from "../../../../api/productApi";
 
 interface ProductFormProps {
   step: number;
@@ -11,9 +12,11 @@ interface ProductFormProps {
   formData: FormDataType;
   setFormData: React.Dispatch<React.SetStateAction<FormDataType>>;
   onClose: () => void;
-  onAddProduct: (newProduct: ProductType) => void;
+  onAddProduct: (newProduct: ProductType, isEdit: boolean) => void;
   editProduct?: ProductType | null;
 }
+
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 const ProductForm: React.FC<ProductFormProps> = ({
   step,
@@ -24,7 +27,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
   onAddProduct,
   editProduct,
 }) => {
-  // ✅ Khi editProduct có dữ liệu, set vào formData
+  // Khi editProduct có dữ liệu, set vào formData
   useEffect(() => {
     if (editProduct) {
       const mainImageUrl = editProduct.images?.[0] || null;
@@ -57,13 +60,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
   // 🔹 Submit tạo / sửa sản phẩm
   const handleSubmit = async () => {
     try {
-      console.log("=== DEBUG FORM DATA ===");
-      console.log("mainImage:", formData.mainImage);
-      console.log("mainImagePreview:", formData.mainImagePreview);
-      console.log("subImages (files):", formData.subImages);
-      console.log("subImagesPreview (urls):", formData.subImagesPreview);
-
-      const token = localStorage.getItem("token");
       const form = new FormData();
 
       // Append các thông tin cơ bản
@@ -90,10 +86,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
       // Xử lý ảnh chính
       if (formData.mainImage) {
-        console.log("Appending new mainImage file");
         form.append("mainImage", formData.mainImage);
       } else if (formData.mainImagePreview) {
-        console.log("Appending existing mainImage URL");
         form.append("existingMainImage", formData.mainImagePreview);
       }
 
@@ -101,46 +95,32 @@ const ProductForm: React.FC<ProductFormProps> = ({
       const existingSubImages = formData.subImagesPreview.filter(
         (url) => !formData.subImages.some((file) => URL.createObjectURL(file) === url)
       );
-      console.log("Appending new subImages files:", formData.subImages);
-      console.log("Appending existing subImages URLs:", existingSubImages);
-
       formData.subImages.forEach((file: File) => form.append("subImages", file));
       existingSubImages.forEach((url) => form.append("existingSubImages", url));
 
       const isEdit = Boolean(editProduct?._id);
-      const url = isEdit
-        ? `http://localhost:5000/api/products/${editProduct?._id}`
-        : "http://localhost:5000/api/products";
-      const method = isEdit ? "PUT" : "POST";
 
-      const res = await fetch(url, {
-        method,
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      });
+      const res = isEdit
+        ? await productApi.updateProduct(editProduct!._id, form)
+        : await productApi.createProduct(form);
 
-      const data = await res.json();
-      if (res.ok) {
-        const newProduct = data.data;
+      const newProduct: ProductType = res.data.data;
 
-        // Update preview để UI popup không bị trắng
-        setFormData((prev) => ({
-          ...prev,
-          mainImagePreview: newProduct.images?.[0] || null,
-          subImagesPreview: newProduct.images?.slice(1) || [],
-          mainImage: null,
-          subImages: [],
-        }));
+      // Cập nhật preview để UI popup không bị trắng
+      setFormData((prev) => ({
+        ...prev,
+        mainImagePreview: newProduct.images?.[0] || null,
+        subImagesPreview: newProduct.images?.slice(1) || [],
+        mainImage: null,
+        subImages: [],
+      }));
 
-        alert(isEdit ? "✅ Cập nhật sản phẩm thành công!" : "✅ Tạo sản phẩm thành công!");
-        onAddProduct(newProduct); // truyền sản phẩm backend ra component cha
-        onClose();
-      } else {
-        alert("❌ Lỗi: " + data.message);
-      }
-    } catch (err) {
+      alert(isEdit ? "✅ Cập nhật sản phẩm thành công!" : "✅ Tạo sản phẩm thành công!");
+      onAddProduct(newProduct, isEdit);
+      onClose();
+    } catch (err: any) {
       console.error(err);
-      alert("Không thể kết nối server");
+      alert(err.response?.data?.message || "Không thể kết nối server");
     }
   };
 
@@ -171,18 +151,10 @@ const ProductForm: React.FC<ProductFormProps> = ({
         <span className="ml-4 text-gray-500 font-medium">Bước {step}/4</span>
       </div>
 
-      {step === 1 && (
-        <Step1BasicInfo formData={formData} handleChange={handleChange} onClose={onClose} setStep={setStep} />
-      )}
-      {step === 2 && (
-        <Step2Images formData={formData} setFormData={setFormData} setStep={setStep} />
-      )}
-      {step === 3 && (
-        <Step3Variations formData={formData} handleChange={handleChange} setStep={setStep} />
-      )}
-      {step === 4 && (
-        <Step4SEO formData={formData} handleChange={handleChange} setStep={setStep} handleSubmit={handleSubmit} />
-      )}
+      {step === 1 && <Step1BasicInfo formData={formData} handleChange={handleChange} onClose={onClose} setStep={setStep} />}
+      {step === 2 && <Step2Images formData={formData} setFormData={setFormData} setStep={setStep} />}
+      {step === 3 && <Step3Variations formData={formData} handleChange={handleChange} setStep={setStep} />}
+      {step === 4 && <Step4SEO formData={formData} handleChange={handleChange} setStep={setStep} handleSubmit={handleSubmit} />}
     </>
   );
 };

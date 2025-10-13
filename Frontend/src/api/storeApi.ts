@@ -1,8 +1,8 @@
-import axiosClient from "./axiosClient";
 import type { StoreType } from "../types/store";
+import axiosClient from "./axiosClient";
 
 const storeApi = {
-  createStore: (data: Partial<StoreType>) =>
+  createStore: (data: FormData | Partial<StoreType>) =>
     axiosClient.post("/api/stores", data),
 
   getMyStore: () => axiosClient.get("/api/stores/me"),

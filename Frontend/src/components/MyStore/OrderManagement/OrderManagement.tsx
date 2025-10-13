@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Eye, Trash2 } from "lucide-react";
+import orderApi from "../../../api/orderApi";
 
 interface OrderItem {
   productId: string;
@@ -26,25 +27,10 @@ const OrderManagement: React.FC = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setError("Bạn chưa đăng nhập");
-          setLoading(false);
-          return;
-        }
-
-        const res = await fetch("http://localhost:5000/api/orders/seller", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!res.ok) {
-          throw new Error("Không thể tải đơn hàng");
-        }
-
-        const data = await res.json();
-        setOrders(Array.isArray(data) ? data : data.data || []);
+        const res = await orderApi.getOrdersBySeller();
+        setOrders(res.data || []);
       } catch (err: any) {
-        setError(err.message || "Lỗi khi tải đơn hàng");
+        setError(err.response?.data?.message || err.message || "Lỗi khi tải đơn hàng");
       } finally {
         setLoading(false);
       }
@@ -86,8 +72,7 @@ const OrderManagement: React.FC = () => {
             {orders.length > 0 ? (
               orders.map((order) => {
                 const latestStatus =
-                  order.statusHistory?.[order.statusHistory.length - 1]
-                    ?.status || "pending";
+                  order.statusHistory?.[order.statusHistory.length - 1]?.status || "pending";
 
                 return (
                   <tr key={order._id} className="border-b hover:bg-gray-50">
@@ -99,12 +84,8 @@ const OrderManagement: React.FC = () => {
                         </div>
                       ))}
                     </td>
-                    <td className="px-4 py-3">
-                      {order.userId?.fullName || "Ẩn danh"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {order.total?.toLocaleString("vi-VN")}₫
-                    </td>
+                    <td className="px-4 py-3">{order.userId?.fullName || "Ẩn danh"}</td>
+                    <td className="px-4 py-3">{order.total?.toLocaleString("vi-VN")}₫</td>
                     <td className="px-4 py-3 text-center">
                       <span
                         className={`px-3 py-1 rounded-full text-sm font-medium ${

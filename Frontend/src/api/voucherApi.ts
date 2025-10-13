@@ -33,26 +33,26 @@ export interface VoucherPreviewResponse {
 
 const voucherApi = {
   // Lấy danh sách voucher khả dụng
-  getAvailableVouchers: () => axiosClient.get<VoucherType[]>("/api/voucher"),
+  getAvailableVouchers: () => axiosClient.get<VoucherType[]>("/api/vouchers"),
 
   // Tạo voucher mới
-  createVoucher: (data: VoucherType) => axiosClient.post<VoucherType>("/api/voucher", data),
+  createVoucher: (data: VoucherType) => axiosClient.post<VoucherType>("/api/vouchers", data),
 
   // Cập nhật voucher
   updateVoucher: (id: string, data: VoucherType) =>
-    axiosClient.put<VoucherType>(`/api/voucher/${id}`, data),
+    axiosClient.put<VoucherType>(`/api/vouchers/${id}`, data),
 
   // Xóa voucher
   deleteVoucher: (id: string) =>
-    axiosClient.delete<{ message: string }>(`/api/voucher/${id}`),
+    axiosClient.delete<{ message: string }>(`/api/vouchers/${id}`),
 
   // Xem trước voucher: tính discount dựa trên tổng tiền đơn hàng
   previewVoucher: (data: VoucherPreviewRequest) =>
-    axiosClient.post<VoucherPreviewResponse>("/api/voucher/preview", data),
+    axiosClient.post<VoucherPreviewResponse>("/api/vouchers/preview", data),
 
   // Áp dụng voucher vào đơn hàng
   applyVoucher: (data: VoucherPreviewRequest) =>
-    axiosClient.post<VoucherPreviewResponse>("/api/voucher/apply", data),
+    axiosClient.post<VoucherPreviewResponse>("/api/vouchers/apply", data),
 };
 
 export default voucherApi;

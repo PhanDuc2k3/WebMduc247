@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AddProductPopup from "./AddProductPopup";
+import productApi from "../../../api/productApi";
 import type { ProductType } from "../../../types/product";
 import {
   Eye,
@@ -12,11 +13,11 @@ import {
   CircleDollarSign,
 } from "lucide-react";
 
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const ProductManagement: React.FC = () => {
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Popup thêm / sửa
   const [showPopup, setShowPopup] = useState(false);
   const [editProduct, setEditProduct] = useState<ProductType | null>(null);
 
@@ -24,17 +25,22 @@ const ProductManagement: React.FC = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/products/my-products", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await res.json();
+      const res = await productApi.getMyProducts();
 
-      const mapped = (data.data || []).map((p: any) => ({
+      const productsArray: any[] = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data.data)
+        ? res.data.data
+        : [];
+
+      const mapped: ProductType[] = productsArray.map((p: any) => ({
         ...p,
         quantity: p.quantity ?? 0,
-        images: (p.images || []).map((img: string) => `http://localhost:5000${img}`),
+        images: (p.images || []).map((img: string) =>
+          img.startsWith("http") ? img : `${BASE_URL}${img.startsWith("/") ? img : "/" + img}`
+        ),
       }));
+
       setProducts(mapped);
     } catch (err) {
       console.error("❌ Lỗi fetch sản phẩm:", err);
@@ -47,37 +53,32 @@ const ProductManagement: React.FC = () => {
     fetchProducts();
   }, []);
 
-  // 🔹 Xử lý thêm / sửa sản phẩm từ backend trả về
+  // 🔹 Thêm / sửa sản phẩm
   const handleAddOrUpdateProduct = (newProduct: ProductType, isEdit: boolean) => {
-    const mapped = {
+    const mapped: ProductType = {
       ...newProduct,
-      images: (newProduct.images || []).map((img: string) => `http://localhost:5000${img}`),
+      images: (newProduct.images || []).map((img: string) =>
+        img.startsWith("http") ? img : `${BASE_URL}${img.startsWith("/") ? img : "/" + img}`
+      ),
     };
     if (isEdit) {
-      setProducts((prev) =>
-        prev.map((p) => (p._id === mapped._id ? mapped : p))
-      );
+      setProducts((prev) => prev.map((p) => (p._id === mapped._id ? mapped : p)));
     } else {
       setProducts((prev) => [mapped, ...prev]);
     }
   };
 
-  // 🔹 Xử lý mở popup sửa
+  // 🔹 Mở popup sửa
   const handleEditClick = (product: ProductType) => {
     setEditProduct(product);
     setShowPopup(true);
   };
 
-  // 🔹 Xử lý xóa sản phẩm
+  // 🔹 Xóa sản phẩm
   const handleDeleteProduct = async (id: string) => {
     if (!window.confirm("Bạn có chắc muốn xóa sản phẩm này không?")) return;
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Lỗi xóa sản phẩm");
+      await productApi.deleteProduct(id);
       setProducts((prev) => prev.filter((p) => p._id !== id));
     } catch (err) {
       console.error("❌ Xóa thất bại:", err);
@@ -122,17 +123,13 @@ const ProductManagement: React.FC = () => {
         />
         <StatBox
           title="Tổng đã bán"
-          value={products
-            .reduce((sum, p) => sum + (p.soldCount || 0), 0)
-            .toString()}
+          value={products.reduce((sum, p) => sum + (p.soldCount || 0), 0).toString()}
           percent="+12%"
           icon={<TrendingUp className="w-6 h-6 text-gray-700" />}
         />
         <StatBox
           title="Tổng lượt xem"
-          value={products
-            .reduce((sum, p) => sum + (p.viewsCount || 0), 0)
-            .toString()}
+          value={products.reduce((sum, p) => sum + (p.viewsCount || 0), 0).toString()}
           percent="+8%"
           icon={<CircleDollarSign className="w-6 h-6 text-gray-700" />}
         />
@@ -187,40 +184,18 @@ const ProductManagement: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-4 py-3">{p.price.toLocaleString("vi-VN")}₫</td>
-                  <td
-                    className={`px-4 py-3 ${
-                      p.quantity < 15 ? "text-red-600 font-semibold" : "text-gray-800"
-                    }`}
-                  >
-                    {p.quantity}
-                  </td>
+                  <td className={`px-4 py-3 ${p.quantity < 15 ? "text-red-600 font-semibold" : "text-gray-800"}`}>{p.quantity}</td>
                   <td className="px-4 py-3 text-gray-800">{p.soldCount}</td>
                   <td className="px-4 py-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        p.isActive ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-                      }`}
-                    >
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${p.isActive ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
                       {p.isActive ? "Hoạt động" : "Ngừng hoạt động"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-800">{p.viewsCount}</td>
                   <td className="px-4 py-3 flex items-center gap-3">
-                    <button className="text-blue-600 hover:text-blue-800">
-                      <Eye size={18} />
-                    </button>
-                    <button
-                      className="text-green-600 hover:text-green-800"
-                      onClick={() => handleEditClick(p)}
-                    >
-                      <Edit size={18} />
-                    </button>
-                    <button
-                      className="text-red-600 hover:text-red-800"
-                      onClick={() => handleDeleteProduct(p._id)}
-                    >
-                      <Trash2 size={18} />
-                    </button>
+                    <button className="text-blue-600 hover:text-blue-800"><Eye size={18} /></button>
+                    <button className="text-green-600 hover:text-green-800" onClick={() => handleEditClick(p)}><Edit size={18} /></button>
+                    <button className="text-red-600 hover:text-red-800" onClick={() => handleDeleteProduct(p._id)}><Trash2 size={18} /></button>
                   </td>
                 </tr>
               ))
@@ -239,21 +214,11 @@ const ProductManagement: React.FC = () => {
 };
 
 // 🔹 Component thống kê nhỏ
-const StatBox: React.FC<{
-  title: string;
-  value: string;
-  percent: string;
-  icon: React.ReactNode;
-}> = ({ title, value, percent, icon }) => (
+const StatBox: React.FC<{ title: string; value: string; percent: string; icon: React.ReactNode }> = ({ title, value, percent, icon }) => (
   <div className="bg-white rounded-lg shadow flex flex-col justify-between p-6 h-32">
-    <div className="flex items-center gap-2 mb-2">
-      {icon}
-      <span className="font-medium text-gray-600">{title}</span>
-    </div>
+    <div className="flex items-center gap-2 mb-2">{icon}<span className="font-medium text-gray-600">{title}</span></div>
     <div className="font-bold text-2xl">{value}</div>
-    <div className={`text-sm ${percent.startsWith("-") ? "text-red-600" : "text-green-600"}`}>
-      {percent}
-    </div>
+    <div className={`text-sm ${percent.startsWith("-") ? "text-red-600" : "text-green-600"}`}>{percent}</div>
   </div>
 );
 

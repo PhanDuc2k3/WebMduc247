@@ -1,16 +1,15 @@
 import React, { useRef, useState } from "react";
+import storeApi from "../../../api/storeApi";
 
 interface StoreRegisterFormProps {
   onClose?: () => void;
+  onSuccess?: () => void;
 }
-interface StoreRegisterFormProps {
-  onSuccess?: () => void; 
-}
-const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose }) => {
+
+const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSuccess }) => {
   const logoRef = useRef<HTMLInputElement>(null);
   const bannerRef = useRef<HTMLInputElement>(null);
 
-  // State lưu form
   const [formData, setFormData] = useState({
     name: "",
     category: "",
@@ -20,24 +19,16 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose }) => {
     contactEmail: "",
   });
 
-  // State preview ảnh
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
 
-  // Cập nhật state khi nhập input
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Xử lý khi chọn file ảnh
-  const handleFileChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    type: "logo" | "banner"
-  ) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "banner") => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
@@ -46,47 +37,35 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose }) => {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-// Submit form
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const token = localStorage.getItem("token");
+    try {
+      const form = new FormData();
+      form.append("name", formData.name);
+      form.append("category", formData.category);
+      form.append("description", formData.description);
+      form.append("address", formData.address);
+      form.append("contactPhone", formData.contactPhone);
+      form.append("contactEmail", formData.contactEmail);
 
-  const form = new FormData();
-  form.append("name", formData.name);
-  form.append("description", formData.description);
-  form.append("address", formData.address);
-  form.append("category", formData.category);
-  form.append("contactPhone", formData.contactPhone);
-  form.append("contactEmail", formData.contactEmail);
+      if (logoRef.current?.files?.[0]) {
+        form.append("logo", logoRef.current.files[0]);
+      }
+      if (bannerRef.current?.files?.[0]) {
+        form.append("banner", bannerRef.current.files[0]);
+      }
 
-  if (logoRef.current?.files?.[0]) {
-    form.append("logo", logoRef.current.files[0]);
-  }
-  if (bannerRef.current?.files?.[0]) {
-    form.append("banner", bannerRef.current.files[0]);
-  }
+      const res = await storeApi.createStore(form);
 
-  try {
-    const res = await fetch("http://localhost:5000/api/users/seller-request", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: form,
-    });
-
-    const data = await res.json();
-    console.log("Phản hồi từ server:", data);
-    alert(data.message);
-
-    if (onClose) onClose();
-  } catch (error) {
-    console.error("Lỗi khi gửi yêu cầu:", error);
-    alert("Có lỗi xảy ra, vui lòng thử lại!");
-  }
-};
-
+      alert(res.data.message || "Đăng ký cửa hàng thành công!");
+      if (onSuccess) onSuccess();
+      if (onClose) onClose();
+    } catch (error: any) {
+      console.error("Lỗi khi tạo cửa hàng:", error);
+      alert(error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại!");
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-lg max-w-xl mx-auto p-8">

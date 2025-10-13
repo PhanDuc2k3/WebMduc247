@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   LineChart,
   Line,
@@ -10,6 +10,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import statisticApi from "../../../api/statisticApi";
 
 interface StatisticsProps {
   storeId: string;
@@ -23,67 +24,42 @@ const Statistics: React.FC<StatisticsProps> = ({ storeId }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-
-        // ----------- Doanh thu -----------
-        const revRes = await fetch(
-          `http://localhost:5000/api/statistics/revenue?storeId=${storeId}&range=7`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const revJson = await revRes.json();
-
+        // Doanh thu 7 ngày
+        const revRes = await statisticApi.getRevenueStats({ storeId, range: 7 });
+        const revJson = revRes.data;
         const revMap: Record<string, number> = {};
         revJson.forEach((item: any) => {
           const dateStr = item.date || item._id;
           revMap[dateStr] = Number(item.total) || 0;
         });
-
         const today = new Date();
-        const days = 7;
-        const revFinal = Array.from({ length: days }).map((_, i) => {
+        const revFinal = Array.from({ length: 7 }).map((_, i) => {
           const d = new Date();
-          d.setDate(today.getDate() - (days - 1 - i));
+          d.setDate(today.getDate() - (6 - i));
           const dateStr = d.toISOString().slice(0, 10);
-          return {
-            date: dateStr,
-            total: revMap[dateStr] || 0,
-          };
+          return { date: dateStr, total: revMap[dateStr] || 0 };
         });
         setRevenueData(revFinal);
 
-        // ----------- Lượt truy cập -----------
-        const viewRes = await fetch(
-          `http://localhost:5000/api/statistics/views?storeId=${storeId}&range=7`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const viewJson = await viewRes.json();
-
+        // Lượt truy cập 7 ngày
+        const viewRes = await statisticApi.getViewsStats({ storeId, range: 7 });
+        const viewJson = viewRes.data;
         const viewMap: Record<string, number> = {};
         viewJson.forEach((v: any) => {
           const dateStr = v.date || v._id;
           viewMap[dateStr] = Number(v.views) || Number(v.totalViews) || 0;
         });
-
-        const viewFinal = Array.from({ length: days }).map((_, i) => {
+        const viewFinal = Array.from({ length: 7 }).map((_, i) => {
           const d = new Date();
-          d.setDate(today.getDate() - (days - 1 - i));
+          d.setDate(today.getDate() - (6 - i));
           const dateStr = d.toISOString().slice(0, 10);
-          return {
-            date: dateStr,
-            views: viewMap[dateStr] || 0,
-          };
+          return { date: dateStr, views: viewMap[dateStr] || 0 };
         });
         setViewsData(viewFinal);
 
-        // ----------- Top sản phẩm -----------
-        const topRes = await fetch(
-          `http://localhost:5000/api/statistics/top-products?storeId=${storeId}&range=7`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const topJson = await topRes.json();
-
-        const topFinal = topJson.map((item: any) => ({
+        // Top sản phẩm
+        const topRes = await statisticApi.getTopProducts({ storeId, range: 7 });
+        const topFinal = topRes.data.map((item: any) => ({
           name: item.product?.name || "Unknown",
           sold: Number(item.totalSold) || 0,
         }));
