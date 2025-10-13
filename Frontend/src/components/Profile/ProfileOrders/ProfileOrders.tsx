@@ -127,45 +127,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                   </div>
                 </div>
 
-                {/* Hiển thị reviews nếu có */}
-                {reviews[item.productId] &&
-                  reviews[item.productId].length > 0 && (
-                    <div className="mt-3 ml-6 space-y-3">
-                      {reviews[item.productId].map((rv) => (
-                        <div
-                          key={rv._id}
-                          className="p-3 border rounded bg-gray-50"
-                        >
-                          <div className="flex items-center gap-2 mb-1">
-                            <img
-                              src={rv.userInfo?.avatarUrl || "/default-avatar.png"}
-                              alt="avatar"
-                              className="w-8 h-8 rounded-full"
-                            />
-                            <span className="font-semibold">
-                              {rv.userInfo?.fullName || "Ẩn danh"}
-                            </span>
-                            <span className="text-yellow-400 ml-2">
-                              {"★".repeat(rv.rating)}
-                            </span>
-                          </div>
-                          <p className="text-gray-700 text-sm">{rv.comment}</p>
-                          {rv.images?.length > 0 && (
-                            <div className="flex gap-2 mt-2">
-                              {rv.images.map((img, idx) => (
-                                <img
-                                  key={idx}
-                                  src={img}
-                                  alt="review"
-                                  className="w-16 h-16 object-cover rounded"
-                                />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+
               </div>
             ))}
           </div>

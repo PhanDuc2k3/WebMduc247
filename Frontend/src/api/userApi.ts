@@ -34,6 +34,7 @@ const userApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  getMyOrders: () => axiosClient.get("/api/orders/my"),
 
   getAllSellerRequests: () => axiosClient.get("/api/users/seller-requests"),
 

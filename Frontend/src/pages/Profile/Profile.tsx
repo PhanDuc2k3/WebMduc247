@@ -64,13 +64,8 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const token = localStorage.getItem("token");
-        if (!token) return;
-        const res = await fetch("http://localhost:5000/api/orders/my", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error("Không lấy được đơn hàng");
-        const data = await res.json();
+        const res = await userApi.getMyOrders(); // sử dụng axiosClient
+        const data = res.data; // axios trả data trực tiếp
 
         const mappedOrders: Order[] = data.map((order: any) => {
           const statusHistory: StatusHistory[] = [
@@ -140,14 +135,14 @@ const Profile: React.FC = () => {
           )}
 
           {activeTab === "orders" && (
-  <ProfileOrders
-    orders={orders}              // truyền danh sách đơn hàng
-    loading={loadingOrders}      // trạng thái loading
-    onReview={(productId, orderId) => {
-      setReviewProductId(productId);
-      setReviewOrderId(orderId);
-    }}                           // mở popup review
-  />
+            <ProfileOrders
+              orders={orders}
+              loading={loadingOrders}
+              onReview={(productId, orderId) => {
+                setReviewProductId(productId);
+                setReviewOrderId(orderId);
+              }}
+            />
           )}
 
           {activeTab === "favorites" && <ProfileFavorites />}
