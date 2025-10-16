@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import userApi from "../../../api/userApi"; 
 
 const statusColor: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-700",
@@ -10,52 +11,42 @@ const SellerApproval: React.FC = () => {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Lấy token admin từ localStorage
-  const token = localStorage.getItem("token");
-
-  // Fetch danh sách yêu cầu từ BE
   const fetchRequests = async () => {
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:5000/api/users/seller-requests", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
+      console.log("🔄 [SellerApproval] Gửi yêu cầu lấy danh sách seller requests...");
 
-      // 🔥 Chỉ giữ những user có sellerRequest + có store name
-      const filtered = (data.requests || []).filter(
+      const res = await userApi.getAllSellerRequests();
+      console.log("✅ [SellerApproval] Dữ liệu trả về từ BE:", res);
+
+      const filtered = (res.data.requests || []).filter(
         (u: any) => u.sellerRequest && u.sellerRequest.store?.name
       );
+      console.log("📋 [SellerApproval] Danh sách sau khi lọc:", filtered);
 
       setRequests(filtered);
-    } catch (error) {
-      console.error("Lỗi khi lấy danh sách:", error);
+    } catch (error: any) {
+      console.error("❌ [SellerApproval] Lỗi khi lấy danh sách:", error?.response || error);
+      alert(error?.response?.data?.message || "Không thể tải danh sách yêu cầu");
     } finally {
       setLoading(false);
     }
   };
 
-  // Xử lý duyệt / từ chối
-const handleAction = async (userId: string, action: "approve" | "reject") => {
-  try {
-    const res = await fetch("http://localhost:5000/api/users/seller-requests/handle", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ userId, action }),
-    });
+  const handleAction = async (userId: string, action: "approve" | "reject") => {
+    try {
+      console.log(`⚙️ [SellerApproval] Gửi hành động ${action} cho userId=${userId}`);
+      const res = await userApi.handleSellerRequest({ userId, action });
 
-    const data = await res.json();
-    alert(data.message);
-    fetchRequests(); // reload lại danh sách
-  } catch (error) {
-    console.error("Lỗi xử lý yêu cầu:", error);
-  }
-};
+      console.log("✅ [SellerApproval] Kết quả xử lý:", res);
+      alert(res.data.message || "Thao tác thành công");
+
+      await fetchRequests();
+    } catch (error: any) {
+      console.error("❌ [SellerApproval] Lỗi xử lý yêu cầu:", error?.response || error);
+      alert(error?.response?.data?.message || "Xử lý thất bại");
+    }
+  };
 
   useEffect(() => {
     fetchRequests();

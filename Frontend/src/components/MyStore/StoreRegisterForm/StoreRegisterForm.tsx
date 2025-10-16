@@ -47,25 +47,25 @@ const handleSubmit = async (e: React.FormEvent) => {
     form.append("name", formData.name);
     form.append("category", formData.category);
     form.append("description", formData.description);
-    form.append("address", formData.address); // ✅ giữ nguyên, KHÔNG đổi thành storeAddress
+    form.append("storeAddress", formData.address);
     form.append("contactPhone", formData.contactPhone);
     form.append("contactEmail", formData.contactEmail);
-
+    
     // ✅ Các file upload — đúng key
     if (logoRef.current?.files?.[0]) {
       form.append("logo", logoRef.current.files[0]); // ✅ đổi lại từ logoUrl → logo
     }
     if (bannerRef.current?.files?.[0]) {
       form.append("banner", bannerRef.current.files[0]); // ✅ đổi lại từ bannerUrl → banner
-    }
-
+    } 
+    
     // ✅ Gọi API đúng hàm requestSeller
     const res = await userApi.requestSeller(
       {
         name: formData.name,
         category: formData.category,
         description: formData.description,
-        address: formData.address,
+        storeAddress: formData.address,
         contactPhone: formData.contactPhone,
         contactEmail: formData.contactEmail,
       },

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import userApi from "../../../api/userApi"; 
 
 const statusColor: Record<string, string> = {
   "Hoạt động": "bg-green-100 text-green-700",
@@ -13,7 +14,7 @@ interface User {
   role: string;
   createdAt: string;
   avatarUrl: string;
-  // bạn có thể thêm status nếu backend có field này
+  status?: string;
 }
 
 const UserManagement: React.FC = () => {
@@ -21,26 +22,31 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    const fetchUsers = async () => {
+      try {
+        console.log("🔄 Đang gọi API lấy danh sách người dùng...");
+        const response = await userApi.getAllUsers();
 
-    fetch("http://localhost:5000/api/users/all", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        setUsers(data.users || []);
+        const payload = (response && (response as any).data !== undefined) ? (response as any).data : response;
+
+        console.log("✅ Dữ liệu trả về từ API:", payload);
+
+        const userList = Array.isArray(payload)
+          ? payload
+          : payload?.users || [];
+
+        setUsers(userList);
+      } catch (error: any) {
+        console.error("❌ Lỗi khi fetch users:", error?.response || error);
+      } finally {
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Lỗi fetch users:", err);
-        setLoading(false);
-      });
+      }
+    };
+
+    fetchUsers();
   }, []);
 
-  if (loading) return <div>Đang tải...</div>;
+  if (loading) return <div>Đang tải danh sách người dùng...</div>;
 
   return (
     <div>
@@ -48,6 +54,7 @@ const UserManagement: React.FC = () => {
       <div className="text-gray-500 mb-4 text-sm">
         Danh sách và quản lý tài khoản người dùng
       </div>
+
       <table className="w-full text-sm">
         <thead>
           <tr className="text-left text-gray-500 border-b">
@@ -60,49 +67,57 @@ const UserManagement: React.FC = () => {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
-            <tr key={user._id} className="border-b">
-              <td className="py-2 flex items-center gap-2">
-                <img
-                  src={user.avatarUrl || "/default-avatar.png"}
-                  alt={user.fullName}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-                {user.fullName}
-              </td>
-              <td>{user.email}</td>
-              <td>
-                <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${
-                    user.role === "seller"
-                      ? "bg-black text-white"
-                      : "bg-gray-100 text-gray-700"
-                  }`}
-                >
-                  {user.role === "buyer"
-                    ? "Khách hàng"
-                    : user.role === "seller"
-                    ? "Người bán"
-                    : "Admin"}
-                </span>
-              </td>
-              <td>{new Date(user.createdAt).toLocaleDateString("vi-VN")}</td>
-              <td>
-                <span
-                  className={`px-2 py-1 rounded text-xs font-medium ${
-                    statusColor["Hoạt động"]
-                  }`}
-                >
-                  Hoạt động
-                </span>
-              </td>
-              <td>
-                <button className="text-gray-400 hover:text-black px-2">
-                  ...
-                </button>
+          {users.length > 0 ? (
+            users.map((user) => (
+              <tr key={user._id} className="border-b">
+                <td className="py-2 flex items-center gap-2">
+                  <img
+                    src={user.avatarUrl || "/default-avatar.png"}
+                    alt={user.fullName}
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                  {user.fullName}
+                </td>
+                <td>{user.email}</td>
+                <td>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      user.role === "seller"
+                        ? "bg-black text-white"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {user.role === "buyer"
+                      ? "Khách hàng"
+                      : user.role === "seller"
+                      ? "Người bán"
+                      : "Admin"}
+                  </span>
+                </td>
+                <td>{new Date(user.createdAt).toLocaleDateString("vi-VN")}</td>
+                <td>
+                  <span
+                    className={`px-2 py-1 rounded text-xs font-medium ${
+                      statusColor[user.status || "Hoạt động"]
+                    }`}
+                  >
+                    {user.status || "Hoạt động"}
+                  </span>
+                </td>
+                <td>
+                  <button className="text-gray-400 hover:text-black px-2">
+                    ...
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={6} className="text-center py-4 text-gray-500">
+                Không có người dùng nào.
               </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>
