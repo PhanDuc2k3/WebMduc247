@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import storeApi from "../../../api/storeApi";
+import userApi from "../../../api/userApi";
 
 interface StoreRegisterFormProps {
   onClose?: () => void;
@@ -43,32 +43,47 @@ const handleSubmit = async (e: React.FormEvent) => {
   try {
     const form = new FormData();
 
-    // ✅ Các field text
+    // ✅ Các field text — đúng key theo backend
     form.append("name", formData.name);
     form.append("category", formData.category);
     form.append("description", formData.description);
-    form.append("storeAddress", formData.address); // ✅ đổi 'address' → 'storeAddress'
+    form.append("address", formData.address); // ✅ giữ nguyên, KHÔNG đổi thành storeAddress
     form.append("contactPhone", formData.contactPhone);
     form.append("contactEmail", formData.contactEmail);
 
-    // ✅ Các file upload
+    // ✅ Các file upload — đúng key
     if (logoRef.current?.files?.[0]) {
-      form.append("logoUrl", logoRef.current.files[0]); // ✅ đổi 'logo' → 'logoUrl'
+      form.append("logo", logoRef.current.files[0]); // ✅ đổi lại từ logoUrl → logo
     }
     if (bannerRef.current?.files?.[0]) {
-      form.append("bannerUrl", bannerRef.current.files[0]); // ✅ đổi 'banner' → 'bannerUrl'
+      form.append("banner", bannerRef.current.files[0]); // ✅ đổi lại từ bannerUrl → banner
     }
 
-    const res = await storeApi.createStore(form);
+    // ✅ Gọi API đúng hàm requestSeller
+    const res = await userApi.requestSeller(
+      {
+        name: formData.name,
+        category: formData.category,
+        description: formData.description,
+        address: formData.address,
+        contactPhone: formData.contactPhone,
+        contactEmail: formData.contactEmail,
+      },
+      {
+        logo: logoRef.current?.files?.[0],
+        banner: bannerRef.current?.files?.[0],
+      }
+    );
 
     alert(res.data.message || "Đăng ký cửa hàng thành công!");
-    if (onSuccess) onSuccess();
-    if (onClose) onClose();
+    onSuccess?.();
+    onClose?.();
   } catch (error: any) {
-    console.error("Lỗi khi tạo cửa hàng:", error);
+    console.error("❌ Lỗi khi tạo cửa hàng:", error);
     alert(error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại!");
   }
 };
+
 
   return (
     <div className="bg-white rounded-2xl shadow-lg max-w-xl mx-auto p-8">

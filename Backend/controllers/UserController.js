@@ -163,34 +163,86 @@ exports.updateUser = async (req, res) => {
 // ==========================
 // YÊU CẦU MỞ CỬA HÀNG
 // ==========================
+
 exports.requestSeller = async (req, res) => {
+  console.log('==== [API] /api/seller/request ====');
+  console.log('👉 Body:', req.body);
+  console.log('👉 Files:', req.files);
+  console.log('👉 User (decoded from token):', req.user);
+
   try {
-    const userId = req.user.userId;
+    const userId = req.user?.userId;
+    if (!userId) {
+      console.warn('⚠️ Không có userId trong token');
+      return res.status(401).json({ message: 'Không xác thực được người dùng' });
+    }
+
     const { name, description, address, category, contactPhone, contactEmail } = req.body;
 
+    // Kiểm tra thông tin bắt buộc
+    if (!name || !address || !category || !contactPhone) {
+      console.warn('⚠️ Thiếu thông tin bắt buộc:', { name, address, category, contactPhone });
+      return res.status(400).json({ message: 'Thiếu thông tin cửa hàng' });
+    }
+
+    // Lấy user từ DB
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: 'Không tìm thấy user' });
-    if (user.sellerRequest?.status === 'pending')
+    if (!user) {
+      console.warn('❌ Không tìm thấy user trong DB:', userId);
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    // Kiểm tra trạng thái yêu cầu seller
+    if (user.sellerRequest?.status === 'pending') {
+      console.warn('⚠️ User đã có yêu cầu đang chờ duyệt:', userId);
       return res.status(400).json({ message: 'Đã gửi yêu cầu, vui lòng chờ admin duyệt' });
+    }
 
+    // Xử lý file upload (logo & banner)
     const host = `${req.protocol}://${req.get('host')}`;
-    const logoUrl = req.files?.logo?.[0] ? `${host}/uploads/${req.files.logo[0].filename}` : '';
-    const bannerUrl = req.files?.banner?.[0] ? `${host}/uploads/${req.files.banner[0].filename}` : '';
+    const logoUrl = req.files?.logo?.[0]
+      ? `${host}/uploads/${req.files.logo[0].filename}`
+      : '';
+    const bannerUrl = req.files?.banner?.[0]
+      ? `${host}/uploads/${req.files.banner[0].filename}`
+      : '';
 
+    console.log('✅ Upload path:', { logoUrl, bannerUrl });
+
+    // Cập nhật thông tin yêu cầu seller
     user.sellerRequest = {
       status: 'pending',
       requestedAt: new Date(),
-      store: { name, description, address, category, contactPhone, contactEmail, logoUrl, bannerUrl, isActive: false },
+      store: {
+        name,
+        description,
+        address,
+        category,
+        contactPhone,
+        contactEmail,
+        logoUrl,
+        bannerUrl,
+        isActive: false,
+      },
     };
 
     await user.save();
-    res.status(200).json({ message: 'Đã gửi yêu cầu mở cửa hàng', sellerRequest: user.sellerRequest });
+
+    console.log('✅ Lưu yêu cầu seller thành công cho user:', userId);
+    console.log('✅ Dữ liệu sellerRequest:', user.sellerRequest);
+
+    res.status(200).json({
+      message: 'Đã gửi yêu cầu mở cửa hàng',
+      sellerRequest: user.sellerRequest,
+    });
   } catch (error) {
-    console.error('Request seller error:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+    console.error('❌ [Lỗi Server - requestSeller]:', error);
+    res.status(500).json({
+      message: 'Lỗi máy chủ',
+      error: error.message,
+    });
   }
 };
-
 exports.getAllSellerRequests = async (req, res) => {
   try {
     const requests = await User.find({ 'sellerRequest.status': 'pending' }).select('fullName email phone sellerRequest');
