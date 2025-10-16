@@ -30,7 +30,7 @@ const userApi = {
     }
     if (files?.logo) formData.append("logo", files.logo);
     if (files?.banner) formData.append("banner", files.banner);
-    return axiosClient.post("/api/users/request-seller", formData, {
+    return axiosClient.post("/api/users/seller-request", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
