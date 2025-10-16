@@ -37,35 +37,38 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    try {
-      const form = new FormData();
-      form.append("name", formData.name);
-      form.append("category", formData.category);
-      form.append("description", formData.description);
-      form.append("address", formData.address);
-      form.append("contactPhone", formData.contactPhone);
-      form.append("contactEmail", formData.contactEmail);
+  try {
+    const form = new FormData();
 
-      if (logoRef.current?.files?.[0]) {
-        form.append("logo", logoRef.current.files[0]);
-      }
-      if (bannerRef.current?.files?.[0]) {
-        form.append("banner", bannerRef.current.files[0]);
-      }
+    // ✅ Các field text
+    form.append("name", formData.name);
+    form.append("category", formData.category);
+    form.append("description", formData.description);
+    form.append("storeAddress", formData.address); // ✅ đổi 'address' → 'storeAddress'
+    form.append("contactPhone", formData.contactPhone);
+    form.append("contactEmail", formData.contactEmail);
 
-      const res = await storeApi.createStore(form);
-
-      alert(res.data.message || "Đăng ký cửa hàng thành công!");
-      if (onSuccess) onSuccess();
-      if (onClose) onClose();
-    } catch (error: any) {
-      console.error("Lỗi khi tạo cửa hàng:", error);
-      alert(error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại!");
+    // ✅ Các file upload
+    if (logoRef.current?.files?.[0]) {
+      form.append("logoUrl", logoRef.current.files[0]); // ✅ đổi 'logo' → 'logoUrl'
     }
-  };
+    if (bannerRef.current?.files?.[0]) {
+      form.append("bannerUrl", bannerRef.current.files[0]); // ✅ đổi 'banner' → 'bannerUrl'
+    }
+
+    const res = await storeApi.createStore(form);
+
+    alert(res.data.message || "Đăng ký cửa hàng thành công!");
+    if (onSuccess) onSuccess();
+    if (onClose) onClose();
+  } catch (error: any) {
+    console.error("Lỗi khi tạo cửa hàng:", error);
+    alert(error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại!");
+  }
+};
 
   return (
     <div className="bg-white rounded-2xl shadow-lg max-w-xl mx-auto p-8">

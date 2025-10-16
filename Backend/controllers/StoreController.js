@@ -2,32 +2,56 @@ const Store = require('../models/Store');
 const User = require('../models/Users');
 
 exports.createStore = async (req, res) => {
-    try {
-        const { name, description, storeAddress, logoUrl, category, customCategory } = req.body;
-        const userId = req.user.userId;
-        console.log('req.user:', req.user);
+  try {
+    // Nếu bạn dùng middleware upload.fields(), thì req.files là object chứa cả logo và banner
+    const logo = req.files?.logo?.[0];
+    const banner = req.files?.banner?.[0];
 
-        const existingStore = await Store.findOne({ owner: userId });
-        if (existingStore) {
-            return res.status(400).json({ message: 'Người dùng đã có cửa hàng' });
-        }
+    // Lấy dữ liệu từ form
+    const {
+      name,
+      description,
+      category,
+      address,
+      contactPhone,
+      contactEmail
+    } = req.body;
 
-        const newStore = new Store({
-            name,
-            description,
-            storeAddress,
-            logoUrl,
-            category: category === 'Other' ? customCategory : category,
-            owner: userId,
-            isActive: false
-        });
+    // Debug console để xem multer đã hoạt động chưa
+    console.log('📂 Uploaded files:', req.files);
+    console.log('📩 Form data:', req.body);
 
-        await newStore.save();
-        res.status(201).json({ message: 'Cửa hàng đã được tạo', store: newStore });
+    // Kiểm tra bắt buộc
+    if (!name || !description || !category || !address) {
+      return res.status(400).json({ message: 'Thiếu thông tin bắt buộc' });
     }
-    catch (error) {
-        res.status(500).json({ message: 'Lỗi khi tạo cửa hàng', error: error.message });
-    }
+
+    // Tạo store mới
+    const newStore = new Store({
+      name,
+      description,
+      category,
+      storeAddress: address,
+      contactPhone,
+      contactEmail,
+      logoUrl: logo ? `/uploads/${logo.filename}` : '', // ✅ Gán đường dẫn file, không phải object
+      bannerUrl: banner ? `/uploads/${banner.filename}` : '',
+      owner: req.user._id, // Lấy từ middleware auth
+    });
+
+    await newStore.save();
+
+    res.status(201).json({
+      message: 'Tạo cửa hàng thành công!',
+      store: newStore
+    });
+  } catch (error) {
+    console.error('🔥 Lỗi khi tạo cửa hàng:', error);
+    res.status(500).json({
+      message: 'Lỗi khi tạo cửa hàng',
+      error: error.message
+    });
+  }
 };
 
 exports.getStoreByOwner = async (req, res) => {
