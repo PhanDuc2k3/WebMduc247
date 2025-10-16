@@ -33,7 +33,9 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      const vercelRegex = /^https:\/\/web-mduc247.*\.vercel\.app$/; // cho phép tất cả subdomain Vercel
+
+      if (!origin || allowedOrigins.includes(origin) || vercelRegex.test(origin)) {
         callback(null, true);
       } else {
         callback(new Error('CORS not allowed for this origin: ' + origin));
