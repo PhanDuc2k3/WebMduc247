@@ -165,59 +165,66 @@ exports.updateUser = async (req, res) => {
 // ==========================
 
 exports.requestSeller = async (req, res) => {
-  console.log('==== [API] /api/seller/request ====');
-  console.log('👉 Body:', req.body);
-  console.log('👉 Files:', req.files);
-  console.log('👉 User (decoded from token):', req.user);
+  console.log("==== [API] /api/users/seller-request ====");
+  console.log("👉 Raw Body:", req.body);
+  console.log("👉 Uploaded Files:", req.files);
+  console.log("👉 User (decoded from token):", req.user);
 
   try {
     const userId = req.user?.userId;
     if (!userId) {
-      console.warn('⚠️ Không có userId trong token');
-      return res.status(401).json({ message: 'Không xác thực được người dùng' });
+      console.warn("⚠️ Không có userId trong token");
+      return res.status(401).json({ message: "Không xác thực được người dùng" });
     }
 
-    const { name, description, address, category, contactPhone, contactEmail } = req.body;
+    // 🟢 Lấy các field từ body
+    const { name, description, storeAddress, category, contactPhone, contactEmail } = req.body;
 
-    // Kiểm tra thông tin bắt buộc
-    if (!name || !address || !category || !contactPhone) {
-      console.warn('⚠️ Thiếu thông tin bắt buộc:', { name, address, category, contactPhone });
-      return res.status(400).json({ message: 'Thiếu thông tin cửa hàng' });
+    // 🧩 Bước check dữ liệu trước khi xử lý
+    const missingFields = [];
+    if (!name) missingFields.push("name");
+    if (!storeAddress) missingFields.push("storeAddress");
+    if (!category) missingFields.push("category");
+    if (!contactPhone) missingFields.push("contactPhone");
+
+    if (missingFields.length > 0) {
+      console.warn("⚠️ Thiếu các thông tin bắt buộc:", missingFields);
+      return res.status(400).json({ message: `Thiếu thông tin: ${missingFields.join(", ")}` });
     }
 
-    // Lấy user từ DB
+    // 🔍 Lấy user từ DB
     const user = await User.findById(userId);
     if (!user) {
-      console.warn('❌ Không tìm thấy user trong DB:', userId);
-      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+      console.warn("❌ Không tìm thấy user trong DB:", userId);
+      return res.status(404).json({ message: "Không tìm thấy người dùng" });
     }
 
-    // Kiểm tra trạng thái yêu cầu seller
-    if (user.sellerRequest?.status === 'pending') {
-      console.warn('⚠️ User đã có yêu cầu đang chờ duyệt:', userId);
-      return res.status(400).json({ message: 'Đã gửi yêu cầu, vui lòng chờ admin duyệt' });
+    // 🚫 Kiểm tra nếu đã có yêu cầu đang chờ
+    if (user.sellerRequest?.status === "pending") {
+      console.warn("⚠️ User đã có yêu cầu đang chờ duyệt:", userId);
+      return res.status(400).json({ message: "Đã gửi yêu cầu, vui lòng chờ admin duyệt" });
     }
 
-    // Xử lý file upload (logo & banner)
-    const host = `${req.protocol}://${req.get('host')}`;
+    // 📁 Xử lý file upload
+    const host = `${req.protocol}://${req.get("host")}`;
     const logoUrl = req.files?.logo?.[0]
       ? `${host}/uploads/${req.files.logo[0].filename}`
-      : '';
+      : null;
     const bannerUrl = req.files?.banner?.[0]
       ? `${host}/uploads/${req.files.banner[0].filename}`
-      : '';
+      : null;
 
-    console.log('✅ Upload path:', { logoUrl, bannerUrl });
+    console.log("✅ File URLs:", { logoUrl, bannerUrl });
 
-    // Cập nhật thông tin yêu cầu seller
+    // 🧾 Lưu thông tin sellerRequest
     user.sellerRequest = {
-      status: 'pending',
+      status: "pending",
       requestedAt: new Date(),
       store: {
         name,
         description,
-        address,
         category,
+        storeAddress,
         contactPhone,
         contactEmail,
         logoUrl,
@@ -228,21 +235,21 @@ exports.requestSeller = async (req, res) => {
 
     await user.save();
 
-    console.log('✅ Lưu yêu cầu seller thành công cho user:', userId);
-    console.log('✅ Dữ liệu sellerRequest:', user.sellerRequest);
+    console.log("✅ Lưu sellerRequest thành công:", user.sellerRequest);
 
     res.status(200).json({
-      message: 'Đã gửi yêu cầu mở cửa hàng',
+      message: "Đã gửi yêu cầu mở cửa hàng",
       sellerRequest: user.sellerRequest,
     });
   } catch (error) {
-    console.error('❌ [Lỗi Server - requestSeller]:', error);
+    console.error("❌ [Lỗi Server - requestSeller]:", error);
     res.status(500).json({
-      message: 'Lỗi máy chủ',
+      message: "Lỗi máy chủ",
       error: error.message,
     });
   }
 };
+
 exports.getAllSellerRequests = async (req, res) => {
   try {
     const requests = await User.find({ 'sellerRequest.status': 'pending' }).select('fullName email phone sellerRequest');
@@ -253,72 +260,39 @@ exports.getAllSellerRequests = async (req, res) => {
   }
 };
 
-exports.handleSellerRequest = async (req, res) => {
-  try {
-    const { id, action } = req.body;
-    console.log("==== [API] /api/users/seller-requests/handle ====");
-    console.log("👉 Body:", req.body);
+if (action === "approve") {
+  const storeData = user.sellerRequest.store;
+  console.log("🧾 storeData nhận từ user:", storeData);
 
-    const user = await User.findById(id);
-    if (!user) {
-      console.log("⚠️ Không tìm thấy user với id:", id);
-      return res.status(404).json({ message: "Không tìm thấy người dùng" });
-    }
-
-    if (action === "approve") {
-      const storeData = user.sellerRequest.store;
-      console.log("🧾 storeData nhận từ user:", storeData);
-
-      // Tạo store mới nếu chưa có
-      let store = await Store.findOne({ owner: user._id });
-      if (!store) {
-        store = new Store({
-          name: storeData.name,
-          description: storeData.description,
-          category: storeData.category,
-          storeAddress: storeData.address, // ✅ map lại cho đúng với schema
-          contactPhone: storeData.contactPhone,
-          contactEmail: storeData.contactEmail,
-          logoUrl: storeData.logoUrl,
-          bannerUrl: storeData.bannerUrl,
-          owner: user._id,
-          isActive: true,
-        });
-
-        await store.save();
-        console.log("✅ Đã tạo cửa hàng mới:", store._id);
-        user.store = store._id;
-      } else {
-        console.log("ℹ️ User đã có store:", store._id);
-      }
-
-      // Cập nhật role và trạng thái
-      user.role = "seller";
-      user.sellerRequest.status = "approved";
-      await user.save();
-
-      console.log("✅ Duyệt yêu cầu thành công cho user:", user._id);
-      return res.json({
-        message: "Đã duyệt và tạo cửa hàng thành công",
-        store,
-      });
-    }
-
-    if (action === "reject") {
-      user.sellerRequest.status = "rejected";
-      await user.save();
-      console.log("❌ Đã từ chối yêu cầu seller cho user:", user._id);
-      return res.json({ message: "Đã từ chối yêu cầu trở thành người bán" });
-    }
-
-    console.log("⚠️ Action không hợp lệ:", action);
-    res.status(400).json({ message: "Hành động không hợp lệ" });
-  } catch (error) {
-    console.error("🔥 Lỗi xử lý yêu cầu seller:", error);
-    res.status(500).json({
-      message: "Lỗi server khi xử lý yêu cầu seller",
-      error: error.message,
+  let store = await Store.findOne({ owner: user._id });
+  if (!store) {
+    store = new Store({
+      name: storeData.name,
+      description: storeData.description,
+      category: storeData.category,
+      storeAddress: storeData.storeAddress, // ✅ key mới
+      contactPhone: storeData.contactPhone,
+      contactEmail: storeData.contactEmail,
+      logoUrl: storeData.logoUrl,
+      bannerUrl: storeData.bannerUrl,
+      owner: user._id,
+      isActive: true,
     });
-  }
-};
 
+    await store.save();
+    console.log("✅ Đã tạo cửa hàng mới:", store._id);
+    user.store = store._id;
+  } else {
+    console.log("ℹ️ User đã có store:", store._id);
+  }
+
+  user.role = "seller";
+  user.sellerRequest.status = "approved";
+  await user.save();
+
+  console.log("✅ Duyệt yêu cầu thành công cho user:", user._id);
+  return res.json({
+    message: "Đã duyệt và tạo cửa hàng thành công",
+    store,
+  });
+}

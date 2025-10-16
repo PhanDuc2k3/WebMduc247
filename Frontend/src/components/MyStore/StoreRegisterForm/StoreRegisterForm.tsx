@@ -14,7 +14,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
     name: "",
     category: "",
     description: "",
-    address: "",
+    storeAddress: "",
     contactPhone: "",
     contactEmail: "",
   });
@@ -22,12 +22,14 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [bannerPreview, setBannerPreview] = useState<string | null>(null);
 
+  // 🧩 Cập nhật input text
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // 🧩 Cập nhật file + preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: "logo" | "banner") => {
     const file = e.target.files?.[0];
     if (file) {
@@ -37,45 +39,25 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
     }
   };
 
-const handleSubmit = async (e: React.FormEvent) => {
+  // 🧩 Submit form
+  const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   try {
     const form = new FormData();
-
-    // ✅ Các field text — đúng key theo backend
     form.append("name", formData.name);
     form.append("category", formData.category);
     form.append("description", formData.description);
-    form.append("storeAddress", formData.address);
+    form.append("storeAddress", formData.storeAddress);
     form.append("contactPhone", formData.contactPhone);
     form.append("contactEmail", formData.contactEmail);
-    
-    // ✅ Các file upload — đúng key
-    if (logoRef.current?.files?.[0]) {
-      form.append("logo", logoRef.current.files[0]); // ✅ đổi lại từ logoUrl → logo
-    }
-    if (bannerRef.current?.files?.[0]) {
-      form.append("banner", bannerRef.current.files[0]); // ✅ đổi lại từ bannerUrl → banner
-    } 
-    
-    // ✅ Gọi API đúng hàm requestSeller
-    const res = await userApi.requestSeller(
-      {
-        name: formData.name,
-        category: formData.category,
-        description: formData.description,
-        storeAddress: formData.address,
-        contactPhone: formData.contactPhone,
-        contactEmail: formData.contactEmail,
-      },
-      {
-        logo: logoRef.current?.files?.[0],
-        banner: bannerRef.current?.files?.[0],
-      }
-    );
 
-    alert(res.data.message || "Đăng ký cửa hàng thành công!");
+    if (logoRef.current?.files?.[0]) form.append("logo", logoRef.current.files[0]);
+    if (bannerRef.current?.files?.[0]) form.append("banner", bannerRef.current.files[0]);
+
+    const res = await userApi.requestSeller(form);
+
+    alert(res.data?.message || "Đăng ký cửa hàng thành công!");
     onSuccess?.();
     onClose?.();
   } catch (error: any) {
@@ -83,6 +65,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     alert(error?.response?.data?.message || "Có lỗi xảy ra, vui lòng thử lại!");
   }
 };
+
 
 
   return (
@@ -168,8 +151,8 @@ const handleSubmit = async (e: React.FormEvent) => {
           </label>
           <input
             type="text"
-            name="address"
-            value={formData.address}
+            name="storeAddress"
+            value={formData.storeAddress}
             onChange={handleChange}
             className="w-full border rounded-lg px-3 py-2 bg-gray-50"
             placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"

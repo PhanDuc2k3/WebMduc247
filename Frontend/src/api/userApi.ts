@@ -25,22 +25,13 @@ const userApi = {
   },
 
   // Người dùng gửi yêu cầu mở cửa hàng (seller request)
-  requestSeller: (
-    data: Record<string, string>,
-    files?: { logo?: File; banner?: File }
-  ) => {
-    const formData = new FormData();
-    for (const key in data) {
-      const value = data[key];
-      if (value !== undefined && value !== null) formData.append(key, value);
-    }
-    if (files?.logo) formData.append("logo", files.logo);
-    if (files?.banner) formData.append("banner", files.banner);
+// Người dùng gửi yêu cầu mở cửa hàng (seller request)
+requestSeller: (formData: FormData) => {
+  return axiosClient.post("/api/users/seller-request", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+},
 
-    return axiosClient.post("/api/users/seller-request", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-  },
 
   // Admin: lấy danh sách tất cả yêu cầu mở cửa hàng
   getAllSellerRequests: () => axiosClient.get("/api/users/seller-requests"),
