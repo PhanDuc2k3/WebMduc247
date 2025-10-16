@@ -45,7 +45,7 @@ const userSchema = new mongoose.Schema({
       name: { type: String },         
       category: { type: String },
       description: { type: String },   
-      address: { type: String },     
+      storeAddress: { type: String },     
       contactPhone: { type: String },  
       contactEmail: { type: String },  
       logoUrl: { type: String },                       

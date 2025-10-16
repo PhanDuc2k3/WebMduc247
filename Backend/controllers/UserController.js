@@ -250,6 +250,7 @@ exports.requestSeller = async (req, res) => {
   }
 };
 
+
 exports.getAllSellerRequests = async (req, res) => {
   try {
     const requests = await User.find({ 'sellerRequest.status': 'pending' }).select('fullName email phone sellerRequest');
