@@ -5,6 +5,7 @@ exports.createStore = async (req, res) => {
     try {
         const { name, description, storeAddress, logoUrl, category, customCategory } = req.body;
         const userId = req.user.userId;
+        console.log('req.user:', req.user);
 
         const existingStore = await Store.findOne({ owner: userId });
         if (existingStore) {
