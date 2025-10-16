@@ -5,6 +5,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const connectDB = require('./config/db');
 
+// Import routes
 const storeRoutes = require('./routes/StoreRoutes');
 const userRoutes = require('./routes/UserRoutes');
 const productRoutes = require('./routes/ProductRoutes');
@@ -22,22 +23,26 @@ connectDB();
 
 const app = express();
 
-// ✅ Danh sách origin được phép
+//  Danh sách origin được phép
 const allowedOrigins = [
   'http://localhost:5173',
-  'https://webmduc247.onrender.com',  
-  'https://web-mduc247.vercel.app', 
+  'https://webmduc247.onrender.com',
+  'https://web-mduc247.vercel.app',
 ];
 
-// ✅ Cấu hình CORS đúng cách
+//  Regex cho phép tất cả subdomain của Vercel
+const vercelRegex = /^https:\/\/web-mduc247.*\.vercel\.app$/;
+
+//  Middleware CORS với log chi tiết
 app.use(
   cors({
     origin: function (origin, callback) {
-      const vercelRegex = /^https:\/\/web-mduc247.*\.vercel\.app$/; // cho phép tất cả subdomain Vercel
-
+      console.log(' Request from origin:', origin || '(local)');
       if (!origin || allowedOrigins.includes(origin) || vercelRegex.test(origin)) {
+        console.log(' CORS allowed for:', origin || '(local)');
         callback(null, true);
       } else {
+        console.log(' CORS blocked for:', origin);
         callback(new Error('CORS not allowed for this origin: ' + origin));
       }
     },
@@ -48,9 +53,13 @@ app.use(
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
-// ✅ Routes
+//  Routes
 app.get('/', (req, res) => {
-  res.send('Backend is running');
+  res.json({
+    message: ' Backend is running',
+    origin: req.headers.origin || '(no origin header)',
+    allowed: allowedOrigins,
+  });
 });
 
 app.use('/api/stores', storeRoutes);
@@ -67,18 +76,28 @@ app.use('/api/messages', messageRoutes);
 
 const server = http.createServer(app);
 
-// ✅ Socket.io cũng cần CORS tương tự
+//  Socket.io CORS config (đồng nhất với Express)
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      console.log('💬 [Socket.io] Connection from:', origin || '(local)');
+      if (!origin || allowedOrigins.includes(origin) || vercelRegex.test(origin)) {
+        console.log(' [Socket.io] Allowed:', origin || '(local)');
+        callback(null, true);
+      } else {
+        console.error('[Socket.io] Blocked origin:', origin);
+        callback(new Error('Not allowed by Socket.io CORS'));
+      }
+    },
     methods: ['GET', 'POST'],
     credentials: true,
   },
 });
 
+//  Gọi module chat socket
 require('./websocket/chatSocket')(io);
 
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(` Server running on port ${PORT}`);
 });
