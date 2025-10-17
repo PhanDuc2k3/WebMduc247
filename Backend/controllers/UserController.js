@@ -261,39 +261,63 @@ exports.getAllSellerRequests = async (req, res) => {
   }
 };
 
-if (action === "approve") {
-  const storeData = user.sellerRequest.store;
-  console.log("🧾 storeData nhận từ user:", storeData);
+exports.handleSellerRequest = async (req, res) => {
+  try {
+    const { userId, action } = req.body;
 
-  let store = await Store.findOne({ owner: user._id });
-  if (!store) {
-    store = new Store({
-      name: storeData.name,
-      description: storeData.description,
-      category: storeData.category,
-      storeAddress: storeData.storeAddress, // ✅ key mới
-      contactPhone: storeData.contactPhone,
-      contactEmail: storeData.contactEmail,
-      logoUrl: storeData.logoUrl,
-      bannerUrl: storeData.bannerUrl,
-      owner: user._id,
-      isActive: true,
-    });
+    if (!userId || !['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ message: 'Thiếu userId hoặc action không hợp lệ' });
+    }
 
-    await store.save();
-    console.log("✅ Đã tạo cửa hàng mới:", store._id);
-    user.store = store._id;
-  } else {
-    console.log("ℹ️ User đã có store:", store._id);
+    // Lấy user
+    const user = await User.findById(userId);
+    if (!user || !user.sellerRequest) {
+      return res.status(404).json({ message: 'Không tìm thấy yêu cầu của user này' });
+    }
+
+    if (user.sellerRequest.status !== 'pending') {
+      return res.status(400).json({ message: 'Yêu cầu đã được xử lý trước đó' });
+    }
+
+    if (action === 'approve') {
+      // 1️⃣ Cập nhật status
+      user.sellerRequest.status = 'approved';
+      user.sellerRequest.processedAt = new Date();
+
+      // 2️⃣ Tạo store mới dựa trên sellerRequest
+      const { name, description, category, storeAddress, contactPhone, contactEmail, logoUrl, bannerUrl } = user.sellerRequest.store;
+
+      const newStore = new Store({
+        owner: user._id,
+        name,
+        description,
+        category,
+        storeAddress,
+        contactPhone,
+        contactEmail,
+        logoUrl,
+        bannerUrl,
+        isActive: true,
+      });
+
+      await newStore.save();
+
+      await user.save();
+
+      return res.status(200).json({ message: 'Đã duyệt yêu cầu và tạo cửa hàng', store: newStore });
+    }
+
+    if (action === 'reject') {
+      user.sellerRequest.status = 'rejected';
+      user.sellerRequest.processedAt = new Date();
+
+      await user.save();
+
+      return res.status(200).json({ message: 'Đã từ chối yêu cầu mở cửa hàng' });
+    }
+
+  } catch (error) {
+    console.error('Handle seller request error:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
   }
-
-  user.role = "seller";
-  user.sellerRequest.status = "approved";
-  await user.save();
-
-  console.log("✅ Duyệt yêu cầu thành công cho user:", user._id);
-  return res.json({
-    message: "Đã duyệt và tạo cửa hàng thành công",
-    store,
-  });
-}
+};
