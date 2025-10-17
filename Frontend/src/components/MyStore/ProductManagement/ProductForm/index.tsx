@@ -58,71 +58,72 @@ const ProductForm: React.FC<ProductFormProps> = ({
   }, [editProduct, setFormData]);
 
   // 🔹 Submit tạo / sửa sản phẩm
-  const handleSubmit = async () => {
-    try {
-      const form = new FormData();
+const handleSubmit = async () => {
+  try {
+    const form = new FormData();
 
-      // Append các thông tin cơ bản
-      Object.entries({
-        name: formData.name,
-        description: formData.description,
-        price: String(formData.price),
-        salePrice: formData.originalPrice,
-        brand: formData.brand,
-        category: formData.category,
-        subCategory: formData.subCategory,
-        model: formData.model,
-        seoTitle: formData.seoTitle,
-        seoDescription: formData.seoDescription,
-        store: formData.storeId ?? "",
-      }).forEach(([key, val]) => {
-        if (val) form.append(key, String(val));
-      });
+    // 🔹 Các field cơ bản
+    Object.entries({
+      name: formData.name,
+      description: formData.description,
+      price: String(formData.price),
+      salePrice: formData.originalPrice,
+      brand: formData.brand,
+      category: formData.category,
+      subCategory: formData.subCategory,
+      model: formData.model,
+      seoTitle: formData.seoTitle,
+      seoDescription: formData.seoDescription,
+      store: formData.storeId ?? "",
+    }).forEach(([key, val]) => {
+      if (val) form.append(key, String(val));
+    });
 
-      form.append("specifications", JSON.stringify(formData.specifications));
-      form.append("tags", JSON.stringify(formData.tags));
-      form.append("features", JSON.stringify(formData.features));
-      form.append("variations", JSON.stringify(formData.variations));
+    // 🔹 Các field JSON
+    ["specifications", "tags", "features", "variations"].forEach((key) => {
+      form.append(key, JSON.stringify(formData[key as keyof FormDataType] || []));
+    });
 
-      // Xử lý ảnh chính
-      if (formData.mainImage) {
-        form.append("mainImage", formData.mainImage);
-      } else if (formData.mainImagePreview) {
-        form.append("existingMainImage", formData.mainImagePreview);
-      }
+    // 🔹 Ảnh mới
+    if (formData.mainImage) form.append("mainImage", formData.mainImage);
+    formData.subImages.forEach((file) => form.append("subImages", file));
 
-      // Xử lý ảnh phụ
-      const existingSubImages = formData.subImagesPreview.filter(
-        (url) => !formData.subImages.some((file) => URL.createObjectURL(file) === url)
-      );
-      formData.subImages.forEach((file: File) => form.append("subImages", file));
-      existingSubImages.forEach((url) => form.append("existingSubImages", url));
-
-      const isEdit = Boolean(editProduct?._id);
-
-      const res = isEdit
-        ? await productApi.updateProduct(editProduct!._id, form)
-        : await productApi.createProduct(form);
-
-      const newProduct: ProductType = res.data.data;
-
-      // Cập nhật preview để UI popup không bị trắng
-      setFormData((prev) => ({
-        ...prev,
-        mainImagePreview: newProduct.images?.[0] || null,
-        subImagesPreview: newProduct.images?.slice(1) || [],
-        mainImage: null,
-        subImages: [],
-      }));
-
-      alert(isEdit ? "✅ Cập nhật sản phẩm thành công!" : "✅ Tạo sản phẩm thành công!");
-      onAddProduct(newProduct, isEdit);
-      onClose();
-    } catch (err: any) {
-      console.error(err);
-      alert(err.response?.data?.message || "Không thể kết nối server");
+    // 🔹 Ảnh cũ giữ lại
+    if (formData.mainImagePreview && !formData.mainImage) {
+      form.append("existingMainImage", formData.mainImagePreview);
     }
-  };
+    formData.subImagesPreview.forEach((url) => {
+      // chỉ append nếu ảnh chưa bị xóa
+      if (!formData.subImages.some((f) => URL.createObjectURL(f) === url)) {
+        form.append("existingSubImages", url);
+      }
+    });
+
+    const isEdit = Boolean(editProduct?._id);
+    const res = isEdit
+      ? await productApi.updateProduct(editProduct!._id, form)
+      : await productApi.createProduct(form);
+
+    const newProduct: ProductType = res.data.data;
+
+    // 🔹 Cập nhật formData để preview UI
+    setFormData((prev) => ({
+      ...prev,
+      mainImagePreview: newProduct.images?.[0] || null,
+      subImagesPreview: newProduct.images?.slice(1) || [],
+      mainImage: null,
+      subImages: [],
+    }));
+
+    alert(isEdit ? "✅ Cập nhật sản phẩm thành công!" : "✅ Tạo sản phẩm thành công!");
+    onAddProduct(newProduct, isEdit);
+    onClose();
+  } catch (err: any) {
+    console.error(err);
+    alert(err.response?.data?.message || "Không thể kết nối server");
+  }
+};
+
 
   const handleChange = (field: keyof FormDataType, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

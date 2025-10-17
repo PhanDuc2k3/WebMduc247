@@ -138,20 +138,33 @@ exports.updateProduct = async (req, res) => {
     if (!store) return res.status(400).json({ success: false, message: "Bạn chưa có cửa hàng" });
 
     let updateData = { ...req.body };
-    ["variations", "specifications", "tags", "keywords"].forEach(field => {
-      if (updateData[field] && typeof updateData[field] === "string") {
-        updateData[field] = JSON.parse(updateData[field]);
+
+    // 🔹 JSON fields parse
+    ["variations", "specifications", "tags", "features"].forEach((field) => {
+      if (updateData[field]) {
+        try {
+          updateData[field] = JSON.parse(updateData[field]);
+        } catch {
+          updateData[field] = [];
+        }
       }
     });
 
-    // ✅ Dùng Cloudinary URL
-    if (req.files && Object.keys(req.files).length > 0) {
-      let images = [];
-      for (const key in req.files) {
-        images.push(...req.files[key].map(f => f.path));
-      }
-      updateData.images = images;
+    // 🔹 Xử lý ảnh
+    let images = [];
+
+    // Ảnh mới upload
+    if (req.files?.mainImage) images.push(`/uploads/${req.files.mainImage[0].filename}`);
+    if (req.files?.subImages) images.push(...req.files.subImages.map(f => `/uploads/${f.filename}`));
+
+    // Ảnh cũ giữ lại
+    if (req.body.existingMainImage) images.push(req.body.existingMainImage);
+    if (req.body.existingSubImages) {
+      if (Array.isArray(req.body.existingSubImages)) images.push(...req.body.existingSubImages);
+      else images.push(req.body.existingSubImages);
     }
+
+    if (images.length > 0) updateData.images = images;
 
     const product = await Product.findOneAndUpdate(
       { _id: req.params.id, store: store._id },
@@ -163,9 +176,11 @@ exports.updateProduct = async (req, res) => {
 
     res.json({ success: true, data: product });
   } catch (err) {
-    res.status(400).json({ success: false, message: err.message });
+    console.error("updateProduct error:", err);
+    res.status(500).json({ success: false, message: err.message || "Server error" });
   }
 };
+
 
 
 // Soft delete product
