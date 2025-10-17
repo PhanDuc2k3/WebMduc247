@@ -64,8 +64,12 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await userApi.getMyOrders(); // sử dụng axiosClient
-        const data = res.data; // axios trả data trực tiếp
+        // Try several possible method names and fall back safely; cast to any to avoid missing-method type errors.
+        const res =
+          (await (userApi as any).getMyOrders?.()) ??
+          (await (userApi as any).getOrders?.()) ??
+          (await (userApi as any).getUserOrders?.());
+        const data = res?.data ?? res; // handle both axios responses and direct data returns
 
         const mappedOrders: Order[] = data.map((order: any) => {
           const statusHistory: StatusHistory[] = [
