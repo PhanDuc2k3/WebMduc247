@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from "react";
+import React, { type ChangeEvent } from "react";
 import type { FormDataType } from "../../../../types/product";
 
 interface Props {
