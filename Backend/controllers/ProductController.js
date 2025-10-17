@@ -12,11 +12,8 @@ const generateSKU = (name) => {
 exports.createProduct = async (req, res) => {
   try {
     const userId = req.user.userId;
-
     const store = await Store.findOne({ owner: userId });
-    if (!store) {
-      return res.status(400).json({ success: false, message: "Không tìm thấy cửa hàng của bạn." });
-    }
+    if (!store) return res.status(400).json({ success: false, message: "Không tìm thấy cửa hàng của bạn." });
 
     const {
       name, description, price, salePrice, brand, category, subCategory,
@@ -40,12 +37,13 @@ exports.createProduct = async (req, res) => {
       }
     });
 
+    // ✅ Dùng Cloudinary URL
     let images = [];
     if (req.files) {
       const main = req.files.mainImage ? req.files.mainImage[0] : null;
       const subs = req.files.subImages || [];
-      if (main) images.push(`/uploads/${main.filename}`);
-      if (subs.length > 0) images.push(...subs.map(f => `/uploads/${f.filename}`));
+      if (main) images.push(main.path);
+      if (subs.length > 0) images.push(...subs.map(f => f.path));
     }
 
     const finalSKU = sku || generateSKU(name);
@@ -64,6 +62,7 @@ exports.createProduct = async (req, res) => {
     return res.status(400).json({ success: false, message: err.message });
   }
 };
+
 
 // Get all products with pagination, filtering, sorting
 exports.getProducts = async (req, res) => {
@@ -145,8 +144,13 @@ exports.updateProduct = async (req, res) => {
       }
     });
 
-    if (req.files && req.files.length > 0) {
-      updateData.images = req.files.map(f => `/uploads/${f.filename}`);
+    // ✅ Dùng Cloudinary URL
+    if (req.files && Object.keys(req.files).length > 0) {
+      let images = [];
+      for (const key in req.files) {
+        images.push(...req.files[key].map(f => f.path));
+      }
+      updateData.images = images;
     }
 
     const product = await Product.findOneAndUpdate(
@@ -162,6 +166,7 @@ exports.updateProduct = async (req, res) => {
     res.status(400).json({ success: false, message: err.message });
   }
 };
+
 
 // Soft delete product
 exports.deleteProduct = async (req, res) => {

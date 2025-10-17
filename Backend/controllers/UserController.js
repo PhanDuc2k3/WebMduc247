@@ -98,17 +98,19 @@ exports.updateProfile = async (req, res) => {
     const { fullName, phone } = req.body;
 
     let updateData = { fullName, phone };
+
+    // Nếu có file upload avatar từ Cloudinary
     if (req.file) {
-      const serverUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-      updateData.avatarUrl = `${serverUrl}/uploads/${req.file.filename}`;
+      updateData.avatarUrl = req.file.path; // req.file.path là URL Cloudinary
     }
 
     const user = await User.findByIdAndUpdate(userId, updateData, {
       new: true,
-      runValidators: true
+      runValidators: true,
     }).select('-password');
 
-    if (!user) return res.status(404).json({ message: 'Người dùng không tồn tại' });
+    if (!user)
+      return res.status(404).json({ message: 'Người dùng không tồn tại' });
 
     res.status(200).json({ message: 'Cập nhật thông tin thành công', user });
   } catch (error) {
@@ -116,6 +118,7 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
   }
 };
+
 
 // ==========================
 // QUẢN LÝ NGƯỜI DÙNG (ADMIN)
@@ -165,58 +168,32 @@ exports.updateUser = async (req, res) => {
 // ==========================
 
 exports.requestSeller = async (req, res) => {
-  console.log("==== [API] /api/users/seller-request ====");
-  console.log("👉 Raw Body:", req.body);
-  console.log("👉 Uploaded Files:", req.files);
-  console.log("👉 User (decoded from token):", req.user);
-
   try {
     const userId = req.user?.userId;
-    if (!userId) {
-      console.warn("⚠️ Không có userId trong token");
-      return res.status(401).json({ message: "Không xác thực được người dùng" });
-    }
+    if (!userId) return res.status(401).json({ message: "Không xác thực được người dùng" });
 
-    // 🟢 Lấy các field từ body
     const { name, description, storeAddress, category, contactPhone, contactEmail } = req.body;
 
-    // 🧩 Bước check dữ liệu trước khi xử lý
+    // Check các field bắt buộc
     const missingFields = [];
     if (!name) missingFields.push("name");
     if (!storeAddress) missingFields.push("storeAddress");
     if (!category) missingFields.push("category");
     if (!contactPhone) missingFields.push("contactPhone");
 
-    if (missingFields.length > 0) {
-      console.warn("⚠️ Thiếu các thông tin bắt buộc:", missingFields);
+    if (missingFields.length > 0)
       return res.status(400).json({ message: `Thiếu thông tin: ${missingFields.join(", ")}` });
-    }
 
-    // 🔍 Lấy user từ DB
     const user = await User.findById(userId);
-    if (!user) {
-      console.warn("❌ Không tìm thấy user trong DB:", userId);
-      return res.status(404).json({ message: "Không tìm thấy người dùng" });
-    }
+    if (!user) return res.status(404).json({ message: "Không tìm thấy người dùng" });
 
-    // 🚫 Kiểm tra nếu đã có yêu cầu đang chờ
-    if (user.sellerRequest?.status === "pending") {
-      console.warn("⚠️ User đã có yêu cầu đang chờ duyệt:", userId);
+    if (user.sellerRequest?.status === "pending")
       return res.status(400).json({ message: "Đã gửi yêu cầu, vui lòng chờ admin duyệt" });
-    }
 
-    // 📁 Xử lý file upload
-    const host = `${req.protocol}://${req.get("host")}`;
-    const logoUrl = req.files?.logo?.[0]
-      ? `${host}/uploads/${req.files.logo[0].filename}`
-      : null;
-    const bannerUrl = req.files?.banner?.[0]
-      ? `${host}/uploads/${req.files.banner[0].filename}`
-      : null;
+    // Lấy URL từ Cloudinary
+    const logoUrl = req.files?.logo?.[0]?.path || null;
+    const bannerUrl = req.files?.banner?.[0]?.path || null;
 
-    console.log("✅ File URLs:", { logoUrl, bannerUrl });
-
-    // 🧾 Lưu thông tin sellerRequest
     user.sellerRequest = {
       status: "pending",
       requestedAt: new Date(),
@@ -235,20 +212,16 @@ exports.requestSeller = async (req, res) => {
 
     await user.save();
 
-    console.log("✅ Lưu sellerRequest thành công:", user.sellerRequest);
-
     res.status(200).json({
       message: "Đã gửi yêu cầu mở cửa hàng",
       sellerRequest: user.sellerRequest,
     });
   } catch (error) {
-    console.error("❌ [Lỗi Server - requestSeller]:", error);
-    res.status(500).json({
-      message: "Lỗi máy chủ",
-      error: error.message,
-    });
+    console.error("requestSeller error:", error);
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
   }
 };
+
 
 
 exports.getAllSellerRequests = async (req, res) => {

@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import productApi from "../../../api/productApi";
 
 interface Product {
   _id: string;
@@ -20,12 +19,22 @@ interface ProductCardProps {
   product: Product;
 }
 
+// Helper hiển thị URL ảnh
+const getImageUrl = (img?: string) => {
+  if (!img) return "/no-image.png";
+  return img.startsWith("http") ? img : `${import.meta.env.VITE_API_URL}${img}`;
+};
+
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  useEffect(() => {
+    console.log("📸 Product images:", product.images?.map(getImageUrl));
+  }, [product.images]);
+
   return (
     <div className="group bg-white border-2 border-gray-300 rounded-lg shadow-md p-3 relative transition-all duration-300 hover:shadow-lg w-full max-w-xs min-h-[300px] flex flex-col">
       <div className="relative overflow-hidden rounded-md">
         <img
-          src={`${import.meta.env.VITE_API_URL}${product.images?.[0] || "/no-image.png"}`}
+          src={getImageUrl(product.images?.[0])}
           alt={product.name}
           className="w-full h-[180px] object-cover rounded-md transition-transform duration-300 group-hover:scale-105"
         />
@@ -80,6 +89,5 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     </div>
   );
 };
-
 
 export default ProductCard;
