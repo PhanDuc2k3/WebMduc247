@@ -279,33 +279,36 @@ exports.handleSellerRequest = async (req, res) => {
       return res.status(400).json({ message: 'Yêu cầu đã được xử lý trước đó' });
     }
 
-    if (action === 'approve') {
-      // 1️⃣ Cập nhật status
-      user.sellerRequest.status = 'approved';
-      user.sellerRequest.processedAt = new Date();
+if (action === 'approve') {
+  // Cập nhật status
+  user.sellerRequest.status = 'approved';
+  user.sellerRequest.processedAt = new Date();
 
-      // 2️⃣ Tạo store mới dựa trên sellerRequest
-      const { name, description, category, storeAddress, contactPhone, contactEmail, logoUrl, bannerUrl } = user.sellerRequest.store;
+  // Đổi role
+  user.role = 'seller';
 
-      const newStore = new Store({
-        owner: user._id,
-        name,
-        description,
-        category,
-        storeAddress,
-        contactPhone,
-        contactEmail,
-        logoUrl,
-        bannerUrl,
-        isActive: true,
-      });
+  // Tạo store mới
+  const { name, description, category, storeAddress, contactPhone, contactEmail, logoUrl, bannerUrl } = user.sellerRequest.store;
 
-      await newStore.save();
+  const newStore = new Store({
+    owner: user._id,
+    name,
+    description,
+    category,
+    storeAddress,
+    contactPhone,
+    contactEmail,
+    logoUrl,
+    bannerUrl,
+    isActive: true,
+  });
 
-      await user.save();
+  await newStore.save();
+  await user.save();
 
-      return res.status(200).json({ message: 'Đã duyệt yêu cầu và tạo cửa hàng', store: newStore });
-    }
+  return res.status(200).json({ message: 'Đã duyệt yêu cầu, tạo cửa hàng và chuyển role sang seller', store: newStore });
+}
+
 
     if (action === 'reject') {
       user.sellerRequest.status = 'rejected';
