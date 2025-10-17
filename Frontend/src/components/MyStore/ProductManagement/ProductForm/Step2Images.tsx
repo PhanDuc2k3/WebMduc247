@@ -1,16 +1,22 @@
-// Step2Images.tsx
-import React from "react";
-import type { ChangeEvent } from "react";
+import React, { ChangeEvent } from "react";
 import type { FormDataType } from "../../../../types/product";
 
 interface Props {
   formData: FormDataType;
   setFormData: React.Dispatch<React.SetStateAction<FormDataType>>;
   setStep: React.Dispatch<React.SetStateAction<number>>;
+  existingSubImages: string[];
+  setExistingSubImages: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
-const Step2Images: React.FC<Props> = ({ formData, setFormData, setStep }) => {
-  // 🔹 Chọn ảnh chính
+const Step2Images: React.FC<Props> = ({
+  formData,
+  setFormData,
+  setStep,
+  existingSubImages,
+  setExistingSubImages,
+}) => {
+  // Chọn ảnh chính
   const handleMainImage = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -22,10 +28,10 @@ const Step2Images: React.FC<Props> = ({ formData, setFormData, setStep }) => {
     }
   };
 
-  // 🔹 Chọn nhiều ảnh phụ
+  // Chọn ảnh phụ mới
   const handleSubImages = (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
-    if (files.length === 0) return;
+    if (!files.length) return;
 
     const newPreviews = files.map((f) => URL.createObjectURL(f));
     setFormData((prev) => ({
@@ -35,13 +41,24 @@ const Step2Images: React.FC<Props> = ({ formData, setFormData, setStep }) => {
     }));
   };
 
-  // 🔹 Xóa ảnh phụ theo index
+  // Xóa ảnh phụ theo index
   const handleRemoveSubImage = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      subImages: prev.subImages.filter((_, i) => i !== index),
-      subImagesPreview: prev.subImagesPreview.filter((_, i) => i !== index),
-    }));
+    if (index < existingSubImages.length) {
+      // xóa ảnh cũ
+      setExistingSubImages(existingSubImages.filter((_, i) => i !== index));
+      setFormData((prev) => ({
+        ...prev,
+        subImagesPreview: prev.subImagesPreview.filter((_, i) => i !== index),
+      }));
+    } else {
+      // xóa ảnh mới
+      const newIndex = index - existingSubImages.length;
+      setFormData((prev) => ({
+        ...prev,
+        subImages: prev.subImages.filter((_, i) => i !== newIndex),
+        subImagesPreview: prev.subImagesPreview.filter((_, i) => i !== index),
+      }));
+    }
   };
 
   return (

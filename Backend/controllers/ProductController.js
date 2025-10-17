@@ -1,8 +1,11 @@
 const Product = require('../models/Product');
 const Store = require('../models/Store');
 const ViewLog = require('../models/ViewLog');
+const { parseJSONField, mergeImages } = require('../middlewares/cloudinary');
+const parseJSONSafe = require('../utils/parseJSONSafe');
 
-const generateSKU = (name) => {
+const mongoose = require('mongoose');
+  const generateSKU = (name) => {
   const timestamp = Date.now();
   const shortName = name && name.trim() ? name.toUpperCase().replace(/\s+/g, '-') : 'PROD';
   return `${shortName}-${timestamp}`;
@@ -110,6 +113,7 @@ exports.getProductById = async (req, res) => {
 // Increase product view
 exports.increaseView = async (req, res) => {
   try {
+    console.log("1");
     const { id } = req.params;
     const product = await Product.findById(id);
     if (!product) return res.status(404).json({ success: false, message: "Product not found" });
@@ -134,50 +138,62 @@ exports.increaseView = async (req, res) => {
 // Update product by seller
 exports.updateProduct = async (req, res) => {
   try {
+    // 1️⃣ Kiểm tra cửa hàng
     const store = await Store.findOne({ owner: req.user.userId });
-    if (!store) return res.status(400).json({ success: false, message: "Bạn chưa có cửa hàng" });
+    if (!store)
+      return res.status(400).json({ success: false, message: "Bạn chưa có cửa hàng" });
 
+    // 2️⃣ Kiểm tra productId
+    const productId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(productId))
+      return res.status(400).json({ success: false, message: "Invalid product ID" });
+
+    // 3️⃣ Copy req.body
     let updateData = { ...req.body };
 
-    // 🔹 JSON fields parse
-    ["variations", "specifications", "tags", "features"].forEach((field) => {
-      if (updateData[field]) {
-        try {
-          updateData[field] = JSON.parse(updateData[field]);
-        } catch {
-          updateData[field] = [];
+    // 4️⃣ Parse JSON chỉ những field JSON
+    const jsonFields = ["variations", "specifications", "tags", "features", "keywords"];
+    jsonFields.forEach(field => {
+      if (updateData[field] && typeof updateData[field] === "string") {
+        const str = updateData[field].trim();
+        if (str.startsWith("[") || str.startsWith("{")) {
+          try {
+            updateData[field] = JSON.parse(str);
+          } catch {
+            updateData[field] = [];
+          }
         }
       }
     });
 
-    // 🔹 Xử lý ảnh
-    let images = [];
+    // 5️⃣ Merge ảnh chính/sub
+    const { mainImage: newMain, subImages: newSubs } = mergeImages(
+      req.files || {},
+      req.body.existingMainImage,
+      req.body.existingSubImages
+    );
 
-    // Ảnh mới upload
-    if (req.files?.mainImage) images.push(`/uploads/${req.files.mainImage[0].filename}`);
-    if (req.files?.subImages) images.push(...req.files.subImages.map(f => `/uploads/${f.filename}`));
-
-    // Ảnh cũ giữ lại
-    if (req.body.existingMainImage) images.push(req.body.existingMainImage);
-    if (req.body.existingSubImages) {
-      if (Array.isArray(req.body.existingSubImages)) images.push(...req.body.existingSubImages);
-      else images.push(req.body.existingSubImages);
+    if (newMain) updateData.images = [newMain, ...(newSubs || [])]; // mainImage đầu tiên
+    else if (newSubs && newSubs.length > 0) {
+      // giữ main cũ nếu không có main mới
+      const mainPrev = req.body.existingMainImage || "";
+      updateData.images = mainPrev ? [mainPrev, ...newSubs] : [...newSubs];
     }
 
-    if (images.length > 0) updateData.images = images;
-
+    // 6️⃣ Cập nhật product
     const product = await Product.findOneAndUpdate(
-      { _id: req.params.id, store: store._id },
+      { _id: productId, store: store._id },
       updateData,
       { new: true, runValidators: true }
     );
 
-    if (!product) return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm của bạn" });
+    if (!product)
+      return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm của bạn" });
 
-    res.json({ success: true, data: product });
+    return res.json({ success: true, data: product });
   } catch (err) {
     console.error("updateProduct error:", err);
-    res.status(500).json({ success: false, message: err.message || "Server error" });
+    return res.status(500).json({ success: false, message: err.message || "Server error" });
   }
 };
 

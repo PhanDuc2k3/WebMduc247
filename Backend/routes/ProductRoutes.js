@@ -45,6 +45,13 @@ router.put(
     { name: "mainImage", maxCount: 1 },
     { name: "subImages", maxCount: 5 },
   ]),
+  (err, req, res, next) => {
+    if (err) {
+      console.log("❌ Lỗi Multer:", err);
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  },
   updateProduct
 );
 
