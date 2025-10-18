@@ -24,20 +24,23 @@ const OrderManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const res = await orderApi.getOrdersBySeller();
-        setOrders(res.data || []);
-      } catch (err: any) {
-        setError(err.response?.data?.message || err.message || "Lỗi khi tải đơn hàng");
-      } finally {
-        setLoading(false);
-      }
-    };
+useEffect(() => {
+  const fetchOrders = async () => {
+    try {
+      const res = await orderApi.getOrdersBySeller();
+      console.log("📦 Dữ liệu trả về từ API:", res); // thêm dòng này
+      setOrders(res.data || []);
+    } catch (err: any) {
+      console.error("❌ Lỗi khi gọi API:", err);
+      setError(err.response?.data?.message || err.message || "Lỗi khi tải đơn hàng");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchOrders();
-  }, []);
+  fetchOrders();
+}, []);
+
 
   if (loading) return <p className="p-6">Đang tải đơn hàng...</p>;
   if (error) return <p className="p-6 text-red-500">{error}</p>;

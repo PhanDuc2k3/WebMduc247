@@ -28,10 +28,8 @@ const orderApi = {
   getMyOrders: () => axiosClient.get("/api/orders/my"),
 
   // Lấy đơn hàng theo người bán
-getOrdersBySeller: () => {
-  const sellerId = localStorage.getItem("userId"); // hoặc key bạn lưu
-  return axiosClient.get("/api/orders/seller", { params: { sellerId } });
-},
+  getOrdersBySeller: () => axiosClient.get("/api/orders/seller"),
+
 
   // Lấy đơn hàng theo code
   getOrderByCode: (orderCode: string) => axiosClient.get(`/api/orders/by-code/${orderCode}`),

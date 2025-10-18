@@ -204,11 +204,18 @@ exports.getOrderById = async (req, res) => {
 exports.getOrdersBySeller = async (req, res) => {
   try {
     const sellerId = req.user.userId;
-    const seller = await User.findById(sellerId).populate("store");
-    if (!seller || !seller.store) {
+    const seller = await User.findById(sellerId);
+
+    // Lấy store từ sellerRequest.store nếu không có seller.store
+    const storeInfo = seller.store || seller.sellerRequest?.store;
+    if (!storeInfo) {
       return res.status(400).json({ message: "Bạn chưa có cửa hàng" });
     }
-    const storeId = seller.store._id;
+
+    const storeId = storeInfo._id || storeInfo.id;
+    if (!storeId) {
+      return res.status(400).json({ message: "Store chưa có ID" });
+    }
 
     const orders = await Order.find({ "items.storeId": storeId })
       .sort({ createdAt: -1 })
@@ -220,6 +227,7 @@ exports.getOrdersBySeller = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 
 exports.getOrderByCode = async (req, res) => {
   try {
