@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { DollarSign, ShoppingCart, Package, Eye } from "lucide-react";
-import userApi from "../../../api/userApi";
+import storeApi from "../../../api/storeApi";
 import orderApi from "../../../api/orderApi";
 import productApi from "../../../api/productApi";
 
@@ -28,26 +28,43 @@ const Overview: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const profileRes = await userApi.getProfile();
-        const profile = profileRes.data;
-        const storeId = profile.store?._id || profile.user?.store?._id;
+        console.log("📦 Bắt đầu lấy thông tin cửa hàng...");
+        const storeRes = await storeApi.getMyStore();
+        console.log("📦 storeRes:", storeRes.data);
 
+        const storeId = storeRes.data.store?._id;
         if (!storeId) {
           setError("Bạn chưa có cửa hàng.");
+          setLoading(false);
           return;
         }
+        console.log("👉 storeId:", storeId);
 
-        // Lấy đơn hàng và sản phẩm song song
-        const [ordersRes, productsRes] = await Promise.all([
-          orderApi.getOrdersBySeller(),
-          productApi.getProductsByStore(storeId),
-        ]);
+        // Lấy đơn hàng
+        try {
+          console.log("📦 Bắt đầu lấy đơn hàng...");
+          const ordersRes = await orderApi.getOrdersBySeller();
+          console.log("📦 ordersRes:", ordersRes.data);
+          setOrders(ordersRes.data || []);
+        } catch (err: any) {
+          console.error("🔥 Lỗi lấy đơn hàng:", err.response?.data || err.message);
+          setOrders([]);
+        }
 
-        setOrders(ordersRes.data || []);
-        setProducts(productsRes.data || []);
+        // Lấy sản phẩm
+        try {
+          console.log("📦 Bắt đầu lấy sản phẩm...");
+          const productsRes = await productApi.getProductsByStore(storeId);
+          console.log("📦 productsRes:", productsRes.data);
+          setProducts(productsRes.data || []);
+        } catch (err: any) {
+          console.error("🔥 Lỗi lấy sản phẩm:", err.response?.data || err.message);
+          setProducts([]);
+        }
+
       } catch (err: any) {
-        console.error("Lỗi khi lấy dữ liệu:", err);
-        setError(err.response?.data?.message || "Lỗi khi tải dữ liệu");
+        console.error("🔥 Lỗi lấy store:", err.response?.data || err.message || err);
+        setError("Bạn chưa có cửa hàng hoặc API lỗi.");
       } finally {
         setLoading(false);
       }

@@ -46,13 +46,22 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  // 🧩 LOG debug props nhận được
+  console.group("🟢 [ProfileOrders] Render Component");
+  console.log("📦 Props.orders:", orders);
+  console.log("⏳ Props.loading:", loading);
+  console.log("🔢 Số lượng orders:", orders?.length || 0);
+  console.groupEnd();
+
   // state chứa reviews theo productId
   const [reviews, setReviews] = useState<Record<string, Review[]>>({});
 
   // fetch reviews theo productId
   const fetchReviews = async (productId: string) => {
     try {
+      console.log("🔍 Gọi API review cho productId:", productId);
       const res = await reviewApi.getReviewsByProduct(productId);
+      console.log("✅ Review data:", res.data);
       setReviews((prev) => ({ ...prev, [productId]: res.data }));
     } catch (err) {
       console.error("❌ Lỗi fetch reviews:", err);
@@ -61,14 +70,21 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
 
   // khi có orders thì fetch review cho từng product
   useEffect(() => {
-    orders.forEach((order) =>
-      order.items.forEach((item) => {
-        if (!reviews[item.productId]) {
-          fetchReviews(item.productId);
-        }
-      })
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    console.log("📦 useEffect chạy — orders thay đổi:", orders);
+
+    if (orders?.length > 0) {
+      orders.forEach((order) => {
+        console.log("🧾 Kiểm tra order:", order._id);
+        order.items.forEach((item) => {
+          console.log("📦 Sản phẩm trong order:", item.productId, item.name);
+          if (!reviews[item.productId]) {
+            fetchReviews(item.productId);
+          }
+        });
+      });
+    } else {
+      console.warn("⚠️ Không có đơn hàng để fetch review!");
+    }
   }, [orders]);
 
   const getShippingStatus = (history: StatusHistory[]) => {
@@ -85,20 +101,28 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
     return map[latest] || latest;
   };
 
-  if (loading)
+  // 🧩 LOG logic hiển thị
+  if (loading) {
+    console.log("⏳ Đang tải đơn hàng...");
     return <div className="p-6 text-lg">Đang tải đơn hàng...</div>;
-  if (!orders.length)
+  }
+
+  if (!orders || orders.length === 0) {
+    console.warn("⚠️ Không có đơn hàng nào trong props!");
     return (
       <div className="p-6 text-gray-500 text-lg">Chưa có đơn hàng nào</div>
     );
+  }
+
+  console.log("✅ Hiển thị danh sách đơn hàng:", orders.length);
 
   return (
     <div className="bg-white rounded-xl shadow p-8">
       <h3 className="font-semibold text-xl mb-6">Lịch sử đơn hàng</h3>
 
-      {orders.map((order) => (
+      {orders.map((order, index) => (
         <div
-          key={order._id}
+          key={order._id || index}
           className="border rounded-xl p-6 mb-6 flex flex-col md:flex-row justify-between"
         >
           {/* Bên trái */}
@@ -126,8 +150,6 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                     </div>
                   </div>
                 </div>
-
-
               </div>
             ))}
           </div>

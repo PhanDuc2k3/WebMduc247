@@ -7,7 +7,7 @@ import ProfileSettings from "../../components/Profile/ProfileSettings/ProfileSet
 import ProfileInfoDetail from "../../components/Profile/ProfileInfoDetail/ProfileInfoDetail";
 import ProductReview from "../Review/Review";
 import userApi from "../../api/userApi";
-
+import orderApi from "../../api/orderApi"
 interface OrderItem {
   name: string;
   qty: number;
@@ -49,83 +49,77 @@ const Profile: React.FC = () => {
   const [reviewProductId, setReviewProductId] = useState<string | null>(null);
   const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
 
+  // 🧩 Lấy thông tin user
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await userApi.getProfile();
         setUser(res.data.user);
       } catch (error) {
-        console.error("Lỗi fetch user:", error);
+        console.error("❌ Lỗi fetch user:", error);
       }
     };
     fetchUser();
   }, []);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        // Try several possible method names and fall back safely; cast to any to avoid missing-method type errors.
-        const res =
-          (await (userApi as any).getMyOrders?.()) ??
-          (await (userApi as any).getOrders?.()) ??
-          (await (userApi as any).getUserOrders?.());
-        const data = res?.data ?? res; // handle both axios responses and direct data returns
+  // 📦 Lấy danh sách đơn hàng tùy theo role
+useEffect(() => {
+  const fetchOrders = async () => {
+    if (!user) return;
+    setLoadingOrders(true);
 
-        const mappedOrders: Order[] = data.map((order: any) => {
-          const statusHistory: StatusHistory[] = [
-            {
-              status:
-                order.paymentInfo?.status === "pending"
-                  ? "pending"
-                  : "delivered",
-              note:
-                order.paymentInfo?.status === "pending"
-                  ? "Chưa thanh toán"
-                  : "Đã giao",
-              timestamp: order.createdAt,
-            },
-          ];
+    try {
+      // Lấy tất cả đơn hàng mà user này mua
+      const res = await orderApi.getMyOrders();
 
-          return {
-            _id: order._id,
-            date: new Date(order.createdAt).toLocaleDateString("vi-VN"),
-            total: order.total.toLocaleString("vi-VN", {
-              style: "currency",
-              currency: "VND",
-            }),
-            items: order.items.map((item: any) => ({
-              name: item.name,
-              qty: item.quantity,
-              price: item.price.toLocaleString("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              }),
-              imgUrl: item.imageUrl,
-              productId: item.productId,
-            })),
-            statusHistory,
-          };
-        });
+      console.log("📦 Orders mua:", res.data);
 
-        setOrders(mappedOrders);
-      } catch (err) {
-        console.error("🔥 Lỗi fetch orders:", err);
-      } finally {
-        setLoadingOrders(false);
-      }
-    };
-    fetchOrders();
-  }, []);
+      const mappedOrders: Order[] = res.data.map((order: any) => ({
+        _id: order._id,
+        date: new Date(order.createdAt).toLocaleDateString("vi-VN"),
+        total: order.total?.toLocaleString("vi-VN", {
+          style: "currency",
+          currency: "VND",
+        }),
+        items: order.items?.map((item: any) => ({
+          name: item.name,
+          qty: item.quantity,
+          price: item.price?.toLocaleString("vi-VN", {
+            style: "currency",
+            currency: "VND",
+          }),
+          imgUrl: item.imageUrl,
+          productId:
+            typeof item.productId === "object" ? item.productId._id : item.productId,
+        })) || [],
+        statusHistory: order.statusHistory || [],
+      }));
 
-  if (!user) return <div>Đang tải...</div>;
+      setOrders(mappedOrders);
+    } catch (err) {
+      console.error("🔥 Lỗi fetch orders:", err);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  fetchOrders();
+}, [user]);
+
+
+  if (!user) return <div className="p-8 text-center">Đang tải thông tin người dùng...</div>;
 
   return (
     <div className="bg-[#f8f9fb] min-h-screen py-8">
       <div className="max-w-6xl mx-auto">
+        {/* 🧍 Thông tin user */}
         <ProfileInfo user={user} onEdit={() => setIsEditing(true)} />
+
+        {/* 🧭 Tabs điều hướng */}
         <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
 
         <div className="mt-6">
+          {/* Thông tin cá nhân */}
           {activeTab === "info" && (
             <ProfileInfoDetail
               isEditing={isEditing}
@@ -138,22 +132,29 @@ const Profile: React.FC = () => {
             />
           )}
 
+          {/* Đơn hàng */}
           {activeTab === "orders" && (
             <ProfileOrders
               orders={orders}
+              
               loading={loadingOrders}
               onReview={(productId, orderId) => {
                 setReviewProductId(productId);
                 setReviewOrderId(orderId);
               }}
+              
             />
           )}
 
+          {/* Yêu thích */}
           {activeTab === "favorites" && <ProfileFavorites />}
+
+          {/* Cài đặt */}
           {activeTab === "settings" && <ProfileSettings />}
         </div>
       </div>
 
+      {/* 🔹 Modal đánh giá sản phẩm */}
       {reviewProductId && reviewOrderId && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg w-full max-w-2xl p-6 relative">

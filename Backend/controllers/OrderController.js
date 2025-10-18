@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const Voucher = require("../models/Voucher");
 const User = require("../models/Users"); 
 const Product = require("../models/Product");
-
+const Store = require("../models/Store")
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -204,19 +204,15 @@ exports.getOrderById = async (req, res) => {
 exports.getOrdersBySeller = async (req, res) => {
   try {
     const sellerId = req.user.userId;
-    const seller = await User.findById(sellerId);
 
-    // Lấy store từ sellerRequest.store nếu không có seller.store
-    const storeInfo = seller.store || seller.sellerRequest?.store;
-    if (!storeInfo) {
+    // 1️⃣ Tìm store dựa trên owner
+    const store = await Store.findOne({ owner: sellerId });
+    if (!store) {
       return res.status(400).json({ message: "Bạn chưa có cửa hàng" });
     }
+    const storeId = store._id;
 
-    const storeId = storeInfo._id || storeInfo.id;
-    if (!storeId) {
-      return res.status(400).json({ message: "Store chưa có ID" });
-    }
-
+    // 2️⃣ Lấy orders có ít nhất 1 item thuộc store
     const orders = await Order.find({ "items.storeId": storeId })
       .sort({ createdAt: -1 })
       .populate("userId", "fullName email phone");
@@ -227,6 +223,8 @@ exports.getOrdersBySeller = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+
 
 
 exports.getOrderByCode = async (req, res) => {
