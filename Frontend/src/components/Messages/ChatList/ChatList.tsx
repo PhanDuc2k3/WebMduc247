@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import messageApi from "../../../api/messageApi"; // dùng api đã tạo
 
 interface Chat {
   conversationId: string;
@@ -11,32 +12,31 @@ interface Props {
   currentUserId: string;
   selectedChat: Chat | null;
   onSelectChat: (chat: Chat) => void;
-    disabled?: boolean; // thêm
-
+  disabled?: boolean;
 }
 
 export default function ChatList({ currentUserId, selectedChat, onSelectChat, disabled }: Props) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        const res = await fetch(`http://localhost:5000/api/messages/conversations/${currentUserId}`);
-        if (!res.ok) throw new Error("Lỗi khi lấy danh sách cuộc trò chuyện");
+useEffect(() => {
+  const fetchChats = async () => {
+    try {
+      if (!currentUserId) return;
 
-        const data = await res.json();
-        console.log("Danh sách conversations:", data); // để debug
-        setChats(data);
-      } catch (err) {
-        console.error("❌ Lỗi fetchChats:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+      const res = await messageApi.getUserConversations(currentUserId);
+      console.log("Danh sách conversations:", res.data); // debug
+      setChats(res.data);
+    } catch (err) {
+      console.error("❌ Lỗi fetchChats:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    if (currentUserId) fetchChats();
-  }, [currentUserId]);
+  fetchChats();
+}, [currentUserId]);
+
 
   return (
     <div className="w-1/3 bg-white border-r overflow-y-auto">
@@ -50,10 +50,10 @@ export default function ChatList({ currentUserId, selectedChat, onSelectChat, di
         chats.map((chat) => (
           <div
             key={chat.conversationId}
-            onClick={() => !disabled && onSelectChat(chat)} // disable khi không có user
+            onClick={() => !disabled && onSelectChat(chat)}
             className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-100 ${
               selectedChat?.conversationId === chat.conversationId ? "bg-gray-200" : ""
-            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`} // style khi disabled
+            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
             <img
               src={chat.avatarUrl || "/default-avatar.png"}
@@ -70,4 +70,3 @@ export default function ChatList({ currentUserId, selectedChat, onSelectChat, di
     </div>
   );
 }
-

@@ -76,11 +76,11 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
           />
         </div>
         <div>
-          <label className="text-sm font-medium">Giá gốc (nếu có)</label>
+          <label className="text-sm font-medium">Giá giảm giá (nếu có)</label>
           <input
             type="number"
             className="w-full border rounded px-3 py-2 mt-1"
-            placeholder="VD: 18000000"
+            placeholder="VD: 12000000"
             value={formData.originalPrice}
             onChange={(e) => handleChange("originalPrice", e.target.value)}
           />

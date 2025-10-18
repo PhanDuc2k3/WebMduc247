@@ -74,7 +74,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
             type="button"
             className="bg-green-600 text-white px-3 py-1 rounded text-sm"
           >
-            + Thêm màu
+            + Thêm
           </button>
         </div>
 
@@ -84,10 +84,10 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
             <div className="flex justify-between items-center mb-3">
               <div className="flex-1">
                 <label className="text-sm font-medium block mb-1">
-                  Tên màu
+                  Loại sản phẩm:
                 </label>
                 <input
-                  placeholder="VD: Đỏ, Xanh, Đen..."
+                  placeholder="VD: Màu mã, chất liệu, ... "
                   className="border px-2 py-1 rounded w-full"
                   value={v.color}
                   onChange={(e) => updateVariationColor(i, e.target.value)}
@@ -98,7 +98,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                 type="button"
                 className="text-red-500 text-sm hover:underline ml-3"
               >
-                Xóa màu
+                Xóa
               </button>
             </div>
 

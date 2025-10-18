@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Eye, Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import orderApi from "../../../api/orderApi";
 
 interface OrderItem {
@@ -23,38 +24,61 @@ const OrderManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
-useEffect(() => {
-  const fetchOrders = async () => {
-    try {
-      const res = await orderApi.getOrdersBySeller();
-      console.log("📦 Dữ liệu trả về từ API:", res); // thêm dòng này
-      setOrders(res.data || []);
-    } catch (err: any) {
-      console.error("❌ Lỗi khi gọi API:", err);
-      setError(err.response?.data?.message || err.message || "Lỗi khi tải đơn hàng");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const navigate = useNavigate();
 
-  fetchOrders();
-}, []);
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await orderApi.getOrdersBySeller();
+        setOrders(res.data || []);
+      } catch (err: any) {
+        setError(err.response?.data?.message || err.message || "Lỗi khi tải đơn hàng");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
+  const filteredOrders = orders.filter(
+    (o) =>
+      o.orderCode.toLowerCase().includes(search.toLowerCase()) ||
+      o.userId.fullName.toLowerCase().includes(search.toLowerCase())
+  );
 
-  if (loading) return <p className="p-6">Đang tải đơn hàng...</p>;
-  if (error) return <p className="p-6 text-red-500">{error}</p>;
+  const totalOrders = orders.length;
+  const totalRevenue = orders.reduce((sum, o) => sum + o.total, 0);
+  const deliveredCount = orders.filter(
+    (o) => o.statusHistory[o.statusHistory.length - 1]?.status === "delivered"
+  ).length;
+  const pendingCount = orders.filter(
+    (o) => o.statusHistory[o.statusHistory.length - 1]?.status !== "delivered"
+  ).length;
+
+  if (loading) return <div className="p-6">Đang tải đơn hàng...</div>;
+  if (error) return <div className="p-6 text-red-500">{error}</div>;
 
   return (
-    <div>
-      {/* Thanh công cụ */}
-      <div className="flex justify-end mb-4 gap-2">
-        <button className="bg-black text-white px-5 py-2 rounded-lg font-semibold">
-          Xuất báo cáo
-        </button>
-        <button className="bg-gray-100 text-black px-5 py-2 rounded-lg font-semibold">
-          Lọc đơn hàng
-        </button>
+    <div className="p-6 bg-gray-50 min-h-screen font-sans relative">
+      {/* 4 ô thống kê */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+        <StatBox title="Tổng đơn hàng" value={totalOrders.toString()} percent="+0%" />
+        <StatBox title="Tổng doanh thu" value={totalRevenue.toLocaleString("vi-VN") + "₫"} percent="+0%" />
+        <StatBox title="Đơn đã giao" value={deliveredCount.toString()} percent="+0%" />
+        <StatBox title="Đơn đang xử lý" value={pendingCount.toString()} percent="-0%" />
+      </div>
+
+      {/* Thanh tìm kiếm */}
+      <div className="flex justify-between items-center mb-4">
+        <input
+          type="text"
+          placeholder="Tìm kiếm đơn hàng..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full max-w-md px-4 py-2 border rounded shadow-sm focus:outline-none focus:ring"
+        />
       </div>
 
       {/* Bảng đơn hàng */}
@@ -72,8 +96,8 @@ useEffect(() => {
             </tr>
           </thead>
           <tbody>
-            {orders.length > 0 ? (
-              orders.map((order) => {
+            {filteredOrders.length > 0 ? (
+              filteredOrders.map((order) => {
                 const latestStatus =
                   order.statusHistory?.[order.statusHistory.length - 1]?.status || "pending";
 
@@ -110,6 +134,7 @@ useEffect(() => {
                         <button
                           title="Xem chi tiết"
                           className="text-blue-600 hover:text-blue-800 transition"
+                          onClick={() => navigate(`/order/${order._id}`)}
                         >
                           <Eye size={18} />
                         </button>
@@ -126,7 +151,7 @@ useEffect(() => {
               })
             ) : (
               <tr>
-                <td colSpan={7} className="text-center py-4">
+                <td colSpan={7} className="text-center py-4 text-gray-500 font-medium">
                   Chưa có đơn hàng nào
                 </td>
               </tr>
@@ -137,5 +162,20 @@ useEffect(() => {
     </div>
   );
 };
+
+// Component thống kê nhỏ
+const StatBox: React.FC<{ title: string; value: string; percent: string }> = ({
+  title,
+  value,
+  percent,
+}) => (
+  <div className="bg-white rounded-lg shadow flex flex-col justify-between p-6 h-32">
+    <div className="font-medium text-gray-600">{title}</div>
+    <div className="font-bold text-2xl">{value}</div>
+    <div className={`text-sm ${percent.startsWith("-") ? "text-red-600" : "text-green-600"}`}>
+      {percent}
+    </div>
+  </div>
+);
 
 export default OrderManagement;
