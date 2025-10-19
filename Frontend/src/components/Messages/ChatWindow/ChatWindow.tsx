@@ -45,18 +45,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // 1️⃣ Connect socket 1 lần
+  // Connect socket once
   useEffect(() => {
     if (!currentUserId) return;
     const socket = io(SOCKET_URL, { query: { userId: currentUserId } });
     socketRef.current = socket;
 
-    socket.on("connect", () => {
-      console.log("✅ Connected to WebSocket");
-    });
-    socket.on("disconnect", () => {
-      console.log("❌ Disconnected from WebSocket");
-    });
+    socket.on("connect", () => console.log("✅ Connected to WebSocket"));
+    socket.on("disconnect", () => console.log("❌ Disconnected from WebSocket"));
 
     return () => {
       socket.disconnect();
@@ -64,25 +60,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
   }, [currentUserId]);
 
-  // 2️⃣ Join conversation + nhận tin nhắn realtime
+  // Join conversation + handle incoming messages
   useEffect(() => {
     if (!conversationId || !socketRef.current) return;
-
     const roomId = conversationId.toString();
     socketRef.current.emit("joinConversation", roomId);
 
-    const handler = (msg: Message) => {
-      // convert cả FE và BE về string
-      if (msg.conversationId.toString() !== roomId) return;
+const handler = (msg: Message) => {
+  if (msg.conversationId.toString() !== roomId) return;
 
-      setMessages(prev => {
-        if (msg.tempId) {
-          return prev.map(m => (m.tempId === msg.tempId ? msg : m));
-        }
-        if (!prev.find(m => m._id === msg._id)) return [...prev, msg];
-        return prev;
-      });
-    };
+  setMessages(prev => {
+    // Nếu có tempId → update temp message
+    if (msg.tempId) {
+      return prev.map(m => (m._id === msg.tempId ? msg : m));
+    }
+
+    // Nếu tin nhắn chưa tồn tại → thêm mới
+    if (!prev.find(m => m._id === msg._id)) return [...prev, msg];
+
+    return prev;
+  });
+};
+
 
     socketRef.current.on("receiveMessage", handler);
     return () => {
@@ -90,7 +89,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
   }, [conversationId]);
 
-  // 3️⃣ Load tin nhắn ban đầu
+  // Load initial messages
   useEffect(() => {
     if (!conversationId) return;
     const fetchMessages = async () => {
@@ -104,14 +103,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     fetchMessages();
   }, [conversationId]);
 
-  // 4️⃣ Scroll bottom
+  // Auto scroll bottom
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
     container.scrollTop = container.scrollHeight;
   }, [messages]);
 
-  // 5️⃣ Chọn file
+  // File selection
   const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (!files.length) return;
@@ -128,26 +127,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setPreview([]);
   };
 
-  // 6️⃣ Gửi tin nhắn
+  // Send message
 const handleSend = async () => {
   if (!conversationId || (!newMessage.trim() && newFiles.length === 0)) return;
 
-  const tempId = `temp-${Date.now()}`;
-
-  // Hiển thị ngay trên UI
-  const tempMessage: Message = {
-    _id: tempId,
-    sender: currentUserId,
-    conversationId,
-    text: newMessage.trim() || undefined,
-    attachments: newFiles.map(f => ({ url: URL.createObjectURL(f) })),
-    createdAt: new Date().toISOString(),
-  };
-
-  setMessages(prev => [...prev, tempMessage]);
-
   let attachments: Attachment[] = [];
 
+  // Upload file nếu có
   if (newFiles.length) {
     const formData = new FormData();
     newFiles.forEach(f => formData.append("attachments", f));
@@ -162,19 +148,21 @@ const handleSend = async () => {
     }
   }
 
+  // Gửi payload text + attachments qua socket
   const payload = {
     sender: currentUserId,
     conversationId,
     text: newMessage.trim() || undefined,
     attachments,
-    tempId, // thêm tempId để backend emit lại có thể update
   };
 
   socketRef.current?.emit("sendMessage", payload);
 
+  // Không thêm temp message → "Đang gửi..." không hiển thị
   setNewMessage("");
   clearPreview();
 };
+
 
   return (
     <div className="flex flex-col border rounded-lg h-[calc(100vh-110px)]">
@@ -191,18 +179,20 @@ const handleSend = async () => {
         {messages.map(msg => {
           const isMine = msg.sender === currentUserId;
           return (
-            <div key={msg._id} className="space-y-1">
+            <div key={msg._id} className={`space-y-1 ${msg.tempId ? "opacity-50 italic" : ""}`}>
               <div className={`text-sm text-gray-500 ${isMine ? "text-right" : ""}`}>
                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                {msg.tempId && " (Đang gửi...)"}
               </div>
               <div className={`p-3 rounded-lg w-fit max-w-md break-words ${isMine ? "ml-auto bg-green-100" : "bg-blue-100"}`}>
-                {msg.attachments && msg.attachments.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-1">
-                    {msg.attachments.map((a, i) => (
-                      <img key={i} src={a.url} alt={`attachment-${i}`} className="w-32 h-32 object-cover rounded" />
-                    ))}
-                  </div>
-                )}
+                {msg.attachments?.length ? (
+  <div className="flex flex-wrap gap-2 mb-1">
+    {msg.attachments.map((a, i) => (
+      <img key={i} src={a.url} alt={`attachment-${i}`} className="w-32 h-32 object-cover rounded" />
+    ))}
+  </div>
+) : null}
+
                 {msg.text && <div>{msg.text}</div>}
               </div>
             </div>
