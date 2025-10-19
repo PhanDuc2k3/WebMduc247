@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const bannerController = require("../controllers/BannerController");
-const { upload } = require("../middlewares/upload"); // file bạn gửi
+const { upload } = require("../middlewares/upload"); // multer hoặc Cloudinary
 
 // Lấy tất cả banner
 router.get("/", bannerController.getAllBanners);
@@ -12,5 +12,8 @@ router.get("/type/:type", bannerController.getBannersByType);
 
 // Sửa banner (admin) → có thể upload ảnh
 router.put("/:id", upload.single("image"), bannerController.updateBanner);
+
+// Tạo banner mới
+router.post("/", upload.single("image"), bannerController.createBanner);
 
 module.exports = router;

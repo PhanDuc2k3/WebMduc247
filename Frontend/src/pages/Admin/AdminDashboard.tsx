@@ -12,6 +12,8 @@ const tabs = [
   { key: "orders", label: "Quản lý đơn hàng" },
   { key: "vouchers", label: "Quản lý Voucher" },
   { key: "sellerRequest", label: "Duyệt đơn người bán" },
+    { key: "banner", label: "Chỉnh sửa Banner" },
+
 ];
 
 const AdminDashboard: React.FC = () => {

@@ -1,6 +1,22 @@
 // controllers/bannerController.js
 const Banner = require("../models/Banner");
+exports.createBanner = async (req, res) => {
+  try {
+    const { title, link, type } = req.body;
+    if (!title || !type) return res.status(400).json({ message: "Title và type bắt buộc" });
 
+    let imageUrl = "";
+    if (req.file && req.file.path) {
+      imageUrl = req.file.path; // Cloudinary hoặc path lưu file
+    }
+
+    const newBanner = new Banner({ title, link, type, imageUrl });
+    await newBanner.save();
+    res.status(201).json(newBanner);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 exports.getAllBanners = async (req, res) => {
   try {
     const banners = await Banner.find().sort({ order: 1 });
