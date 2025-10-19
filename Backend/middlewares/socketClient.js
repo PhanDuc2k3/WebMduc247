@@ -1,7 +1,7 @@
 // middlewares/socketClient.js
 const { io } = require("socket.io-client");
 
-const socket = io(process.env.WS_URL || "http://localhost:5050", {
+const socket = io("http://localhost:5050", {
   transports: ["websocket"],
   reconnection: true,
 });

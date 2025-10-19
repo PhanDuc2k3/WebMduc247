@@ -12,13 +12,15 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "https://webmduc247.onrender.com",
-    "https://web-mduc247.vercel.app"
+    "https://web-mduc247.vercel.app",
+    "https://webmduc247-websocket.onrender.com",
   ],
   credentials: true,
 }));
 
 app.get("/", (req, res) => res.send("WebSocket service running 🚀"));
 
+// --- Tạo server http
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -33,7 +35,9 @@ const io = new Server(server, {
   },
 });
 
-require("./websocket/chatSocket")(io);
+// --- Import chatSocket, trả về express app mount backend route
+const chatSocketApp = require("./websocket/chatSocket")(io);
+app.use("/api/socket", chatSocketApp); // => route /api/socket/emit
 
 const PORT = process.env.WS_PORT || 5050;
 server.listen(PORT, () => console.log(`⚡ WebSocket running on port ${PORT}`));

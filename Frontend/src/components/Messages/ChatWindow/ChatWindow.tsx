@@ -25,11 +25,17 @@ interface Message {
   attachments?: Attachment[];
   createdAt: string;
   conversationId: string;
+  tempId?: string;
 }
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5050";
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId, disabled, chatUser }) => {
+const ChatWindow: React.FC<ChatWindowProps> = ({
+  conversationId,
+  currentUserId,
+  disabled,
+  chatUser,
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
@@ -39,29 +45,43 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId, 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Connect socket
+  // 1️⃣ Connect socket 1 lần
   useEffect(() => {
     if (!currentUserId) return;
-
     const socket = io(SOCKET_URL, { query: { userId: currentUserId } });
     socketRef.current = socket;
 
-    if (conversationId) socket.emit("joinConversation", conversationId);
+    socket.on("connect", () => {
+      console.log("✅ Connected to WebSocket");
+    });
+    socket.on("disconnect", () => {
+      console.log("❌ Disconnected from WebSocket");
+    });
 
     return () => {
-      socketRef.current?.disconnect();
+      socket.disconnect();
       socketRef.current = null;
     };
-  }, [currentUserId, conversationId]);
+  }, [currentUserId]);
 
-  // Receive messages
+  // 2️⃣ Join conversation + nhận tin nhắn realtime
   useEffect(() => {
-    if (!socketRef.current) return;
+    if (!conversationId || !socketRef.current) return;
+
+    const roomId = conversationId.toString();
+    socketRef.current.emit("joinConversation", roomId);
 
     const handler = (msg: Message) => {
-      if (msg.conversationId === conversationId) {
-        setMessages((prev) => (prev.find((m) => m._id === msg._id) ? prev : [...prev, msg]));
-      }
+      // convert cả FE và BE về string
+      if (msg.conversationId.toString() !== roomId) return;
+
+      setMessages(prev => {
+        if (msg.tempId) {
+          return prev.map(m => (m.tempId === msg.tempId ? msg : m));
+        }
+        if (!prev.find(m => m._id === msg._id)) return [...prev, msg];
+        return prev;
+      });
     };
 
     socketRef.current.on("receiveMessage", handler);
@@ -70,7 +90,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId, 
     };
   }, [conversationId]);
 
-  // Load initial messages
+  // 3️⃣ Load tin nhắn ban đầu
   useEffect(() => {
     if (!conversationId) return;
     const fetchMessages = async () => {
@@ -84,19 +104,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId, 
     fetchMessages();
   }, [conversationId]);
 
-  // Scroll bottom
+  // 4️⃣ Scroll bottom
   useEffect(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
     container.scrollTop = container.scrollHeight;
   }, [messages]);
 
-  // Select files
+  // 5️⃣ Chọn file
   const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (!files.length) return;
     setNewFiles(files);
-    setPreview(files.map((f) => URL.createObjectURL(f)));
+    setPreview(files.map(f => URL.createObjectURL(f)));
   };
 
   const handleOpenFileDialog = () => {
@@ -108,29 +128,46 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ conversationId, currentUserId, 
     setPreview([]);
   };
 
-  // Send message
+  // 6️⃣ Gửi tin nhắn
 const handleSend = async () => {
   if (!conversationId || (!newMessage.trim() && newFiles.length === 0)) return;
 
+  const tempId = `temp-${Date.now()}`;
+
+  // Hiển thị ngay trên UI
+  const tempMessage: Message = {
+    _id: tempId,
+    sender: currentUserId,
+    conversationId,
+    text: newMessage.trim() || undefined,
+    attachments: newFiles.map(f => ({ url: URL.createObjectURL(f) })),
+    createdAt: new Date().toISOString(),
+  };
+
+  setMessages(prev => [...prev, tempMessage]);
+
   let attachments: Attachment[] = [];
 
-  // Nếu có file → upload qua REST API
   if (newFiles.length) {
     const formData = new FormData();
     newFiles.forEach(f => formData.append("attachments", f));
     formData.append("sender", currentUserId);
     formData.append("conversationId", conversationId);
 
-    const res = await messageApi.sendMessage(formData as any);
-    attachments = res.data.attachments; // Lấy URL Cloudinary
+    try {
+      const res = await messageApi.sendMessage(formData as any);
+      attachments = res.data.attachments; // URL thực từ server
+    } catch (err) {
+      console.error("❌ Lỗi gửi file:", err);
+    }
   }
 
-  // Gửi payload text + attachments qua socket
   const payload = {
     sender: currentUserId,
     conversationId,
     text: newMessage.trim() || undefined,
     attachments,
+    tempId, // thêm tempId để backend emit lại có thể update
   };
 
   socketRef.current?.emit("sendMessage", payload);
@@ -139,18 +176,19 @@ const handleSend = async () => {
   clearPreview();
 };
 
-
   return (
     <div className="flex flex-col border rounded-lg h-[calc(100vh-110px)]">
       {/* Header */}
       <div className="flex-none p-4 border-b bg-white flex items-center gap-2">
-        {chatUser.avatar && <img src={chatUser.avatar} alt={chatUser.name} className="w-8 h-8 rounded-full object-cover" />}
+        {chatUser.avatar && (
+          <img src={chatUser.avatar} alt={chatUser.name} className="w-8 h-8 rounded-full object-cover" />
+        )}
         <h2 className="text-lg font-semibold">{chatUser.name || "Chọn cuộc trò chuyện"}</h2>
       </div>
 
       {/* Messages */}
       <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
-        {messages.map((msg) => {
+        {messages.map(msg => {
           const isMine = msg.sender === currentUserId;
           return (
             <div key={msg._id} className="space-y-1">
@@ -158,14 +196,14 @@ const handleSend = async () => {
                 {new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </div>
               <div className={`p-3 rounded-lg w-fit max-w-md break-words ${isMine ? "ml-auto bg-green-100" : "bg-blue-100"}`}>
-                {msg.text}
-                {msg.attachments && (
-                  <div className="mt-2 flex flex-wrap gap-2">
+                {msg.attachments && msg.attachments.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-1">
                     {msg.attachments.map((a, i) => (
                       <img key={i} src={a.url} alt={`attachment-${i}`} className="w-32 h-32 object-cover rounded" />
                     ))}
                   </div>
                 )}
+                {msg.text && <div>{msg.text}</div>}
               </div>
             </div>
           );
@@ -176,7 +214,9 @@ const handleSend = async () => {
       <div className={`flex-none p-4 border-t flex flex-col gap-2 bg-white ${disabled ? "opacity-50 pointer-events-none" : ""}`}>
         {preview.length > 0 && (
           <div className="flex gap-2 relative p-2 bg-gray-100 rounded">
-            {preview.map((src, i) => <img key={i} src={src} alt={`preview-${i}`} className="w-16 h-16 object-cover rounded" />)}
+            {preview.map((src, i) => (
+              <img key={i} src={src} alt={`preview-${i}`} className="w-16 h-16 object-cover rounded" />
+            ))}
             <button onClick={clearPreview} className="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full p-1">
               <XMarkIcon className="h-4 w-4" />
             </button>
@@ -192,8 +232,8 @@ const handleSend = async () => {
             placeholder={disabled ? "Bạn cần đăng nhập để chat..." : "Nhập tin nhắn..."}
             className="flex-1 p-3 border rounded-lg focus:outline-none"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            onChange={e => setNewMessage(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSend()}
             disabled={disabled}
           />
           <button onClick={handleSend} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600" disabled={disabled}>
