@@ -19,7 +19,7 @@ export default function ChatInterface() {
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
-        const userId = user._id || user.id; // ưu tiên _id
+        const userId = user._id || user.id; 
 
         if (userId) {
           setCurrentUserId(userId);
@@ -49,10 +49,15 @@ export default function ChatInterface() {
       <div className="flex-1">
         {selectedChat ? (
           <ChatWindow
-            conversationId={selectedChat.conversationId}
-            currentUserId={currentUserId}
-            disabled={!currentUserId} // disable input khi chưa login
-          />
+          conversationId={selectedChat.conversationId}
+          currentUserId={currentUserId}
+          disabled={!currentUserId} // disable input khi chưa login
+          chatUser={{
+           name: selectedChat.name,
+          avatar: selectedChat.avatarUrl,
+          }}
+/>
+
         ) : (
           <div className="flex items-center justify-center h-full text-gray-400">
             Chọn một cuộc trò chuyện để bắt đầu
