@@ -25,7 +25,8 @@ const io = new Server(server, {
     origin: [
       "http://localhost:5173",
       "https://webmduc247.onrender.com",
-      "https://web-mduc247.vercel.app"
+      "https://web-mduc247.vercel.app",
+      "https://webmduc247-websocket.onrender.com"
     ],
     methods: ["GET", "POST"],
     credentials: true,

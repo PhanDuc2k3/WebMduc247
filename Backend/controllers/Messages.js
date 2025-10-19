@@ -3,7 +3,7 @@ const Conversation = require("../models/Conversation");
 const Message = require("../models/Message");
 const User = require("../models/Users");
 const { uploadToCloudinary } = require("../helpers/cloudinaryUploader");
-const SOCKET_SERVICE_URL = process.env.SOCKET_SERVICE_URL || "http://localhost:5050";
+const SOCKET_SERVICE_URL = process.env.WS_URL || "http://localhost:5050";
 
 exports.getOrCreateConversation = async (req, res) => {
   try {

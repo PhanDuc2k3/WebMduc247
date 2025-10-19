@@ -24,6 +24,7 @@ const allowedOrigins = [
   'http://localhost:5173',
   'https://webmduc247.onrender.com',
   'https://web-mduc247.vercel.app',
+  'https://webmduc247-websocket.onrender.com',
 ];
 
 app.use(
