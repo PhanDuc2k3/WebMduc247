@@ -1,6 +1,7 @@
 // websocket/chatSocket.js
 require("dotenv").config();
 const mongoose = require("mongoose");
+const Message = require("../models/Messages"); // Dùng chung model từ backend chính
 const { uploadToCloudinary } = require("../helpers/cloudinaryUploader");
 
 // ✅ Kết nối MongoDB nếu microservice socket chạy tách riêng
