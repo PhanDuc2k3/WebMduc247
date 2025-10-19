@@ -4,6 +4,8 @@ import UserManagement from "../../components/Admin/UserManagement/UserManagement
 // import OrderManagement from "../../components/Admin/OrderManagement/OrderManagement";
 // import VoucherManagement from "../../components/Admin/VoucherManagement/VoucherManagement";
 import SellerApproval from "../../components/Admin/SellerRequests/SellerRequests";
+import BannerManagement from "../../components/Admin/BannerManagement/BannerManagement";
+
 const tabs = [
   { key: "users", label: "Quản lý người dùng" },
   { key: "stores", label: "Quản lý cửa hàng" },
@@ -51,6 +53,8 @@ const AdminDashboard: React.FC = () => {
         {activeTab === "orders" &&  <div>Báo cáo...</div>}
         {activeTab === "vouchers" &&  <div>Báo cáo...</div>}
         {activeTab === "sellerRequest" && <SellerApproval />}
+        {activeTab === "banner" && <BannerManagement />} {/* Banner tab */}
+
       </div>
     </div>
   );

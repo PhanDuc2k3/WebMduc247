@@ -14,7 +14,7 @@ const statisticsRoutes = require('./routes/StatisticsRoutes');
 const paymentRoutes = require('./routes/Payment');
 const reviewRoutes = require('./routes/ReviewRoutes');
 const messageRoutes = require('./routes/MessageRoutes');
-
+const bannerRoutes = require("./routes/BannerRoutes")
 dotenv.config();
 connectDB();
 
@@ -55,6 +55,6 @@ app.use('/api/statistics', statisticsRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/messages', messageRoutes);
-
+app.use('/api/banner', bannerRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
