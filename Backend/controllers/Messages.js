@@ -5,7 +5,7 @@
   const User = require("../models/Users");
   const { uploadToCloudinary } = require("../helpers/cloudinaryUploader");
   const socket = require("../middlewares/socketClient"); // Kết nối trực tiếp đến socket service
-  const SOCKET_SERVICE_URL =
+  const SOCKET_SERVICE_URL = process.env.WS_URL||
     "http://localhost:5050";
     
   // Tạo hoặc lấy conversation
