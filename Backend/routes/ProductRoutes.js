@@ -14,7 +14,7 @@ const {
   increaseView
 } = require("../controllers/ProductController");
 
-const upload = require("../middlewares/upload");
+const { upload } = require('../middlewares/upload');
 const auth = require("../middlewares/authMiddleware");
 const authorize = require("../middlewares/roleMiddleware");
 

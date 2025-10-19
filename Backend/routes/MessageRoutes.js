@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const { upload, logUpload } = require('../middlewares/upload');
 const {
   getOrCreateConversation,
   sendMessage,
@@ -7,19 +8,22 @@ const {
   getUserConversations,
 } = require("../controllers/Messages");
 
+// 🟩 Lấy danh sách hội thoại của user
+router.get("/conversations/:userId", getUserConversations);
 
-// const { protect } = require("../middlewares/authMiddleware");
+// 🟩 Tạo hoặc lấy conversation giữa 2 user
+router.post("/conversation", getOrCreateConversation);
 
-// Lấy danh sách conversation của 1 user
-router.get("/conversations/:userId", /* protect, */ getUserConversations);
+// 🟩 Gửi tin nhắn (hỗ trợ text + ảnh)
 
-// Tạo hoặc lấy conversation giữa 2 user
-router.post("/conversation", /* protect, */ getOrCreateConversation);
+router.post(
+  '/send',
+  upload.fields([{ name: 'attachments', maxCount: 5 }]), // key phải trùng
+  logUpload,
+  sendMessage
+);
 
-// Gửi tin nhắn
-router.post("/send", /* protect, */ sendMessage);
-
-// Lấy tất cả tin nhắn trong 1 conversation
-router.get("/:conversationId", /* protect, */ getMessages);
+// 🟩 Lấy tất cả tin nhắn trong 1 conversation
+router.get("/:conversationId", getMessages);
 
 module.exports = router;

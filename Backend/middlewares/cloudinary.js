@@ -19,36 +19,43 @@ const parseJSONField = (field) => {
 
 /**
  * Merge ảnh từ Cloudinary + ảnh cũ
- * @param {object} files - req.files
- * @param {string} existingMain - ảnh chính cũ
- * @param {array|string} existingSubs - ảnh phụ cũ
+ * Áp dụng cho cả create/update
+ * @param {object} files - req.files (multer)
+ * @param {string|array|null} existingMain - ảnh chính cũ
+ * @param {string|array|null} existingSubs - ảnh phụ cũ
  * @returns {object} { mainImage, subImages }
  */
-// utils/mergeImages.js
-// Merge ảnh cho cả create/update
 const mergeImages = (files = {}, existingMain = null, existingSubs = null) => {
   const mainImage = files.mainImage?.[0]?.path || null;
-  const subImages = files.subImages?.map(f => f.path) || [];
+  const subImages = Array.isArray(files.subImages)
+    ? files.subImages.map((f) => f.path)
+    : [];
 
   let oldMain = null;
   let oldSubs = [];
 
   if (existingMain) {
-    try { oldMain = JSON.parse(existingMain); } catch { oldMain = existingMain; }
-    if (Array.isArray(oldMain)) oldMain = oldMain[0]; // giữ ảnh chính cũ
+    try {
+      oldMain = JSON.parse(existingMain);
+    } catch {
+      oldMain = existingMain;
+    }
+    if (Array.isArray(oldMain)) oldMain = oldMain[0];
   }
 
   if (existingSubs) {
-    try { oldSubs = JSON.parse(existingSubs); } catch { oldSubs = [existingSubs]; }
+    try {
+      oldSubs = JSON.parse(existingSubs);
+    } catch {
+      oldSubs = [existingSubs];
+    }
     if (!Array.isArray(oldSubs)) oldSubs = [oldSubs];
   }
 
   return {
     mainImage: mainImage || oldMain || null,
-    subImages: [...subImages, ...oldSubs]
+    subImages: [...subImages, ...oldSubs].filter(Boolean),
   };
 };
-
-
 
 module.exports = { parseJSONField, mergeImages };

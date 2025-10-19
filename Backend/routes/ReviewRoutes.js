@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const auth = require("../middlewares/authMiddleware");
-const upload = require("../middlewares/upload");
+const { upload } = require('../middlewares/upload');
 const { createReview,getReviewsByProduct } = require("../controllers/ReviewController");
 
 
