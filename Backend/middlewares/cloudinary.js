@@ -1,4 +1,4 @@
-// helpers/productHelper.js
+// middlewares/cloudinary
 
 /**
  * Parse JSON an toàn
