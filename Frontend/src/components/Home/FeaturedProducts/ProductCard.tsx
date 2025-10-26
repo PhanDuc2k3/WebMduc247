@@ -27,7 +27,6 @@ const getImageUrl = (img?: string) => {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   useEffect(() => {
-    console.log("📸 Product images:", product.images?.map(getImageUrl));
   }, [product.images]);
 
   return (

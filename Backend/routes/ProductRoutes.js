@@ -11,7 +11,8 @@ const {
   getMyProducts,
   getProductsByStore,
   getViewsStats,
-  increaseView
+  increaseView,
+  getProductCountByCategory
 } = require("../controllers/ProductController");
 
 const { upload } = require('../middlewares/upload');
@@ -28,6 +29,7 @@ router.post(
   ]),
   createProduct
 );
+router.get("/count-by-category",getProductCountByCategory);
 
 router.get("/views-stats", getViewsStats);
 router.patch("/:id/view", increaseView);

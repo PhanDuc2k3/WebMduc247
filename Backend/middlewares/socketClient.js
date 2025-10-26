@@ -7,11 +7,11 @@ const socket = io(process.env.WS_URL ||"http://localhost:5050", {
 });
 
 socket.on("connect", () => {
-  console.log("✅ Connected to WebSocket service from backend");
+  console.log(" Connected to WebSocket service from backend");
 });
 
 socket.on("disconnect", () => {
-  console.log("❌ Disconnected from WebSocket service");
+  console.log(" Disconnected from WebSocket service");
 });
 
 module.exports = socket;

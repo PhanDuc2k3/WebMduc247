@@ -1,14 +1,18 @@
 import React, { useState, useMemo } from "react";
-import { Heart } from "lucide-react";
+import { Heart, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import axiosClient from "../../../api/axiosClient";
+import { toast } from "react-toastify"; 
+import "react-toastify/dist/ReactToastify.css";
 
 interface VariationOption {
   name: string;
   additionalPrice?: number;
+  _id: string;
 }
 
 interface Variation {
   color: string;
+  _id: string;
   options: VariationOption[];
 }
 
@@ -29,29 +33,42 @@ interface ProductInfoProps {
   setQuantity: (n: number) => void;
 }
 
-const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantity }) => {
+const ProductInfo: React.FC<ProductInfoProps> = ({
+  product,
+  quantity,
+  setQuantity,
+}) => {
   const [selectedColor, setSelectedColor] = useState<string | null>(null);
   const [selectedStorage, setSelectedStorage] = useState<string | null>(null);
-  const [selectedOption, setSelectedOption] = useState<VariationOption | null>(null);
+  const [selectedOption, setSelectedOption] = useState<VariationOption | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
 
-  const colors: string[] = Array.from(new Set(product.variations?.map(v => v.color) || []));
+  const colors: string[] = Array.from(
+    new Set(product.variations?.map((v) => v.color) || [])
+  );
 
   const availableStorages = selectedColor
-    ? product.variations?.find(v => v.color === selectedColor)?.options.map(o => o.name) || []
+    ? product.variations
+        ?.find((v) => v.color === selectedColor)
+        ?.options.map((o) => o.name) || []
     : [];
 
   const basePrice = product.salePrice ?? product.price;
-
   const finalPrice = useMemo(() => {
-    return selectedOption ? basePrice + (selectedOption.additionalPrice || 0) : basePrice;
+    return selectedOption
+      ? basePrice + (selectedOption.additionalPrice || 0)
+      : basePrice;
   }, [basePrice, selectedOption]);
 
   const handleSelectStorage = (storage: string) => {
     setSelectedStorage(storage);
     if (selectedColor) {
-      const variation = product.variations?.find(v => v.color === selectedColor);
-      const opt = variation?.options.find(o => o.name === storage);
+      const variation = product.variations?.find(
+        (v) => v.color === selectedColor
+      );
+      const opt = variation?.options.find((o) => o.name === storage);
       setSelectedOption(opt || null);
     } else {
       setSelectedOption(null);
@@ -60,28 +77,47 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
 
   const handleAddToCart = async () => {
     if (!selectedColor || !selectedStorage || !selectedOption) {
-      alert("Vui lòng chọn màu sắc và dung lượng trước khi thêm vào giỏ hàng!");
+      toast.warning(
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-yellow-500" size={18} />
+          <span>Vui lòng chọn màu sắc và dung lượng!</span>
+        </div>
+      );
       return;
     }
+
+    const variation = product.variations?.find(
+      (v) => v.color === selectedColor
+    );
+    const option = variation?.options.find((o) => o.name === selectedStorage);
+
+    if (!variation || !option) return;
+
+    const payload = {
+      productId: product._id,
+      quantity,
+      variationId: variation._id,
+      optionId: option._id,
+    };
+
     try {
       setLoading(true);
-      await axiosClient.post(
-        "/api/cart/add",
-        {
-          productId: product._id,
-          quantity,
-          variation: {
-            color: selectedColor,
-            size: selectedStorage,
-            additionalPrice: selectedOption.additionalPrice || 0,
-          },
-        },
-        { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+
+      await axiosClient.post("/api/cart/add", payload, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+
+      toast.success(
+        <div className="flex items-center gap-2">
+          <span>Đã thêm vào giỏ hàng!</span>
+        </div>
       );
-      alert("✅ Đã thêm vào giỏ hàng!");
-    } catch (err) {
-      console.error("❌ Lỗi thêm giỏ hàng:", err);
-      alert("❌ Có lỗi khi thêm vào giỏ hàng");
+    } catch {
+      toast.error(
+        <div className="flex items-center gap-2">
+          <span>Lỗi khi thêm vào giỏ hàng!</span>
+        </div>
+      );
     } finally {
       setLoading(false);
     }
@@ -89,6 +125,9 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* ✅ KHÔNG còn ToastContainer ở đây */}
+
+      {/* Tên sản phẩm */}
       <div>
         <h1 className="text-2xl font-semibold">{product.name}</h1>
         <div className="text-sm text-gray-600 mt-1">
@@ -96,6 +135,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         </div>
       </div>
 
+      {/* Giá */}
       <div className="text-red-600 text-xl font-bold">
         {finalPrice.toLocaleString("vi-VN")}₫
         {product.salePrice && (
@@ -105,10 +145,11 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         )}
       </div>
 
+      {/* Chọn màu */}
       <div>
         <h3 className="font-medium mb-2">Sản phẩm:</h3>
         <div className="flex gap-2 flex-wrap">
-          {colors.map(color => (
+          {colors.map((color) => (
             <button
               key={color}
               onClick={() => {
@@ -128,13 +169,16 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         </div>
       </div>
 
+      {/* Chọn loại */}
       {selectedColor && (
         <div>
           <h3 className="font-medium mb-2">Chọn loại:</h3>
           <div className="flex gap-2 flex-wrap">
-            {availableStorages.map(s => {
-              const variation = product.variations?.find(v => v.color === selectedColor);
-              const opt = variation?.options.find(o => o.name === s);
+            {availableStorages.map((s) => {
+              const variation = product.variations?.find(
+                (v) => v.color === selectedColor
+              );
+              const opt = variation?.options.find((o) => o.name === s);
               return (
                 <button
                   key={s}
@@ -158,6 +202,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         </div>
       )}
 
+      {/* Số lượng */}
       <div>
         <h3 className="font-medium mb-2">Số lượng:</h3>
         <div className="flex items-center gap-2">
@@ -177,6 +222,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         </div>
       </div>
 
+      {/* Nút hành động */}
       <div className="flex gap-3 flex-wrap">
         <button className="flex items-center gap-1 px-4 py-2 border rounded hover:bg-gray-100">
           <Heart size={18} /> Yêu thích
@@ -193,8 +239,10 @@ const ProductInfo: React.FC<ProductInfoProps> = ({ product, quantity, setQuantit
         </button>
       </div>
 
+      {/* Người bán */}
       <div className="text-sm text-gray-600">
-        Người bán: <span className="font-medium">{product.store?.name || "Không rõ"}</span>
+        Người bán:{" "}
+        <span className="font-medium">{product.store?.name || "Không rõ"}</span>
       </div>
     </div>
   );

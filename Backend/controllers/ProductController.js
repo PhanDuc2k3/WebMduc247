@@ -113,7 +113,6 @@ exports.getProductById = async (req, res) => {
 // Increase product view
 exports.increaseView = async (req, res) => {
   try {
-    console.log("1");
     const { id } = req.params;
     const product = await Product.findById(id);
     if (!product) return res.status(404).json({ success: false, message: "Product not found" });
@@ -303,5 +302,25 @@ exports.getViewsStats = async (req, res) => {
   } catch (err) {
     console.error("getViewsStats error:", err.message);
     res.status(500).json({ message: "Lỗi server" });
+  }
+};
+// Đếm số lượng sản phẩm theo danh mục
+exports.getProductCountByCategory = async (req, res) => {
+  try {
+    const counts = await Product.aggregate([
+      { $match: { isActive: true } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+    ]);
+
+    const result = counts.map(c => ({
+      category: c._id || "Khác",
+      count: c.count,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error("getProductCountByCategory error:", err.message);
+    res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };

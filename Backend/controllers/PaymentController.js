@@ -68,7 +68,7 @@ exports.momoCallback = async (req, res) => {
 
     res.status(200).json({ message: 'OK' });
   } catch (err) {
-    console.error('🔥 Lỗi callback MoMo:', err);
+    console.error(' Lỗi callback MoMo:', err);
     res.status(500).json({ message: 'Lỗi server' });
   }
 };

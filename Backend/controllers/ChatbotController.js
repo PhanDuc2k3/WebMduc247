@@ -11,7 +11,7 @@ dotenv.config();
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 if (!GEMINI_API_KEY) {
-  console.error('❌ GEMINI_API_KEY chưa thiết lập!');
+  console.error('GEMINI_API_KEY chưa thiết lập!');
 }
 
 // --- Khởi tạo AI ---
@@ -34,8 +34,7 @@ async function createEmbedding(text) {
       contents: [text]
     });
     return res.embeddings?.[0]?.values || [];
-  } catch (err) {
-    console.error('❌ Embedding failed:', err.message || err);
+  } catch {
     return [];
   }
 }
@@ -53,13 +52,7 @@ async function retrieveTopKProducts(queryVector, k = 5) {
 
   const topK = docs.sort((a, b) => b.score - a.score).slice(0, k);
 
-  topK.forEach((d, i) =>
-    console.log(`[DEBUG] Top ${i + 1}: ${d.metadata.name}, score=${d.score.toFixed(4)}`)
-  );
-
-  // Fallback: nếu tất cả score quá thấp (<0.2), thử match text trực tiếp
   if (topK.every(d => d.score < 0.2)) {
-    console.log('[DEBUG] Score thấp, thử tìm trực tiếp bằng text');
     const allProducts = await Product.find({ isActive: true });
     const directMatch = allProducts.filter(p =>
       normalizeText(p.name).includes(normalizeText(queryVector.join(' ')))
@@ -96,8 +89,6 @@ async function chatWithGemini(req, res) {
   const { message, userId } = req.body;
   if (!message) return res.status(400).json({ reply: 'Thiếu message!' });
 
-  console.log(`\n--- START CHAT: User=${userId || 'GUEST'}, Msg="${message}" ---`);
-
   let action = 'chat';
   if (isProductIntent(message)) action = 'find_product';
   if (message.toLowerCase().includes('mua')) action = 'create_order';
@@ -105,7 +96,6 @@ async function chatWithGemini(req, res) {
   try {
     switch (action) {
 
-      // --- Tìm sản phẩm ---
       case 'find_product': {
         const queryVector = await createEmbedding(message);
         if (!queryVector.length) return res.json({ reply: 'Mình không thể tạo embedding, thử lại sau nhé!', products: [] });
@@ -117,12 +107,11 @@ async function chatWithGemini(req, res) {
         ).join('\n');
 
         const prompt = `
-Bạn là chatbot e-commerce , trả lời ngắn gọn tối đa 100 từ.
+Bạn là chatbot e-commerce, trả lời ngắn gọn tối đa 100 từ.
 Dữ liệu sản phẩm tham khảo:
 ${dataText || 'Không có sản phẩm nào liên quan.'}
 Người dùng hỏi: "${message}"
 Hãy trả lời tập trung vào danh sách sản phẩm.
-Nếu có người dùng nào cần tư vấn thì hãy giới thiệu sản phẩm sẵn có
         `;
 
         let reply = 'Mình chưa tìm thấy sản phẩm nào!';
@@ -133,9 +122,7 @@ Nếu có người dùng nào cần tư vấn thì hãy giới thiệu sản ph�
             config: { temperature: 0.2 }
           });
           reply = chatRes.text || reply;
-        } catch (err) {
-          console.warn('⚠️ Chat generation failed:', err.message || err);
-        }
+        } catch {}
 
         return res.json({
           reply,
@@ -143,7 +130,6 @@ Nếu có người dùng nào cần tư vấn thì hãy giới thiệu sản ph�
         });
       }
 
-      // --- Tạo order ---
       case 'create_order': {
         const queryVector = await createEmbedding(message);
         const topProducts = await retrieveTopKProducts(queryVector, 3);
@@ -156,7 +142,6 @@ Nếu có người dùng nào cần tư vấn thì hãy giới thiệu sản ph�
         });
       }
 
-      // --- Chat bình thường ---
       case 'chat':
       default: {
         let reply = 'Mình chưa hiểu!';
@@ -167,14 +152,11 @@ Nếu có người dùng nào cần tư vấn thì hãy giới thiệu sản ph�
             config: { temperature: 0.3 }
           });
           reply = chatRes.text || reply;
-        } catch (err) {
-          console.warn('⚠️ Chat generation failed:', err.message || err);
-        }
+        } catch {}
         return res.json({ reply });
       }
     }
-  } catch (err) {
-    console.error('❌ Chat controller error:', err);
+  } catch {
     return res.json({ reply: 'Có lỗi xảy ra, thử lại sau nhé!' });
   }
 }

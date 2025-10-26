@@ -1,4 +1,3 @@
-// websocket/server.js
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
@@ -35,9 +34,12 @@ const io = new Server(server, {
   },
 });
 
-// --- Import chatSocket, trả về express app mount backend route
+// --- Import chatSocket và cartSocket
 const chatSocketApp = require("./websocket/chatSocket")(io);
-app.use("/api/socket", chatSocketApp); // => route /api/socket/emit
+app.use("/api/socket", chatSocketApp); // route chat
+
+const cartSocketApp = require("./websocket/cartSocket")(io);
+app.use("/api/cart-socket", cartSocketApp); // route cart
 
 const PORT = process.env.WS_PORT || 5050;
 server.listen(PORT, () => console.log(`⚡ WebSocket running on port ${PORT}`));

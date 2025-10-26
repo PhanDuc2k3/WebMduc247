@@ -1,80 +1,103 @@
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
+const axios = require("axios");
 
-// Lấy giỏ hàng
+const SOCKET_SERVICE_URL = "http://localhost:5050";
+
+async function emitCartUpdate(userId, cart) {
+  try {
+    const cartCount = Array.isArray(cart.items)
+      ? cart.items.reduce((acc, item) => acc + (item.quantity || 0), 0)
+      : 0;
+
+    await axios.post(
+      `${SOCKET_SERVICE_URL}/api/cart-socket/emitCartUpdate`,
+      { userId, cart, cartCount },
+      { headers: { "Content-Type": "application/json" } }
+    );
+  } catch (err) {
+    console.error("Emit cart update error:", err.message);
+  }
+}
+
 exports.getCart = async (req, res) => {
   try {
     const userId = req.user.userId;
-
     let cart = await Cart.findOne({ userId })
       .populate("items.productId")
       .populate("items.storeId", "name logoUrl");
-
-    if (!cart) {
-      cart = await Cart.create({ userId, items: [] });
-    }
-
+    if (!cart) cart = await Cart.create({ userId, items: [] });
     return res.status(200).json(cart);
-  } catch (error) {
-    console.error(" Lỗi getCart:", error);
+  } catch {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-// Thêm sản phẩm vào giỏ
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { productId, quantity, variation } = req.body;
+    const { productId, quantity = 1, variationId, optionId } = req.body;
 
     const product = await Product.findById(productId).populate("store");
-    if (!product) {
-      return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
-    }
+    if (!product) return res.status(404).json({ message: "Không tìm thấy sản phẩm" });
 
     let cart = await Cart.findOne({ userId });
     if (!cart) cart = await Cart.create({ userId, items: [] });
 
-    let extraPrice = 0;
-    if (variation?.color && variation?.size) {
-      const foundVariation = product.variations.find(v => v.color === variation.color);
-      if (foundVariation) {
-        const option = foundVariation.options.find(o => o.name === variation.size);
-        if (option) extraPrice = option.additionalPrice || 0;
+    let variation = {};
+    if (variationId && optionId && Array.isArray(product.variations)) {
+      const v = product.variations.find(v => v._id.toString() === variationId.toString());
+      const opt = v?.options.find(o => o._id.toString() === optionId.toString());
+      if (v && opt) {
+        variation = {
+          variationId: v._id.toString(),
+          optionId: opt._id.toString(),
+          color: v.color,
+          size: opt.name,
+          additionalPrice: opt.additionalPrice || 0
+        };
       }
     }
 
-    const basePrice = product.price;
-    const baseSalePrice = product.salePrice && product.salePrice > 0 ? product.salePrice : null;
-    const unitPrice = (baseSalePrice ?? basePrice) + extraPrice;
+    const unitPrice = (product.salePrice ?? product.price) + (variation.additionalPrice || 0);
 
-    const existingItem = cart.items.find(
-      (item) =>
-        item.productId.toString() === productId &&
-        item.variation?.color === (variation?.color || null) &&
-        item.variation?.size === (variation?.size || null)
-    );
+    const existingItem = cart.items.find(item => {
+      const itemVarId = (item.variation?.variationId || item.variationId)?.toString();
+      const itemOptId = (item.variation?.optionId || item.optionId)?.toString();
+      return (
+        item.productId.toString() === productId.toString() &&
+        itemVarId === (variation.variationId || "").toString() &&
+        itemOptId === (variation.optionId || "").toString()
+      );
+    });
+
+    const mainImage = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : "";
 
     if (existingItem) {
       existingItem.quantity += quantity;
       existingItem.subtotal = existingItem.quantity * unitPrice;
     } else {
-      cart.items.push({
+      const newItem = {
         productId,
-        storeId: product.store._id,
+        storeId: product.store?._id,
         name: product.name,
-        imageUrl: product.images[0],
-        price: basePrice,
-        salePrice: baseSalePrice,
+        imageUrl: mainImage,
+        price: product.price,
+        salePrice: product.salePrice,
         quantity,
-        variation: {
-          color: variation?.color || null,
-          size: variation?.size || null,
-          additionalPrice: extraPrice,
-        },
-        subtotal: unitPrice * quantity,
-      });
+        variation,
+        variationId: variation.variationId,
+        optionId: variation.optionId,
+        subtotal: unitPrice * quantity
+      };
+      cart.items.push(newItem);
     }
+
+    const subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
+    const discount = cart.discount || 0;
+    const shippingFee = cart.shippingFee || 0;
+    cart.subtotal = subtotal;
+    cart.total = subtotal - discount + shippingFee;
 
     await cart.save();
 
@@ -82,46 +105,34 @@ exports.addToCart = async (req, res) => {
       .populate("items.productId")
       .populate("items.storeId", "name logoUrl");
 
+    await emitCartUpdate(userId, populatedCart);
     return res.status(200).json(populatedCart);
-  } catch (error) {
-    console.error(" Lỗi addToCart:", error);
+  } catch {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
 
-// Cập nhật số lượng
 exports.updateQuantity = async (req, res) => {
   try {
     const { itemId, quantity } = req.body;
-    const cart = await Cart.findOne({ userId: req.user.userId });
+    const userId = req.user.userId;
+
+    const cart = await Cart.findOne({ userId });
     if (!cart) return res.status(404).json({ message: "Giỏ hàng không tồn tại" });
 
     const item = cart.items.find(i => i._id.toString() === itemId);
     if (!item) return res.status(404).json({ message: "Sản phẩm không tồn tại trong giỏ hàng" });
 
     item.quantity = quantity;
-    item.subtotal =
-      ((item.salePrice ?? item.price) + (item.variation?.additionalPrice || 0)) * quantity;
+    const basePrice = item.salePrice ?? item.price;
+    const additionalPrice = item.variation?.additionalPrice || 0;
+    item.subtotal = (basePrice + additionalPrice) * quantity;
 
-    await cart.save();
-
-    res.json({ success: true, cart });
-  } catch (error) {
-    console.error(" Lỗi updateQuantity:", error);
-    res.status(500).json({ message: "Lỗi server" });
-  }
-};
-
-// Xóa sản phẩm
-exports.removeFromCart = async (req, res) => {
-  try {
-    const userId = req.user.userId;
-    const { itemId } = req.params;
-
-    let cart = await Cart.findOne({ userId });
-    if (!cart) return res.status(404).json({ message: "Không tìm thấy giỏ hàng" });
-
-    cart.items = cart.items.filter(item => item._id.toString() !== itemId);
+    const subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
+    const discount = cart.discount || 0;
+    const shippingFee = cart.shippingFee || 0;
+    cart.subtotal = subtotal;
+    cart.total = subtotal - discount + shippingFee;
 
     await cart.save();
 
@@ -129,9 +140,38 @@ exports.removeFromCart = async (req, res) => {
       .populate("items.productId")
       .populate("items.storeId", "name logoUrl");
 
-    return res.status(200).json(populatedCart);
-  } catch (error) {
-    console.error(" Lỗi removeFromCart:", error);
+    await emitCartUpdate(userId, populatedCart);
+    res.json({ success: true, cart: populatedCart });
+  } catch {
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+exports.removeFromCart = async (req, res) => {
+  try {
+    const { itemId } = req.params;
+    const userId = req.user.userId;
+
+    let cart = await Cart.findOne({ userId });
+    if (!cart) return res.status(404).json({ message: "Không tìm thấy giỏ hàng" });
+
+    cart.items = cart.items.filter(item => item._id.toString() !== itemId);
+
+    const subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
+    const discount = cart.discount || 0;
+    const shippingFee = cart.shippingFee || 0;
+    cart.subtotal = subtotal;
+    cart.total = subtotal - discount + shippingFee;
+
+    await cart.save();
+
+    const populatedCart = await Cart.findById(cart._id)
+      .populate("items.productId")
+      .populate("items.storeId", "name logoUrl");
+
+    await emitCartUpdate(userId, populatedCart);
+    res.status(200).json(populatedCart);
+  } catch {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
