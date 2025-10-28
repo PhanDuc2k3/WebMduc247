@@ -1,13 +1,16 @@
 import { io, type Socket } from "socket.io-client";
 
-const SOCKET_URL =
-  import.meta.env.MODE === "production"
-    ? "https://yourdomain.com"
-    : "http://localhost:5050";
+const SOCKET_URL = "http://localhost:5050";
 
 let socket: Socket;
 
 export const getSocket = () => {
-  if (!socket) socket = io(SOCKET_URL, { autoConnect: false });
+  if (!socket) {
+    socket = io(SOCKET_URL, {
+      autoConnect: true,
+      transports: ["websocket"],
+    });
+    socket.on("connect_error", () => {});
+  }
   return socket;
 };

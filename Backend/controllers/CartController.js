@@ -1,25 +1,30 @@
+// controllers/CartController.js
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const axios = require("axios");
 
-const SOCKET_SERVICE_URL = "http://localhost:5050";
+const SOCKET_SERVICE_URL = process.env.SOCKET_SERVICE_URL || "http://localhost:5050";
 
+// Hàm emit cart update đến socket microservice
 async function emitCartUpdate(userId, cart) {
+  if (!userId || !cart) return;
   try {
     const cartCount = Array.isArray(cart.items)
-      ? cart.items.reduce((acc, item) => acc + (item.quantity || 0), 0)
+      ? cart.items.reduce((sum, i) => sum + (i.quantity || 0), 0)
       : 0;
 
+    // POST đến socket microservice
     await axios.post(
       `${SOCKET_SERVICE_URL}/api/cart-socket/emitCartUpdate`,
       { userId, cart, cartCount },
       { headers: { "Content-Type": "application/json" } }
     );
   } catch (err) {
-    console.error("Emit cart update error:", err.message);
+    console.error("Emit cart update error:", err.response?.status, err.message);
   }
 }
 
+// Lấy giỏ hàng
 exports.getCart = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -28,11 +33,13 @@ exports.getCart = async (req, res) => {
       .populate("items.storeId", "name logoUrl");
     if (!cart) cart = await Cart.create({ userId, items: [] });
     return res.status(200).json(cart);
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
 
+// Thêm sản phẩm vào giỏ
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -54,7 +61,7 @@ exports.addToCart = async (req, res) => {
           optionId: opt._id.toString(),
           color: v.color,
           size: opt.name,
-          additionalPrice: opt.additionalPrice || 0
+          additionalPrice: opt.additionalPrice || 0,
         };
       }
     }
@@ -77,7 +84,7 @@ exports.addToCart = async (req, res) => {
       existingItem.quantity += quantity;
       existingItem.subtotal = existingItem.quantity * unitPrice;
     } else {
-      const newItem = {
+      cart.items.push({
         productId,
         storeId: product.store?._id,
         name: product.name,
@@ -88,16 +95,13 @@ exports.addToCart = async (req, res) => {
         variation,
         variationId: variation.variationId,
         optionId: variation.optionId,
-        subtotal: unitPrice * quantity
-      };
-      cart.items.push(newItem);
+        subtotal: unitPrice * quantity,
+      });
     }
 
-    const subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
-    const discount = cart.discount || 0;
-    const shippingFee = cart.shippingFee || 0;
-    cart.subtotal = subtotal;
-    cart.total = subtotal - discount + shippingFee;
+    // Tính toán subtotal, total
+    cart.subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
+    cart.total = cart.subtotal - (cart.discount || 0) + (cart.shippingFee || 0);
 
     await cart.save();
 
@@ -105,13 +109,17 @@ exports.addToCart = async (req, res) => {
       .populate("items.productId")
       .populate("items.storeId", "name logoUrl");
 
+    // Emit update tới socket
     await emitCartUpdate(userId, populatedCart);
+
     return res.status(200).json(populatedCart);
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
 
+// Cập nhật số lượng sản phẩm
 exports.updateQuantity = async (req, res) => {
   try {
     const { itemId, quantity } = req.body;
@@ -123,16 +131,13 @@ exports.updateQuantity = async (req, res) => {
     const item = cart.items.find(i => i._id.toString() === itemId);
     if (!item) return res.status(404).json({ message: "Sản phẩm không tồn tại trong giỏ hàng" });
 
-    item.quantity = quantity;
     const basePrice = item.salePrice ?? item.price;
     const additionalPrice = item.variation?.additionalPrice || 0;
+    item.quantity = quantity;
     item.subtotal = (basePrice + additionalPrice) * quantity;
 
-    const subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
-    const discount = cart.discount || 0;
-    const shippingFee = cart.shippingFee || 0;
-    cart.subtotal = subtotal;
-    cart.total = subtotal - discount + shippingFee;
+    cart.subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
+    cart.total = cart.subtotal - (cart.discount || 0) + (cart.shippingFee || 0);
 
     await cart.save();
 
@@ -141,12 +146,15 @@ exports.updateQuantity = async (req, res) => {
       .populate("items.storeId", "name logoUrl");
 
     await emitCartUpdate(userId, populatedCart);
+
     res.json({ success: true, cart: populatedCart });
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
 
+// Xóa sản phẩm khỏi giỏ
 exports.removeFromCart = async (req, res) => {
   try {
     const { itemId } = req.params;
@@ -157,11 +165,8 @@ exports.removeFromCart = async (req, res) => {
 
     cart.items = cart.items.filter(item => item._id.toString() !== itemId);
 
-    const subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
-    const discount = cart.discount || 0;
-    const shippingFee = cart.shippingFee || 0;
-    cart.subtotal = subtotal;
-    cart.total = subtotal - discount + shippingFee;
+    cart.subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
+    cart.total = cart.subtotal - (cart.discount || 0) + (cart.shippingFee || 0);
 
     await cart.save();
 
@@ -170,8 +175,10 @@ exports.removeFromCart = async (req, res) => {
       .populate("items.storeId", "name logoUrl");
 
     await emitCartUpdate(userId, populatedCart);
+
     res.status(200).json(populatedCart);
-  } catch {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ message: "Lỗi server" });
   }
 };

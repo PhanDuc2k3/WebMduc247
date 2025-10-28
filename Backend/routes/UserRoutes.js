@@ -9,7 +9,8 @@ const {
   updateUser,
   requestSeller,
   getAllSellerRequests,
-  handleSellerRequest
+  handleSellerRequest,
+  logout
 } = require('../controllers/UserController');
 
 const authMiddleware = require('../middlewares/authMiddleware');
@@ -20,7 +21,7 @@ const router = express.Router();
 // Auth
 router.post('/register', register);
 router.post('/login', login);
-
+router.post('/logout', authMiddleware,logout);
 // Profile (người dùng tự sửa thông tin)
 router.get('/profile', authMiddleware, getProfile);
 router.put('/profile', authMiddleware, upload.single('avatar'), updateProfile);

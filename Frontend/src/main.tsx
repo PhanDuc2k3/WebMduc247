@@ -2,16 +2,27 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
+
 import { CartProvider } from "./context/CartContext.tsx";
-import { ToastContainer } from "react-toastify"; // ✅ import thêm dòng này
-import "react-toastify/dist/ReactToastify.css";  // ✅ import CSS cho toastify
+import { ChatProvider } from "./context/chatContext.tsx";
+import { UserProvider } from "./Layouts/Header/useHeader";
+
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+import { BrowserRouter } from "react-router-dom";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <CartProvider>
-      <App />
-      {/* ✅ Thêm ToastContainer global tại đây */}
-      <ToastContainer position="top-right" autoClose={2000} />
-    </CartProvider>
+    <BrowserRouter> {/* ← Router duy nhất */}
+      <UserProvider> {/* dùng useNavigate() thoải mái */}
+        <ChatProvider>
+          <CartProvider>
+            <App />
+            <ToastContainer position="top-right" autoClose={2000} />
+          </CartProvider>
+        </ChatProvider>
+      </UserProvider>
+    </BrowserRouter>
   </StrictMode>
 );

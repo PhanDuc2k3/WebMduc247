@@ -57,16 +57,6 @@ const userSchema = new mongoose.Schema({
   store: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Store'
-  },
-
-  // New fields for online status
-  online: {
-    type: Boolean,
-    default: false
-  },
-  lastSeen: {
-    type: Date,
-    default: Date.now
   }
 
 }, { timestamps: true });

@@ -1,4 +1,3 @@
-// controllers/MessageController.js
 const axios = require("axios");
 const Message = require("../models/Message");
 const Conversation = require("../models/Conversation");
@@ -7,7 +6,6 @@ const { uploadToCloudinary } = require("../helpers/cloudinaryUploader");
 
 const SOCKET_SERVICE_URL = process.env.WS_URL || "http://localhost:5050";
 
-// Tạo hoặc lấy conversation
 exports.getOrCreateConversation = async (req, res) => {
   try {
     const { senderId, receiverId } = req.body;
@@ -35,7 +33,6 @@ exports.getOrCreateConversation = async (req, res) => {
   }
 };
 
-// Gửi tin nhắn
 exports.sendMessage = async (req, res) => {
   try {
     const { conversationId, sender, text } = req.body;
@@ -45,7 +42,6 @@ exports.sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Thiếu dữ liệu gửi tin nhắn" });
     }
 
-    // Chuyển req.files về mảng
     let filesArray = [];
     if (files) {
       if (Array.isArray(files)) filesArray = files;
@@ -56,7 +52,6 @@ exports.sendMessage = async (req, res) => {
       }
     }
 
-    // Upload và tạo attachments
     let attachments = [];
     for (const file of filesArray) {
       if (file.path) {
@@ -65,13 +60,10 @@ exports.sendMessage = async (req, res) => {
         try {
           const result = await uploadToCloudinary(file, "chat_attachments");
           attachments.push({ url: result.url, type: result.type || "image" });
-        } catch (err) {
-          // Bỏ qua lỗi upload
-        }
+        } catch {}
       }
     }
 
-    // Tạo message
     const message = await Message.create({
       conversationId,
       sender,
@@ -79,17 +71,22 @@ exports.sendMessage = async (req, res) => {
       attachments,
     });
 
-    // Cập nhật lastMessage cho conversation
     await Conversation.findByIdAndUpdate(conversationId, {
       lastMessage: text || "[Đính kèm]",
       updatedAt: new Date(),
     });
 
-    // Gửi event tới Socket service
     try {
+      const senderUser = await User.findById(sender).select("fullName avatarUrl");
       await axios.post(`${SOCKET_SERVICE_URL}/api/socket/emit`, {
-        event: "new_message",
-        data: message,
+        event: "notify_message",
+        data: {
+          conversationId,
+          senderId: sender,
+          senderName: senderUser?.fullName || "Người dùng",
+          text: text || "[Đính kèm]",
+          avatarUrl: senderUser?.avatarUrl || "/default-avatar.png",
+        },
         room: conversationId,
       });
     } catch {}
@@ -100,7 +97,6 @@ exports.sendMessage = async (req, res) => {
   }
 };
 
-// Lấy tin nhắn của conversation
 exports.getMessages = async (req, res) => {
   try {
     const { conversationId } = req.params;
@@ -113,7 +109,6 @@ exports.getMessages = async (req, res) => {
   }
 };
 
-// Lấy danh sách conversation của user
 exports.getUserConversations = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -128,9 +123,11 @@ exports.getUserConversations = async (req, res) => {
       const otherUser = conv.participants.find((p) => p._id.toString() !== userId);
       return {
         conversationId: conv._id,
-        lastMessage: conv.lastMessage,
+        lastMessage: conv.lastMessage || "",
+        participants: conv.participants,
         name: otherUser?.fullName || "Người dùng",
-        avatarUrl: otherUser?.avatarUrl || "",
+        avatarUrl: otherUser?.avatarUrl || "/default-avatar.png",
+        online: otherUser?.online || false,
       };
     });
 

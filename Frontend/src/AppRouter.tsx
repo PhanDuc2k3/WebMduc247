@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./Layouts/Layout";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
@@ -18,38 +18,35 @@ import Message from "./pages/Messages/Message";
 import Product from "./pages/ProductList/ProductList";
 import NewPage from "./pages/New/NewPage"
 import SupportPage from "./pages/Support/SupportPage"
+
 const AppRouter = () => (
-  <BrowserRouter>
-    <Routes>
+  <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="/register" element={<Register />} />
 
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <Route element={<Layout />}>  
+      <Route path="/" element={<Home />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/mystore" element={<MyStore />} />
+      <Route path="/products/:id" element={<ProductDetail />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/voucher" element={<VoucherPage />} />
+      <Route path="/store/:id" element={<StorePage />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/order/:orderId" element={<OrderPage />} />
+      <Route path="/payment-success" element={<PaymentSuccess />} />
+      <Route path="/stores" element={<StoreList />} />
+      <Route path="/messages/:id?" element={<Message />} />
+      <Route path="/message" element={<Navigate to="/messages" replace />} />
 
+      <Route path="/categories" element={<Product />} />
+      <Route path="/new" element={<NewPage />} />
+      <Route path="/support" element={<SupportPage/>}/>
+    </Route>
 
-      <Route element={<Layout />}>  
-        <Route path="/" element={<Home />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/mystore" element={<MyStore />} />
-        <Route path="/products/:id" element={<ProductDetail />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/voucher" element={<VoucherPage />} />
-        <Route path="/store/:id" element={<StorePage />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/order/:orderId" element={<OrderPage />} />
-        <Route path="/payment-success" element={<PaymentSuccess />} />
-        <Route path="/stores" element={<StoreList />} />
-        <Route path="/messages/:id?" element={<Message />} />
-        <Route path="/message" element={<Navigate to="/messages" replace />} />
-
-        <Route path="/categories" element={<Product />} />
-        <Route path="/new" element={<NewPage />} />
-        <Route path="/support" element={<SupportPage/>}/>
-      </Route>
-
-      <Route path="/s" element={<Navigate to="/login" />} />
-      <Route path="/admin" element={<AdminDashboard />} />
-    </Routes>
-  </BrowserRouter>
+    <Route path="/s" element={<Navigate to="/login" />} />
+    <Route path="/admin" element={<AdminDashboard />} />
+  </Routes>
 );
 
 export default AppRouter;

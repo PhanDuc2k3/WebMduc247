@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "@/api/axiosClient";
 import { Mail, Lock } from "lucide-react";
+import { useChat } from "../../context/chatContext"; // ✅ thêm dòng này
 
 const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState("login");
@@ -13,21 +14,62 @@ const Login: React.FC = () => {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const { setCurrentUserId, socket } = useChat(); // ✅ lấy từ context
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      console.log("🔹 [Login] Đang gửi request login với:", { email, password });
+
       const res = await axiosClient.post("/api/users/login", { email, password });
+      console.log("🔹 [Login] Response từ server:", res.data);
+
       if (res.status === 200) {
         const data = res.data;
         toast.success(data.message || "Đăng nhập thành công");
         localStorage.setItem("token", data.token);
-        if (data.user) localStorage.setItem("user", JSON.stringify(data.user));
-        setTimeout(() => navigate("/"), 1200);
+
+        if (data.user) {
+          console.log("🔹 [Login] User data nhận được:", data.user);
+
+          const userData = {
+            ...data.user,
+            online: data.user.online,
+            lastSeen: data.user.lastSeen,
+          };
+
+          // ✅ Lưu vào localStorage
+          localStorage.setItem("user", JSON.stringify(userData));
+
+          console.log(
+            "🔹 [Login] User online status:",
+            userData.online,
+            "Last seen:",
+            userData.lastSeen
+          );
+
+          // ✅ Cập nhật userId cho chatContext để socket biết bạn là ai
+          const userId = userData._id || userData.id;
+          if (userId) {
+            setCurrentUserId(userId);
+            console.log("📡 [Login] setCurrentUserId:", userId);
+
+            // ✅ Gửi sự kiện user_connected ngay lập tức lên server
+            if (socket && socket.connected) {
+              socket.emit("user_connected", userId);
+              console.log("📡 [Login] Emit user_connected:", userId);
+            }
+          }
+        }
+
+        // ✅ Chuyển hướng sau 1s
+        setTimeout(() => navigate("/"), 1000);
       }
     } catch (err: any) {
       const message = err.response?.data?.message || "Đăng nhập thất bại, vui lòng thử lại";
       toast.error(message);
+      console.error("❌ [Login] Lỗi:", err);
     } finally {
       setLoading(false);
     }
@@ -40,16 +82,22 @@ const Login: React.FC = () => {
           <span className="text-white text-2xl font-bold">MD</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-800">ShopMDuc247</h1>
-        <p className="text-gray-500 text-center mt-1">Sàn thương mại điện tử hàng đầu</p>
+        <p className="text-gray-500 text-center mt-1">
+          Sàn thương mại điện tử hàng đầu
+        </p>
       </div>
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8 relative">
-        <h2 className="text-xl font-semibold text-center mb-4">Chào mừng bạn!</h2>
+        <h2 className="text-xl font-semibold text-center mb-4">
+          Chào mừng bạn!
+        </h2>
 
         <div className="flex mb-6 bg-gray-100 rounded-lg overflow-hidden">
           <button
             className={`w-1/2 py-2 text-center font-medium ${
-              activeTab === "login" ? "bg-white" : "bg-gray-100 text-gray-400"
+              activeTab === "login"
+                ? "bg-white"
+                : "bg-gray-100 text-gray-400"
             }`}
             onClick={() => {
               setActiveTab("login");
@@ -60,7 +108,9 @@ const Login: React.FC = () => {
           </button>
           <button
             className={`w-1/2 py-2 text-center font-medium ${
-              activeTab === "register" ? "bg-white" : "bg-gray-100 text-gray-400"
+              activeTab === "register"
+                ? "bg-white"
+                : "bg-gray-100 text-gray-400"
             }`}
             onClick={() => {
               setActiveTab("register");
@@ -126,17 +176,6 @@ const Login: React.FC = () => {
             {loading ? "Đang xử lý..." : "Đăng nhập"}
           </button>
         </form>
-
-        {/* <div className="my-6 text-center text-gray-400 text-sm">HOẶC ĐĂNG NHẬP VỚI</div>
-
-        <div className="flex gap-4">
-          <button className="flex-1 flex items-center justify-center gap-2 border rounded-lg py-2 hover:bg-gray-50">
-            Google
-          </button>
-          <button className="flex-1 flex items-center justify-center gap-2 border rounded-lg py-2 hover:bg-gray-50">
-            Facebook
-          </button>
-        </div> */}
       </div>
 
       <ToastContainer

@@ -1,3 +1,4 @@
+// backend/server.js
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
@@ -16,10 +17,8 @@ app.use(cors({
   ],
   credentials: true,
 }));
+app.use(express.json());
 
-app.get("/", (req, res) => res.send("WebSocket service running 🚀"));
-
-// --- Tạo server http
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -32,14 +31,22 @@ const io = new Server(server, {
     methods: ["GET", "POST"],
     credentials: true,
   },
+  allowEIO3: true,
 });
 
-// --- Import chatSocket và cartSocket
-const chatSocketApp = require("./websocket/chatSocket")(io);
-app.use("/api/socket", chatSocketApp); // route chat
+// --- Import và inject io
+const cartSocketRouter = require("./websocket/cartSocket");
+cartSocketRouter.setIo(io);
+app.use("/api/cart-socket", cartSocketRouter);
 
-const cartSocketApp = require("./websocket/cartSocket")(io);
-app.use("/api/cart-socket", cartSocketApp); // route cart
+// --- Chat socket (nếu có)
+require("./websocket/chatSocket")(io);
+
+// --- Socket connection logging
+io.on("connection", (socket) => {
+  console.log("⚡ Socket connected:", socket.id);
+  socket.on("disconnect", () => console.log("❌ Socket disconnected:", socket.id));
+});
 
 const PORT = process.env.WS_PORT || 5050;
-server.listen(PORT, () => console.log(`⚡ WebSocket running on port ${PORT}`));
+server.listen(PORT, () => console.log(`WebSocket service running on port ${PORT}`));

@@ -30,6 +30,7 @@ exports.register = async (req, res) => {
 // ==========================
 // ĐĂNG NHẬP
 // ==========================
+
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -50,6 +51,9 @@ exports.login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
+    // 🔹 Cập nhật trạng thái online khi login
+    await User.findByIdAndUpdate(user._id, { online: true, lastSeen: new Date() });
+
     res.status(200).json({
       message: 'Đăng nhập thành công',
       token,
@@ -59,11 +63,27 @@ exports.login = async (req, res) => {
         fullName: user.fullName,
         phone: user.phone,
         role: user.role,
-        avatarUrl: user.avatarUrl || ''
+        avatarUrl: user.avatarUrl || '',
+        online: true,        // trả luôn trạng thái cho client
+        lastSeen: new Date()
       }
     });
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+  }
+};
+
+// ==========================
+// ĐĂNG XUẤT
+// ==========================
+exports.logout = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    await User.findByIdAndUpdate(userId, { online: false, lastSeen: new Date() });
+    res.status(200).json({ message: 'Đăng xuất thành công' });
+  } catch (error) {
+    console.error('Logout error:', error);
     res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
   }
 };
@@ -297,3 +317,4 @@ if (action === 'approve') {
     res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
   }
 };
+

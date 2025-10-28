@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import messageApi from "../../../api/messageApi"; // dùng api đã tạo
+import messageApi from "../../../api/messageApi";
+import { useChat } from "../../../context/chatContext";
 
 interface Chat {
   conversationId: string;
   name: string;
   avatarUrl?: string;
   lastMessage: string;
+  online?: boolean;
+  participantId?: string;
 }
 
 interface Props {
@@ -15,29 +18,127 @@ interface Props {
   disabled?: boolean;
 }
 
-export default function ChatList({ currentUserId, selectedChat, onSelectChat, disabled }: Props) {
+export default function ChatList({
+  currentUserId,
+  selectedChat,
+  onSelectChat,
+  disabled,
+}: Props) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const { socket, unreadMessages, setUnreadMessages, onlineUsers, setOnlineUsers } = useChat();
 
-useEffect(() => {
-  const fetchChats = async () => {
-    try {
-      if (!currentUserId) return;
+  // Fetch danh sách chat
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        if (!currentUserId) return;
 
-      const res = await messageApi.getUserConversations(currentUserId);
-      console.log("Danh sách conversations:", res.data); // debug
-      setChats(res.data);
-    } catch (err) {
-      console.error("❌ Lỗi fetchChats:", err);
-    } finally {
-      setLoading(false);
+        const res = await messageApi.getUserConversations(currentUserId);
+
+        const mappedChats: Chat[] = (res.data as any[])
+          .map((conv) => {
+            const participants = conv.participants || [];
+            const participant = participants.find(
+              (p: any) => p._id !== currentUserId
+            );
+
+            if (!participant) return null;
+
+            const lastMsg =
+              conv.lastMessage?.text ||
+              conv.lastMessage?.content ||
+              (conv.lastMessage?.attachments?.length ? "[Đính kèm]" : "") ||
+              conv.lastMessage ||
+              "";
+
+            const chat: Chat = {
+              conversationId:
+                conv.conversationId ||
+                conv._id?.toString() ||
+                "unknown_conversation",
+              name: participant.fullName || "Người dùng ẩn danh",
+              avatarUrl: participant.avatarUrl || "/default-avatar.png",
+              lastMessage: lastMsg,
+              participantId: participant._id,
+              online: false,
+            };
+
+            return chat;
+          })
+          .filter((c): c is Chat => Boolean(c?.conversationId));
+
+        setChats(mappedChats);
+
+        setChats((prevChats) =>
+          prevChats.map((chat) => ({
+            ...chat,
+            online: chat.participantId
+              ? onlineUsers.includes(chat.participantId)
+              : false,
+          }))
+        );
+      } catch (err) {
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChats();
+  }, [currentUserId, onlineUsers]);
+
+  // Kết nối socket & nhận danh sách online
+  useEffect(() => {
+    if (!socket) return;
+
+    if (!socket.connected) {
+      socket.connect();
     }
+
+    if (currentUserId) {
+      socket.emit("user_connected", currentUserId);
+    }
+
+    socket.on("update_online_users", (users: string[]) => {
+      setOnlineUsers(users);
+    });
+
+    socket.on("user_connected", (userId: string) => {});
+
+    socket.on("user_disconnected", (userId: string) => {});
+
+    return () => {
+      socket.off("update_online_users");
+      socket.off("user_connected");
+      socket.off("user_disconnected");
+    };
+  }, [socket, currentUserId]);
+
+  // Cập nhật onlineUsers vào danh sách chat (realtime)
+  useEffect(() => {
+    if (!onlineUsers) return;
+
+    setChats((prev) =>
+      prev.map((c) => ({
+        ...c,
+        online: c.participantId ? onlineUsers.includes(c.participantId) : false,
+      }))
+    );
+  }, [onlineUsers]);
+
+  // Chọn chat
+  const handleSelectChat = (chat: Chat) => {
+    if (!chat.conversationId) return;
+
+    onSelectChat(chat);
+
+    setUnreadMessages((prev) => ({
+      ...prev,
+      [chat.conversationId]: 0,
+    }));
   };
 
-  fetchChats();
-}, [currentUserId]);
-
-
+  // UI
   return (
     <div className="w-1/3 bg-white border-r overflow-y-auto">
       <h2 className="p-4 font-bold text-lg border-b">Tin nhắn</h2>
@@ -50,19 +151,38 @@ useEffect(() => {
         chats.map((chat) => (
           <div
             key={chat.conversationId}
-            onClick={() => !disabled && onSelectChat(chat)}
-            className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-100 ${
-              selectedChat?.conversationId === chat.conversationId ? "bg-gray-200" : ""
+            onClick={() => !disabled && handleSelectChat(chat)}
+            className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-100 transition ${
+              selectedChat?.conversationId === chat.conversationId
+                ? "bg-gray-200"
+                : ""
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            <img
-              src={chat.avatarUrl || "/default-avatar.png"}
-              alt={chat.name}
-              className="w-10 h-10 rounded-full object-cover"
-            />
-            <div className="flex-1">
-              <div className="font-semibold">{chat.name}</div>
-              <div className="text-sm text-gray-500 truncate">{chat.lastMessage}</div>
+            {/* Avatar + online indicator */}
+            <div className="relative w-10 h-10">
+              <img
+                src={chat.avatarUrl}
+                alt={chat.name}
+                className="w-10 h-10 rounded-full object-cover"
+              />
+              {chat.online && (
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-md"></span>
+              )}
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 relative">
+              <div className="font-semibold truncate">{chat.name}</div>
+              <div className="text-sm text-gray-500 truncate">
+                {chat.lastMessage || "Chưa có tin nhắn"}
+              </div>
+
+              {/* Badge tin chưa đọc */}
+              {unreadMessages[chat.conversationId] > 0 && (
+                <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2 text-xs">
+                  {unreadMessages[chat.conversationId]}
+                </span>
+              )}
             </div>
           </div>
         ))
