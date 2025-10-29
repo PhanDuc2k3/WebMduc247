@@ -1,13 +1,16 @@
-import React from "react";
+import React, { useState } from "react";
+import axiosClient from "../../../api/axiosClient";
+import { toast } from "react-toastify";
+import { useCart } from "../../../context/CartContext";
 
 interface Variation {
   color?: string;
-  size?: string;
+  size?: string; // Giả sử 'size' là tên trường trong variation
   additionalPrice?: number;
 }
 
 export interface CartItemType {
-  _id: string;
+  _id: string; // ID của Cart Item (itemId)
   name: string;
   imageUrl?: string;
   price: number;
@@ -21,7 +24,7 @@ interface CartItemProps {
   item: CartItemType;
   selected: boolean;
   onSelect: (id: string) => void;
-  onUpdateQty: (id: string, qty: number) => void;
+  // onUpdateQty đã bị loại bỏ
   onRemove: (id: string) => void;
 }
 
@@ -29,14 +32,39 @@ const CartItem: React.FC<CartItemProps> = ({
   item,
   selected,
   onSelect,
-  onUpdateQty,
   onRemove,
 }) => {
+  const [loading, setLoading] = useState(false);
+  const { fetchCart } = useCart(); // Lấy hàm fetchCart từ Context
+
   const getFullUrl = (path?: string) => {
     const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:5000";
     return path?.startsWith("http") ? path : `${baseUrl}${path}`;
   };
 
+const [localQuantity, setLocalQuantity] = useState(item.quantity);
+
+const handleUpdateQuantity = async (newQuantity: number) => {
+  if (newQuantity < 1) return;
+  if (loading) return;
+  
+  setLocalQuantity(newQuantity); // cập nhật tạm UI ngay
+  setLoading(true);
+
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    await axiosClient.put(`/api/cart/update`, { itemId: item._id, quantity: newQuantity }, { headers: { Authorization: `Bearer ${token}` } });
+    fetchCart(); // fetch chính xác từ backend
+  } catch (error) {
+    console.error(error);
+    toast.error("Cập nhật số lượng thất bại.");
+    setLocalQuantity(item.quantity); // revert nếu fail
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <div className="flex items-center px-6 py-4 border-b last:border-b-0">
       {/* Checkbox */}
@@ -76,20 +104,26 @@ const CartItem: React.FC<CartItemProps> = ({
 
       {/* Quantity controls */}
       <div className="flex items-center gap-2 mx-6">
-        <button
-          onClick={() => onUpdateQty(item._id, item.quantity - 1)}
-          disabled={item.quantity <= 1}
-          className="w-8 h-8 border rounded text-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        >
-          -
-        </button>
-        <span className="w-8 text-center">{item.quantity}</span>
-        <button
-          onClick={() => onUpdateQty(item._id, item.quantity + 1)}
-          className="w-8 h-8 border rounded text-lg text-gray-600 hover:bg-gray-100 transition"
-        >
-          +
-        </button>
+<div className="flex items-center gap-2 mx-6">
+  <button
+    onClick={() => handleUpdateQuantity(localQuantity - 1)}
+    disabled={localQuantity <= 1 || loading}
+    className="w-10 h-10 flex items-center justify-center border rounded-lg text-lg text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+  >
+    -
+  </button>
+
+  <span className="w-10 text-center font-medium text-gray-800">{localQuantity}</span>
+
+  <button
+    onClick={() => handleUpdateQuantity(localQuantity + 1)}
+    disabled={loading}
+    className="w-10 h-10 flex items-center justify-center border rounded-lg text-lg text-gray-600 hover:bg-gray-100 transition-all"
+  >
+    +
+  </button>
+</div>
+
       </div>
 
       {/* Remove button */}

@@ -3,6 +3,7 @@ import { Heart, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import axiosClient from "../../../api/axiosClient";
 import { toast } from "react-toastify"; 
 import "react-toastify/dist/ReactToastify.css";
+import { useCart } from "../../../context/CartContext"; // <--- BỔ SUNG: Import hook useCart
 
 interface VariationOption {
   name: string;
@@ -44,6 +45,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     null
   );
   const [loading, setLoading] = useState(false);
+  
+  const { fetchCart } = useCart(); // <--- BỔ SUNG: Lấy hàm fetchCart từ CartContext
 
   const colors: string[] = Array.from(
     new Set(product.variations?.map((v) => v.color) || [])
@@ -106,6 +109,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       await axiosClient.post("/api/cart/add", payload, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
+
+      fetchCart(); // <--- GỌI HÀM NÀY ĐỂ CẬP NHẬT CART COUNT TRONG CONTEXT VÀ TRÊN HEADER
 
       toast.success(
         <div className="flex items-center gap-2">

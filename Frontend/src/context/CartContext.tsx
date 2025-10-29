@@ -43,6 +43,22 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [socketConnected, setSocketConnected] = useState(false);
 
+  // --- Emit cart update via socket (queue if not connected)
+    const emitCartUpdate = (uid: string, cartData: CartItem[]) => {
+      const s = socket;
+      const count = cartData.reduce((sum, i) => sum + i.quantity, 0);
+      if (!s) return;
+  
+      if (!s.connected) {
+        s.once("connect", () => {
+          s.emit("cartUpdated", { userId: uid, cart: cartData, cartCount: count });
+        });
+        s.connect();
+      } else {
+        s.emit("cartUpdated", { userId: uid, cart: cartData, cartCount: count });
+      }
+    };
+
   // --- Add to cart
   const addToCart = (item: CartItem) => {
     let newCart: CartItem[];
@@ -73,25 +89,11 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
     }
   };
 
-  // --- Emit cart update via socket (queue if not connected)
-    const emitCartUpdate = (uid: string, cartData: CartItem[]) => {
-      const s = socket;
-      const count = cartData.reduce((sum, i) => sum + i.quantity, 0);
-      if (!s) return;
-  
-      if (!s.connected) {
-        s.once("connect", () => {
-          s.emit("cartUpdated", { userId: uid, cart: cartData, cartCount: count });
-        });
-        s.connect();
-      } else {
-        s.emit("cartUpdated", { userId: uid, cart: cartData, cartCount: count });
-      }
-    };
 
   // --- Fetch cart from API
   const fetchCart = async () => {
-    if (!userId) return;
+    // Chỉ fetch nếu đã có userId (đã đăng nhập)
+    if (!userId) return; 
     setLoading(true);
     try {
       const res = await axiosClient.get(`/api/cart`, {
@@ -103,6 +105,10 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
       setCart(apiCart);
       setCartCount(newCount);
       localStorage.setItem("cart", JSON.stringify(apiCart));
+
+      // BỔ SUNG QUAN TRỌNG: Phát sự kiện socket sau khi fetch thành công
+      // để đồng bộ hóa cart count trên các thiết bị/tab khác.
+      emitCartUpdate(userId, apiCart); 
 
       console.log("[Cart] Fetched from API:", apiCart);
     } catch (err) {

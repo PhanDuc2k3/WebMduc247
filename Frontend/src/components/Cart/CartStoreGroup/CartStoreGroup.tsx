@@ -20,14 +20,14 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
 
       {/* Sản phẩm */}
       {items.map((item: any) => (
-        <CartItem
-          key={item._id}
-          item={item}
-          selected={selectedItems.includes(item._id)}
-          onSelect={onSelect}
-          onUpdateQty={onUpdateQty}
-          onRemove={onRemove}
-        />
+<CartItem
+  key={item._id}
+  item={item}
+  selected={selectedItems.includes(item._id)}
+  onSelect={onSelect}
+  onRemove={onRemove} // chỉ còn onRemove, onUpdateQty bỏ
+/>
+
       ))}
     </div>
   );
