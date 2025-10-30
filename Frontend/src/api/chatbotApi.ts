@@ -1,7 +1,8 @@
-import axiosClient from "./axiosClient";
+import axios from "axios";
 
 interface ChatRequest {
   message: string;
+  userId?: string; // thêm nếu có login
 }
 
 interface ChatResponse {
@@ -9,9 +10,9 @@ interface ChatResponse {
 }
 
 const chatbotApi = {
-  // Gửi tin nhắn đến chatbot backend
   sendMessage: (data: ChatRequest) =>
-    axiosClient.post<ChatResponse>("/api/chatbot", data),
+    axios.post<ChatResponse>("http://localhost:5001/api/chatbot/chat", data),
 };
+
 
 export default chatbotApi;

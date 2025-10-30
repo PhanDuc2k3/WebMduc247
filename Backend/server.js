@@ -17,7 +17,7 @@ const paymentRoutes = require('./routes/Payment');
 const reviewRoutes = require('./routes/ReviewRoutes');
 const messageRoutes = require('./routes/MessageRoutes');
 const bannerRoutes = require("./routes/BannerRoutes");
-const chatbotRoutes = require("./routes/ChatbotRoutes"); // 👈 chatbot
+// const chatbotRoutes = require("./routes/ChatbotRoutes"); // 👈 chatbot
 
 dotenv.config();
 connectDB();
@@ -65,7 +65,7 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/banner', bannerRoutes);
-app.use('/api/chatbot', chatbotRoutes); // 👈 chatbot route
+// app.use('/api/chatbot', chatbotRoutes); // 👈 chatbot route
 
 // 🧩 Middleware xử lý lỗi route không tồn tại
 app.use((req, res) => {
