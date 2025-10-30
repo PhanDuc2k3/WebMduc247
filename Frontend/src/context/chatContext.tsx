@@ -47,13 +47,28 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   // Kết nối socket
-  useEffect(() => {
-    const newSocket = io(SOCKET_URL, { reconnection: true, transports: ["websocket"] });
-    setSocket(newSocket);
-    return () => {
-      if (newSocket.connected) newSocket.disconnect();
-    };
-  }, []);
+useEffect(() => {
+  console.log("[Chat] Connecting socket to:", SOCKET_URL);
+  const newSocket = io(SOCKET_URL, {
+    reconnection: true,
+    transports: ["websocket"],
+    withCredentials: true,
+  });
+
+  newSocket.on("connect", () => {
+    console.log("[Chat] ✅ Socket connected:", newSocket.id);
+  });
+
+  newSocket.on("connect_error", (err) => {
+    console.error("[Chat] ❌ Socket connect error:", err.message);
+  });
+
+  setSocket(newSocket);
+  return () => {
+    if (newSocket.connected) newSocket.disconnect();
+  };
+}, []);
+
 
   // Khi có currentUserId → emit user_connected + join user room
   useEffect(() => {

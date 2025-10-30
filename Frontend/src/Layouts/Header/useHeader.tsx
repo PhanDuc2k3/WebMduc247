@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axiosClient from "../../api/axiosClient";
 import { getSocket } from "../../socket";
 
+// --- fix _id optional
 interface UserType {
+  _id?: string;    // ✅ optional để user mặc định "Khách" không lỗi TS
   fullName: string;
   avatarUrl: string;
 }
@@ -31,7 +33,7 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
   const navigate = useNavigate();
   const socket = getSocket();
 
-  // --- Fetch user profile
+  // --- fetch user profile
   const fetchUser = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -46,7 +48,13 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const profile = res.data.user || res.data;
-      setUser({ fullName: profile.fullName || "Khách", avatarUrl: profile.avatarUrl || "" });
+
+      setUser({
+        _id: profile._id,                // ✅ luôn set _id
+        fullName: profile.fullName || "Khách",
+        avatarUrl: profile.avatarUrl || "",
+      });
+
       setOnline(profile.online ?? false);
       setLastSeen(profile.lastSeen ?? null);
     } catch (err) {
@@ -112,7 +120,7 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
     navigate("/login");
   };
 
-return (
+  return (
     <UserContext.Provider
       value={{
         user,
@@ -120,13 +128,14 @@ return (
         lastSeen,
         showDropdown,
         setShowDropdown,
-        handleLogout, // Không có dấu phẩy ở cuối
+        handleLogout,
       }}
     >
       {children}
     </UserContext.Provider>
   );
 };
+
 // --- Hook để dùng context
 export const useUser = () => {
   const context = useContext(UserContext);
@@ -134,5 +143,5 @@ export const useUser = () => {
   return context;
 };
 
-// --- Export useHeader làm alias cho useUser
+// --- Alias cho useHeader
 export const useHeader = useUser;

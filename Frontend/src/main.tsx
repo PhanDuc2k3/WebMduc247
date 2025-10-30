@@ -1,10 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
-import App from "./App.tsx";
+import App from "./App";
 
-import { CartProvider } from "./context/CartContext.tsx";
-import { ChatProvider } from "./context/chatContext.tsx";
+import { CartProvider } from "./context/CartContext";
+import { ChatProvider } from "./context/chatContext";
 import { UserProvider } from "./Layouts/Header/useHeader";
 
 import { ToastContainer } from "react-toastify";

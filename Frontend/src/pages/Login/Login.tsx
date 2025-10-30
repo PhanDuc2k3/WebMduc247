@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "@/api/axiosClient";
 import { Mail, Lock } from "lucide-react";
-import { useChat } from "../../context/chatContext"; // ✅ thêm dòng này
+import { useChat } from "../../context/chatContext";
+import { toast } from "react-toastify";
 
 const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState("login");
@@ -14,62 +13,52 @@ const Login: React.FC = () => {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { setCurrentUserId, socket } = useChat(); // ✅ lấy từ context
+  const { setCurrentUserId, socket } = useChat();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      console.log("🔹 [Login] Đang gửi request login với:", { email, password });
-
       const res = await axiosClient.post("/api/users/login", { email, password });
-      console.log("🔹 [Login] Response từ server:", res.data);
 
-      if (res.status === 200) {
-        const data = res.data;
-        toast.success(data.message || "Đăng nhập thành công");
-        localStorage.setItem("token", data.token);
+     if (res.status === 200) {
+  const data = res.data;
 
-        if (data.user) {
-          console.log("🔹 [Login] User data nhận được:", data.user);
+  // Hiển thị toast và chờ toast tắt mới navigate
+  toast.success(data.message || "Đăng nhập thành công", {
+    onClose: () => {
+      // Lưu token và user
+      localStorage.setItem("token", data.token);
 
-          const userData = {
-            ...data.user,
-            online: data.user.online,
-            lastSeen: data.user.lastSeen,
-          };
+      if (data.user) {
+        const userData = {
+          _id: data.user._id,
+          fullName: data.user.fullName,
+          avatarUrl: data.user.avatarUrl || "",
+          online: data.user.online,
+          lastSeen: data.user.lastSeen,
+        };
+        localStorage.setItem("user", JSON.stringify(userData));
+        window.dispatchEvent(new Event("userUpdated"));
 
-          // ✅ Lưu vào localStorage
-          localStorage.setItem("user", JSON.stringify(userData));
-
-          console.log(
-            "🔹 [Login] User online status:",
-            userData.online,
-            "Last seen:",
-            userData.lastSeen
-          );
-
-          // ✅ Cập nhật userId cho chatContext để socket biết bạn là ai
-          const userId = userData._id || userData.id;
-          if (userId) {
-            setCurrentUserId(userId);
-            console.log("📡 [Login] setCurrentUserId:", userId);
-
-            // ✅ Gửi sự kiện user_connected ngay lập tức lên server
-            if (socket && socket.connected) {
-              socket.emit("user_connected", userId);
-              console.log("📡 [Login] Emit user_connected:", userId);
-            }
+        const userId = userData._id;
+        if (userId) {
+          setCurrentUserId(userId);
+          if (socket && socket.connected) {
+            socket.emit("user_connected", userId);
           }
         }
-
-        // ✅ Chuyển hướng sau 1s
-        setTimeout(() => navigate("/"), 1000);
       }
+
+      navigate("/"); // Chuyển hướng sau khi toast tắt
+    },
+    autoClose: 1500, // thời gian toast hiển thị trước khi gọi onClose
+  });
+}
+
     } catch (err: any) {
       const message = err.response?.data?.message || "Đăng nhập thất bại, vui lòng thử lại";
       toast.error(message);
-      console.error("❌ [Login] Lỗi:", err);
     } finally {
       setLoading(false);
     }
@@ -82,22 +71,16 @@ const Login: React.FC = () => {
           <span className="text-white text-2xl font-bold">MD</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-800">ShopMDuc247</h1>
-        <p className="text-gray-500 text-center mt-1">
-          Sàn thương mại điện tử hàng đầu
-        </p>
+        <p className="text-gray-500 text-center mt-1">Sàn thương mại điện tử hàng đầu</p>
       </div>
 
       <div className="w-full max-w-md bg-white rounded-2xl shadow-md p-8 relative">
-        <h2 className="text-xl font-semibold text-center mb-4">
-          Chào mừng bạn!
-        </h2>
+        <h2 className="text-xl font-semibold text-center mb-4">Chào mừng bạn!</h2>
 
         <div className="flex mb-6 bg-gray-100 rounded-lg overflow-hidden">
           <button
             className={`w-1/2 py-2 text-center font-medium ${
-              activeTab === "login"
-                ? "bg-white"
-                : "bg-gray-100 text-gray-400"
+              activeTab === "login" ? "bg-white" : "bg-gray-100 text-gray-400"
             }`}
             onClick={() => {
               setActiveTab("login");
@@ -108,9 +91,7 @@ const Login: React.FC = () => {
           </button>
           <button
             className={`w-1/2 py-2 text-center font-medium ${
-              activeTab === "register"
-                ? "bg-white"
-                : "bg-gray-100 text-gray-400"
+              activeTab === "register" ? "bg-white" : "bg-gray-100 text-gray-400"
             }`}
             onClick={() => {
               setActiveTab("register");
@@ -123,9 +104,7 @@ const Login: React.FC = () => {
 
         <form className="space-y-4" onSubmit={handleLogin}>
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">
-              Email hoặc số điện thoại
-            </label>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Email hoặc số điện thoại</label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -139,9 +118,7 @@ const Login: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">
-              Mật khẩu
-            </label>
+            <label className="block text-sm font-medium mb-1 text-gray-700">Mật khẩu</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
@@ -156,16 +133,10 @@ const Login: React.FC = () => {
 
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-              />
+              <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
               Ghi nhớ đăng nhập
             </label>
-            <a href="#" className="text-sm text-blue-600 hover:underline">
-              Quên mật khẩu?
-            </a>
+            <a href="#" className="text-sm text-blue-600 hover:underline">Quên mật khẩu?</a>
           </div>
 
           <button
@@ -177,15 +148,6 @@ const Login: React.FC = () => {
           </button>
         </form>
       </div>
-
-      <ToastContainer
-        position="top-center"
-        autoClose={2500}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        pauseOnHover
-      />
     </div>
   );
 };

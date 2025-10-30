@@ -29,63 +29,70 @@ export default function ChatList({
   const { socket, unreadMessages, setUnreadMessages, onlineUsers, setOnlineUsers } = useChat();
 
   // Fetch danh sách chat
-  useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        if (!currentUserId) return;
+useEffect(() => {
+  const fetchChats = async () => {
+    try {
+      if (!currentUserId) return;
 
-        const res = await messageApi.getUserConversations(currentUserId);
+      console.log("[ChatList] Fetching conversations for user:", currentUserId);
 
-        const mappedChats: Chat[] = (res.data as any[])
-          .map((conv) => {
-            const participants = conv.participants || [];
-            const participant = participants.find(
-              (p: any) => p._id !== currentUserId
-            );
+      const res = await messageApi.getUserConversations(currentUserId);
+      console.log("[ChatList] API response:", res.data);
 
-            if (!participant) return null;
+      const mappedChats: Chat[] = (res.data as any[])
+        .map((conv) => {
+          const participants = conv.participants || [];
+          const participant = participants.find(
+            (p: any) => p._id !== currentUserId
+          );
 
-            const lastMsg =
-              conv.lastMessage?.text ||
-              conv.lastMessage?.content ||
-              (conv.lastMessage?.attachments?.length ? "[Đính kèm]" : "") ||
-              conv.lastMessage ||
-              "";
+          if (!participant) return null;
 
-            const chat: Chat = {
-              conversationId:
-                conv.conversationId ||
-                conv._id?.toString() ||
-                "unknown_conversation",
-              name: participant.fullName || "Người dùng ẩn danh",
-              avatarUrl: participant.avatarUrl || "/default-avatar.png",
-              lastMessage: lastMsg,
-              participantId: participant._id,
-              online: false,
-            };
+          const lastMsg =
+            conv.lastMessage?.text ||
+            conv.lastMessage?.content ||
+            (conv.lastMessage?.attachments?.length ? "[Đính kèm]" : "") ||
+            conv.lastMessage ||
+            "";
 
-            return chat;
-          })
-          .filter((c): c is Chat => Boolean(c?.conversationId));
+          const chat: Chat = {
+            conversationId:
+              conv.conversationId ||
+              conv._id?.toString() ||
+              "unknown_conversation",
+            name: participant.fullName || "Người dùng ẩn danh",
+            avatarUrl: participant.avatarUrl || "/default-avatar.png",
+            lastMessage: lastMsg,
+            participantId: participant._id,
+            online: false,
+          };
 
-        setChats(mappedChats);
+          return chat;
+        })
+        .filter((c): c is Chat => Boolean(c?.conversationId));
 
-        setChats((prevChats) =>
-          prevChats.map((chat) => ({
-            ...chat,
-            online: chat.participantId
-              ? onlineUsers.includes(chat.participantId)
-              : false,
-          }))
-        );
-      } catch (err) {
-      } finally {
-        setLoading(false);
-      }
-    };
+      console.log("[ChatList] Mapped chats:", mappedChats);
 
-    fetchChats();
-  }, [currentUserId, onlineUsers]);
+      setChats(mappedChats);
+
+      setChats((prevChats) =>
+        prevChats.map((chat) => ({
+          ...chat,
+          online: chat.participantId
+            ? onlineUsers.includes(chat.participantId)
+            : false,
+        }))
+      );
+    } catch (err) {
+      console.error("[ChatList] Fetch chats error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchChats();
+}, [currentUserId, onlineUsers]);
+
 
   // Kết nối socket & nhận danh sách online
   useEffect(() => {

@@ -17,38 +17,46 @@ const Register: React.FC = () => {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+const handleRegister = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-    if (!acceptTerms) {
-      toast.error("Bạn phải đồng ý với điều khoản sử dụng và chính sách bảo mật");
-      return;
-    }
-    if (!fullName || !phone || !email || !password || !confirmPassword) {
-      toast.error("Vui lòng nhập đầy đủ thông tin");
-      return;
-    }
-    if (password !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp");
-      return;
-    }
+  if (!acceptTerms) {
+    toast.error("Bạn phải đồng ý với điều khoản sử dụng và chính sách bảo mật");
+    return;
+  }
+  if (!fullName || !phone || !email || !password || !confirmPassword) {
+    toast.error("Vui lòng nhập đầy đủ thông tin");
+    return;
+  }
+  if (password !== confirmPassword) {
+    toast.error("Mật khẩu xác nhận không khớp");
+    return;
+  }
 
-    setLoading(true);
-    try {
-      const res = await userApi.register({
-        fullName,
-        phone,
-        email,
-        password,
-      });
-      toast.success(res.data.message || "Đăng ký thành công 🎉");
-      navigate("/login");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại");
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const res = await userApi.register({
+      fullName,
+      phone,
+      email,
+      password,
+    });
+
+    // Hiển thị toast và chờ toast tắt mới navigate
+    toast.success(res.data.message || "Đăng ký thành công 🎉", {
+      autoClose: 1500, // thời gian toast hiển thị
+      onClose: () => {
+        navigate("/login"); // chuyển hướng sau khi toast tắt
+      },
+    });
+
+  } catch (err: any) {
+    toast.error(err.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <>

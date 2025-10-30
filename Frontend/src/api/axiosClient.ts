@@ -12,13 +12,14 @@ const axiosClient: AxiosInstance = axios.create({
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
-    config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+    // ✅ giữ nguyên headers nếu đã có
+    const headers = config.headers ?? {} as any;
+    headers.Authorization = `Bearer ${token}`;
+    config.headers = headers;
   }
 
-  // Log URL chỉ trong môi trường dev
   if (import.meta.env.DEV) {
-    console.log(" API base URL:", API_BASE_URL);
+    console.log("API base URL:", API_BASE_URL);
   }
 
   return config;
