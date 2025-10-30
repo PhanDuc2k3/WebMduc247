@@ -1,22 +1,18 @@
 import React, { useEffect, useState } from "react";
 import ProductCard from "../../Home/FeaturedProducts/ProductCard";
-import productApi from "../../../api/productApi"; // đường dẫn đúng tới folder api
-import type { ProductType } from "../../../types/product"; // <-- DÒNG MỚI: Import kiểu dữ liệu đầy đủ
-
-// XÓA interface Product cũ bị thiếu thuộc tính (dòng 7-16)
-
-// Định nghĩa interface mới bao gồm tất cả thuộc tính của ProductType 
-// và trường 'image' mà logic của bạn đang tạo ra.
-interface ProductWithFeaturedImage extends ProductType {
-  image: string;
-}
+import productApi from "../../../api/productApi";
+import type { ProductType } from "../../../types/product";
 
 interface FeaturedProductProps {
   storeId: string;
 }
 
+// Nếu API trả thiếu images, thêm fallback
+interface ProductWithFeaturedImage extends ProductType {
+  image: string;
+}
+
 const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
-  // Cập nhật kiểu dữ liệu state
   const [products, setProducts] = useState<ProductWithFeaturedImage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,16 +21,39 @@ const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        // Dùng axios từ productApi
         const res = await productApi.getProductsByStore(storeId);
-        // Sử dụng ProductType cho dữ liệu trả về từ API
-        const data: ProductType[] = res.data;
+        const data: ProductType[] = res.data || [];
 
-        // Ép kiểu data.map sang ProductWithFeaturedImage[]
-        const mappedProducts = data.map(p => ({
-          ...p,
+        // map data + fallback cho tất cả field bắt buộc
+        const mappedProducts: ProductWithFeaturedImage[] = data.map(p => ({
+          _id: p._id || "no-id",
+          name: p.name || "Sản phẩm chưa có tên",
+          description: p.description || "",
+          price: p.price || 0,
+          salePrice: p.salePrice,
+          brand: p.brand || "",
+          category: p.category || "",
+          subCategory: p.subCategory || "",
+          quantity: p.quantity || 0,
+          soldCount: p.soldCount || 0,
+          model: p.model || "",
+          sku: p.sku,
+          variations: p.variations || [],
+          images: p.images || ["/fallback-image.png"],
+          specifications: p.specifications || [],
+          rating: p.rating || 0,
+          reviewsCount: p.reviewsCount || 0,
+          tags: p.tags || [],
+          seoTitle: p.seoTitle || "",
+          seoDescription: p.seoDescription || "",
+          keywords: p.keywords || [],
+          isFeatured: p.isFeatured || false,
+          viewsCount: p.viewsCount || 0,
+          isActive: p.isActive || true,
+          store: p.store || "VN",
+          features: p.features || [],
           image: p.images?.[0] || "/fallback-image.png"
-        })) as ProductWithFeaturedImage[];
+        }));
 
         setProducts(mappedProducts);
       } catch (err) {
@@ -47,14 +66,13 @@ const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
     fetchProducts();
   }, [storeId]);
 
-  if (loading) return <p>Đang tải sản phẩm...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
-  if (!products.length) return <p>Chưa có sản phẩm nổi bật nào</p>;
+  if (loading) return <p>⏳ Đang tải sản phẩm...</p>;
+  if (error) return <p className="text-red-500">❌ {error}</p>;
+  if (!products.length) return <p>❌ Chưa có sản phẩm nổi bật nào</p>;
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
       {products.map(product => (
-        // product đã có đủ type (ProductWithFeaturedImage) để đáp ứng ProductCard
         <ProductCard key={product._id} product={product} />
       ))}
     </div>
