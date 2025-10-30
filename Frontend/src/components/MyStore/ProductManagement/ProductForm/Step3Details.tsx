@@ -52,7 +52,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
     <div>
       <h2 className="text-xl font-bold mb-4">Chi tiết & Biến thể</h2>
 
-      {/* 🔹 Tính năng nổi bật */}
+      {/* 🔹 Tính năng nổi bật
       <div className="mb-4">
         <label className="text-sm font-medium block mb-1">
           Tính năng nổi bật
@@ -63,7 +63,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
           value={formData.features.join("\n")}
           onChange={(e) => handleChange("features", e.target.value.split("\n"))}
         />
-      </div>
+      </div> */}
 
       {/* 🔹 Biến thể sản phẩm */}
       <div className="mb-6">

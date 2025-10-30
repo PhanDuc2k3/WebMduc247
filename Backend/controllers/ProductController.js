@@ -3,6 +3,7 @@ const Store = require('../models/Store');
 const ViewLog = require('../models/ViewLog');
 const { parseJSONField, mergeImages } = require('../middlewares/cloudinary');
 const parseJSONSafe = require('../utils/parseJSONSafe');
+const Fuse = require("fuse.js");
 
 const mongoose = require('mongoose');
   const generateSKU = (name) => {
@@ -21,17 +22,26 @@ exports.createProduct = async (req, res) => {
     const {
       name, description, price, salePrice, brand, category, subCategory,
       model, sku, variations, specifications, seoTitle, seoDescription,
-      keywords, tags
+      keywords, tags,
+      existingMainImage, existingSubImages
     } = req.body;
 
-    const parsedVariations = variations && typeof variations === "string" ? JSON.parse(variations) : variations || [];
-    const parsedSpecifications = specifications && typeof specifications === "string" ? JSON.parse(specifications) : specifications || [];
-    const parsedTags = tags && typeof tags === "string" ? JSON.parse(tags) : tags || [];
-    const parsedKeywords = keywords && typeof keywords === "string" ? JSON.parse(keywords) : keywords || [];
+    // Parse JSON fields an toàn
+    const parseJSONSafe = (val) => {
+      if (!val) return [];
+      if (typeof val === "string") {
+        try { return JSON.parse(val); } catch { return []; }
+      }
+      return val;
+    };
+    const parsedVariations = parseJSONSafe(variations);
+    const parsedSpecifications = parseJSONSafe(specifications);
+    const parsedTags = parseJSONSafe(tags);
+    const parsedKeywords = parseJSONSafe(keywords);
 
     let totalQuantity = 0;
     parsedVariations.forEach(v => {
-      if (v.options && v.options.length > 0) {
+      if (v.options && v.options.length) {
         v.options.forEach(opt => {
           opt.stock = Number(opt.stock) || 0;
           opt.additionalPrice = Number(opt.additionalPrice) || 0;
@@ -40,13 +50,25 @@ exports.createProduct = async (req, res) => {
       }
     });
 
-    // ✅ Dùng Cloudinary URL
+    // Xử lý hình ảnh
     let images = [];
-    if (req.files) {
-      const main = req.files.mainImage ? req.files.mainImage[0] : null;
-      const subs = req.files.subImages || [];
-      if (main) images.push(main.path);
-      if (subs.length > 0) images.push(...subs.map(f => f.path));
+
+    // Main image mới
+    if (req.files?.mainImage && req.files.mainImage.length > 0) {
+      images.push(req.files.mainImage[0].path);
+    } else if (existingMainImage) {
+      images.push(existingMainImage);
+    }
+
+    // Sub images mới
+    if (req.files?.subImages && req.files.subImages.length > 0) {
+      images.push(...req.files.subImages.map(f => f.path));
+    }
+
+    // Sub images cũ
+    if (existingSubImages) {
+      if (Array.isArray(existingSubImages)) images.push(...existingSubImages.flat());
+      else images.push(existingSubImages);
     }
 
     const finalSKU = sku || generateSKU(name);
@@ -72,12 +94,19 @@ exports.getProducts = async (req, res) => {
   try {
     const { category, search, sortBy, limit = 10, page = 1 } = req.query;
     const filter = { isActive: true };
+
+    // Filter theo category
     if (category) filter.category = category;
-    if (search) filter.name = { $regex: search, $options: "i" };
 
     const skip = (page - 1) * limit;
-    let query = Product.find(filter).populate("store", "name logoUrl").skip(Number(skip)).limit(Number(limit));
 
+    // Lấy dữ liệu thô theo filter + pagination + sort
+    let query = Product.find(filter)
+      .populate("store", "name logoUrl")
+      .skip(Number(skip))
+      .limit(Number(limit));
+
+    // Sắp xếp
     if (sortBy) {
       if (sortBy === "price_asc") query = query.sort({ price: 1 });
       if (sortBy === "price_desc") query = query.sort({ price: -1 });
@@ -85,11 +114,36 @@ exports.getProducts = async (req, res) => {
       if (sortBy === "newest") query = query.sort({ createdAt: -1 });
     }
 
-    const products = await query;
-    const total = await Product.countDocuments(filter);
+    let products = await query;
 
-    res.json({ success: true, data: products, pagination: { total, page: Number(page), pages: Math.ceil(total / limit) } });
+    // Tìm kiếm mở rộng
+    if (search && search.trim() !== "") {
+      const keyword = search.trim();
+
+      // Dùng Fuse.js để tìm fuzzy search
+      const fuse = new Fuse(products, {
+        keys: ["name", "tags"],
+        threshold: 0.3, // 0.0 = chính xác, 1.0 = gần đúng rất lỏng
+        includeScore: true,
+      });
+
+      products = fuse.search(keyword).map(r => r.item);
+    }
+
+    // Lấy tổng số sản phẩm (không phân trang)
+    const totalAll = await Product.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        total: totalAll,
+        page: Number(page),
+        pages: Math.ceil(totalAll / limit),
+      },
+    });
   } catch (err) {
+    console.error("getProducts error:", err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -137,49 +191,60 @@ exports.increaseView = async (req, res) => {
 // Update product by seller
 exports.updateProduct = async (req, res) => {
   try {
-    // 1️⃣ Kiểm tra cửa hàng
+    console.log("[updateProduct] START");
+    console.log("[updateProduct] req.user:", req.user);
+    console.log("[updateProduct] req.body:", req.body);
+    console.log("[updateProduct] req.files:", req.files);
+
     const store = await Store.findOne({ owner: req.user.userId });
     if (!store)
       return res.status(400).json({ success: false, message: "Bạn chưa có cửa hàng" });
 
-    // 2️⃣ Kiểm tra productId
     const productId = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(productId))
       return res.status(400).json({ success: false, message: "Invalid product ID" });
 
-    // 3️⃣ Copy req.body
     let updateData = { ...req.body };
 
-    // 4️⃣ Parse JSON chỉ những field JSON
+    // Parse các trường JSON
     const jsonFields = ["variations", "specifications", "tags", "features", "keywords"];
-    jsonFields.forEach(field => {
-      if (updateData[field] && typeof updateData[field] === "string") {
-        const str = updateData[field].trim();
-        if (str.startsWith("[") || str.startsWith("{")) {
+    jsonFields.forEach(f => {
+      if (updateData[f]) {
+        if (typeof updateData[f] === "string") {
           try {
-            updateData[field] = JSON.parse(str);
+            updateData[f] = JSON.parse(updateData[f]);
           } catch {
-            updateData[field] = [];
+            updateData[f] = [];
           }
         }
+      } else {
+        updateData[f] = [];
       }
     });
 
-    // 5️⃣ Merge ảnh chính/sub
-    const { mainImage: newMain, subImages: newSubs } = mergeImages(
-      req.files || {},
-      req.body.existingMainImage,
-      req.body.existingSubImages
-    );
+    console.log("[updateProduct] Parsed updateData JSON fields:", updateData);
 
-    if (newMain) updateData.images = [newMain, ...(newSubs || [])]; // mainImage đầu tiên
-    else if (newSubs && newSubs.length > 0) {
-      // giữ main cũ nếu không có main mới
-      const mainPrev = req.body.existingMainImage || "";
-      updateData.images = mainPrev ? [mainPrev, ...newSubs] : [...newSubs];
+    // Hình ảnh
+    let images = [];
+    if (req.files?.mainImage?.length) {
+      images.push(req.files.mainImage[0].path);
+    } else if (req.body.existingMainImage) {
+      images.push(req.body.existingMainImage);
+    }
+    if (req.files?.subImages?.length) {
+      images.push(...req.files.subImages.map(f => f.path));
+    }
+    if (req.body.existingSubImages) {
+      images.push(...(Array.isArray(req.body.existingSubImages)
+        ? req.body.existingSubImages
+        : [req.body.existingSubImages]));
     }
 
-    // 6️⃣ Cập nhật product
+    if (images.length) updateData.images = images;
+
+    console.log("[updateProduct] Final images array:", images);
+
+    // ✅ Update và trả document mới
     const product = await Product.findOneAndUpdate(
       { _id: productId, store: store._id },
       updateData,
@@ -189,12 +254,21 @@ exports.updateProduct = async (req, res) => {
     if (!product)
       return res.status(404).json({ success: false, message: "Không tìm thấy sản phẩm của bạn" });
 
-    return res.json({ success: true, data: product });
+    console.log("[updateProduct] Update successful:", product._id);
+    console.log("[updateProduct] Final product tags:", product.tags);
+    console.log("[updateProduct] Final product keywords:", product.keywords);
+
+    // ✅ Trả trực tiếp product để FE đọc được newProduct.tags
+    return res.json(product);
+
   } catch (err) {
-    console.error("updateProduct error:", err);
+    console.error("[updateProduct] ERROR:", err);
     return res.status(500).json({ success: false, message: err.message || "Server error" });
   }
 };
+
+
+
 
 
 

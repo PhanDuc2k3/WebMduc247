@@ -19,6 +19,13 @@ export interface Variation {
   options: VariationOption[]; // danh sách option con
 }
 
+// 🔹 Thông tin cửa hàng (nếu được populate từ backend)
+export interface StoreRef {
+  _id: string;
+  name?: string;
+  logoUrl?: string;
+}
+
 // 🔹 Dữ liệu sản phẩm trả về từ backend
 export interface ProductType {
   _id: string;
@@ -45,7 +52,8 @@ export interface ProductType {
   isFeatured: boolean;
   viewsCount: number;
   isActive: boolean;
-  store: string; // store id
+  store: string | StoreRef; // ✅ string (id) hoặc object (populated)
+  features: string[];
 }
 
 // 🔹 Dữ liệu form tạm trong frontend

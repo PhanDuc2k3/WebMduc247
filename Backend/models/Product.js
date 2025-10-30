@@ -1,4 +1,3 @@
-// models/Product.js
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
@@ -37,10 +36,10 @@ const productSchema = new mongoose.Schema({
 
   rating: { type: Number, default: 0, min: 0, max: 5 },
   reviewsCount: { type: Number, default: 0 },
-  tags: [{ type: String }],
+  tags: { type: [String], default: [] },
   seoTitle: { type: String },
   seoDescription: { type: String },
-  keywords: [{ type: [String] }],
+  keywords: { type: [String], default: [] },
   isFeatured: { type: Boolean, default: false },
 
   // ✅ tổng view tất cả thời gian
