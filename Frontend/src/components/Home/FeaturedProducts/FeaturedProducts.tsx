@@ -1,82 +1,86 @@
 import React, { useEffect, useState } from "react";
-import ProductCard from "../../Home/FeaturedProducts/ProductCard";
+import { Link } from "react-router-dom";
+import ProductCard from "./ProductCard";
 import productApi from "../../../api/productApi";
 import type { ProductType } from "../../../types/product";
 
-interface FeaturedProductProps {
-  storeId: string;
+// ✅ Tạo kiểu mới cho ProductCard để đảm bảo tương thích store
+interface ProductForCard extends Omit<ProductType, "store"> {
+  store?: string | { name: string };
 }
 
-// Nếu API trả thiếu images, thêm fallback
-interface ProductWithFeaturedImage extends ProductType {
-  image: string;
-}
-
-const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
-  const [products, setProducts] = useState<ProductWithFeaturedImage[]>([]);
+const FeaturedProducts: React.FC = () => {
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setLoading(true);
-        const res = await productApi.getProductsByStore(storeId);
-        const data: ProductType[] = res.data || [];
-
-        // map data + fallback cho tất cả field bắt buộc
-        const mappedProducts: ProductWithFeaturedImage[] = data.map(p => ({
-          _id: p._id || "no-id",
-          name: p.name || "Sản phẩm chưa có tên",
-          description: p.description || "",
-          price: p.price || 0,
-          salePrice: p.salePrice,
-          brand: p.brand || "",
-          category: p.category || "",
-          subCategory: p.subCategory || "",
-          quantity: p.quantity || 0,
-          soldCount: p.soldCount || 0,
-          model: p.model || "",
-          sku: p.sku,
-          variations: p.variations || [],
-          images: p.images || ["/fallback-image.png"],
-          specifications: p.specifications || [],
-          rating: p.rating || 0,
-          reviewsCount: p.reviewsCount || 0,
-          tags: p.tags || [],
-          seoTitle: p.seoTitle || "",
-          seoDescription: p.seoDescription || "",
-          keywords: p.keywords || [],
-          isFeatured: p.isFeatured || false,
-          viewsCount: p.viewsCount || 0,
-          isActive: p.isActive || true,
-          store: p.store || "VN",
-          features: p.features || [],
-          image: p.images?.[0] || "/fallback-image.png"
-        }));
-
-        setProducts(mappedProducts);
+        const res = await productApi.getFeaturedProducts();
+        setProducts(res.data || []);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+        console.error("❌ Lỗi tải sản phẩm:", err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProducts();
-  }, [storeId]);
+  }, []);
 
-  if (loading) return <p>⏳ Đang tải sản phẩm...</p>;
-  if (error) return <p className="text-red-500">❌ {error}</p>;
-  if (!products.length) return <p>❌ Chưa có sản phẩm nổi bật nào</p>;
+  if (loading)
+    return <p className="p-6 text-center text-gray-500">⏳ Đang tải sản phẩm...</p>;
+  if (!products.length)
+    return <p className="p-6 text-center text-gray-500">❌ Chưa có sản phẩm nổi bật</p>;
+
+  const isDesktop = windowWidth >= 1024;
+  const itemsPerRow = Math.floor(windowWidth / 220);
+  const visibleCount = isDesktop ? itemsPerRow * 2 : 8;
+  const visibleProducts = products.slice(0, visibleCount);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      {products.map(product => (
-        <ProductCard key={product._id} product={product} />
-      ))}
-    </div>
+    <section className="p-6 bg-gray-50 rounded-lg">
+      <h3 className="text-[22px] font-bold mb-1 text-gray-900">
+        Sản phẩm nổi bật
+      </h3>
+      <p className="text-sm text-gray-600 mb-4">
+        Những sản phẩm được yêu thích nhất
+      </p>
+
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+        {visibleProducts.map((prod) => {
+          // ✅ Chuyển store về đúng kiểu
+          const productForCard: ProductForCard = {
+            ...prod,
+            store:
+              typeof prod.store === "string"
+                ? prod.store
+                : prod.store?.name
+                ? { name: prod.store.name }
+                : { name: "Unknown" },
+          };
+          return <ProductCard key={prod._id} product={productForCard} />;
+        })}
+      </div>
+
+      <div className="text-center mt-6">
+        <Link
+          to="/categories"
+          className="font-medium text-blue-600 hover:underline transition-all"
+        >
+          Xem thêm sản phẩm →
+        </Link>
+      </div>
+    </section>
   );
 };
 
-export default FeaturedProduct;
+export default FeaturedProducts;

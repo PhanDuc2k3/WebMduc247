@@ -3,7 +3,7 @@ const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 const axios = require("axios");
 
-const SOCKET_SERVICE_URL = process.env.SOCKET_SERVICE_URL || "http://localhost:5050";
+const SOCKET_SERVICE_URL = process.env.WS_URL  || "http://localhost:5050";
 
 // Hàm emit cart update đến socket microservice
 async function emitCartUpdate(userId, cart) {
