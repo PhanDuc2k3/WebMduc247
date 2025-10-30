@@ -6,11 +6,7 @@
     },
     "jsx": "react-jsx",
     "noUnusedLocals": false,
-    "noUnusedParameters": false,
-
-    // ✅ Bỏ qua lỗi type tạm thời
-    "skipLibCheck": true,          // bỏ qua type check của lib / file khác
-    "noEmitOnError": false          // vẫn emit JS ngay cả khi có lỗi type
+    "noUnusedParameters": false
   },
   "files": [],
   "references": [
