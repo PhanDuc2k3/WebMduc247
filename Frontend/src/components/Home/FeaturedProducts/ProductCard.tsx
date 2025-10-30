@@ -1,10 +1,10 @@
 import React, { useEffect } from "react";
 import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { ProductType } from "../../../types/product"; // ✅ import ProductType
+import type { ProductType } from "../../../types/product";
 
 interface ProductCardProps {
-  product: ProductType; // ✅ dùng ProductType
+  product: ProductType;
 }
 
 // Helper hiển thị URL ảnh
@@ -15,6 +15,11 @@ const getImageUrl = (img?: string) => {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   useEffect(() => {}, [product.images]);
+
+  const storeName =
+    typeof product.store === "string"
+      ? "VN"
+      : product.store?.name || "VN";
 
   return (
     <div className="group bg-white border-2 border-gray-300 rounded-lg shadow-md p-3 relative transition-all duration-300 hover:shadow-lg w-full max-w-xs min-h-[300px] flex flex-col">
@@ -53,7 +58,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       <div className="mt-1 text-red-600 font-bold">
-        {(product.salePrice || product.price).toLocaleString("vi-VN")}₫
+        {(product.salePrice ?? product.price).toLocaleString("vi-VN")}₫
         {product.salePrice && (
           <span className="ml-2 text-gray-400 line-through text-sm">
             {product.price.toLocaleString("vi-VN")}₫
@@ -63,18 +68,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       <div className="flex justify-between mt-2 text-gray-600 text-sm">
         <div className="flex gap-1">
-          ⭐ {product.rating || 0} <span>({product.reviewsCount || 0})</span>
+          ⭐ {product.rating} <span>({product.reviewsCount})</span>
         </div>
-        <div>Đã bán {product.soldCount || 0}</div>
+        <div>Đã bán {product.soldCount}</div>
       </div>
 
       <div className="flex justify-between mt-2 text-gray-500 text-sm">
-        <div>{typeof product.store === "string" ? product.store : product.store?.name}</div>
-<div>
-  {typeof product.store === "string"
-    ? "VN"
-    : product.store?.name || "VN"}
-</div>
+        <div>{storeName}</div>
+        <div>VN</div>
       </div>
     </div>
   );

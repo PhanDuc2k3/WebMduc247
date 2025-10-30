@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom"; // 👈 import thêm
+import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
 import productApi from "../../../api/productApi";
 import type { ProductType } from "../../../types/product";
@@ -56,7 +56,6 @@ const FeaturedProducts: React.FC = () => {
         ))}
       </div>
 
-      {/* 👇 Link sang trang /store */}
       <div className="text-center mt-6">
         <Link
           to="/categories"
