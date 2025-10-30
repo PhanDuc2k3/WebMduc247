@@ -3,7 +3,8 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { toast } from "react-toastify";
 
-const SOCKET_URL = "http://localhost:5050"; // dev
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+ // dev
 
 interface ChatContextType {
   socket: Socket | null;

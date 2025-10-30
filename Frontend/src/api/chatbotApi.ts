@@ -2,17 +2,17 @@ import axios from "axios";
 
 interface ChatRequest {
   message: string;
-  userId?: string; // thêm nếu có login
+  userId?: string;
 }
 
 interface ChatResponse {
   reply: string;
 }
 
-const chatbotApi = {
-  sendMessage: (data: ChatRequest) =>
-    axios.post<ChatResponse>("http://localhost:5001/api/chatbot/chat", data),
-};
+const BASE_URL = import.meta.env.VITE_CHATBOT_API_URL;
 
+const chatbotApi = {
+  sendMessage: (data: ChatRequest) => axios.post<ChatResponse>(BASE_URL, data),
+};
 
 export default chatbotApi;

@@ -136,9 +136,12 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
   useEffect(() => {
     if (!userId) return;
 
-    if (!socket) {
-      socket = io("http://localhost:5050", { autoConnect: false });
-    }
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5050";
+
+if (!socket) {
+  socket = io(SOCKET_URL, { autoConnect: false });
+}
+
 
     if (!socket.connected) socket.connect();
 
