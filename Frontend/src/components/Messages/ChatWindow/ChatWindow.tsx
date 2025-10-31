@@ -40,63 +40,58 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [newMessage, setNewMessage] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<string[]>([]);
+  const [isSending, setIsSending] = useState(false);
+
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
   const { socket } = useChat();
   const location = useLocation();
 
-  // 🟩 1️⃣ Ưu tiên load messages từ StoreCard (state)
   useEffect(() => {
     if (location.state?.initialMessages?.length) {
-      console.log("[ChatWindow] 📨 Load từ state:", location.state.initialMessages);
       setMessages(location.state.initialMessages);
     }
   }, [location.state]);
 
-  // 🟩 2️⃣ Fetch messages nếu có conversationId hợp lệ và không có state
   useEffect(() => {
     if (!conversationId || conversationId === "temp") return;
-    if (location.state?.initialMessages?.length) return; // tránh ghi đè state
+    if (location.state?.initialMessages?.length) return;
 
     const fetchMessages = async () => {
       try {
-        console.log("[ChatWindow] 🔄 Fetch messages:", conversationId);
         const res = await messageApi.getMessages(conversationId);
-        console.log("[ChatWindow] ✅ Received messages:", res.data);
         setMessages(res.data);
       } catch (err) {
-        console.error("[ChatWindow] ❌ Lỗi fetch messages:", err);
+        console.error("[ChatWindow]  Lỗi fetch messages:", err);
       }
     };
     fetchMessages();
   }, [conversationId]);
 
-  // 🟩 3️⃣ Socket join + realtime receive
-  useEffect(() => {
-    if (!conversationId || !socket) return;
+useEffect(() => {
+  if (!conversationId || !socket) return;
 
-    console.log("[ChatWindow] 🔗 Join conversation:", conversationId);
-    socket.emit("joinConversation", conversationId);
+  console.log("[ChatWindow]  Join conversation:", conversationId);
+  socket.emit("joinConversation", conversationId);
 
-    const handleReceive = (msg: Message) => {
-      if (msg.conversationId !== conversationId) return;
-      setMessages((prev) => {
-        if (msg.tempId) {
-          return prev.map((m) => (m._id === msg.tempId ? msg : m));
-        }
-        if (!prev.find((m) => m._id === msg._id)) return [...prev, msg];
-        return prev;
-      });
-    };
+  const handleReceive = (msg: Message) => {
+    if (msg.conversationId !== conversationId) return;
+    setMessages((prev) => {
+      if (msg.tempId) {
+        return prev.map((m) => (m._id === msg.tempId ? msg : m));
+      }
+      if (!prev.find((m) => m._id === msg._id)) return [...prev, msg];
+      return prev;
+    });
+  };
 
-    socket.on("receiveMessage", handleReceive);
-    return () => {
-      socket.off("receiveMessage", handleReceive);
-    };
-  }, [conversationId, socket]);
+  socket.on("receiveMessage", handleReceive);
+  return () => {
+    socket.off("receiveMessage", handleReceive);
+  };
+}, [conversationId, socket]);
 
-  // 🟩 4️⃣ Tự động scroll xuống khi có tin mới
+
   useEffect(() => {
     messagesContainerRef.current?.scrollTo({
       top: messagesContainerRef.current.scrollHeight,
@@ -104,7 +99,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     });
   }, [messages]);
 
-  // 🟩 5️⃣ Chọn file upload
   const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (!files.length) return;
@@ -121,17 +115,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setPreview([]);
   };
 
-  // 🟩 6️⃣ Gửi tin nhắn
   const handleSend = async () => {
     if (!conversationId || conversationId === "temp") {
-      console.warn("[ChatWindow] ⚠️ Không có conversationId hợp lệ để gửi tin.");
+      console.warn("[ChatWindow]  Không có conversationId hợp lệ để gửi tin.");
       return;
     }
-
     if (!newMessage.trim() && newFiles.length === 0) return;
 
-    const tempId = Date.now().toString();
+    setIsSending(true);
 
+    const tempId = Date.now().toString();
     const tempMsg: Message = {
       _id: tempId,
       tempId,
@@ -141,10 +134,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       createdAt: new Date().toISOString(),
       conversationId,
     };
-    setMessages((prev) => [...prev, tempMsg]);
+
 
     let attachments: Attachment[] = [];
-
     if (newFiles.length > 0) {
       const formData = new FormData();
       newFiles.forEach((f) => formData.append("attachments", f));
@@ -155,17 +147,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         const res = await messageApi.sendMessage(formData as any);
         attachments = res.data.attachments || [];
       } catch (err) {
-        console.error("[ChatWindow] ❌ Upload lỗi:", err);
+        console.error("[ChatWindow] Upload lỗi:", err);
       }
     }
 
     const payload = { ...tempMsg, attachments };
     socket?.emit("sendMessage", payload);
+
     setNewMessage("");
     clearPreview();
+    setIsSending(false);
   };
 
-  // 🟩 Render UI
   return (
     <div className="flex flex-col border rounded-lg h-[calc(100vh-110px)]">
       {/* Header */}
@@ -196,7 +189,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           return (
             <div
               key={msg._id}
-              className={`space-y-1 ${msg.tempId ? "opacity-50 italic" : ""}`}
+              className={`space-y-1 ${msg.tempId ? "opacity-60 italic" : ""}`}
             >
               <div
                 className={`text-sm text-gray-500 ${
@@ -262,7 +255,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             type="button"
             className="p-2 rounded hover:bg-gray-200"
             onClick={handleOpenFileDialog}
-            disabled={disabled}
+            disabled={disabled || isSending}
           >
             <PhotoIcon className="h-6 w-6 text-gray-600" />
           </button>
@@ -283,14 +276,42 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            disabled={disabled}
+            disabled={disabled || isSending}
           />
           <button
             onClick={handleSend}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-            disabled={disabled}
+            className={`px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2 ${
+              (disabled || isSending) && "opacity-50 cursor-not-allowed"
+            }`}
+            disabled={disabled || isSending}
           >
-            Gửi
+            {isSending ? (
+              <>
+                <svg
+                  className="animate-spin h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z"
+                  ></path>
+                </svg>
+                <span>Đang gửi...</span>
+              </>
+            ) : (
+              "Gửi"
+            )}
           </button>
         </div>
       </div>
