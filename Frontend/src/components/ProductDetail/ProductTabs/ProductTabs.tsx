@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import reviewApi from "../../../api/apiReview"; // import reviewApi
+import reviewApi from "../../../api/apiReview";
+import productApi from "../../../api/productApi"; // 🔹 Thêm API để lấy product
 
 interface Review {
   _id: string;
@@ -13,11 +14,33 @@ interface Review {
   createdAt: string;
 }
 
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+}
+
 const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
-  const [active, setActive] = useState<"mo-ta" | "thong-so" | "danh-gia">("mo-ta");
+  const [active, setActive] = useState<"mo-ta" | "danh-gia">("mo-ta");
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [product, setProduct] = useState<Product | null>(null);
 
+  // 🔹 Lấy mô tả sản phẩm từ DB
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const res = await productApi.getProductById(productId);
+        setProduct(res.data.data);
+        console.log("data: ",res.data)
+      } catch (err) {
+        console.error("Lỗi khi fetch product:", err);
+      }
+    };
+    fetchProduct();
+  }, [productId]);
+
+  // 🔹 Lấy đánh giá khi chọn tab "Đánh giá"
   useEffect(() => {
     const fetchReviews = async () => {
       if (active !== "danh-gia") return;
@@ -36,7 +59,6 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
 
   const tabs = [
     { id: "mo-ta", label: "Mô tả" },
-    { id: "thong-so", label: "Thông số" },
     { id: "danh-gia", label: "Đánh giá" },
   ] as const;
 
@@ -65,32 +87,18 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
 
       {/* Nội dung tab */}
       <div className="p-6 bg-white border rounded-lg shadow text-sm text-gray-800 leading-relaxed">
+        {/* 🔹 Mô tả từ DB */}
         {active === "mo-ta" && (
-          <>
-            <p className="mb-3">
-              iPhone 15 Pro Max là đỉnh cao của công nghệ di động với chip A17 Pro mạnh mẽ và hệ
-              thống camera tiên tiến. Thiết kế titan cao cấp mang đến sự bền bỉ và sang trọng.
-            </p>
-            <ul className="list-disc pl-5 space-y-2">
-              <li>Chip A17 Pro 3nm – Hiệu năng vượt trội</li>
-              <li>Camera chính 48MP với zoom quang học 5x</li>
-              <li>Màn hình ProMotion 120Hz</li>
-              <li>Khung titan cực bền, nhẹ</li>
-              <li>Cổng USB-C tiện lợi</li>
-            </ul>
-          </>
-        )}
-
-        {active === "thong-so" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-8">
-            <p><span className="font-medium">Màn hình:</span> 6.7 inch, Super Retina XDR OLED</p>
-            <p><span className="font-medium">Chip:</span> A17 Pro</p>
-            <p><span className="font-medium">Camera:</span> 48MP + 12MP ultra wide + 12MP telephoto</p>
-            <p><span className="font-medium">Pin:</span> 4441 mAh</p>
-            <p><span className="font-medium">Hệ điều hành:</span> iOS 17</p>
+          <div>
+            {product ? (
+              <p className="text-gray-700">{product.description}</p>
+            ) : (
+              <p className="text-gray-400 italic">Đang tải mô tả...</p>
+            )}
           </div>
         )}
 
+        {/* 🔹 Đánh giá */}
         {active === "danh-gia" && (
           <div className="space-y-6">
             <h3 className="font-semibold text-lg text-gray-800">Đánh giá từ khách hàng</h3>

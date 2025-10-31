@@ -30,25 +30,43 @@ const Login: React.FC = () => {
       // Lưu token và user
       localStorage.setItem("token", data.token);
 
-      if (data.user) {
-        const userData = {
-          _id: data.user._id,
-          fullName: data.user.fullName,
-          avatarUrl: data.user.avatarUrl || "",
-          online: data.user.online,
-          lastSeen: data.user.lastSeen,
-        };
-        localStorage.setItem("user", JSON.stringify(userData));
-        window.dispatchEvent(new Event("userUpdated"));
+if (data.user) {
+  // ✅ Dự phòng cả _id và id (tránh lỗi undefined)
+  const userId = data.user._id || data.user.id;
 
-        const userId = userData._id;
-        if (userId) {
-          setCurrentUserId(userId);
-          if (socket && socket.connected) {
-            socket.emit("user_connected", userId);
-          }
-        }
-      }
+  const userData = {
+    _id: userId, // 🔹 luôn có id ở đây
+    fullName: data.user.fullName,
+    avatarUrl: data.user.avatarUrl || "",
+    online: true,
+    lastSeen: new Date().toISOString(),
+  };
+
+  // ✅ Lưu localStorage
+  localStorage.setItem("user", JSON.stringify(userData));
+  localStorage.setItem("token", data.token);
+  window.dispatchEvent(new Event("userUpdated"));
+
+  // ✅ Cập nhật context và socket
+  if (userId) {
+    setCurrentUserId(userId);
+    if (socket && socket.connected) {
+      socket.emit("user_connected", userId);
+      console.log("[Login] ✅ Đã emit user_connected:", userId);
+    } else {
+      console.warn("[Login] ⚠️ Socket chưa kết nối, không thể emit user_connected");
+    }
+  } else {
+    console.error("[Login] ❌ Không tìm thấy userId trong phản hồi login", data.user);
+  }
+
+  // ✅ Toast xong mới navigate
+  toast.success(data.message || "Đăng nhập thành công", {
+    autoClose: 1500,
+    onClose: () => navigate("/"),
+  });
+}
+
 
       navigate("/"); // Chuyển hướng sau khi toast tắt
     },

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // ✅ thêm
 import messageApi from "../../../api/messageApi";
 import { useChat } from "../../../context/chatContext";
 
@@ -27,104 +28,77 @@ export default function ChatList({
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { socket, unreadMessages, setUnreadMessages, onlineUsers, setOnlineUsers } = useChat();
+  const navigate = useNavigate(); // ✅ thêm
 
   // Fetch danh sách chat
-useEffect(() => {
-  const fetchChats = async () => {
-    try {
-      if (!currentUserId) return;
+  useEffect(() => {
+    const fetchChats = async () => {
+      try {
+        if (!currentUserId) return;
+        console.log("[ChatList] Fetching conversations for user:", currentUserId);
 
-      console.log("[ChatList] Fetching conversations for user:", currentUserId);
+        const res = await messageApi.getUserConversations(currentUserId);
+        console.log("[ChatList] API response:", res.data);
 
-      const res = await messageApi.getUserConversations(currentUserId);
-      console.log("[ChatList] API response:", res.data);
+        const mappedChats: Chat[] = (res.data as any[])
+          .map((conv) => {
+            const participants = conv.participants || [];
+            const participant = participants.find(
+              (p: any) => p._id !== currentUserId
+            );
 
-      const mappedChats: Chat[] = (res.data as any[])
-        .map((conv) => {
-          const participants = conv.participants || [];
-          const participant = participants.find(
-            (p: any) => p._id !== currentUserId
-          );
+            if (!participant) return null;
 
-          if (!participant) return null;
+            const lastMsg =
+              conv.lastMessage?.text ||
+              conv.lastMessage?.content ||
+              (conv.lastMessage?.attachments?.length ? "[Đính kèm]" : "") ||
+              conv.lastMessage ||
+              "";
 
-          const lastMsg =
-            conv.lastMessage?.text ||
-            conv.lastMessage?.content ||
-            (conv.lastMessage?.attachments?.length ? "[Đính kèm]" : "") ||
-            conv.lastMessage ||
-            "";
+            const chat: Chat = {
+              conversationId:
+                conv.conversationId ||
+                conv._id?.toString() ||
+                "unknown_conversation",
+              name: participant.fullName || "Người dùng ẩn danh",
+              avatarUrl: participant.avatarUrl || "/default-avatar.png",
+              lastMessage: lastMsg,
+              participantId: participant._id,
+              online: false,
+            };
 
-          const chat: Chat = {
-            conversationId:
-              conv.conversationId ||
-              conv._id?.toString() ||
-              "unknown_conversation",
-            name: participant.fullName || "Người dùng ẩn danh",
-            avatarUrl: participant.avatarUrl || "/default-avatar.png",
-            lastMessage: lastMsg,
-            participantId: participant._id,
-            online: false,
-          };
+            return chat;
+          })
+          .filter((c): c is Chat => Boolean(c?.conversationId));
 
-          return chat;
-        })
-        .filter((c): c is Chat => Boolean(c?.conversationId));
+        console.log("[ChatList] Mapped chats:", mappedChats);
+        setChats(mappedChats);
+      } catch (err) {
+        console.error("[ChatList] Fetch chats error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      console.log("[ChatList] Mapped chats:", mappedChats);
-
-      setChats(mappedChats);
-
-      setChats((prevChats) =>
-        prevChats.map((chat) => ({
-          ...chat,
-          online: chat.participantId
-            ? onlineUsers.includes(chat.participantId)
-            : false,
-        }))
-      );
-    } catch (err) {
-      console.error("[ChatList] Fetch chats error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchChats();
-}, [currentUserId, onlineUsers]);
-
+    fetchChats();
+  }, [currentUserId, onlineUsers]);
 
   // Kết nối socket & nhận danh sách online
   useEffect(() => {
     if (!socket) return;
+    if (!socket.connected) socket.connect();
+    if (currentUserId) socket.emit("user_connected", currentUserId);
 
-    if (!socket.connected) {
-      socket.connect();
-    }
-
-    if (currentUserId) {
-      socket.emit("user_connected", currentUserId);
-    }
-
-    socket.on("update_online_users", (users: string[]) => {
-      setOnlineUsers(users);
-    });
-
-    socket.on("user_connected", (userId: string) => {});
-
-    socket.on("user_disconnected", (userId: string) => {});
-
+    socket.on("update_online_users", (users: string[]) => setOnlineUsers(users));
     return () => {
       socket.off("update_online_users");
-      socket.off("user_connected");
-      socket.off("user_disconnected");
     };
   }, [socket, currentUserId]);
 
-  // Cập nhật onlineUsers vào danh sách chat (realtime)
+  // ✅ Cập nhật online realtime
   useEffect(() => {
     if (!onlineUsers) return;
-
     setChats((prev) =>
       prev.map((c) => ({
         ...c,
@@ -133,12 +107,17 @@ useEffect(() => {
     );
   }, [onlineUsers]);
 
-  // Chọn chat
+  // ✅ Chọn chat và cập nhật URL
   const handleSelectChat = (chat: Chat) => {
     if (!chat.conversationId) return;
 
+    console.log("[ChatList] 🖱 Chọn chat:", chat);
     onSelectChat(chat);
 
+    // Cập nhật URL
+    navigate(`/messages/${chat.conversationId}`);
+
+    // Reset tin chưa đọc
     setUnreadMessages((prev) => ({
       ...prev,
       [chat.conversationId]: 0,
@@ -165,7 +144,6 @@ useEffect(() => {
                 : ""
             } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
           >
-            {/* Avatar + online indicator */}
             <div className="relative w-10 h-10">
               <img
                 src={chat.avatarUrl}
@@ -177,14 +155,12 @@ useEffect(() => {
               )}
             </div>
 
-            {/* Info */}
             <div className="flex-1 relative">
               <div className="font-semibold truncate">{chat.name}</div>
               <div className="text-sm text-gray-500 truncate">
                 {chat.lastMessage || "Chưa có tin nhắn"}
               </div>
 
-              {/* Badge tin chưa đọc */}
               {unreadMessages[chat.conversationId] > 0 && (
                 <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2 text-xs">
                   {unreadMessages[chat.conversationId]}

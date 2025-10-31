@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import messageApi from "../../../api/messageApi";
 import { useChat } from "../../../context/chatContext";
+import { useLocation } from "react-router-dom";
 
 interface ChatWindowProps {
   conversationId: string;
@@ -39,21 +40,47 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [newMessage, setNewMessage] = useState("");
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [preview, setPreview] = useState<string[]>([]);
-
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { socket } = useChat();
+  const location = useLocation();
 
-  // Join conversation + nhận tin nhắn realtime
+  // 🟩 1️⃣ Ưu tiên load messages từ StoreCard (state)
+  useEffect(() => {
+    if (location.state?.initialMessages?.length) {
+      console.log("[ChatWindow] 📨 Load từ state:", location.state.initialMessages);
+      setMessages(location.state.initialMessages);
+    }
+  }, [location.state]);
+
+  // 🟩 2️⃣ Fetch messages nếu có conversationId hợp lệ và không có state
+  useEffect(() => {
+    if (!conversationId || conversationId === "temp") return;
+    if (location.state?.initialMessages?.length) return; // tránh ghi đè state
+
+    const fetchMessages = async () => {
+      try {
+        console.log("[ChatWindow] 🔄 Fetch messages:", conversationId);
+        const res = await messageApi.getMessages(conversationId);
+        console.log("[ChatWindow] ✅ Received messages:", res.data);
+        setMessages(res.data);
+      } catch (err) {
+        console.error("[ChatWindow] ❌ Lỗi fetch messages:", err);
+      }
+    };
+    fetchMessages();
+  }, [conversationId]);
+
+  // 🟩 3️⃣ Socket join + realtime receive
   useEffect(() => {
     if (!conversationId || !socket) return;
 
+    console.log("[ChatWindow] 🔗 Join conversation:", conversationId);
     socket.emit("joinConversation", conversationId);
 
-    const handler = (msg: Message) => {
+    const handleReceive = (msg: Message) => {
       if (msg.conversationId !== conversationId) return;
-
       setMessages((prev) => {
         if (msg.tempId) {
           return prev.map((m) => (m._id === msg.tempId ? msg : m));
@@ -63,32 +90,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       });
     };
 
-    socket.on("receiveMessage", handler);
+    socket.on("receiveMessage", handleReceive);
     return () => {
-      socket.off("receiveMessage", handler);
+      socket.off("receiveMessage", handleReceive);
     };
   }, [conversationId, socket]);
 
-  // Tải tin nhắn cũ
+  // 🟩 4️⃣ Tự động scroll xuống khi có tin mới
   useEffect(() => {
-    if (!conversationId) return;
-    const fetchMessages = async () => {
-      try {
-        const res = await messageApi.getMessages(conversationId);
-        setMessages(res.data);
-      } catch (err) {}
-    };
-    fetchMessages();
-  }, [conversationId]);
-
-  // Cuộn xuống khi có tin mới
-  useEffect(() => {
-    messagesContainerRef.current?.scrollTo(
-      0,
-      messagesContainerRef.current.scrollHeight
-    );
+    messagesContainerRef.current?.scrollTo({
+      top: messagesContainerRef.current.scrollHeight,
+      behavior: "smooth",
+    });
   }, [messages]);
 
+  // 🟩 5️⃣ Chọn file upload
   const handleSelectFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : [];
     if (!files.length) return;
@@ -105,10 +121,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setPreview([]);
   };
 
-  // Gửi tin nhắn
+  // 🟩 6️⃣ Gửi tin nhắn
   const handleSend = async () => {
-    if (!conversationId) return;
+    if (!conversationId || conversationId === "temp") {
+      console.warn("[ChatWindow] ⚠️ Không có conversationId hợp lệ để gửi tin.");
+      return;
+    }
+
     if (!newMessage.trim() && newFiles.length === 0) return;
+
+    const tempId = Date.now().toString();
+
+    const tempMsg: Message = {
+      _id: tempId,
+      tempId,
+      sender: currentUserId,
+      text: newMessage.trim(),
+      attachments: [],
+      createdAt: new Date().toISOString(),
+      conversationId,
+    };
+    setMessages((prev) => [...prev, tempMsg]);
 
     let attachments: Attachment[] = [];
 
@@ -121,22 +154,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       try {
         const res = await messageApi.sendMessage(formData as any);
         attachments = res.data.attachments || [];
-      } catch (err) {}
+      } catch (err) {
+        console.error("[ChatWindow] ❌ Upload lỗi:", err);
+      }
     }
 
-    const payload = {
-      sender: currentUserId,
-      conversationId,
-      text: newMessage.trim() || undefined,
-      attachments,
-    };
-
+    const payload = { ...tempMsg, attachments };
     socket?.emit("sendMessage", payload);
-
     setNewMessage("");
     clearPreview();
   };
 
+  // 🟩 Render UI
   return (
     <div className="flex flex-col border rounded-lg h-[calc(100vh-110px)]">
       {/* Header */}
@@ -158,6 +187,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         ref={messagesContainerRef}
         className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
       >
+        {messages.length === 0 && (
+          <p className="text-center text-gray-400">Chưa có tin nhắn nào.</p>
+        )}
+
         {messages.map((msg) => {
           const isMine = msg.sender === currentUserId;
           return (
