@@ -1,8 +1,6 @@
 const Product = require('../models/Product');
 const Store = require('../models/Store');
 const ViewLog = require('../models/ViewLog');
-const { parseJSONField, mergeImages } = require('../middlewares/cloudinary');
-const parseJSONSafe = require('../utils/parseJSONSafe');
 const Fuse = require("fuse.js");
 
 const mongoose = require('mongoose');

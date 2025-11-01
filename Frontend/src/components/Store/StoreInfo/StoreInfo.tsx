@@ -1,25 +1,22 @@
 // StoreOverview.tsx
 import React from "react";
+import type { StoreType } from "../../../types/store";
 
-const StoreOverview: React.FC = () => (
-  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-6">
-    <div>
-      <p className="font-semibold">Đánh giá:</p>
-      <p>⭐ 4.8 / 5 (12,680 đánh giá)</p>
+interface StoreOverviewProps {
+  store: StoreType;
+}
+
+const StoreOverview: React.FC<StoreOverviewProps> = ({ store }) => {
+  if (!store) return null;
+
+  return (
+    <div className="bg-white rounded-lg shadow p-4 sm:p-6 mb-6">
+      {/* Tiêu đề thông tin cửa hàng */}
+      <h2 className="text-lg font-semibold mb-4">Thông tin cửa hàng</h2>
+
+      <p className="text-sm text-gray-700 font-medium">{store.description}</p>
     </div>
-    <div>
-      <p className="font-semibold">Phản hồi:</p>
-      <p>⏱ Trong vòng 1 giờ</p>
-    </div>
-    <div>
-      <p className="font-semibold">Tỷ lệ phản hồi:</p>
-      <p>📈 98%</p>
-    </div>
-    <div>
-      <p className="font-semibold">Địa điểm:</p>
-      <p>📍 Hà Nội</p>
-    </div>
-  </div>
-);
+  );
+};
 
 export default StoreOverview;

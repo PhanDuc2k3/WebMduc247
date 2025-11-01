@@ -81,103 +81,138 @@ const ProductForm: React.FC<ProductFormProps> = ({
   };
 
   // ✅ Gửi dữ liệu
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+const handleSubmit = async (e?: React.FormEvent) => {
+  e?.preventDefault();
 
-    try {
-      const formDataToSend = new FormData();
+  try {
+    const formDataToSend = new FormData();
 
-      console.log("[handleSubmit] 🚀 Sending form with tags:", formData.tags);
+    console.log("🚀 [handleSubmit] FormData trước khi append:");
+    console.log({
+      name: formData.name,
+      description: formData.description,
+      price: formData.price,
+      originalPrice: formData.originalPrice,
+      brand: formData.brand,
+      category: formData.category,
+      subCategory: formData.subCategory,
+      model: formData.model,
+      seoTitle: formData.seoTitle,
+      seoDescription: formData.seoDescription,
+      storeId: formData.storeId,
+      tags: formData.tags,
+      features: formData.features,
+      specifications: formData.specifications,
+      variations: formData.variations,
+      mainImage: formData.mainImage,
+      subImages: formData.subImages,
+    });
 
-      // Trường cơ bản
-      formDataToSend.append("name", formData.name || "");
-      formDataToSend.append("description", formData.description || "");
-      formDataToSend.append("price", String(formData.price || ""));
-      formDataToSend.append("salePrice", String(formData.originalPrice || ""));
-      formDataToSend.append("brand", formData.brand || "");
-      formDataToSend.append("category", formData.category || "");
-      formDataToSend.append("subCategory", formData.subCategory || "");
-      formDataToSend.append("model", formData.model || "");
-      formDataToSend.append("seoTitle", formData.seoTitle || "");
-      formDataToSend.append("seoDescription", formData.seoDescription || "");
-      formDataToSend.append("store", formData.storeId || "");
+    // Trường cơ bản
+    formDataToSend.append("name", formData.name || "");
+    formDataToSend.append("description", formData.description || "");
+    formDataToSend.append("price", String(formData.price || ""));
+    formDataToSend.append("salePrice", String(formData.originalPrice || ""));
+    formDataToSend.append("brand", formData.brand || "");
+    formDataToSend.append("category", formData.category || "");
+    formDataToSend.append("subCategory", formData.subCategory || "");
+    formDataToSend.append("model", formData.model || "");
+    formDataToSend.append("seoTitle", formData.seoTitle || "");
+    formDataToSend.append("seoDescription", formData.seoDescription || "");
+    formDataToSend.append("store", formData.storeId || "");
 
-      // ✅ tags
-      if (Array.isArray(formData.tags)) {
-        formData.tags.forEach((tag) => tag && formDataToSend.append("tags[]", tag));
-      }
-
-      // ✅ JSON fields
-      formDataToSend.append("features", JSON.stringify(formData.features || []));
-      formDataToSend.append("specifications", JSON.stringify(formData.specifications || []));
-      formDataToSend.append("variations", JSON.stringify(formData.variations || []));
-
-      // ✅ Images
-      if (formData.mainImage) formDataToSend.append("mainImage", formData.mainImage);
-      formData.subImages.forEach((img) => formDataToSend.append("subImages", img));
-
-      console.log("[handleSubmit] 📤 Data sending:", Object.fromEntries(formDataToSend.entries()));
-
-      // Gọi API
-      const response = isEditing
-        ? await axiosClient.put(`/api/products/${editProduct?._id}`, formDataToSend, {
-            headers: { "Content-Type": "multipart/form-data" },
-          })
-        : await axiosClient.post("/api/products", formDataToSend, {
-            headers: { "Content-Type": "multipart/form-data" },
-          });
-
-      const newProduct = response.data;
-
-      console.log("[handleSubmit] ✅ Tags received from server:", newProduct.tags);
-      console.log("[handleSubmit] ✅ Keywords received from server:", newProduct.keywords);
-
-      toast.success(isEditing ? "Cập nhật sản phẩm thành công!" : "Thêm sản phẩm thành công!");
-
-      // ✅ Nếu là edit → cập nhật lại formData từ server
-      if (isEditing) {
-        setFormData((prev) => ({
-          ...prev,
-          ...newProduct,
-          tags: newProduct.tags || [],
-          features: newProduct.features || [],
-          specifications: newProduct.specifications || [],
-          variations: newProduct.variations || [],
-          seoTitle: newProduct.seoTitle || prev.seoTitle,
-          seoDescription: newProduct.seoDescription || prev.seoDescription,
-        }));
-      } else {
-        // ✅ Reset form nếu thêm mới
-        setFormData({
-          name: "",
-          description: "",
-          price: "",
-          originalPrice: "",
-          brand: "",
-          category: "",
-          subCategory: "",
-          model: "",
-          seoTitle: "",
-          seoDescription: "",
-          tags: [],
-          features: [],
-          specifications: [],
-          variations: [],
-          mainImage: null,
-          mainImagePreview: null,
-          subImages: [],
-          subImagesPreview: [],
-          storeId: "",
-        });
-      }
-
-      onAddProduct(newProduct, isEditing);
-      onClose();
-    } catch (error: any) {
-      console.error("[handleSubmit] ❌ Error submitting form:", error);
-      toast.error(error.response?.data?.message || "Lỗi khi gửi dữ liệu sản phẩm");
+    // ✅ tags
+    if (Array.isArray(formData.tags)) {
+      console.log("[handleSubmit] 🔹 Tags array:", formData.tags);
+      formData.tags.forEach((tag) => tag && formDataToSend.append("tags[]", tag));
     }
-  };
+
+    // ✅ JSON fields
+    formDataToSend.append("features", JSON.stringify(formData.features || []));
+    formDataToSend.append("specifications", JSON.stringify(formData.specifications || []));
+    formDataToSend.append("variations", JSON.stringify(formData.variations || []));
+
+    console.log("[handleSubmit] 🔹 JSON fields prepared:");
+    console.log({
+      features: JSON.stringify(formData.features || []),
+      specifications: JSON.stringify(formData.specifications || []),
+      variations: JSON.stringify(formData.variations || []),
+    });
+
+    // ✅ Images
+    console.log("[handleSubmit] 🔹 Main image:", formData.mainImage);
+    console.log("[handleSubmit] 🔹 Sub images:", formData.subImages);
+    if (formData.mainImage) formDataToSend.append("mainImage", formData.mainImage);
+    formData.subImages.forEach((img) => formDataToSend.append("subImages", img));
+
+    console.log("[handleSubmit] 📤 FormData entries:");
+    for (const pair of formDataToSend.entries()) {
+      console.log(pair[0], pair[1]);
+    }
+
+    // Gọi API
+    const response = isEditing
+      ? await axiosClient.put(`/api/products/${editProduct?._id}`, formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+        })
+      : await axiosClient.post("/api/products", formDataToSend, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+
+    const newProduct = response.data;
+
+    console.log("[handleSubmit] ✅ Tags returned from server:", newProduct.tags);
+    console.log("[handleSubmit] ✅ Keywords returned from server:", newProduct.keywords);
+
+    toast.success(isEditing ? "Cập nhật sản phẩm thành công!" : "Thêm sản phẩm thành công!");
+
+    // Cập nhật formData nếu edit
+    if (isEditing) {
+      setFormData((prev) => ({
+        ...prev,
+        ...newProduct,
+        tags: newProduct.tags || [],
+        features: newProduct.features || [],
+        specifications: newProduct.specifications || [],
+        variations: newProduct.variations || [],
+        seoTitle: newProduct.seoTitle || prev.seoTitle,
+        seoDescription: newProduct.seoDescription || prev.seoDescription,
+        mainImagePreview: newProduct.images?.[0] || null,
+        subImagesPreview: newProduct.images?.slice(1) || [],
+      }));
+    } else {
+      // Reset form nếu thêm mới
+      setFormData({
+        name: "",
+        description: "",
+        price: "",
+        originalPrice: "",
+        brand: "",
+        category: "",
+        subCategory: "",
+        model: "",
+        seoTitle: "",
+        seoDescription: "",
+        tags: [],
+        features: [],
+        specifications: [],
+        variations: [],
+        mainImage: null,
+        mainImagePreview: null,
+        subImages: [],
+        subImagesPreview: [],
+        storeId: "",
+      });
+    }
+
+    onAddProduct(newProduct, isEditing);
+    onClose();
+  } catch (error: any) {
+    console.error("[handleSubmit] ❌ Error submitting form:", error);
+    toast.error(error.response?.data?.message || "Lỗi khi gửi dữ liệu sản phẩm");
+  }
+};
+
 
   return (
     <>

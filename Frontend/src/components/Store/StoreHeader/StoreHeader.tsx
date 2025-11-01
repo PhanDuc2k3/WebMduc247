@@ -24,20 +24,20 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
       )}
 
       {/* Container */}
-      <div className="max-w-6xl mx-auto relative -mt-8 sm:-mt-12 px-2 sm:px-4 md:px-6">
+      <div className="max-w-6xl mx-auto relative -mt-8 sm:-mt-12 ">
         <div className="bg-white rounded-lg shadow p-3 sm:p-6">
           {/* Header: Logo + Info + Buttons */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-6">
             {/* Store info */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full md:w-auto">
               <img
                 src={store.logoUrl}
                 alt={store.name}
                 className="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover flex-shrink-0"
               />
-              <div className="flex flex-col justify-center">
+              <div className="flex flex-col justify-center flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h2 className="text-lg font-semibold">{store.name}</h2>
+                  <h2 className="text-lg font-semibold truncate">{store.name}</h2>
                   <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">
                     Mall
                   </span>
@@ -45,10 +45,10 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
                     Chính hãng
                   </span>
                 </div>
-                <p className="text-sm text-gray-600">{store.description}</p>
+                <p className="text-sm text-gray-600 truncate">{store.description}</p>
                 <p className="text-sm text-gray-500 mt-1 flex items-center gap-1 truncate">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  {store.storeAddress}
+                  <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  <span className="truncate">{store.storeAddress}</span>
                 </p>
               </div>
             </div>
@@ -65,27 +65,32 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 sm:gap-4 mt-5 text-sm text-gray-700 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-5 text-sm text-gray-700 text-center">
+            {/* Rating */}
             <div className="flex flex-col items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-400" />
-              {store.rating.toFixed(1)}
+              <div className="flex items-center gap-1 justify-center">
+                <Star className="w-4 h-4 text-yellow-400" />
+                <span>{store.rating.toFixed(1)}</span>
+              </div>
               <p className="text-gray-500 text-xs">Đánh giá</p>
             </div>
+
+            {/* Products */}
             <div className="flex flex-col items-center gap-1">
-              {store.products}
+              <span>{store.products}</span>
               <p className="text-gray-500 text-xs">Sản phẩm</p>
             </div>
+
+            {/* Reviews count */}
             <div className="flex flex-col items-center gap-1">
-              {store.responseRate}%
-              <p className="text-gray-500 text-xs">Tỉ lệ phản hồi</p>
+              <span>{store.reviewsCount}</span>
+              <p className="text-gray-500 text-xs">Người đánh giá</p>
             </div>
+
+            {/* Join date */}
             <div className="flex flex-col items-center gap-1">
-              {store.responseTime}
-              <p className="text-gray-500 text-xs">Phản hồi</p>
-            </div>
-            <div className="flex flex-col items-center gap-1">
-              {store.joinDate}
-              <p className="text-gray-500 text-xs">Tham gia</p>
+              <span>{store.joinDate ? new Date(store.joinDate).toLocaleDateString("vi-VN") : "-"}</span>
+              <p className="text-gray-500 text-xs">Ngày tạo</p>
             </div>
           </div>
         </div>

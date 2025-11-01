@@ -5,9 +5,11 @@ import ProductManagement from "../../components/MyStore/ProductManagement/Produc
 import OrderManagement from "../../components/MyStore/OrderManagement/OrderManagement";
 import Statistics from "../../components/MyStore/Statistics/Statistics";
 import VoucherManagement from "../../components/MyStore/VoucherManagement/VoucherManagement";
+import ManageStore from "../../components/MyStore/ManageStore/ManageStore"; // import component mới
 import axiosClient from "../../api/axiosClient";
 
 const tabs = [
+  { key: "manageStore", label: "Quản lý cửa hàng" }, // tab mới
   { key: "overview", label: "Tổng quan" },
   { key: "products", label: "Sản phẩm" },
   { key: "orders", label: "Đơn hàng" },
@@ -20,7 +22,7 @@ const MyStore: React.FC = () => {
   const [hasStore, setHasStore] = useState<boolean>(false);
   const [storeId, setStoreId] = useState<string | null>(null);
   const [sellerRequestStatus, setSellerRequestStatus] = useState<string>("none");
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("manageStore"); // mặc định mở tab quản lý cửa hàng
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,6 +91,7 @@ const MyStore: React.FC = () => {
         </div>
 
         <div>
+          {activeTab === "manageStore" && <ManageStore />} {/* tab mới */}
           {activeTab === "overview" && <Overview />}
           {activeTab === "products" && <ProductManagement />}
           {activeTab === "orders" && <OrderManagement />}

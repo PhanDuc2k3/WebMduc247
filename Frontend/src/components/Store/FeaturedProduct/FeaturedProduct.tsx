@@ -1,45 +1,42 @@
+// components/Store/FeaturedProduct/FeaturedProduct.tsx
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import ProductCard from "../../Home/FeaturedProducts/ProductCard";
-import productApi from "../../../api/productApi"; // đường dẫn đúng tới folder api
-
-interface Product {
-  _id: string;
-  name: string;
-  image: string;
-  price: number;
-  salePrice?: number;
-  images?: string[];
-  rating?: number;
-  reviewsCount?: number;
-  soldCount?: number;
-  store?: string | { name: string; logoUrl?: string };
-}
+import productApi from "../../../api/productApi";
+import type { ProductType } from "../../../types/product";
 
 interface FeaturedProductProps {
   storeId: string;
 }
 
+interface ProductForCard extends Omit<ProductType, "store"> {
+  store?: string | { name: string };
+}
+
 const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWindowWidth(window.innerWidth);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setLoading(true);
-        // Dùng axios từ productApi
         const res = await productApi.getProductsByStore(storeId);
-        const data: Product[] = res.data;
+        let productsData: ProductType[] = res.data || [];
 
-        const mappedProducts = data.map(p => ({
-          ...p,
-          image: p.images?.[0] || "/fallback-image.png"
-        }));
+        // Sắp xếp theo số lượt bán giảm dần
+        productsData.sort((a, b) => (b.soldCount || 0) - (a.soldCount || 0));
 
-        setProducts(mappedProducts);
+        setProducts(productsData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+        console.error("❌ Lỗi tải sản phẩm:", err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }
@@ -48,16 +45,45 @@ const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
     fetchProducts();
   }, [storeId]);
 
-  if (loading) return <p>Đang tải sản phẩm...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
-  if (!products.length) return <p>Chưa có sản phẩm nổi bật nào</p>;
+  if (loading)
+    return <p className="p-6 text-center text-gray-500">⏳ Đang tải sản phẩm...</p>;
+  if (!products.length)
+    return <p className="p-6 text-center text-gray-500">❌ Chưa có sản phẩm nổi bật</p>;
+
+  const isDesktop = windowWidth >= 1024;
+  const itemsPerRow = Math.floor(windowWidth / 220);
+  const visibleCount = isDesktop ? itemsPerRow * 2 : 8;
+  const visibleProducts = products.slice(0, visibleCount);
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-      {products.map(product => (
-        <ProductCard key={product._id} product={product} />
-      ))}
-    </div>
+    <section className="p-4 rounded-lg">
+      {/* Tiêu đề sản phẩm bán chạy */}
+      <h2 className="text-lg font-semibold mb-4">Sản phẩm bán chạy</h2>
+
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
+        {visibleProducts.map((prod) => {
+          const productForCard: ProductForCard = {
+            ...prod,
+            store:
+              typeof prod.store === "string"
+                ? prod.store
+                : prod.store?.name
+                ? { name: prod.store.name }
+                : { name: "Unknown" },
+          };
+          return <ProductCard key={prod._id} product={productForCard} />;
+        })}
+      </div>
+
+      <div className="text-center mt-4">
+        <Link
+          to={`/store/${storeId}/products`}
+          className="font-medium text-blue-600 hover:underline transition-all"
+        >
+          Xem thêm sản phẩm →
+        </Link>
+      </div>
+    </section>
   );
 };
 

@@ -6,8 +6,9 @@ const productSchema = new mongoose.Schema({
   price: { type: Number, required: true },
   salePrice: { type: Number },
   brand: { type: String, required: true },
-  category: { type: String, required: true },
+  category: { type: String, required: true }, // category chính
   subCategory: { type: String },
+  categories: { type: [String], default: [] }, // ← các category bổ sung
   quantity: { type: Number, required: true },
   soldCount: { type: Number, default: 0 },
   model: { type: String },
@@ -42,9 +43,7 @@ const productSchema = new mongoose.Schema({
   keywords: { type: [String], default: [] },
   isFeatured: { type: Boolean, default: false },
 
-  // ✅ tổng view tất cả thời gian
   viewsCount: { type: Number, default: 0 },
-
   isActive: { type: Boolean, default: true },
 
   store: {
