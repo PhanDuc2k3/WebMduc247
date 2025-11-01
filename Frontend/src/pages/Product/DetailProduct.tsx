@@ -57,26 +57,53 @@ const ProductDetail: React.FC = () => {
     }
   }, [id]);
 
-  if (loading) return <div className="p-6 text-center">⏳ Đang tải...</div>;
-  if (!product) return <div className="p-6 text-center">❌ Không tìm thấy sản phẩm</div>;
+  if (loading) {
+    return (
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-pulse">⏳</div>
+          <p className="text-gray-600 text-lg">Đang tải sản phẩm...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!product) {
+    return (
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <p className="text-gray-600 text-lg font-semibold">Không tìm thấy sản phẩm</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 bg-white rounded-lg shadow-md">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <ProductImages
-          images={product.images}
-          mainImage={mainImage}
-          setMainImage={setMainImage}
-        />
+    <div className="w-full py-8 md:py-12">
+      <div className="mb-8 animate-fade-in-up">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+          <div className="animate-fade-in-left delay-200">
+            <ProductImages
+              images={product.images}
+              mainImage={mainImage}
+              setMainImage={setMainImage}
+            />
+          </div>
 
-        <ProductInfo
-          product={product}
-          quantity={quantity}
-          setQuantity={setQuantity}
-        />
+          <div className="animate-fade-in-right delay-300">
+            <ProductInfo
+              product={product}
+              quantity={quantity}
+              setQuantity={setQuantity}
+            />
+          </div>
+        </div>
       </div>
 
-      <ProductTabs productId={product._id} />
+      <div className="mt-12 animate-fade-in-up delay-400">
+        <ProductTabs productId={product._id} />
+      </div>
     </div>
   );
 };

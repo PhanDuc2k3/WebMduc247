@@ -67,40 +67,51 @@ const Categories: React.FC = () => {
   };
 
   return (
-    <section className="p-6 bg-gray-50 mt-10 rounded-lg">
-      <h3 className="text-[22px] font-bold mb-1 text-gray-900">Danh mục nổi bật</h3>
-      <p className="text-sm text-gray-600 mb-4">Khám phá các danh mục sản phẩm phổ biến</p>
+    <section className="p-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 mt-10 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
+      <div className="mb-6 animate-fade-in-down">
+        <h3 className="text-[24px] lg:text-[28px] font-bold mb-2 text-gray-900 gradient-text">
+          🛍️ Danh mục nổi bật
+        </h3>
+        <p className="text-sm text-gray-600">Khám phá các danh mục sản phẩm phổ biến</p>
+      </div>
 
       <div className="relative">
         <button
           onClick={() => scroll("left")}
-          className="absolute left-3 top-1/2 -translate-y-1/2 z-20 
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 
                      w-12 h-12 flex items-center justify-center
-                     rounded-full bg-white/70 backdrop-blur
-                     shadow-md hover:bg-white hover:scale-105
-                     transition-all duration-200"
+                     rounded-full bg-white/90 backdrop-blur-md glass-effect
+                     shadow-lg hover:bg-white hover:scale-110 hover:shadow-xl
+                     transition-all duration-300 group"
+          aria-label="Scroll left"
         >
-          <ChevronLeft size={24} className="text-gray-700" />
+          <ChevronLeft size={24} className="text-gray-700 group-hover:text-blue-600 transition-colors" />
         </button>
 
         <div
           ref={scrollRef}
-          className="flex gap-5 overflow-x-auto scroll-smooth px-2 py-2 no-scrollbar"
+          className="flex gap-4 md:gap-6 overflow-x-auto scroll-smooth px-3 py-4 no-scrollbar"
         >
           {categories.map((cat, idx) => {
             const Icon = cat.icon;
             return (
               <div
                 key={idx}
-                className={`flex flex-col items-center justify-center text-center rounded-xl 
-                            shadow-sm hover:shadow-md transition-shadow
-                            p-6 min-w-[150px] ${cat.color}`}
+                className={`flex flex-col items-center justify-center text-center rounded-2xl 
+                            shadow-md hover:shadow-xl transition-all duration-300
+                            p-6 min-w-[150px] cursor-pointer transform hover:-translate-y-2
+                            ${cat.color} group animate-scale-in`}
+                style={{ animationDelay: `${idx * 0.05}s` }}
               >
-                <div className="mb-2">
-                  <Icon size={36} className="text-gray-800" />
+                <div className="mb-3 transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
+                  <Icon size={40} className="text-gray-800 group-hover:text-blue-600 transition-colors duration-300" />
                 </div>
-                <div className="font-semibold text-gray-900">{cat.name}</div>
-                <div className="text-sm text-gray-600">{cat.count}</div>
+                <div className="font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+                  {cat.name}
+                </div>
+                <div className="text-xs text-gray-600 mt-1 group-hover:text-gray-800 transition-colors duration-300">
+                  {cat.count}
+                </div>
               </div>
             );
           })}
@@ -108,13 +119,14 @@ const Categories: React.FC = () => {
 
         <button
           onClick={() => scroll("right")}
-          className="absolute right-3 top-1/2 -translate-y-1/2 z-20 
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 
                      w-12 h-12 flex items-center justify-center
-                     rounded-full bg-white/70 backdrop-blur
-                     shadow-md hover:bg-white hover:scale-105
-                     transition-all duration-200"
+                     rounded-full bg-white/90 backdrop-blur-md glass-effect
+                     shadow-lg hover:bg-white hover:scale-110 hover:shadow-xl
+                     transition-all duration-300 group"
+          aria-label="Scroll right"
         >
-          <ChevronRight size={24} className="text-gray-700" />
+          <ChevronRight size={24} className="text-gray-700 group-hover:text-blue-600 transition-colors" />
         </button>
       </div>
     </section>

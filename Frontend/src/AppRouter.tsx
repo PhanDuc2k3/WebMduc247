@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./Layouts/Layout";
+import AdminLayout from "./Layouts/AdminLayout/AdminLayout";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import Home from "./pages/Home/Home";
@@ -39,13 +40,15 @@ const AppRouter = () => (
       <Route path="/messages/:id?" element={<Message />} />
       <Route path="/message" element={<Navigate to="/messages" replace />} />
 
-      <Route path="/categories" element={<Product />} />
+      <Route path="/products" element={<Product />} />
       <Route path="/new" element={<NewPage />} />
       <Route path="/support" element={<SupportPage/>}/>
     </Route>
 
     <Route path="/s" element={<Navigate to="/login" />} />
-    <Route path="/admin" element={<AdminDashboard />} />
+    <Route element={<AdminLayout />}>
+      <Route path="/admin" element={<AdminDashboard />} />
+    </Route>
   </Routes>
 );
 

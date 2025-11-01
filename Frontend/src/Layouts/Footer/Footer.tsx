@@ -3,67 +3,125 @@ import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-white shadow-[0_-2px_8px_rgba(127,90,240,0.08)] pt-12">
+    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white shadow-2xl mt-auto">
       {/* Top */}
-      <div className="flex flex-wrap justify-between gap-8 px-8 pb-6 border-b border-gray-200">
-        {/* Brand */}
-        <div className="flex-1.2 min-w-[250px]">
-          <span className="bg-gradient-to-r from-[#3a5ef7] to-[#a259f7] text-white text-lg font-bold rounded-lg px-6 py-1 inline-block mb-3">
-            ShopMduc247
-          </span>
-          <p className="text-gray-900 text-base mb-3">
-            Sàn thương mại điện tử hàng đầu Việt Nam với hàng triệu sản phẩm chất lượng và dịch vụ tốt nhất.
-          </p>
-          <div className="flex gap-3 mt-2 text-purple-700 text-xl">
-            <a href="#" aria-label="Facebook"><Facebook /></a>
-            <a href="#" aria-label="Instagram"><Instagram /></a>
-            <a href="#" aria-label="Twitter"><Twitter /></a>
-            <a href="#" aria-label="YouTube"><Youtube /></a>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          {/* Brand */}
+          <div className="lg:col-span-1">
+            <span className="bg-gradient-to-r from-[#3a5ef7] to-[#a259f7] text-white text-xl font-bold rounded-xl px-6 py-2 inline-block mb-4 shadow-lg">
+              ShopMduc247
+            </span>
+            <p className="text-gray-300 text-sm mb-4 leading-relaxed">
+              Sàn thương mại điện tử hàng đầu Việt Nam với hàng triệu sản phẩm chất lượng và dịch vụ tốt nhất.
+            </p>
+            <div className="flex gap-3 mt-4">
+              <a 
+                href="#" 
+                aria-label="Facebook"
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#3b5998] flex items-center justify-center transition-all duration-300 transform hover:scale-110"
+              >
+                <Facebook size={18} />
+              </a>
+              <a 
+                href="#" 
+                aria-label="Instagram"
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 flex items-center justify-center transition-all duration-300 transform hover:scale-110"
+              >
+                <Instagram size={18} />
+              </a>
+              <a 
+                href="#" 
+                aria-label="Twitter"
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#1da1f2] flex items-center justify-center transition-all duration-300 transform hover:scale-110"
+              >
+                <Twitter size={18} />
+              </a>
+              <a 
+                href="#" 
+                aria-label="YouTube"
+                className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#ff0000] flex items-center justify-center transition-all duration-300 transform hover:scale-110"
+              >
+                <Youtube size={18} />
+              </a>
+            </div>
           </div>
-        </div>
 
-        {/* Footer columns */}
-        <div className="flex-1 min-w-[150px]">
-          <h4 className="text-gray-900 font-semibold text-lg mb-2">Chăm sóc khách hàng</h4>
-          <ul className="space-y-1 text-gray-900 text-sm">
-            <li>Trung tâm trợ giúp</li>
-            <li>Hướng dẫn mua hàng</li>
-            <li>Hướng dẫn bán hàng</li>
-            <li>Thanh toán</li>
-            <li>Vận chuyển</li>
-            <li>Trả hàng & Hoàn tiền</li>
-          </ul>
-        </div>
+          {/* Footer columns */}
+          <div>
+            <h4 className="text-white font-bold text-lg mb-4 relative pb-2">
+              Chăm sóc khách hàng
+              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-[#3a5ef7] to-[#a259f7]"></span>
+            </h4>
+            <ul className="space-y-2 text-gray-300 text-sm">
+              {['Trung tâm trợ giúp', 'Hướng dẫn mua hàng', 'Hướng dẫn bán hàng', 'Thanh toán', 'Vận chuyển', 'Trả hàng & Hoàn tiền'].map((item, idx) => (
+                <li key={idx}>
+                  <a href="#" className="hover:text-[#a259f7] transition-colors duration-300 flex items-center gap-2">
+                    <span>•</span>
+                    <span>{item}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div className="flex-1 min-w-[150px]">
-          <h4 className="text-gray-900 font-semibold text-lg mb-2">Về ShopMduc247</h4>
-          <ul className="space-y-1 text-gray-900 text-sm">
-            <li>Giới thiệu</li>
-            <li>Tuyển dụng</li>
-            <li>Điều khoản</li>
-            <li>Chính sách bảo mật</li>
-            <li>Chính hãng</li>
-            <li>Kênh người bán</li>
-          </ul>
-        </div>
+          <div>
+            <h4 className="text-white font-bold text-lg mb-4 relative pb-2">
+              Về ShopMduc247
+              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-[#3a5ef7] to-[#a259f7]"></span>
+            </h4>
+            <ul className="space-y-2 text-gray-300 text-sm">
+              {['Giới thiệu', 'Tuyển dụng', 'Điều khoản', 'Chính sách bảo mật', 'Chính hãng', 'Kênh người bán'].map((item, idx) => (
+                <li key={idx}>
+                  <a href="#" className="hover:text-[#a259f7] transition-colors duration-300 flex items-center gap-2">
+                    <span>•</span>
+                    <span>{item}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-        <div className="flex-1 min-w-[200px]">
-          <h4 className="text-gray-900 font-semibold text-lg mb-2">Liên hệ</h4>
-          <ul className="space-y-1 text-gray-900 text-sm">
-            <li className="flex items-center"><span className="mr-1 text-lg">📞</span> Hotline: 1800 1234</li>
-            <li className="flex items-center"><span className="mr-1 text-lg">✉️</span> support@shopmduc247.vn</li>
-            <li className="flex items-center"><span className="mr-1 text-lg">📍</span> Tầng 4-5-6, Tòa nhà Capital Place, số 29 Liễu Giai, Ba Đình, Hà Nội</li>
-          </ul>
+          <div>
+            <h4 className="text-white font-bold text-lg mb-4 relative pb-2">
+              Liên hệ
+              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-[#3a5ef7] to-[#a259f7]"></span>
+            </h4>
+            <ul className="space-y-3 text-gray-300 text-sm">
+              <li className="flex items-start gap-2">
+                <span className="text-lg mt-0.5">📞</span>
+                <span className="hover:text-[#a259f7] transition-colors duration-300">Hotline: 1800 1234</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-lg mt-0.5">✉️</span>
+                <span className="hover:text-[#a259f7] transition-colors duration-300">support@shopmduc247.vn</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-lg mt-0.5">📍</span>
+                <span className="hover:text-[#a259f7] transition-colors duration-300">Tầng 4-5-6, Tòa nhà Capital Place, số 29 Liễu Giai, Ba Đình, Hà Nội</span>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
 
       {/* Bottom */}
-      <div className="flex flex-col md:flex-row justify-between items-center px-8 py-4 text-purple-700 text-sm">
-        <span>© 2024 ShopMduc247. Tất cả quyền được bảo lưu.</span>
-        <div className="flex gap-2 mt-2 md:mt-0">
-          <span className="bg-[#1976d2] text-white px-2 py-0.5 rounded font-semibold text-sm">VISA</span>
-          <span className="bg-[#e53935] text-white px-2 py-0.5 rounded font-semibold text-sm">MC</span>
-          <span className="bg-[#fbc02d] text-white px-2 py-0.5 rounded font-semibold text-sm">JCB</span>
+      <div className="border-t border-gray-700/50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <span className="text-gray-300 text-sm">© 2024 ShopMduc247. Tất cả quyền được bảo lưu.</span>
+            <div className="flex gap-3">
+              <span className="bg-gradient-to-r from-[#1976d2] to-[#1565c0] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-lg transform hover:scale-105 transition-all duration-300">
+                VISA
+              </span>
+              <span className="bg-gradient-to-r from-[#e53935] to-[#c62828] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-lg transform hover:scale-105 transition-all duration-300">
+                MC
+              </span>
+              <span className="bg-gradient-to-r from-[#fbc02d] to-[#f9a825] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-lg transform hover:scale-105 transition-all duration-300">
+                JCB
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </footer>

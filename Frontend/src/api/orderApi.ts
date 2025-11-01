@@ -46,6 +46,12 @@ const orderApi = {
 
   // Lấy chi tiết đơn hàng theo ID
   getOrderById: (orderId: string) => axiosClient.get(`/api/orders/${orderId}`),
+
+  // Xóa đơn hàng (admin)
+  deleteOrder: (orderId: string) => axiosClient.delete(`/api/orders/${orderId}`),
+
+  // Cập nhật đơn hàng (admin)
+  updateOrder: (orderId: string, data: any) => axiosClient.put(`/api/orders/${orderId}`, data),
 };
 
 export default orderApi;

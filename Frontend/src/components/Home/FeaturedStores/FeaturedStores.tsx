@@ -54,39 +54,48 @@ const FeaturedStores: React.FC = () => {
   const visibleStores = stores.slice(0, 6);
 
   return (
-    <section className="p-6 bg-gray-50 rounded-lg w-full">
-      <h3 className="text-[22px] font-bold mb-1 text-gray-900">
-        Cửa hàng nổi bật
-      </h3>
-      <p className="text-sm text-gray-600 mb-6">
-        Một số cửa hàng tiêu biểu trên hệ thống
-      </p>
+    <section className="p-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 w-full">
+      <div className="mb-6 animate-fade-in-down">
+        <h3 className="text-[24px] lg:text-[28px] font-bold mb-2 text-gray-900 gradient-text">
+          🏬 Cửa hàng nổi bật
+        </h3>
+        <p className="text-sm text-gray-600">
+          Một số cửa hàng tiêu biểu trên hệ thống
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 justify-start items-start">
-        {visibleStores.map((store) => (
-          <StoreCard
+        {visibleStores.map((store, index) => (
+          <div
             key={store._id}
-            storeId={store._id}
-            ownerId={
-              typeof store.owner === "string" ? store.owner : store.owner._id
-            }
-            name={store.name}
-            description={store.description}
-            logoUrl={store.logoUrl}
-            bannerUrl={store.bannerUrl}
-            createdAt={store.createdAt}
-            isActive={store.isActive}
-            customCategory={store.customCategory}
-          />
+            className="animate-slide-up"
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <StoreCard
+              storeId={store._id}
+              ownerId={
+                typeof store.owner === "string" ? store.owner : store.owner._id
+              }
+              name={store.name}
+              description={store.description}
+              logoUrl={store.logoUrl}
+              bannerUrl={store.bannerUrl}
+              createdAt={store.createdAt}
+              isActive={store.isActive}
+              customCategory={store.customCategory}
+            />
+          </div>
         ))}
       </div>
 
       {/* 👇 Chuyển hướng đến trang /store */}
       <div
         onClick={() => navigate("/stores")}
-        className="text-center mt-6 font-medium text-blue-600 cursor-pointer hover:underline"
+        className="text-center mt-8 cursor-pointer"
       >
-        Xem thêm cửa hàng →
+        <span className="inline-block font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all duration-300 transform hover:scale-105 text-lg">
+          Xem thêm cửa hàng →
+        </span>
       </div>
     </section>
   );

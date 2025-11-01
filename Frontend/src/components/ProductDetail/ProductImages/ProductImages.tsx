@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 
 interface ProductImagesProps {
   productId?: string;  
@@ -13,37 +13,77 @@ const ProductImages: React.FC<ProductImagesProps> = ({
   mainImage,
   setMainImage,
 }) => {
+  const [zoomed, setZoomed] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setZoomPosition({ x, y });
+  };
+
   return (
-    <div className="flex flex-col items-center">
-      {/* Ảnh chính */}
-      <div className="w-full max-w-sm mb-5">
+    <div className="w-full">
+      {/* Ảnh chính với zoom effect */}
+      <div 
+        className="w-full mb-6 relative group rounded-2xl overflow-hidden shadow-xl border-4 border-gray-100 hover:border-blue-300 transition-all duration-300 bg-white"
+        onMouseEnter={() => setZoomed(true)}
+        onMouseLeave={() => setZoomed(false)}
+        onMouseMove={handleMouseMove}
+      >
         {mainImage ? (
-          <img
-            src={mainImage}
-            alt="product"
-            className="w-full aspect-[3/4] object-contain rounded-md border"
-          />
+          <div className="relative w-full aspect-[3/4] bg-gray-50 overflow-hidden">
+            <img
+              src={mainImage}
+              alt="product"
+              className={`w-full h-full object-contain transition-transform duration-300 ${
+                zoomed ? "scale-150" : "scale-100"
+              }`}
+              style={{
+                transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`
+              }}
+            />
+            {zoomed && (
+              <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
+            )}
+          </div>
         ) : (
-          <div className="w-full aspect-[3/4] flex items-center justify-center border rounded-md text-gray-400">
-            Chưa có ảnh
+          <div className="w-full aspect-[3/4] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl text-gray-400 bg-gray-50">
+            <div className="text-center">
+              <div className="text-4xl mb-2">📷</div>
+              <p className="text-sm">Chưa có ảnh</p>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Thumbnail */}
-      <div className="flex gap-2 flex-wrap justify-center">
+      {/* Thumbnail với scroll */}
+      <div className="flex gap-3 overflow-x-auto pb-2 no-scrollbar">
         {images.map((img, idx) => (
-          <img
+          <div
             key={idx}
-            src={img}
-            alt={`thumb-${idx}`}
-            className={`w-16 h-16 object-contain rounded-md border cursor-pointer transition ${
-              mainImage === img ? "border-blue-500" : "hover:border-gray-400"
+            className={`flex-shrink-0 w-20 h-20 rounded-xl border-4 overflow-hidden cursor-pointer transition-all duration-300 transform hover:scale-110 ${
+              mainImage === img 
+                ? "border-blue-500 shadow-lg ring-4 ring-blue-200" 
+                : "border-gray-200 hover:border-blue-300"
             }`}
             onClick={() => setMainImage(img)}
-          />
+          >
+            <img
+              src={img}
+              alt={`thumb-${idx}`}
+              className="w-full h-full object-cover"
+            />
+          </div>
         ))}
       </div>
+      
+      {images.length > 1 && (
+        <p className="text-xs text-gray-500 mt-2 text-center">
+          {images.length} ảnh - Click để xem chi tiết
+        </p>
+      )}
     </div>
   );
 };

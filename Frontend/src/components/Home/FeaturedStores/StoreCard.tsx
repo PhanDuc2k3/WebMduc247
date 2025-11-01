@@ -105,61 +105,78 @@ const StoreCard: React.FC<StoreCardProps> = ({
   }
 
   return (
-    <div className="bg-white border border-gray-300 rounded-xl shadow-sm hover:shadow-md hover:border-gray-400 hover:bg-gray-50 transition-all duration-200 p-6 flex flex-col overflow-hidden min-w-[250px]">
+    <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-md hover:shadow-2xl hover:border-blue-400 transition-all duration-500 p-6 flex flex-col overflow-hidden min-w-[250px] transform hover:-translate-y-2 animate-scale-in group">
       {bannerUrl && (
-        <div className="h-32 w-full overflow-hidden rounded-lg mb-4">
-          <img src={bannerUrl} alt={name} className="w-full h-full object-cover" />
+        <div className="h-32 w-full overflow-hidden rounded-xl mb-4 relative">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+          <img 
+            src={bannerUrl} 
+            alt={name} 
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+            loading="lazy"
+          />
         </div>
       )}
 
       <div className="flex flex-col flex-1">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-3 transform group-hover:translate-x-1 transition-transform duration-300">
           {logoUrl && (
-            <img
-              src={logoUrl}
-              alt={name}
-              className="w-12 h-12 rounded border object-cover"
-            />
+            <div className="relative">
+              <div className="absolute inset-0 bg-blue-500 rounded-full blur opacity-0 group-hover:opacity-30 transition-opacity duration-300"></div>
+              <img
+                src={logoUrl}
+                alt={name}
+                className="w-14 h-14 rounded-full border-2 border-gray-200 object-cover relative z-10 group-hover:border-blue-400 transition-all duration-300 group-hover:scale-110 shadow-lg"
+              />
+            </div>
           )}
-          <div>
-            <div className="text-lg font-semibold text-gray-900">{name}</div>
-            <div className="text-xs text-gray-500">{joinDate}</div>
+          <div className="flex-1">
+            <div className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+              {name}
+            </div>
+            <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+              📅 {joinDate}
+            </div>
           </div>
         </div>
 
-        <div className="text-gray-600 text-sm mb-3 flex-1">{description}</div>
+        <div className="text-gray-600 text-sm mb-4 flex-1 line-clamp-2 group-hover:text-gray-700 transition-colors duration-300">
+          {description}
+        </div>
 
-        <div className="flex flex-wrap gap-2 mb-3">
+        <div className="flex flex-wrap gap-2 mb-4">
           {tags.map((tag, i) => (
             <span
               key={i}
-              className="text-xs bg-gray-100 text-blue-600 px-2 py-1 rounded font-medium"
+              className="text-xs bg-gradient-to-r from-blue-50 to-blue-100 text-blue-600 px-3 py-1 rounded-full font-semibold shadow-sm group-hover:shadow-md transition-shadow duration-300"
             >
               {tag}
             </span>
           ))}
           <span
-            className={`text-xs px-2 py-1 rounded font-medium ${
-              isActive ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"
+            className={`text-xs px-3 py-1 rounded-full font-semibold shadow-sm transition-all duration-300 ${
+              isActive 
+                ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 group-hover:from-green-200 group-hover:to-emerald-200" 
+                : "bg-gray-100 text-gray-600"
             }`}
           >
-            {statusText}
+            {isActive ? "🟢 " : "⚫ "}{statusText}
           </span>
         </div>
 
         <div className="mt-auto flex gap-3">
           <button
             onClick={() => navigate(`/store/${storeId}`)}
-            className="flex-1 bg-gray-900 text-white py-2 rounded-md font-semibold hover:bg-gray-800 transition"
+            className="flex-1 bg-gradient-to-r from-gray-900 to-gray-800 text-white py-2.5 rounded-xl font-bold hover:from-gray-800 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95"
           >
-            Xem cửa hàng
+            🏪 Xem cửa hàng
           </button>
 
           <button
             onClick={handleChatNow}
-            className="flex-1 border border-gray-300 text-gray-900 py-2 rounded-md font-semibold hover:bg-gray-100 transition"
+            className="flex-1 border-2 border-gray-300 text-gray-900 py-2.5 rounded-xl font-bold hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
           >
-            Chat ngay
+            💬 Chat
           </button>
         </div>
       </div>

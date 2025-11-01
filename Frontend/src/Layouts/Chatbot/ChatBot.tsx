@@ -54,74 +54,117 @@ const ChatBot: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50">
+    <div className="fixed bottom-6 right-6 z-50">
       {!isOpen && (
         <button
           onClick={handleOpen}
-          className="bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-full shadow-lg transition-all"
+          className="relative w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 group animate-fade-in"
         >
-          <MessageCircle size={26} />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full blur-lg opacity-50 animate-pulse"></div>
+          <MessageCircle size={28} className="relative z-10 transform group-hover:rotate-12 transition-transform duration-300" />
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold animate-bounce">
+            1
+          </span>
         </button>
       )}
 
       {isOpen && (
-        <div className="w-96 h-[600px] flex flex-col bg-white shadow-2xl rounded-2xl border border-gray-300 animate-fadeIn">
-          <div className="bg-blue-600 text-white p-4 rounded-t-2xl font-semibold text-lg flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bot size={22} className="text-white" />
-              <span>Chatbot hỗ trợ</span>
+        <div className="w-[400px] h-[600px] flex flex-col bg-white shadow-2xl rounded-3xl border-2 border-gray-200 overflow-hidden animate-scale-in">
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 text-white p-5 flex items-center justify-between shadow-lg">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="absolute inset-0 bg-white rounded-full blur opacity-30 animate-pulse"></div>
+                <div className="relative w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                  <Bot size={24} className="text-white" />
+                </div>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-lg">Chatbot hỗ trợ</span>
+                <span className="text-xs text-white/80 flex items-center gap-1">
+                  <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                  Đang trực tuyến
+                </span>
+              </div>
             </div>
             <button
               onClick={() => setIsOpen(false)}
-              className="text-white hover:text-gray-200"
+              className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all duration-300 transform hover:rotate-90"
             >
-              <X size={22} />
+              <X size={18} />
             </button>
           </div>
 
+          {/* Messages */}
           <div
             ref={chatRef}
-            className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50"
+            className="flex-1 overflow-y-auto p-5 space-y-4 bg-gradient-to-br from-gray-50 via-white to-gray-50 custom-scrollbar"
             style={{ maxHeight: "460px" }}
           >
             {messages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} animate-fade-in-up`}
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div
-                  className={`px-4 py-2 rounded-xl text-sm shadow-sm max-w-[80%] break-words ${
-                    msg.role === "user"
-                      ? "bg-blue-500 text-white"
-                      : "bg-gray-200 text-gray-900"
-                  }`}
-                >
-                  {msg.message}
+                <div className="flex items-start gap-2 max-w-[85%]">
+                  {msg.role === "bot" && (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <Bot size={16} className="text-white" />
+                    </div>
+                  )}
+                  <div
+                    className={`px-4 py-3 rounded-2xl text-sm shadow-md max-w-full break-words ${
+                      msg.role === "user"
+                        ? "bg-gradient-to-br from-blue-500 to-purple-600 text-white ml-auto"
+                        : "bg-white text-gray-900 border-2 border-gray-200"
+                    }`}
+                  >
+                    <p className="leading-relaxed">{msg.message}</p>
+                  </div>
+                  {msg.role === "user" && (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center flex-shrink-0 shadow-md">
+                      <span className="text-white font-bold text-xs">U</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
 
             {isLoading && (
-              <div className="text-gray-500 italic text-sm">Đang trả lời...</div>
+              <div className="flex justify-start animate-fade-in-up">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-md">
+                    <Bot size={16} className="text-white" />
+                  </div>
+                  <div className="flex gap-1 bg-white border-2 border-gray-200 rounded-2xl px-4 py-3 shadow-md">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></span>
+                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
 
+          {/* Input Form */}
           <form
             onSubmit={handleSubmit}
-            className="flex items-center p-3 border-t border-gray-200 bg-white rounded-b-2xl"
+            className="flex items-center gap-3 p-4 border-t-2 border-gray-200 bg-white"
           >
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Nhập tin nhắn..."
-              className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="flex-1 border-2 border-gray-300 rounded-full px-5 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 bg-gray-50 hover:bg-white"
             />
             <button
               type="submit"
-              className="ml-3 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-all"
+              disabled={!input.trim()}
+              className="px-5 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-full hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-bold"
             >
-              Gửi
+              ➤
             </button>
           </form>
         </div>

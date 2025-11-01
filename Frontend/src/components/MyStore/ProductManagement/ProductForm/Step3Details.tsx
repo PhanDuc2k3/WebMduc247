@@ -49,142 +49,157 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
   };
 
   return (
-    <div>
-      <h2 className="text-xl font-bold mb-4">Chi tiết & Biến thể</h2>
-
-      {/* 🔹 Tính năng nổi bật
-      <div className="mb-4">
-        <label className="text-sm font-medium block mb-1">
-          Tính năng nổi bật
-        </label>
-        <textarea
-          className="w-full border rounded px-3 py-2 mt-1"
-          placeholder="Liệt kê các tính năng nổi bật của sản phẩm..."
-          value={formData.features.join("\n")}
-          onChange={(e) => handleChange("features", e.target.value.split("\n"))}
-        />
-      </div> */}
+    <div className="animate-fade-in-up">
+      <h2 className="text-2xl font-bold mb-6 gradient-text flex items-center gap-2">
+        <span>🎨</span> Chi tiết & Biến thể
+      </h2>
 
       {/* 🔹 Biến thể sản phẩm */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center mb-3">
-          <label className="text-sm font-medium">Biến thể sản phẩm</label>
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <label className="text-lg font-bold text-gray-700 flex items-center gap-2">
+            <span>🔀</span> Biến thể sản phẩm
+          </label>
           <button
             onClick={addVariation}
             type="button"
-            className="bg-green-600 text-white px-3 py-1 rounded text-sm"
+            className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           >
-            + Thêm
+            <span>➕</span> Thêm biến thể
           </button>
         </div>
 
-        {formData.variations.map((v, i) => (
-          <div key={i} className="border rounded p-3 mb-4">
-            {/* 🔸 Tên màu */}
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex-1">
-                <label className="text-sm font-medium block mb-1">
-                  Loại sản phẩm:
-                </label>
-                <input
-                  placeholder="VD: Màu mã, chất liệu, ... "
-                  className="border px-2 py-1 rounded w-full"
-                  value={v.color}
-                  onChange={(e) => updateVariationColor(i, e.target.value)}
-                />
-              </div>
-              <button
-                onClick={() => removeVariation(i)}
-                type="button"
-                className="text-red-500 text-sm hover:underline ml-3"
-              >
-                Xóa
-              </button>
-            </div>
-
-            {/* 🔸 Danh sách tùy chọn */}
-            {v.options.map((opt, j) => (
+        {formData.variations.length === 0 ? (
+          <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
+            <div className="text-6xl mb-4">🎨</div>
+            <p className="text-gray-600 font-medium">Chưa có biến thể nào</p>
+            <p className="text-sm text-gray-400 mt-2">Nhấn "Thêm biến thể" để bắt đầu</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {formData.variations.map((v, i) => (
               <div
-                key={j}
-                className="grid grid-cols-3 gap-3 border-t pt-3 mt-2"
+                key={i}
+                className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6 shadow-lg animate-fade-in-up"
+                style={{ animationDelay: `${i * 0.1}s` }}
               >
-                <div>
-                  <label className="text-xs font-medium block mb-1">
-                    Tên tùy chọn
-                  </label>
-                  <input
-                    placeholder="VD: 128GB, XL, 500g"
-                    className="border rounded px-2 py-1 w-full"
-                    value={opt.name}
-                    onChange={(e) =>
-                      updateOption(i, j, "name", e.target.value)
-                    }
-                  />
+                {/* 🔸 Tên màu */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex-1">
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      <span>🏷️</span> Loại sản phẩm:
+                    </label>
+                    <input
+                      placeholder="VD: Màu sắc, chất liệu, kích thước..."
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                      value={v.color}
+                      onChange={(e) => updateVariationColor(i, e.target.value)}
+                    />
+                  </div>
+                  <button
+                    onClick={() => removeVariation(i)}
+                    type="button"
+                    className="ml-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+                  >
+                    <span>🗑️</span> Xóa
+                  </button>
                 </div>
 
-                <div>
-                  <label className="text-xs font-medium block mb-1">
-                    Giá cộng thêm
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    className="border rounded px-2 py-1 w-full"
-                    value={opt.additionalPrice}
-                    onChange={(e) =>
-                      updateOption(
-                        i,
-                        j,
-                        "additionalPrice",
-                        Number(e.target.value)
-                      )
-                    }
-                  />
-                </div>
+                {/* 🔸 Danh sách tùy chọn */}
+                {v.options.length === 0 ? (
+                  <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-xl bg-white/50 mb-4">
+                    <p className="text-gray-500 text-sm">Chưa có tùy chọn nào</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3 mb-4">
+                    {v.options.map((opt, j) => (
+                      <div
+                        key={j}
+                        className="bg-white rounded-xl p-4 border-2 border-gray-200 shadow-md"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-2">
+                              <span>📝</span> Tên tùy chọn
+                            </label>
+                            <input
+                              placeholder="VD: 128GB, XL, 500g"
+                              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium text-sm"
+                              value={opt.name}
+                              onChange={(e) =>
+                                updateOption(i, j, "name", e.target.value)
+                              }
+                            />
+                          </div>
 
-                <div>
-                  <label className="text-xs font-medium block mb-1">
-                    Số lượng tồn
-                  </label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    className="border rounded px-2 py-1 w-full"
-                    value={opt.stock}
-                    onChange={(e) =>
-                      updateOption(i, j, "stock", Number(e.target.value))
-                    }
-                  />
-                </div>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-2">
+                              <span>💰</span> Giá cộng thêm
+                            </label>
+                            <input
+                              type="number"
+                              placeholder="0"
+                              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium text-sm"
+                              value={opt.additionalPrice}
+                              onChange={(e) =>
+                                updateOption(
+                                  i,
+                                  j,
+                                  "additionalPrice",
+                                  Number(e.target.value)
+                                )
+                              }
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold text-gray-700 mb-2">
+                              <span>📦</span> Số lượng tồn
+                            </label>
+                            <input
+                              type="number"
+                              placeholder="0"
+                              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium text-sm"
+                              value={opt.stock}
+                              onChange={(e) =>
+                                updateOption(i, j, "stock", Number(e.target.value))
+                              }
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => addOption(i)}
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm"
+                >
+                  <span>➕</span> Thêm tùy chọn
+                </button>
               </div>
             ))}
-
-            <button
-              type="button"
-              onClick={() => addOption(i)}
-              className="bg-blue-600 text-white text-xs px-3 py-1 rounded mt-3"
-            >
-              + Thêm tùy chọn
-            </button>
           </div>
-        ))}
+        )}
       </div>
 
       {/* 🔹 Nút điều hướng */}
-      <div className="flex justify-between mt-6">
+      <div className="flex justify-between mt-8">
         <button
           type="button"
-          className="bg-gray-100 px-4 py-2 rounded font-medium"
+          className="bg-gradient-to-r from-gray-400 to-gray-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           onClick={() => setStep(2)}
         >
-          ⬅ Quay lại
+          <span>⬅️</span> Quay lại
         </button>
         <button
           type="button"
-          className="bg-blue-600 text-white px-4 py-2 rounded font-medium"
+          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           onClick={() => setStep(4)}
         >
-          Tiếp tục ➡
+          Tiếp tục <span>➡️</span>
         </button>
       </div>
     </div>

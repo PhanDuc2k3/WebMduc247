@@ -126,50 +126,65 @@ export default function ChatList({
 
   // UI
   return (
-    <div className="w-1/3 bg-white border-r overflow-y-auto">
-      <h2 className="p-4 font-bold text-lg border-b">Tin nhắn</h2>
+    <div className="w-1/3 bg-white border-r-2 border-gray-200 overflow-hidden flex flex-col">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 border-b-2 border-gray-200">
+        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+          <span>💬</span> Tin nhắn
+        </h2>
+        <p className="text-white/90 text-sm mt-1">{chats.length} cuộc trò chuyện</p>
+      </div>
 
-      {loading ? (
-        <div className="p-4 text-gray-500">Đang tải...</div>
-      ) : chats.length === 0 ? (
-        <div className="p-4 text-gray-500">Không có cuộc trò chuyện</div>
-      ) : (
-        chats.map((chat) => (
-          <div
-            key={chat.conversationId}
-            onClick={() => !disabled && handleSelectChat(chat)}
-            className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-100 transition ${
-              selectedChat?.conversationId === chat.conversationId
-                ? "bg-gray-200"
-                : ""
-            } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-          >
-            <div className="relative w-10 h-10">
-              <img
-                src={chat.avatarUrl}
-                alt={chat.name}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-              {chat.online && (
-                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full shadow-md"></span>
-              )}
-            </div>
-
-            <div className="flex-1 relative">
-              <div className="font-semibold truncate">{chat.name}</div>
-              <div className="text-sm text-gray-500 truncate">
-                {chat.lastMessage || "Chưa có tin nhắn"}
+      <div className="flex-1 overflow-y-auto">
+        {loading ? (
+          <div className="p-8 text-center animate-fade-in">
+            <div className="text-4xl mb-4 animate-pulse">💬</div>
+            <p className="text-gray-600 text-lg font-medium">Đang tải...</p>
+          </div>
+        ) : chats.length === 0 ? (
+          <div className="p-8 text-center animate-fade-in">
+            <div className="text-6xl mb-4">💬</div>
+            <p className="text-gray-500 text-lg font-medium mb-2">Chưa có cuộc trò chuyện</p>
+            <p className="text-gray-400 text-sm">Bắt đầu cuộc trò chuyện mới</p>
+          </div>
+        ) : (
+          chats.map((chat, index) => (
+            <div
+              key={chat.conversationId}
+              onClick={() => !disabled && handleSelectChat(chat)}
+              className={`flex items-center gap-3 p-5 cursor-pointer transition-all duration-300 animate-fade-in-up border-b border-gray-100 ${
+                selectedChat?.conversationId === chat.conversationId
+                  ? "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500 shadow-lg"
+                  : "hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50"
+              } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <div className="relative w-14 h-14">
+                <img
+                  src={chat.avatarUrl}
+                  alt={chat.name}
+                  className="w-14 h-14 rounded-full object-cover border-3 border-white shadow-lg"
+                />
+                {chat.online && (
+                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-lg"></span>
+                )}
               </div>
 
-              {unreadMessages[chat.conversationId] > 0 && (
-                <span className="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2 text-xs">
-                  {unreadMessages[chat.conversationId]}
-                </span>
-              )}
+              <div className="flex-1 relative">
+                <div className="font-bold text-gray-900 truncate mb-1">{chat.name}</div>
+                <div className="text-sm text-gray-600 truncate flex items-center gap-2">
+                  <span>{chat.lastMessage || "Chưa có tin nhắn"}</span>
+                </div>
+
+                {unreadMessages[chat.conversationId] > 0 && (
+                  <span className="absolute top-0 right-0 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-3 py-1 text-xs font-bold shadow-lg animate-pulse">
+                    {unreadMessages[chat.conversationId]}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        ))
-      )}
+          ))
+        )}
+      </div>
     </div>
   );
 }

@@ -137,10 +137,21 @@ const SupportPage = () => {
   };
 
   return (
-    <div className="max-w-8xl mx-auto p-6 space-y-10 text-gray-800 font-sans">
+    <div className="w-full py-8 md:py-12">
+      {/* Header Section */}
+      <div className="mb-8 animate-fade-in-down">
+        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text">
+          💬 Trung tâm hỗ trợ
+        </h1>
+        <p className="text-gray-600 text-lg">
+          Chúng tôi luôn sẵn sàng giúp đỡ bạn!
+        </p>
+      </div>
 
-      {/* Contact Info */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="space-y-8">
+
+        {/* Contact Info */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up">
         {[
           { title: 'Hotline', content: '1800 1234', note: 'Hỗ trợ 24/7', icon: <Phone size={28} className="text-blue-700" />, iconBgColor: 'rgba(59,130,246,0.2)', iconBorderColor: 'rgba(59,130,246,0.5)' },
           { title: 'Email', content: 'support@shoppingabc.com', note: 'Phản hồi trong 24h', icon: <Mail size={28} className="text-green-700" />, iconBgColor: 'rgba(34,197,94,0.2)', iconBorderColor: 'rgba(34,197,94,0.5)' },
@@ -151,9 +162,11 @@ const SupportPage = () => {
         ))}
       </section>
 
-      {/* Quick Guide */}
-      <section>
-        <h2 className="text-xl font-bold mb-4">Hướng dẫn nhanh</h2>
+        {/* Quick Guide */}
+        <section className="animate-fade-in-up delay-200">
+          <h2 className="text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900">
+            <span>⚡</span> <span className="gradient-text">Hướng dẫn nhanh</span>
+          </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
             { title: 'Hướng dẫn đặt hàng', icon: <ShoppingCart size={24} />, description: 'Cách đặt hàng nhanh chóng và dễ dàng' },
@@ -166,63 +179,69 @@ const SupportPage = () => {
         </div>
       </section>
 
-      {/* FAQ Section */}
-<section>
-  <h2 className="text-xl font-bold mb-4">Câu hỏi thường gặp</h2>
+        {/* FAQ Section */}
+        <section className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 p-8 animate-fade-in-up delay-300">
+          <h2 className="text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900">
+            <span>❓</span> <span className="gradient-text">Câu hỏi thường gặp</span>
+          </h2>
 
-  {/* Tabs ngang */}
-  <div className="flex space-x-2 mb-4 border-b border-gray-300">
-    {faqCategories.map((group) => (
-      <button
-        key={group.id}
-        className={`px-4 py-2 -mb-px border-b-2 font-medium text-gray-700 ${
-          selectedTab === group.id
-            ? "border-blue-500 text-blue-600"
-            : "border-transparent hover:text-blue-500"
-        }`}
-        onClick={() => setSelectedTab(group.id)}
-      >
-        {group.title}
-      </button>
-    ))}
-  </div>
+          {/* Tabs ngang */}
+          <div className="flex flex-wrap gap-3 mb-6">
+            {faqCategories.map((group) => (
+              <button
+                key={group.id}
+                className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 ${
+                  selectedTab === group.id
+                    ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105"
+                    : "bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
+                }`}
+                onClick={() => setSelectedTab(group.id)}
+              >
+                {group.title}
+              </button>
+            ))}
+          </div>
 
-  {/* Danh sách câu hỏi */}
-  <div className="border rounded-[1px] shadow-sm">
+          {/* Danh sách câu hỏi */}
+          <div className="border-2 border-gray-200 rounded-2xl shadow-lg overflow-hidden">
     {faqCategories
       .find((group) => group.id === selectedTab)
       ?.questions.map((item, idx) => (
         <div
           key={idx}
-          className={`p-4 cursor-pointer hover:bg-gray-50 ${idx !== faqCategories.find((group) => group.id === selectedTab)?.questions.length! - 1 ? "border-b border-gray-200" : ""}`}
+          className={`p-6 cursor-pointer transition-all duration-300 ${
+            idx !== faqCategories.find((group) => group.id === selectedTab)?.questions.length! - 1 ? "border-b-2 border-gray-200" : ""
+          } ${openAnswers[selectedTab]?.includes(idx) ? "bg-gradient-to-r from-blue-50 to-purple-50" : "hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50"}`}
           onClick={() => toggleAnswer(selectedTab, idx)}
         >
           <div className="flex justify-between items-center">
-            <p className="font-medium">{item.q}</p>
-            <span className="text-gray-500">
+            <p className="font-bold text-gray-900 text-lg">{item.q}</p>
+            <span className="text-2xl font-bold text-gray-500 hover:text-purple-600 transition-colors">
               {openAnswers[selectedTab]?.includes(idx) ? "−" : "+"}
             </span>
           </div>
           {openAnswers[selectedTab]?.includes(idx) && (
-            <p className="mt-2 text-gray-600">{item.a}</p>
+            <p className="mt-4 text-gray-700 leading-relaxed animate-fade-in">{item.a}</p>
           )}
         </div>
       ))}
-  </div>
-</section>
+          </div>
+        </section>
 
 
-      {/* Support Form */}
-      <section>
-        <h2 className="text-xl font-bold mb-4">Gửi yêu cầu hỗ trợ</h2>
-        <SupportForm />
-      </section>
+        {/* Support Form */}
+        <section className="animate-fade-in-up delay-400">
+          <h2 className="text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900">
+            <span>📝</span> <span className="gradient-text">Gửi yêu cầu hỗ trợ</span>
+          </h2>
+          <SupportForm />
+        </section>
 
-      {/* Additional Info */}
-<section className="max-w-6xl">
-  <AdditionalInfoCard />
-</section>
-
+        {/* Additional Info */}
+        <section className="animate-fade-in-up delay-500">
+          <AdditionalInfoCard />
+        </section>
+      </div>
     </div>
   );
 };

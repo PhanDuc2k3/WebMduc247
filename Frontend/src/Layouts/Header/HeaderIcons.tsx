@@ -9,25 +9,28 @@ interface Props {
 export const HeaderIcons: React.FC<Props> = ({ cartCount }) => {
   return (
     <>
-      <Link to="/wishlist" className="hidden sm:flex items-center gap-1 hover:text-[#3a5ef7] transition">
-        <Heart size={22} /> <span className="hidden lg:inline">Yêu thích</span>
+      <Link to="/wishlist" className="hidden md:flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group">
+        <Heart size={18} className="group-hover:scale-125 transition-transform" /> 
+        <span className="hidden xl:inline text-sm font-bold">Yêu thích</span>
       </Link>
-      <Link to="/voucher" className="hidden sm:flex items-center gap-1 hover:text-[#3a5ef7] transition">
-        <Gift size={22} /> <span className="hidden lg:inline">Voucher</span>
+      <Link to="/voucher" className="hidden md:flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group">
+        <Gift size={18} className="group-hover:scale-125 transition-transform" /> 
+        <span className="hidden xl:inline text-sm font-bold">Voucher</span>
       </Link>
-      <Link to="/cart" className="relative flex items-center gap-1 hover:text-[#3a5ef7] transition">
+      <Link to="/cart" className="relative flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group">
         <div className="relative">
-          <ShoppingCart size={22} />
+          <ShoppingCart size={18} className="group-hover:scale-125 transition-transform" />
           {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+            <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-black animate-pulse">
               {cartCount}
             </span>
           )}
         </div>
-        <span className="hidden lg:inline ml-1">Giỏ hàng</span>
+        <span className="hidden xl:inline text-sm font-bold">Giỏ hàng</span>
       </Link>
-      <Link to="/message" className="hidden sm:flex items-center gap-1 hover:text-[#3a5ef7] transition">
-        <MessageCircle size={22} /> <span className="hidden lg:inline">Tin nhắn</span>
+      <Link to="/message" className="hidden md:flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group">
+        <MessageCircle size={18} className="group-hover:scale-125 transition-transform" /> 
+        <span className="hidden xl:inline text-sm font-bold">Tin nhắn</span>
       </Link>
     </>
   );

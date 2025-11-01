@@ -49,116 +49,118 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   }, []);
 
   return (
-    <div className="flex flex-wrap justify-between gap-4 mb-6 p-6 border border-gray-300 rounded-lg bg-gray-50 shadow-sm">
-      {/* Ô tìm kiếm */}
-      <div className="flex items-center flex-1 min-w-[250px] border border-gray-300 rounded-md px-3 py-2.5 shadow-sm bg-white hover:border-gray-400 focus-within:border-gray-500 transition">
-        <Search className="w-4 h-4 text-gray-500 mr-2" />
-        <input
-          type="text"
-          placeholder="Tìm kiếm cửa hàng..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full outline-none text-sm placeholder-gray-500"
-        />
-      </div>
-
-      {/* Bộ lọc đánh giá */}
-      <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={ratingRef}>
-        <button
-          onClick={() => {
-            setRatingOpen(!ratingOpen);
-            setRegionOpen(false);
-            setCategoryOpen(false);
-          }}
-          className="w-full flex justify-between items-center border border-gray-300 rounded-md px-4 py-2.5 bg-white text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:border-gray-500 transition"
-        >
-          {rating}
-          <ChevronDown
-            className={`w-4 h-4 text-gray-500 transition-transform ${ratingOpen ? "rotate-180" : ""}`}
+    <div className="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-200">
+      <div className="flex flex-wrap gap-4">
+        {/* Ô tìm kiếm */}
+        <div className="flex items-center flex-1 min-w-[250px] bg-white border-2 border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:border-blue-400 focus-within:border-blue-500 focus-within:shadow-md transition-all duration-300">
+          <Search className="w-5 h-5 text-gray-400 mr-3" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm sản phẩm..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full outline-none text-sm placeholder-gray-400 text-gray-700"
           />
-        </button>
-        {ratingOpen && (
-          <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-md overflow-hidden animate-fadeIn">
-            {ratingOptions.map((opt) => (
-              <div
-                key={opt}
-                onClick={() => {
-                  setRating(opt);
-                  setRatingOpen(false);
-                }}
-                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-              >
-                {opt}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        </div>
 
-      {/* Bộ lọc khu vực */}
-      <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={regionRef}>
-        <button
-          onClick={() => {
-            setRegionOpen(!regionOpen);
-            setRatingOpen(false);
-            setCategoryOpen(false);
-          }}
-          className="w-full flex justify-between items-center border border-gray-300 rounded-md px-4 py-2.5 bg-white text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:border-gray-500 transition"
-        >
-          {region}
-          <ChevronDown
-            className={`w-4 h-4 text-gray-500 transition-transform ${regionOpen ? "rotate-180" : ""}`}
-          />
-        </button>
-        {regionOpen && (
-          <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-md overflow-hidden animate-fadeIn">
-            {regionOptions.map((opt) => (
-              <div
-                key={opt}
-                onClick={() => {
-                  setRegion(opt);
-                  setRegionOpen(false);
-                }}
-                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-              >
-                {opt}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+        {/* Bộ lọc đánh giá */}
+        <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={ratingRef}>
+          <button
+            onClick={() => {
+              setRatingOpen(!ratingOpen);
+              setRegionOpen(false);
+              setCategoryOpen(false);
+            }}
+            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-sm text-gray-700 hover:border-blue-400 hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm"
+          >
+            <span className="font-medium">⭐ {rating}</span>
+            <ChevronDown
+              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${ratingOpen ? "rotate-180 text-blue-500" : ""}`}
+            />
+          </button>
+          {ratingOpen && (
+            <div className="absolute z-20 mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fade-in">
+              {ratingOptions.map((opt) => (
+                <div
+                  key={opt}
+                  onClick={() => {
+                    setRating(opt);
+                    setRatingOpen(false);
+                  }}
+                  className="px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-600 cursor-pointer transition-all duration-200 font-medium"
+                >
+                  {opt}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
-      {/* Bộ lọc ngành hàng */}
-      <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={categoryRef}>
-        <button
-          onClick={() => {
-            setCategoryOpen(!categoryOpen);
-            setRegionOpen(false);
-            setRatingOpen(false);
-          }}
-          className="w-full flex justify-between items-center border border-gray-300 rounded-md px-4 py-2.5 bg-white text-sm text-gray-700 hover:bg-gray-100 focus:outline-none focus:border-gray-500 transition"
-        >
-          {category}
-          <ChevronDown
-            className={`w-4 h-4 text-gray-500 transition-transform ${categoryOpen ? "rotate-180" : ""}`}
-          />
-        </button>
-        {categoryOpen && (
-          <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-md overflow-hidden animate-fadeIn max-h-60 overflow-y-auto">
-            {categoryOptions.map((opt) => (
-              <div
-                key={opt}
-                onClick={() => {
-                  setCategory(opt);
-                  setCategoryOpen(false);
-                }}
-                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
-              >
-                {opt}
-              </div>
-            ))}
-          </div>
-        )}
+        {/* Bộ lọc khu vực */}
+        <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={regionRef}>
+          <button
+            onClick={() => {
+              setRegionOpen(!regionOpen);
+              setRatingOpen(false);
+              setCategoryOpen(false);
+            }}
+            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-sm text-gray-700 hover:border-blue-400 hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm"
+          >
+            <span className="font-medium">📍 {region}</span>
+            <ChevronDown
+              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${regionOpen ? "rotate-180 text-blue-500" : ""}`}
+            />
+          </button>
+          {regionOpen && (
+            <div className="absolute z-20 mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fade-in">
+              {regionOptions.map((opt) => (
+                <div
+                  key={opt}
+                  onClick={() => {
+                    setRegion(opt);
+                    setRegionOpen(false);
+                  }}
+                  className="px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-600 cursor-pointer transition-all duration-200 font-medium"
+                >
+                  {opt}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Bộ lọc ngành hàng */}
+        <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={categoryRef}>
+          <button
+            onClick={() => {
+              setCategoryOpen(!categoryOpen);
+              setRegionOpen(false);
+              setRatingOpen(false);
+            }}
+            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-sm text-gray-700 hover:border-blue-400 hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm"
+          >
+            <span className="font-medium">🏷️ {category}</span>
+            <ChevronDown
+              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${categoryOpen ? "rotate-180 text-blue-500" : ""}`}
+            />
+          </button>
+          {categoryOpen && (
+            <div className="absolute z-20 mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fade-in max-h-60 overflow-y-auto custom-scrollbar">
+              {categoryOptions.map((opt) => (
+                <div
+                  key={opt}
+                  onClick={() => {
+                    setCategory(opt);
+                    setCategoryOpen(false);
+                  }}
+                  className="px-4 py-3 text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-600 cursor-pointer transition-all duration-200 font-medium"
+                >
+                  {opt}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

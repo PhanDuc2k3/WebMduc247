@@ -1,13 +1,41 @@
-// middlewares/cloudinary
+// middlewares/cloudinary.js
+const fs = require('fs');
+const cloudinary = require('cloudinary').v2;
+require('dotenv').config();
 
-/**
- * Parse JSON an toàn
- * @param {string|array} field
- * @returns {array}
- */
+// cấu hình Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// =========================
+// Upload lên Cloudinary
+// =========================
+const uploadToCloudinary = async (filePath, folder = 'uploads') => {
+  try {
+    const result = await cloudinary.uploader.upload(filePath, {
+      folder,
+      resource_type: 'auto',
+      transformation: [{ width: 2000, crop: 'limit' }],
+    });
+
+    // xóa file tạm sau khi upload xong
+    fs.unlinkSync(filePath);
+    return result;
+  } catch (error) {
+    console.error('Lỗi upload Cloudinary:', error.message);
+    return null;
+  }
+};
+
+// =========================
+// Parse JSON an toàn
+// =========================
 const parseJSONField = (field) => {
   if (!field) return [];
-  if (typeof field === "string") {
+  if (typeof field === 'string') {
     try {
       return JSON.parse(field);
     } catch {
@@ -17,14 +45,9 @@ const parseJSONField = (field) => {
   return field;
 };
 
-/**
- * Merge ảnh từ Cloudinary + ảnh cũ
- * Áp dụng cho cả create/update
- * @param {object} files - req.files (multer)
- * @param {string|array|null} existingMain - ảnh chính cũ
- * @param {string|array|null} existingSubs - ảnh phụ cũ
- * @returns {object} { mainImage, subImages }
- */
+// =========================
+// Merge images
+// =========================
 const mergeImages = (files = {}, existingMain = null, existingSubs = null) => {
   const mainImage = files.mainImage?.[0]?.path || null;
   const subImages = Array.isArray(files.subImages)
@@ -58,4 +81,7 @@ const mergeImages = (files = {}, existingMain = null, existingSubs = null) => {
   };
 };
 
-module.exports = { parseJSONField, mergeImages };
+// =========================
+// Export duy nhất
+// =========================
+module.exports = { parseJSONField, mergeImages, uploadToCloudinary };

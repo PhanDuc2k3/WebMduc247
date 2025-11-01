@@ -11,18 +11,18 @@ interface Props {
 
 const ContactInfoCard: React.FC<Props> = ({ title, content, note, icon, iconBgColor, iconBorderColor }) => {
   return (
-    <div className="bg-white shadow rounded p-4 flex flex-col items-center text-center space-y-2 hover:scale-105 transition-transform duration-300">
+    <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 p-6 flex flex-col items-center text-center space-y-3 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 group animate-fade-in-up">
       {/* Vòng tròn xung quanh icon */}
       <div
-        className={`w-14 h-14 flex items-center justify-center rounded-full border-2 transition-all duration-300`}
+        className={`w-16 h-16 flex items-center justify-center rounded-full border-3 transition-all duration-300 group-hover:scale-110 shadow-lg`}
         style={{ backgroundColor: iconBgColor, borderColor: iconBorderColor }}
       >
         {icon}
       </div>
 
-      <h3 className="text-lg font-semibold">{title}</h3>
-      <p className="text-blue-600 font-medium">{content}</p>
-      {note && <p className="text-sm text-gray-500">{note}</p>}
+      <h3 className="text-lg font-black text-gray-900">{title}</h3>
+      <p className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{content}</p>
+      {note && <p className="text-sm text-gray-600 font-semibold">{note}</p>}
     </div>
   );
 };

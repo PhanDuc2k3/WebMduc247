@@ -55,28 +55,45 @@ const CheckoutPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white shadow-lg rounded-lg font-sans text-gray-800">
-      <h1 className="text-2xl font-bold text-gray-800 mb-6">Thanh toán</h1>
+    <div className="w-full py-8 md:py-12">
+      <div className="mb-8 animate-fade-in-down">
+        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
+          <span>💳</span> Thanh toán
+        </h1>
+        <p className="text-gray-600 text-lg">Hoàn tất đơn hàng của bạn</p>
+      </div>
 
-      <div className="flex flex-col lg:flex-row gap-6">
+      <div className="flex flex-col lg:flex-row gap-6 animate-fade-in-up">
         {/* Cột trái */}
         <div className="flex-1 space-y-6">
-          <Address onSelect={setSelectedAddressId} />
-          <Product selectedItems={selectedItemsIds} />
-          <Delivery onChange={setShippingFee} />
+          <div className="animate-fade-in-up delay-200">
+            <Address onSelect={setSelectedAddressId} />
+          </div>
+          <div className="animate-fade-in-up delay-300">
+            <Product selectedItems={selectedItemsIds} />
+          </div>
+          <div className="animate-fade-in-up delay-400">
+            <Delivery onChange={setShippingFee} />
+          </div>
         </div>
 
-        {/* Cột phải */}
+        {/* Cột phải - Sticky */}
         <div className="w-full lg:w-1/3 space-y-6">
-          <VoucherBox subtotal={cartSubtotal} onPreview={handleVoucherPreview} />
-          <Payment onChange={setPaymentMethod} />
-          <OrderSummary
-            shippingFee={shippingFee}
-            paymentMethod={paymentMethod}
-            addressId={selectedAddressId}
-            discount={voucherDiscount}
-            voucherCode={selectedVoucherCode}
-          />
+          <div className="animate-fade-in-up delay-500">
+            <VoucherBox subtotal={cartSubtotal} onPreview={handleVoucherPreview} />
+          </div>
+          <div className="animate-fade-in-up delay-600">
+            <Payment onChange={setPaymentMethod} />
+          </div>
+          <div className="animate-fade-in-up delay-700">
+            <OrderSummary
+              shippingFee={shippingFee}
+              paymentMethod={paymentMethod}
+              addressId={selectedAddressId}
+              discount={voucherDiscount}
+              voucherCode={selectedVoucherCode}
+            />
+          </div>
         </div>
       </div>
     </div>

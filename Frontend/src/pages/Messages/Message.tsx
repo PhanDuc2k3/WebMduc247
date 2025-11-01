@@ -111,9 +111,13 @@ export default function ChatInterface() {
             }}
           />
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-400 gap-2">
-            <Clock className="w-5 h-5" />
-            <span>Chọn một cuộc trò chuyện để bắt đầu</span>
+          <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in">
+            <div className="text-8xl mb-6 animate-bounce">💬</div>
+            <p className="text-2xl font-bold text-gray-700 mb-2">Chào mừng đến với Tin nhắn</p>
+            <p className="text-lg text-gray-500 flex items-center gap-2">
+              <Clock className="w-5 h-5" />
+              <span>Chọn một cuộc trò chuyện để bắt đầu</span>
+            </p>
           </div>
         )}
       </div>
