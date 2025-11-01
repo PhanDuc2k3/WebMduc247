@@ -103,100 +103,125 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
 
   // 🧩 LOG logic hiển thị
   if (loading) {
-    console.log("⏳ Đang tải đơn hàng...");
-    return <div className="p-6 text-lg">Đang tải đơn hàng...</div>;
-  }
-
-  if (!orders || orders.length === 0) {
-    console.warn("⚠️ Không có đơn hàng nào trong props!");
     return (
-      <div className="p-6 text-gray-500 text-lg">Chưa có đơn hàng nào</div>
+      <div className="p-8 text-center animate-fade-in">
+        <div className="text-4xl mb-4 animate-pulse">📦</div>
+        <p className="text-gray-600 text-lg font-medium">Đang tải đơn hàng...</p>
+      </div>
     );
   }
 
-  console.log("✅ Hiển thị danh sách đơn hàng:", orders.length);
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 text-center animate-fade-in">
+        <div className="text-6xl mb-4">📦</div>
+        <h3 className="text-2xl font-bold text-gray-900 mb-2">Chưa có đơn hàng nào</h3>
+        <p className="text-gray-500 mb-6">Bắt đầu mua sắm ngay hôm nay!</p>
+        <button
+          onClick={() => navigate("/products")}
+          className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          🛍️ Mua sắm ngay
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-white rounded-xl shadow p-8">
-      <h3 className="font-semibold text-xl mb-6">Lịch sử đơn hàng</h3>
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6 lg:p-8 animate-fade-in-up">
+        <h3 className="text-2xl font-bold text-gray-900 gradient-text flex items-center gap-3 mb-6">
+          <span>📦</span> Lịch sử đơn hàng
+        </h3>
 
-      {orders.map((order, index) => (
-        <div
-          key={order._id || index}
-          className="border rounded-xl p-6 mb-6 flex flex-col md:flex-row justify-between"
-        >
-          {/* Bên trái */}
-          <div className="flex-1">
-            <div className="font-medium text-lg mb-2">
-              Đơn hàng #{order._id}
-            </div>
-            <div className="text-gray-500 text-base mb-4">
-              Ngày đặt: {order.date}
-            </div>
+        {orders.map((order, index) => (
+          <div
+            key={order._id || index}
+            className="border-2 border-gray-200 rounded-xl p-6 mb-6 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-all duration-300 animate-fade-in-up last:mb-0"
+            style={{ animationDelay: `${index * 0.1}s` }}
+          >
+            <div className="flex flex-col md:flex-row justify-between gap-6">
+              {/* Bên trái */}
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-lg font-bold text-gray-900">
+                    Đơn hàng #{order._id.slice(-8).toUpperCase()}
+                  </span>
+                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                    📅 {order.date}
+                  </span>
+                </div>
 
-            {/* Danh sách sản phẩm */}
-            {order.items.map((item, idx) => (
-              <div key={`${item.productId}-${idx}`} className="mb-6">
-                <div className="flex items-center gap-4">
-                  <img
-                    src={item.imgUrl || "/default-avatar.png"}
-                    alt={item.name}
-                    className="w-20 h-20 rounded object-cover"
-                  />
-                  <div>
-                    <div className="text-lg font-medium">{item.name}</div>
-                    <div className="text-sm text-gray-500">
-                      Số lượng: {item.qty} x {item.price}
+                {/* Danh sách sản phẩm */}
+                <div className="space-y-4">
+                  {order.items.map((item, idx) => (
+                    <div key={`${item.productId}-${idx}`} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 transition-all duration-300">
+                      <div className="relative">
+                        <img
+                          src={item.imgUrl || "/default-avatar.png"}
+                          alt={item.name}
+                          className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <div className="text-base font-bold text-gray-900 mb-1 line-clamp-2">{item.name}</div>
+                        <div className="text-sm text-gray-600">
+                          Số lượng: <span className="font-bold text-blue-600">{item.qty}</span> x <span className="font-bold">{item.price}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* Bên phải */}
-          <div className="flex flex-col items-end gap-3 mt-6 md:mt-0 min-w-[200px]">
-            <span className="font-bold text-lg">{order.total}</span>
-            <span className="bg-black text-white px-4 py-1 rounded text-sm">
-              {getShippingStatus(order.statusHistory)}
-            </span>
+              {/* Bên phải */}
+              <div className="flex flex-col items-end gap-4 min-w-[250px]">
+                <div className="text-2xl font-extrabold text-blue-600 mb-2">
+                  {order.total}
+                </div>
+                <span className="px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-bold border-2 border-green-300">
+                  ✓ {getShippingStatus(order.statusHistory)}
+                </span>
 
-            <div className="flex gap-4 flex-wrap justify-end">
-              {getShippingStatus(order.statusHistory) === "Đã giao hàng" ? (
-                <>
-                  {order.items.map((item) => (
+                <div className="flex flex-col gap-2 w-full">
+                  {getShippingStatus(order.statusHistory) === "Đã giao hàng" ? (
+                    <>
+                      {order.items.map((item) => (
+                        <button
+                          key={item.productId}
+                          onClick={() => onReview(item.productId, order._id)}
+                          className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl text-sm font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105"
+                        >
+                          ⭐ Đánh giá
+                        </button>
+                      ))}
+                    </>
+                  ) : (
                     <button
-                      key={item.productId}
-                      onClick={() => onReview(item.productId, order._id)}
-                      className="bg-blue-500 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-600"
+                      onClick={() => navigate(`/order/${order._id}`)}
+                      className="w-full px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 transform hover:scale-105"
                     >
-                      Đánh giá {item.name}
+                      👁️ Xem chi tiết
                     </button>
-                  ))}
-                </>
-              ) : (
-                <button
-                  onClick={() => navigate(`/order/${order._id}`)}
-                  className="bg-gray-100 px-4 py-2 rounded text-sm font-medium hover:bg-gray-200"
-                >
-                  Xem chi tiết
-                </button>
-              )}
+                  )}
 
-              {order.items[0]?.productId && (
-                <button
-                  onClick={() =>
-                    navigate(`/products/${order.items[0].productId}`)
-                  }
-                  className="bg-gray-100 px-4 py-2 rounded text-sm font-medium hover:bg-gray-200"
-                >
-                  Mua lại
-                </button>
-              )}
+                  {order.items[0]?.productId && (
+                    <button
+                      onClick={() =>
+                        navigate(`/products/${order.items[0].productId}`)
+                      }
+                      className="w-full px-4 py-2 bg-white border-2 border-blue-300 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-50 transition-all duration-300 transform hover:scale-105"
+                    >
+                      🛒 Mua lại
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };

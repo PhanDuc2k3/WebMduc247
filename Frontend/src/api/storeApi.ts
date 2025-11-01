@@ -34,6 +34,20 @@ const storeApi = {
   activateStore: () => axiosClient.patch("/api/stores/activate"),
   deactivateStore: () => axiosClient.patch("/api/stores/deactivate"),
 
+  // Admin: Lấy tất cả cửa hàng (bao gồm inactive)
+  getAllStores: () => axiosClient.get("/api/stores"),
+
+  // Admin: Xóa cửa hàng
+  deleteStore: (storeId: string) => axiosClient.delete(`/api/stores/${storeId}`),
+
+  // Admin: Cập nhật cửa hàng theo ID
+  updateStoreById: (storeId: string, data: FormData | Partial<StoreType>) =>
+    axiosClient.put(
+      `/api/stores/${storeId}`,
+      data,
+      data instanceof FormData ? { headers: { "Content-Type": "multipart/form-data" } } : {}
+    ),
+
   // ========================
   // QUẢN LÝ DANH MỤC
   // ========================

@@ -24,21 +24,25 @@ const AdditionalInfoCard = () => {
   ];
 
   return (
-    <section className="flex flex-col md:flex-row gap-4 max-w-6xl mx-auto p-6 text-gray-800 font-sans">
+    <section className="flex flex-col md:flex-row gap-6 max-w-6xl mx-auto">
       {infoBlocks.map((block, idx) => (
         <div
           key={idx}
-          className={`${block.bgColor} w-full md:w-1/3 p-6 rounded shadow flex flex-col space-y-2 transition transform hover:-translate-y-1 hover:shadow-lg`}
+          className="bg-white w-full md:w-1/3 p-8 rounded-2xl shadow-xl border-2 border-gray-100 flex flex-col space-y-4 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl group animate-fade-in-up"
+          style={{ animationDelay: `${idx * 0.1}s` }}
         >
           <div className="flex items-center space-x-3 mb-2">
-            <div className="p-3 rounded-full bg-white shadow-sm">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-white to-gray-50 shadow-lg group-hover:shadow-2xl transition-all duration-300 group-hover:scale-110">
               {block.icon}
             </div>
-            <h3 className="text-lg font-semibold">{block.title}</h3>
+            <h3 className="text-xl font-black text-gray-900">{block.title}</h3>
           </div>
-          <div className="flex flex-col space-y-1 text-sm text-gray-700">
+          <div className="flex flex-col space-y-2 text-sm text-gray-700 font-semibold">
             {block.content.map((line, i) => (
-              <span key={i}>{line}</span>
+              <div key={i} className="flex items-center gap-2">
+                <span className="text-lg">✓</span>
+                <span>{line}</span>
+              </div>
             ))}
           </div>
         </div>

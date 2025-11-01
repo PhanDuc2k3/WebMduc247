@@ -35,6 +35,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       const mainImageUrl = editProduct.images?.[0] || null;
       const subImagesUrl = editProduct.images?.slice(1) || [];
 
+      // ✅ Chỉ set ảnh cũ vào existingSubImages, không set vào subImagesPreview
       setExistingSubImages(subImagesUrl);
 
       const storeId =
@@ -60,7 +61,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         mainImage: null,
         mainImagePreview: mainImageUrl,
         subImages: [],
-        subImagesPreview: subImagesUrl,
+        subImagesPreview: [], // ✅ Khởi tạo rỗng, ảnh cũ sẽ hiển thị từ existingSubImages
         storeId,
       };
 
@@ -142,8 +143,22 @@ const handleSubmit = async (e?: React.FormEvent) => {
     // ✅ Images
     console.log("[handleSubmit] 🔹 Main image:", formData.mainImage);
     console.log("[handleSubmit] 🔹 Sub images:", formData.subImages);
-    if (formData.mainImage) formDataToSend.append("mainImage", formData.mainImage);
+    console.log("[handleSubmit] 🔹 Existing sub images:", existingSubImages);
+    
+    // Main image: ưu tiên file mới, nếu không có thì dùng ảnh cũ
+    if (formData.mainImage) {
+      formDataToSend.append("mainImage", formData.mainImage);
+    } else if (formData.mainImagePreview && !formData.mainImagePreview.startsWith('blob:')) {
+      formDataToSend.append("existingMainImage", formData.mainImagePreview);
+    }
+    
+    // Sub images: thêm ảnh mới
     formData.subImages.forEach((img) => formDataToSend.append("subImages", img));
+    
+    // Existing sub images: giữ lại ảnh cũ chưa bị xóa
+    existingSubImages.forEach((imgUrl) => {
+      formDataToSend.append("existingSubImages", imgUrl);
+    });
 
     console.log("[handleSubmit] 📤 FormData entries:");
     for (const pair of formDataToSend.entries()) {
@@ -168,6 +183,10 @@ const handleSubmit = async (e?: React.FormEvent) => {
 
     // Cập nhật formData nếu edit
     if (isEditing) {
+      // ✅ Cập nhật existingSubImages với ảnh sub mới từ server
+      const newSubImages = newProduct.images?.slice(1) || [];
+      setExistingSubImages(newSubImages);
+      
       setFormData((prev) => ({
         ...prev,
         ...newProduct,
@@ -178,10 +197,12 @@ const handleSubmit = async (e?: React.FormEvent) => {
         seoTitle: newProduct.seoTitle || prev.seoTitle,
         seoDescription: newProduct.seoDescription || prev.seoDescription,
         mainImagePreview: newProduct.images?.[0] || null,
-        subImagesPreview: newProduct.images?.slice(1) || [],
+        subImages: [], // ✅ Reset ảnh mới vì đã merge vào server
+        subImagesPreview: [], // ✅ Reset preview vì ảnh đã ở existingSubImages
       }));
     } else {
       // Reset form nếu thêm mới
+      setExistingSubImages([]);
       setFormData({
         name: "",
         description: "",
@@ -203,6 +224,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
         subImagesPreview: [],
         storeId: "",
       });
+      setStep(1); // ✅ Reset về step 1
     }
 
     onAddProduct(newProduct, isEditing);
@@ -217,24 +239,30 @@ const handleSubmit = async (e?: React.FormEvent) => {
   return (
     <>
       {/* 🧭 Header Steps */}
-      <div className="flex items-center mb-6">
+      <div className="flex items-center mb-8 animate-fade-in-down">
         {[1, 2, 3, 4].map((s) => (
           <div key={s} className="flex items-center">
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
-                step >= s ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-400"
+              className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg ${
+                step >= s
+                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white transform scale-110"
+                  : "bg-gray-200 text-gray-400"
               }`}
             >
-              {s}
+              {step > s ? "✓" : s}
             </div>
             {s < 4 && (
-              <div className="w-10 h-1 bg-gray-200 mx-2 rounded-full">
-                <div className={`h-1 rounded-full ${step > s ? "bg-blue-500" : ""}`}></div>
+              <div className="w-16 h-2 bg-gray-200 mx-3 rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ${
+                    step > s ? "w-full" : "w-0"
+                  }`}
+                ></div>
               </div>
             )}
           </div>
         ))}
-        <span className="ml-4 text-gray-500 font-medium">Bước {step}/4</span>
+        <span className="ml-6 text-gray-600 font-bold text-lg">Bước {step}/4</span>
       </div>
 
       {/* 🧩 Step Components */}

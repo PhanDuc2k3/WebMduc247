@@ -151,8 +151,27 @@ export default function OrderPage() {
     fetchOrder();
   }, [orderId, isSeller]);
 
-  if (loading) return <div className="p-6">Đang tải đơn hàng...</div>;
-  if (!order) return <div className="p-6 text-red-500">Không lấy được thông tin đơn hàng</div>;
+  if (loading) {
+    return (
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-pulse">📦</div>
+          <p className="text-gray-600 text-lg font-medium">Đang tải thông tin đơn hàng...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (!order) {
+    return (
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
+          <div className="text-6xl mb-4">❌</div>
+          <p className="text-red-500 text-lg font-medium">Không lấy được thông tin đơn hàng</p>
+        </div>
+      </div>
+    );
+  }
 
   const currentStatus = order.statusHistory[order.statusHistory.length - 1].status;
 
@@ -178,15 +197,26 @@ export default function OrderPage() {
     order.items[0]?.storeId?.toString() === myStoreId.toString();
 
   return (
-    <main className="min-h-screen bg-[#F5F7FE]">
-      <div className="grid grid-cols-1 lg:grid-cols-[70%_30%] bg-white">
-        <div className="space-y-6 p-6">
+    <div className="w-full py-8 md:py-12">
+      <div className="mb-8 animate-fade-in-down">
+        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
+          <span>📦</span> Chi tiết đơn hàng
+        </h1>
+        <p className="text-gray-600 text-lg flex items-center gap-2">
+          <span>📋</span> Mã đơn hàng: <span className="font-bold text-blue-600">{order.orderCode}</span>
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[68%_32%] gap-6 animate-fade-in-up">
+        {/* Cột trái */}
+        <div className="space-y-6">
           <OrderStatus statusHistory={order.statusHistory} />
           <OrderProduct items={order.items} />
           <PaymentInfo order={order} />
         </div>
 
-        <div className="space-y-6 p-6">
+        {/* Cột phải */}
+        <div className="space-y-6">
           <CustomerInfo customer={displayedUser} />
           <ShippingInfo
             shippingAddress={order.shippingAddress}
@@ -198,6 +228,6 @@ export default function OrderPage() {
           )}
         </div>
       </div>
-    </main>
+    </div>
   );
 }

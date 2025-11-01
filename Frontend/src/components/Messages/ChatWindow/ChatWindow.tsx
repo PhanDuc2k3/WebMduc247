@@ -160,17 +160,17 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col border rounded-lg h-[calc(100vh-110px)]">
+    <div className="flex flex-col border-2 border-gray-200 rounded-r-2xl h-[calc(100vh-110px)] overflow-hidden">
       {/* Header */}
-      <div className="flex-none p-4 border-b bg-white flex items-center gap-2">
+      <div className="flex-none p-6 border-b-2 border-gray-200 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center gap-3 shadow-lg">
         {chatUser.avatar && (
           <img
             src={chatUser.avatar}
             alt={chatUser.name}
-            className="w-8 h-8 rounded-full object-cover"
+            className="w-12 h-12 rounded-full object-cover border-3 border-white shadow-lg"
           />
         )}
-        <h2 className="text-lg font-semibold">
+        <h2 className="text-xl font-bold text-white">
           {chatUser.name || "Chọn cuộc trò chuyện"}
         </h2>
       </div>
@@ -178,10 +178,14 @@ useEffect(() => {
       {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50"
+        className="flex-1 overflow-y-auto p-6 space-y-4 bg-gradient-to-br from-gray-50 to-blue-50"
       >
         {messages.length === 0 && (
-          <p className="text-center text-gray-400">Chưa có tin nhắn nào.</p>
+          <div className="flex flex-col items-center justify-center h-full text-gray-400">
+            <div className="text-6xl mb-4">💬</div>
+            <p className="text-lg font-medium">Chưa có tin nhắn nào.</p>
+            <p className="text-sm mt-2">Bắt đầu trò chuyện ngay bây giờ!</p>
+          </div>
         )}
 
         {messages.map((msg) => {
@@ -189,37 +193,41 @@ useEffect(() => {
           return (
             <div
               key={msg._id}
-              className={`space-y-1 ${msg.tempId ? "opacity-60 italic" : ""}`}
+              className={`flex ${isMine ? "justify-end" : "justify-start"} ${msg.tempId ? "opacity-60" : ""}`}
             >
-              <div
-                className={`text-sm text-gray-500 ${
-                  isMine ? "text-right" : ""
-                }`}
-              >
-                {new Date(msg.createdAt).toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-                {msg.tempId && " (Đang gửi...)"}
-              </div>
-              <div
-                className={`p-3 rounded-lg w-fit max-w-md break-words ${
-                  isMine ? "ml-auto bg-green-100" : "bg-blue-100"
-                }`}
-              >
-                {msg.attachments?.length ? (
-                  <div className="flex flex-wrap gap-2 mb-1">
-                    {msg.attachments.map((a, i) => (
-                      <img
-                        key={i}
-                        src={a.url}
-                        alt={`attachment-${i}`}
-                        className="w-32 h-32 object-cover rounded"
-                      />
-                    ))}
-                  </div>
-                ) : null}
-                {msg.text && <div>{msg.text}</div>}
+              <div className="space-y-2 max-w-md">
+                <div
+                  className={`text-xs font-semibold px-2 ${
+                    isMine ? "text-right text-gray-600" : "text-left text-gray-600"
+                  }`}
+                >
+                  {new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                  {msg.tempId && <span className="italic"> (Đang gửi...)</span>}
+                </div>
+                <div
+                  className={`p-4 rounded-2xl w-fit max-w-md break-words shadow-lg animate-fade-in-up ${
+                    isMine 
+                      ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-tr-none" 
+                      : "bg-white text-gray-900 rounded-tl-none border-2 border-gray-200"
+                  }`}
+                >
+                  {msg.attachments?.length ? (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {msg.attachments.map((a, i) => (
+                        <img
+                          key={i}
+                          src={a.url}
+                          alt={`attachment-${i}`}
+                          className="w-32 h-32 object-cover rounded-xl shadow-md border-2 border-white"
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                  {msg.text && <div className="font-medium">{msg.text}</div>}
+                </div>
               </div>
             </div>
           );
@@ -228,36 +236,36 @@ useEffect(() => {
 
       {/* Input */}
       <div
-        className={`flex-none p-4 border-t flex flex-col gap-2 bg-white ${
+        className={`flex-none p-4 border-t-2 border-gray-200 flex flex-col gap-3 bg-white ${
           disabled ? "opacity-50 pointer-events-none" : ""
         }`}
       >
         {preview.length > 0 && (
-          <div className="flex gap-2 relative p-2 bg-gray-100 rounded">
+          <div className="flex gap-2 relative p-3 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border-2 border-blue-200">
             {preview.map((src, i) => (
               <img
                 key={i}
                 src={src}
                 alt={`preview-${i}`}
-                className="w-16 h-16 object-cover rounded"
+                className="w-20 h-20 object-cover rounded-xl shadow-md border-2 border-white"
               />
             ))}
             <button
               onClick={clearPreview}
-              className="absolute -top-2 -right-2 bg-gray-800 text-white rounded-full p-1"
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-all duration-300 transform hover:scale-110 shadow-lg"
             >
-              <XMarkIcon className="h-4 w-4" />
+              <XMarkIcon className="h-5 w-5" />
             </button>
           </div>
         )}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            className="p-2 rounded hover:bg-gray-200"
+            className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-110 flex items-center justify-center"
             onClick={handleOpenFileDialog}
             disabled={disabled || isSending}
           >
-            <PhotoIcon className="h-6 w-6 text-gray-600" />
+            <PhotoIcon className="h-6 w-6" />
           </button>
           <input
             type="file"
@@ -270,9 +278,9 @@ useEffect(() => {
           <input
             type="text"
             placeholder={
-              disabled ? "Bạn cần đăng nhập để chat..." : "Nhập tin nhắn..."
+              disabled ? "Bạn cần đăng nhập để chat..." : "💬 Nhập tin nhắn..."
             }
-            className="flex-1 p-3 border rounded-lg focus:outline-none"
+            className="flex-1 p-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -280,7 +288,7 @@ useEffect(() => {
           />
           <button
             onClick={handleSend}
-            className={`px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 flex items-center gap-2 ${
+            className={`w-28 h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 flex items-center justify-center gap-2 font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
               (disabled || isSending) && "opacity-50 cursor-not-allowed"
             }`}
             disabled={disabled || isSending}
@@ -288,7 +296,7 @@ useEffect(() => {
             {isSending ? (
               <>
                 <svg
-                  className="animate-spin h-4 w-4 text-white"
+                  className="animate-spin h-5 w-5 text-white"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -307,10 +315,13 @@ useEffect(() => {
                     d="M4 12a8 8 0 018-8v8H4z"
                   ></path>
                 </svg>
-                <span>Đang gửi...</span>
+                <span className="text-sm">Gửi...</span>
               </>
             ) : (
-              "Gửi"
+              <>
+                <span>🚀</span>
+                <span>Gửi</span>
+              </>
             )}
           </button>
         </div>

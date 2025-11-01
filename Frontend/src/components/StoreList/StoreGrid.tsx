@@ -9,19 +9,24 @@ interface Props {
 const StoreGrid: React.FC<Props> = ({ stores }) => {
   return (
     <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-      {stores.map((store) => (
-        <StoreCard
+      {stores.map((store, index) => (
+        <div
           key={store._id}
-          storeId={store._id}
-          ownerId={typeof store.owner === "string" ? store.owner : store.owner._id}
-          name={store.name}
-          description={store.description}
-          logoUrl={store.logoUrl}
-          bannerUrl={store.bannerUrl}
-          createdAt={store.createdAt}
-          isActive={store.isActive}
-          customCategory={store.customCategory}
-        />
+          className="animate-slide-up"
+          style={{ animationDelay: `${index * 0.1}s` }}
+        >
+          <StoreCard
+            storeId={store._id}
+            ownerId={typeof store.owner === "string" ? store.owner : store.owner._id}
+            name={store.name}
+            description={store.description}
+            logoUrl={store.logoUrl}
+            bannerUrl={store.bannerUrl}
+            createdAt={store.createdAt}
+            isActive={store.isActive}
+            customCategory={store.customCategory}
+          />
+        </div>
       ))}
     </div>
   );

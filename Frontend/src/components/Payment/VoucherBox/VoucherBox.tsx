@@ -64,40 +64,55 @@ const VoucherBox: React.FC<VoucherBoxProps> = ({ subtotal, onPreview }) => {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="font-semibold text-lg mb-4">Mã giảm giá</div>
-      <div className="flex gap-2 mb-3">
-        <input
-          type="text"
-          value={voucher}
-          onChange={(e) => setVoucher(e.target.value)}
-          placeholder="Nhập mã voucher"
-          className="flex-1 border rounded px-3 py-2 text-sm"
-        />
-        <button
-          onClick={previewVoucher}
-          className="bg-green-600 text-white px-4 rounded hover:bg-green-700"
-        >
-          Áp dụng
-        </button>
+    <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+          <span>🎁</span> Mã giảm giá
+        </h2>
+        <p className="text-gray-600 text-sm mt-1">Nhập mã voucher của bạn</p>
       </div>
-
-      {info && (
-        <div
-          className={`border p-3 rounded text-sm ${
-            info.valid
-              ? "bg-green-50 border-green-200 text-green-800"
-              : "bg-red-50 border-red-200 text-red-800"
-          }`}
-        >
-          <div className="font-medium">{info.title}</div>
-          <div>Code: {info.code}</div>
-          <div>Mô tả: {info.description}</div>
-          <div>
-            Điều kiện: từ {(info.minOrderValue ?? 0).toLocaleString("vi-VN")}₫
-          </div>
+      <div className="p-6 space-y-4">
+        <div className="flex gap-3">
+          <input
+            type="text"
+            value={voucher}
+            onChange={(e) => setVoucher(e.target.value)}
+            placeholder="🎫 Nhập mã voucher"
+            className="flex-1 border-2 border-gray-200 rounded-xl px-5 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all duration-300"
+          />
+          <button
+            onClick={previewVoucher}
+            className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 whitespace-nowrap"
+          >
+            ✅ Áp dụng
+          </button>
         </div>
-      )}
+
+        {info && (
+          <div
+            className={`border-2 p-5 rounded-2xl animate-scale-in ${
+              info.valid
+                ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-300"
+                : "bg-gradient-to-br from-red-50 to-rose-50 border-red-300"
+            }`}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-bold text-xl">
+                {info.valid ? "✅" : "❌"} {info.title}
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                info.valid ? "bg-green-200 text-green-700" : "bg-red-200 text-red-700"
+              }`}>
+                {info.code}
+              </span>
+            </div>
+            <div className="text-gray-700 text-sm">
+              <p>📝 {info.description}</p>
+              <p>💵 Điều kiện: từ {(info.minOrderValue ?? 0).toLocaleString("vi-VN")}₫</p>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

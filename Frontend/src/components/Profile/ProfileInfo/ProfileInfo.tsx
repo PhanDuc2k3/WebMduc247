@@ -15,50 +15,64 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow p-8 flex items-center gap-8 mb-6">
-      <img
-        src={user.avatarUrl || "/default-avatar.png"}
-        alt="avatar"
-        className="w-32 h-32 rounded-full object-cover border"
-      />
-      <div className="flex-1">
-        <div className="flex items-center gap-3 mb-2">
-          <span className="font-semibold text-3xl">{user.fullName}</span>
-          {user.role && (
-            <span className="bg-gray-100 text-sm px-3 py-1 rounded text-gray-700 border border-gray-300">
-              {user.role === "buyer"
-                ? "Người mua"
-                : user.role === "seller"
-                ? "Người bán"
-                : "Admin"}
+    <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl border-2 border-gray-100 p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+        {/* Avatar */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full blur opacity-50 animate-pulse"></div>
+          <img
+            src={user.avatarUrl || "/default-avatar.png"}
+            alt="avatar"
+            className="relative w-32 h-32 rounded-full object-cover border-4 border-white shadow-2xl transform hover:scale-105 transition-transform duration-300"
+          />
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 text-center sm:text-left">
+          <div className="flex flex-wrap items-center gap-3 mb-3 justify-center sm:justify-start">
+            <span className="font-bold text-3xl lg:text-4xl text-gray-900 gradient-text">
+              {user.fullName}
             </span>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-6 text-gray-600 text-lg mb-3">
-          <span>
-            <i className="fa fa-envelope mr-1" /> {user.email}
-          </span>
-          <span>
-            <i className="fa fa-phone mr-1" /> {user.phone}
-          </span>
-          <span>
-            <i className="fa fa-calendar mr-1" /> Tham gia{" "}
-            {new Date(user.createdAt).toLocaleDateString("vi-VN")}
-          </span>
-        </div>
-        <div className="flex gap-4">
-          <button
-            onClick={onEdit}
-            className="bg-gray-100 px-6 py-2 rounded hover:bg-gray-200 text-base font-medium"
-          >
-            Chỉnh sửa
-          </button>
-          <button
-            onClick={handleLogout}
-            className="bg-gray-100 px-6 py-2 rounded hover:bg-gray-200 text-base font-medium"
-          >
-            Đăng xuất
-          </button>
+            {user.role && (
+              <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 text-sm px-4 py-1.5 rounded-full font-bold border-2 border-blue-300 shadow-sm">
+                {user.role === "buyer"
+                  ? "👤 Người mua"
+                  : user.role === "seller"
+                  ? "🏪 Người bán"
+                  : "👑 Admin"}
+              </span>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4 text-gray-600 text-base mb-4 justify-center sm:justify-start">
+            <span className="flex items-center gap-2">
+              <span>📧</span> {user.email}
+            </span>
+            {user.phone && (
+              <span className="flex items-center gap-2">
+                <span>📱</span> {user.phone}
+              </span>
+            )}
+            <span className="flex items-center gap-2">
+              <span>📅</span> Tham gia{" "}
+              {new Date(user.createdAt).toLocaleDateString("vi-VN")}
+            </span>
+          </div>
+
+          <div className="flex gap-3 justify-center sm:justify-start">
+            <button
+              onClick={onEdit}
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            >
+              ✏️ Chỉnh sửa
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-red-50 hover:border-red-400 hover:text-red-600 text-base font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105"
+            >
+              🚪 Đăng xuất
+            </button>
+          </div>
         </div>
       </div>
     </div>

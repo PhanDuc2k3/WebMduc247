@@ -45,10 +45,24 @@ const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
     fetchProducts();
   }, [storeId]);
 
-  if (loading)
-    return <p className="p-6 text-center text-gray-500">⏳ Đang tải sản phẩm...</p>;
-  if (!products.length)
-    return <p className="p-6 text-center text-gray-500">❌ Chưa có sản phẩm nổi bật</p>;
+  if (loading) {
+    return (
+      <div className="p-6 text-center animate-fade-in">
+        <div className="text-4xl mb-4 animate-pulse">⏳</div>
+        <p className="text-gray-500 text-lg font-medium">Đang tải sản phẩm...</p>
+      </div>
+    );
+  }
+  
+  if (!products.length) {
+    return (
+      <div className="p-8 text-center animate-fade-in">
+        <div className="text-6xl mb-4">📦</div>
+        <p className="text-gray-500 text-lg font-medium mb-2">Chưa có sản phẩm nổi bật</p>
+        <p className="text-gray-400 text-sm">Cửa hàng sẽ sớm cập nhật sản phẩm</p>
+      </div>
+    );
+  }
 
   const isDesktop = windowWidth >= 1024;
   const itemsPerRow = Math.floor(windowWidth / 220);
@@ -56,12 +70,19 @@ const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
   const visibleProducts = products.slice(0, visibleCount);
 
   return (
-    <section className="p-4 rounded-lg">
+    <section className="p-6 lg:p-8 rounded-2xl bg-gradient-to-br from-gray-50 via-white to-gray-50 shadow-lg border border-gray-200 animate-fade-in-up">
       {/* Tiêu đề sản phẩm bán chạy */}
-      <h2 className="text-lg font-semibold mb-4">Sản phẩm bán chạy</h2>
+      <div className="mb-6 animate-fade-in-down">
+        <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 gradient-text flex items-center gap-3">
+          <span>🔥</span> Sản phẩm bán chạy
+        </h2>
+        <p className="text-gray-600 text-sm mt-2">
+          Những sản phẩm được yêu thích nhất từ cửa hàng này
+        </p>
+      </div>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
-        {visibleProducts.map((prod) => {
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+        {visibleProducts.map((prod, index) => {
           const productForCard: ProductForCard = {
             ...prod,
             store:
@@ -71,14 +92,22 @@ const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
                 ? { name: prod.store.name }
                 : { name: "Unknown" },
           };
-          return <ProductCard key={prod._id} product={productForCard} />;
+          return (
+            <div
+              key={prod._id}
+              className="animate-slide-up"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <ProductCard product={productForCard} />
+            </div>
+          );
         })}
       </div>
 
-      <div className="text-center mt-4">
+      <div className="text-center mt-8">
         <Link
           to={`/store/${storeId}/products`}
-          className="font-medium text-blue-600 hover:underline transition-all"
+          className="inline-block font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all duration-300 transform hover:scale-105 text-lg"
         >
           Xem thêm sản phẩm →
         </Link>

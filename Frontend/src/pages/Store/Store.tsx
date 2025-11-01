@@ -37,50 +37,71 @@ const StorePage: React.FC = () => {
     fetchStore();
   }, [id]);
 
-  if (loading)
-    return <p className="text-center mt-6">Đang tải cửa hàng...</p>;
-  if (!store)
+  if (loading) {
     return (
-      <p className="text-center mt-6 text-red-500">Cửa hàng không tồn tại.</p>
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-pulse">🏪</div>
+          <p className="text-gray-600 text-lg font-medium">Đang tải thông tin cửa hàng...</p>
+        </div>
+      </div>
     );
+  }
+
+  if (!store) {
+    return (
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center">
+          <div className="text-6xl mb-4">❌</div>
+          <p className="text-gray-600 text-lg font-semibold text-red-500">Cửa hàng không tồn tại</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-6xl mx-auto px-2 sm:px-4 md:px-6 font-sans text-gray-800">
-      {/* Header: cùng độ ngang với tab */}
-      <div className="w-full">
+    <div className="w-full py-8 md:py-12">
+      {/* Header */}
+      <div className="mb-8 animate-fade-in-up">
         <StoreHeader store={store} />
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-4 border-b mt-6 overflow-x-auto">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`py-2 px-4 font-medium transition duration-200 whitespace-nowrap ${
-              activeTab === tab.id
-                ? "border-b-2 border-blue-500 text-blue-600"
-                : "text-gray-500 hover:text-blue-500"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="mb-8 animate-fade-in-up delay-200">
+        <div className="flex space-x-3 bg-gradient-to-r from-gray-100 to-gray-50 p-2 rounded-2xl w-fit shadow-md border border-gray-200 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-8 py-3 text-base font-bold rounded-xl border-2 transition-all duration-300 transform hover:scale-105 whitespace-nowrap ${
+                activeTab === tab.id
+                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-blue-600 shadow-lg scale-105"
+                  : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-400"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Tab Content */}
-      <div className="mt-6 space-y-6">
-        {activeTab === "info" && <StoreOverview store={store} />}
+      <div className="animate-fade-in-up delay-300">
+        {activeTab === "info" && (
+          <div className="card-container animate-slide-up">
+            <StoreOverview store={store} />
+          </div>
+        )}
 
         {activeTab === "featured" && (
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
+          <div className="card-container animate-slide-up">
             <FeaturedProduct storeId={id!} />
           </div>
         )}
 
         {activeTab === "categories" && (
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-<Categories storeId={store._id} />
+          <div className="card-container animate-slide-up">
+            <Categories storeId={store._id} />
           </div>
         )}
       </div>

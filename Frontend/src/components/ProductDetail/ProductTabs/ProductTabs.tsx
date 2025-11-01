@@ -66,18 +66,18 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
     path?.startsWith("http") ? path : `http://localhost:5000${path}`;
 
   return (
-    <div className="w-full max-w-screen-xl mx-auto mt-10">
+    <div className="w-full">
       {/* Thanh chọn tab */}
-      <div className="flex space-x-3 bg-gray-100 p-1 rounded-full w-fit mb-6">
+      <div className="flex space-x-3 bg-gradient-to-r from-gray-100 to-gray-50 p-2 rounded-2xl w-fit mb-8 shadow-md border border-gray-200">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActive(tab.id)}
-            className={`px-5 py-1 text-sm font-medium rounded-full border transition-colors duration-200
+            className={`px-8 py-3 text-base font-bold rounded-xl border-2 transition-all duration-300 transform hover:scale-105
               ${
                 active === tab.id
-                  ? "bg-white text-blue-600 border-blue-600 shadow-sm"
-                  : "bg-gray-100 text-gray-600 border-gray-300 hover:bg-white hover:text-blue-500"
+                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-blue-600 shadow-lg scale-105"
+                  : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-400"
               }`}
           >
             {tab.label}
@@ -86,7 +86,7 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
       </div>
 
       {/* Nội dung tab */}
-      <div className="p-6 bg-white border rounded-lg shadow text-sm text-gray-800 leading-relaxed">
+      <div className="p-8 bg-white border-2 border-gray-200 rounded-2xl shadow-lg text-base text-gray-800 leading-relaxed animate-fade-in-up">
         {/* 🔹 Mô tả từ DB */}
         {active === "mo-ta" && (
           <div>

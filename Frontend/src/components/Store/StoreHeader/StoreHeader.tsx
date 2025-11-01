@@ -11,86 +11,99 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
   if (!store) return <p>Không tìm thấy cửa hàng</p>;
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative animate-fade-in-up">
       {/* Banner */}
       {store.bannerUrl && (
-        <div className="w-screen relative left-1/2 -ml-[50vw] h-36 sm:h-48 md:h-64 overflow-hidden">
+        <div className="w-full h-48 sm:h-64 md:h-80 overflow-hidden rounded-2xl shadow-2xl relative group">
           <img
             src={store.bannerUrl}
             alt="Store Banner"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
         </div>
       )}
 
       {/* Container */}
-      <div className="max-w-6xl mx-auto relative -mt-8 sm:-mt-12 ">
-        <div className="bg-white rounded-lg shadow p-3 sm:p-6">
+      <div className="relative -mt-16 sm:-mt-20 animate-fade-in-up delay-200">
+        <div className="bg-white rounded-2xl shadow-2xl border-2 border-gray-100 p-6 lg:p-8">
           {/* Header: Logo + Info + Buttons */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-6">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             {/* Store info */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full md:w-auto">
-              <img
-                src={store.logoUrl}
-                alt={store.name}
-                className="w-20 h-20 rounded-full border-4 border-white shadow-lg object-cover flex-shrink-0"
-              />
-              <div className="flex flex-col justify-center flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <h2 className="text-lg font-semibold truncate">{store.name}</h2>
-                  <span className="text-xs bg-blue-100 text-blue-600 px-2 py-0.5 rounded">
-                    Mall
+            <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto items-center sm:items-start">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full blur opacity-50 animate-pulse"></div>
+                <img
+                  src={store.logoUrl || "/default-store.png"}
+                  alt={store.name}
+                  className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full border-4 border-white shadow-2xl object-cover flex-shrink-0 transform hover:scale-110 transition-transform duration-300"
+                />
+                {store.isActive && (
+                  <span className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-4 border-white rounded-full animate-pulse shadow-lg"></span>
+                )}
+              </div>
+              <div className="flex flex-col justify-center flex-1 min-w-0 text-center sm:text-left">
+                <div className="flex flex-wrap items-center gap-2 mb-2 justify-center sm:justify-start">
+                  <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 gradient-text">
+                    {store.name}
+                  </h2>
+                  <span className="text-xs bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 px-3 py-1 rounded-full font-bold shadow-sm">
+                    🏪 Mall
                   </span>
-                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
-                    Chính hãng
+                  <span className="text-xs bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-3 py-1 rounded-full font-bold shadow-sm">
+                    ✓ Chính hãng
                   </span>
                 </div>
-                <p className="text-sm text-gray-600 truncate">{store.description}</p>
-                <p className="text-sm text-gray-500 mt-1 flex items-center gap-1 truncate">
-                  <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
-                  <span className="truncate">{store.storeAddress}</span>
-                </p>
+                <p className="text-base text-gray-600 mb-2 line-clamp-2">{store.description}</p>
+                {store.storeAddress && (
+                  <p className="text-sm text-gray-500 flex items-center gap-2 justify-center sm:justify-start">
+                    <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                    <span className="truncate">{store.storeAddress}</span>
+                  </p>
+                )}
               </div>
             </div>
 
             {/* Buttons */}
-            <div className="flex gap-2 flex-wrap mt-2 md:mt-0">
-              <button className="bg-blue-500 text-white px-3 py-1.5 rounded hover:bg-blue-600 text-sm">
-                Chat ngay
+            <div className="flex gap-3 flex-wrap w-full sm:w-auto justify-center sm:justify-end">
+              <button className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base">
+                💬 Chat ngay
               </button>
-              <button className="border px-3 py-1.5 rounded hover:bg-gray-100 text-sm">
-                Theo dõi
+              <button className="px-6 py-3 border-2 border-gray-300 rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-600 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 text-sm sm:text-base">
+                ⭐ Theo dõi
               </button>
             </div>
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-5 text-sm text-gray-700 text-center">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-8 border-t border-gray-200">
             {/* Rating */}
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-yellow-50 to-orange-50 rounded-xl border-2 border-yellow-200 hover:border-yellow-400 transition-all duration-300 transform hover:scale-105">
               <div className="flex items-center gap-1 justify-center">
-                <Star className="w-4 h-4 text-yellow-400" />
-                <span>{store.rating.toFixed(1)}</span>
+                <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                <span className="text-xl font-bold text-gray-900">{store.rating?.toFixed(1) || "0.0"}</span>
               </div>
-              <p className="text-gray-500 text-xs">Đánh giá</p>
+              <p className="text-gray-600 text-xs font-semibold">⭐ Đánh giá</p>
             </div>
 
             {/* Products */}
-            <div className="flex flex-col items-center gap-1">
-              <span>{store.products}</span>
-              <p className="text-gray-500 text-xs">Sản phẩm</p>
+            <div className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 transform hover:scale-105">
+              <span className="text-2xl font-bold text-blue-600">{store.products || 0}</span>
+              <p className="text-gray-600 text-xs font-semibold">📦 Sản phẩm</p>
             </div>
 
             {/* Reviews count */}
-            <div className="flex flex-col items-center gap-1">
-              <span>{store.reviewsCount}</span>
-              <p className="text-gray-500 text-xs">Người đánh giá</p>
+            <div className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200 hover:border-purple-400 transition-all duration-300 transform hover:scale-105">
+              <span className="text-2xl font-bold text-purple-600">{store.reviewsCount || 0}</span>
+              <p className="text-gray-600 text-xs font-semibold">👥 Người đánh giá</p>
             </div>
 
             {/* Join date */}
-            <div className="flex flex-col items-center gap-1">
-              <span>{store.joinDate ? new Date(store.joinDate).toLocaleDateString("vi-VN") : "-"}</span>
-              <p className="text-gray-500 text-xs">Ngày tạo</p>
+            <div className="flex flex-col items-center gap-2 p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border-2 border-green-200 hover:border-green-400 transition-all duration-300 transform hover:scale-105">
+              <span className="text-lg font-bold text-green-600">
+                {store.joinDate ? new Date(store.joinDate).toLocaleDateString("vi-VN") : "—"}
+              </span>
+              <p className="text-gray-600 text-xs font-semibold">📅 Ngày tạo</p>
             </div>
           </div>
         </div>

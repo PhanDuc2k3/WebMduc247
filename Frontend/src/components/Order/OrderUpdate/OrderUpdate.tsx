@@ -59,61 +59,77 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
   };
 
   return (
-    <div className="max-w-3xl mx-10 p-6 bg-white rounded-lg shadow-md mt-6 space-y-4">
-      <h2 className="text-lg font-semibold text-gray-800">Cập nhật đơn hàng</h2>
-
-      {/* Chọn trạng thái */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Trạng thái đơn hàng
-        </label>
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          {statusOptions.map((s) => (
-            <option key={s.value} value={s.value}>
-              {s.label}
-            </option>
-          ))}
-        </select>
+    <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
+        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+          <span>⚙️</span> Cập nhật đơn hàng
+        </h2>
+        <p className="text-gray-600 text-sm mt-1">Chỉnh sửa trạng thái đơn hàng</p>
       </div>
+      <div className="p-6 space-y-5">
+        {/* Chọn trạng thái */}
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">
+            <span>📋</span> Trạng thái đơn hàng
+          </label>
+          <select
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+          >
+            {statusOptions.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      {/* Ghi chú */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Ghi chú
-        </label>
-        <textarea
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          rows={3}
-          placeholder="Nhập ghi chú cho khách hàng"
-          className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        />
-      </div>
+        {/* Ghi chú */}
+        <div>
+          <label className="block text-sm font-bold text-gray-700 mb-2">
+            <span>📝</span> Ghi chú
+          </label>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={4}
+            placeholder="Nhập ghi chú cho khách hàng..."
+            className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 resize-none"
+          />
+        </div>
 
-      {/* Nút hành động */}
-      <div className="flex flex-wrap gap-3 pt-2">
-        <button
-          onClick={handleUpdate}
-          disabled={loading}
-          className={`px-4 py-2 text-white text-sm font-medium rounded transition ${
-            loading
-              ? "bg-indigo-400 cursor-not-allowed"
-              : "bg-indigo-600 hover:bg-indigo-700"
-          }`}
-        >
-          {loading ? "Đang cập nhật..." : "Cập nhật đơn hàng"}
-        </button>
+        {/* Nút hành động */}
+        <div className="flex flex-col gap-3 pt-2">
+          <button
+            onClick={handleUpdate}
+            disabled={loading}
+            className={`w-full px-6 py-3 text-white text-sm font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+            }`}
+          >
+            {loading ? (
+              <>
+                <span className="animate-spin">⏳</span>
+                <span>Đang cập nhật...</span>
+              </>
+            ) : (
+              <>
+                <span>💾</span>
+                <span>Cập nhật đơn hàng</span>
+              </>
+            )}
+          </button>
 
-        <button
-          onClick={() => window.print()}
-          className="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded hover:bg-gray-200 transition"
-        >
-          In hóa đơn
-        </button>
+          <button
+            onClick={() => window.print()}
+            className="w-full px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-600 text-white text-sm font-bold rounded-xl hover:from-gray-500 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+          >
+            <span>🖨️</span> In hóa đơn
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -105,25 +105,51 @@ export default function CartPage() {
     navigate("/checkout");
   };
 
-  if (loading) return <div className="p-6">Đang tải giỏ hàng...</div>;
+  if (loading) {
+    return (
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-pulse">🛒</div>
+          <p className="text-gray-600 text-lg font-medium">Đang tải giỏ hàng...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-gray-100 min-h-screen py-8 font-sans">
-      <div className="max-w-6xl mx-auto flex gap-6">
-        {/* Left: Cart Items */}
-        <div className="flex-1">
-          <div className="bg-white rounded-lg shadow p-6 flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold">Giỏ hàng</h1>
-            <span>{cart?.items.length || 0} sản phẩm</span>
-          </div>
+    <div className="w-full py-8 md:py-12">
+      <div className="mb-8 animate-fade-in-down">
+        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
+          <span>🛒</span> Giỏ hàng của tôi
+        </h1>
+        <p className="text-gray-600 text-lg">
+          {cart?.items.length || 0} sản phẩm trong giỏ hàng
+        </p>
+      </div>
 
-          <div className="space-y-6">
-            {!cart || cart.items.length === 0 ? (
-              <div className="bg-white rounded-lg shadow p-6 text-gray-600">Giỏ hàng trống</div>
-            ) : (
-              Object.entries(groupedByStore || {}).map(([storeId, group]: any) => (
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Left: Cart Items */}
+        <div className="flex-1 space-y-6 animate-fade-in-up delay-200">
+          {!cart || cart.items.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 text-center animate-fade-in">
+              <div className="text-6xl mb-4">🛒</div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Giỏ hàng trống</h2>
+              <p className="text-gray-500 mb-6">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
+              <button
+                onClick={() => navigate("/products")}
+                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              >
+                🛍️ Mua sắm ngay
+              </button>
+            </div>
+          ) : (
+            Object.entries(groupedByStore || {}).map(([storeId, group]: any, index) => (
+              <div
+                key={storeId}
+                className="animate-slide-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
                 <CartStoreGroup
-                  key={storeId}
                   store={group.store}
                   items={group.items}
                   selectedItems={selectedItems}
@@ -131,27 +157,25 @@ export default function CartPage() {
                   onUpdateQty={updateQuantity}
                   onRemove={removeItem}
                 />
-              ))
-            )}
-          </div>
-        </div>
-
-        {/* Right: Order Summary */}
-        <div className="w-[350px] space-y-4">
-          {cart && (
-            <>
-<OrderSummary
-  subtotal={selectedTotal}
-  discount={0}
-  shippingFee={cart.shippingFee ?? 0} // fallback
-  total={selectedTotal + (cart.shippingFee ?? 0)} // fallback
-  selectedItems={selectedItems}
-/>
-
-
-            </>
+              </div>
+            ))
           )}
         </div>
+
+        {/* Right: Order Summary - Sticky */}
+        {cart && cart.items.length > 0 && (
+          <div className="lg:w-[400px] space-y-4 animate-fade-in-right delay-300">
+            <div className="sticky top-[180px]">
+              <OrderSummary
+                subtotal={selectedTotal}
+                discount={0}
+                shippingFee={cart.shippingFee ?? 0}
+                total={selectedTotal + (cart.shippingFee ?? 0)}
+                selectedItems={selectedItems}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

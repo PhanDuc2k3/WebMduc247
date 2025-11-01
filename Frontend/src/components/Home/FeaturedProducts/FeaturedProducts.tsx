@@ -47,16 +47,18 @@ const FeaturedProducts: React.FC = () => {
   const visibleProducts = products.slice(0, visibleCount);
 
   return (
-    <section className="p-6 bg-gray-50 rounded-lg">
-      <h3 className="text-[22px] font-bold mb-1 text-gray-900">
-        Sản phẩm nổi bật
-      </h3>
-      <p className="text-sm text-gray-600 mb-4">
-        Những sản phẩm được yêu thích nhất
-      </p>
+    <section className="p-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
+      <div className="mb-6 animate-fade-in-down">
+        <h3 className="text-[24px] lg:text-[28px] font-bold mb-2 text-gray-900 gradient-text">
+          ⭐ Sản phẩm nổi bật
+        </h3>
+        <p className="text-sm text-gray-600">
+          Những sản phẩm được yêu thích nhất hiện tại
+        </p>
+      </div>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4">
-        {visibleProducts.map((prod) => {
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+        {visibleProducts.map((prod, index) => {
           // ✅ Chuyển store về đúng kiểu
           const productForCard: ProductForCard = {
             ...prod,
@@ -67,14 +69,22 @@ const FeaturedProducts: React.FC = () => {
                 ? { name: prod.store.name }
                 : { name: "Unknown" },
           };
-          return <ProductCard key={prod._id} product={productForCard} />;
+          return (
+            <div
+              key={prod._id}
+              className="animate-slide-up"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <ProductCard product={productForCard} />
+            </div>
+          );
         })}
       </div>
 
-      <div className="text-center mt-6">
+      <div className="text-center mt-8">
         <Link
-          to="/categories"
-          className="font-medium text-blue-600 hover:underline transition-all"
+          to="/products"
+          className="inline-block font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all duration-300 transform hover:scale-105 text-lg"
         >
           Xem thêm sản phẩm →
         </Link>

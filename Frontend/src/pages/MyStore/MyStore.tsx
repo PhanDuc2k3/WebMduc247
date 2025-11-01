@@ -9,12 +9,12 @@ import ManageStore from "../../components/MyStore/ManageStore/ManageStore"; // i
 import axiosClient from "../../api/axiosClient";
 
 const tabs = [
-  { key: "manageStore", label: "Quản lý cửa hàng" }, // tab mới
-  { key: "overview", label: "Tổng quan" },
-  { key: "products", label: "Sản phẩm" },
-  { key: "orders", label: "Đơn hàng" },
-  { key: "stats", label: "Thống kê" },
-  { key: "voucher", label: "Voucher" },
+  { key: "manageStore", label: "Quản lý cửa hàng", icon: "🏪" },
+  { key: "overview", label: "Tổng quan", icon: "📊" },
+  { key: "products", label: "Sản phẩm", icon: "📦" },
+  { key: "orders", label: "Đơn hàng", icon: "🛒" },
+  { key: "stats", label: "Thống kê", icon: "📈" },
+  { key: "voucher", label: "Voucher", icon: "🎁" },
 ];
 
 const MyStore: React.FC = () => {
@@ -49,49 +49,82 @@ const MyStore: React.FC = () => {
     fetchProfile();
   }, []);
 
-  if (loading) return <div className="p-6">Đang tải...</div>;
+  if (loading) {
+    return (
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center">
+          <div className="text-6xl mb-4 animate-pulse">🏪</div>
+          <p className="text-gray-600 text-lg font-medium">Đang tải...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (role === "buyer" && !hasStore && sellerRequestStatus === "none") {
     return (
-      <div className="bg-[#f8f9fb] min-h-screen px-8 py-6">
-        <StoreRegisterForm onSuccess={() => setSellerRequestStatus("pending")} />
+      <div className="w-full py-8 md:py-12">
+        <div className="mb-8 animate-fade-in-down">
+          <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
+            <span>🏪</span> Đăng ký mở cửa hàng
+          </h1>
+          <p className="text-gray-600 text-lg">Bắt đầu hành trình bán hàng của bạn ngay hôm nay</p>
+        </div>
+        <div className="animate-fade-in-up delay-200">
+          <StoreRegisterForm onSuccess={() => setSellerRequestStatus("pending")} />
+        </div>
       </div>
     );
   }
 
   if (role === "buyer" && sellerRequestStatus === "pending") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen text-center">
-        <h2 className="text-xl font-semibold mb-2">Yêu cầu mở cửa hàng đang chờ duyệt</h2>
-        <p className="text-gray-600">Vui lòng chờ admin phê duyệt yêu cầu của bạn.</p>
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
+          <div className="text-6xl mb-4 animate-pulse">⏳</div>
+          <h2 className="text-2xl font-bold mb-2 text-gray-900">Yêu cầu đang chờ duyệt</h2>
+          <p className="text-gray-600 mb-4">Vui lòng chờ admin phê duyệt yêu cầu của bạn</p>
+          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <p className="text-sm text-blue-800">
+              ⏰ Chúng tôi sẽ xem xét và liên hệ với bạn trong vòng 24 giờ
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (role === "seller" && hasStore) {
     return (
-      <div className="bg-[#f8f9fb] min-h-screen px-8 py-6">
-        <h1 className="font-bold text-xl mb-1">Dashboard Người bán</h1>
-        <p className="text-gray-600 mb-6">Quản lý cửa hàng và sản phẩm của bạn</p>
-
-        <div className="flex gap-2 mb-4">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              className={`px-5 py-2 rounded-full font-medium ${
-                activeTab === tab.key
-                  ? "bg-gray-200 text-black"
-                  : "bg-gray-100 text-gray-500"
-              }`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              {tab.label}
-            </button>
-          ))}
+      <div className="w-full py-8 md:py-12">
+        <div className="mb-8 animate-fade-in-down">
+          <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
+            <span>🏬</span> Quản lý cửa hàng
+          </h1>
+          <p className="text-gray-600 text-lg">Dashboard người bán - Quản lý cửa hàng và sản phẩm</p>
         </div>
 
-        <div>
-          {activeTab === "manageStore" && <ManageStore />} {/* tab mới */}
+        <div className="mb-6 animate-fade-in-up delay-200">
+          <div className="flex flex-wrap gap-3">
+            {tabs.map((tab, index) => (
+              <button
+                key={tab.key}
+                className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${
+                  activeTab === tab.key
+                    ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105"
+                    : "bg-white text-gray-600 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
+                } animate-fade-in-up`}
+                style={{ animationDelay: `${index * 0.1}s` }}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                <span className="text-xl">{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="animate-fade-in-up delay-300">
+          {activeTab === "manageStore" && <ManageStore />}
           {activeTab === "overview" && <Overview />}
           {activeTab === "products" && <ProductManagement />}
           {activeTab === "orders" && <OrderManagement />}
@@ -104,15 +137,29 @@ const MyStore: React.FC = () => {
 
   if (role === "seller" && !hasStore) {
     return (
-      <div className="p-6">
-        <p className="text-gray-600">Bạn là seller nhưng chưa có cửa hàng nào.</p>
+      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+        <div className="text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
+          <div className="text-6xl mb-4">🏪</div>
+          <h2 className="text-2xl font-bold mb-2 text-gray-900">Chưa có cửa hàng</h2>
+          <p className="text-gray-600 mb-6">Bạn là seller nhưng chưa có cửa hàng nào</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            🔄 Tải lại trang
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
-      <p className="text-gray-600">Bạn không có quyền truy cập trang này.</p>
+    <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+      <div className="text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
+        <div className="text-6xl mb-4">🚫</div>
+        <h2 className="text-2xl font-bold mb-2 text-gray-900">Không có quyền truy cập</h2>
+        <p className="text-gray-600">Bạn không có quyền truy cập trang này</p>
+      </div>
     </div>
   );
 };

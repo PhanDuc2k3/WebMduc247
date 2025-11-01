@@ -63,13 +63,13 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
   };
 
   return (
-    <div className="w-full bg-white rounded-xl ">
+    <div className="w-full">
       {/* Thanh kéo chọn giá tối đa */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-2 text-sm text-gray-600">
-          <span>Khoảng giá:</span>
-          <span className="font-medium text-gray-800">
-            0 - {(price * 1_000_000).toLocaleString("vi-VN")} ₫
+      <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-100">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-semibold text-gray-700">💰 Khoảng giá:</span>
+          <span className="font-bold text-lg text-blue-600">
+            0 - {(price * 1_000_000).toLocaleString("vi-VN")}₫
           </span>
         </div>
         <input
@@ -82,23 +82,27 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
           style={{
             background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${
               (price / 50) * 100
-            }%, #bfdbfe ${(price / 50) * 100}%, #bfdbfe 100%)`,
+            }%, #e0e7ff ${(price / 50) * 100}%, #e0e7ff 100%)`,
           }}
-          className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+          className="w-full h-3 rounded-lg appearance-none cursor-pointer"
         />
       </div>
 
       {/* Lọc nhanh theo mức giá cố định */}
-      <div className="flex flex-col gap-3 text-gray-700">
+      <div className="flex flex-col gap-2 mb-6">
         {[
-          { label: "Dưới 1 triệu", value: "duoi1tr" },
-          { label: "Từ 1 - 5 triệu", value: "1-5tr" },
-          { label: "Từ 5 - 10 triệu", value: "5-10tr" },
-          { label: "Trên 10 triệu", value: "tren10tr" },
+          { label: "Dưới 1 triệu", value: "duoi1tr", emoji: "💵" },
+          { label: "Từ 1 - 5 triệu", value: "1-5tr", emoji: "💴" },
+          { label: "Từ 5 - 10 triệu", value: "5-10tr", emoji: "💶" },
+          { label: "Trên 10 triệu", value: "tren10tr", emoji: "💷" },
         ].map((opt) => (
           <label
             key={opt.value}
-            className="flex items-center gap-3 cursor-pointer hover:text-blue-600 transition"
+            className={`flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 transition-all duration-300 ${
+              selectedPrice === opt.value
+                ? "border-blue-500 bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-semibold shadow-md"
+                : "border-gray-200 hover:border-blue-300 hover:bg-gray-50 text-gray-700"
+            }`}
           >
             <input
               type="radio"
@@ -106,56 +110,69 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
               value={opt.value}
               checked={selectedPrice === opt.value}
               onChange={(e) => setSelectedPrice(e.target.value)}
-              className="accent-blue-500"
+              className="accent-blue-500 w-4 h-4"
             />
-            <span className="text-sm">{opt.label}</span>
+            <span className="text-xl">{opt.emoji}</span>
+            <span className="text-sm font-medium flex-1">{opt.label}</span>
           </label>
         ))}
       </div>
 
       {/* Nút hành động */}
-      <div className="mt-6 flex justify-between">
+      <div className="flex flex-col gap-3">
         <button
           onClick={handleReset}
-          className="px-4 py-2 text-sm rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition"
+          className="w-full px-4 py-2.5 text-sm font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 shadow-sm hover:shadow-md"
         >
-          Xóa lọc
+          🔄 Xóa lọc
         </button>
         <button
           onClick={() => setIsPopupOpen(true)}
-          className="px-4 py-2 text-sm rounded-md bg-green-500 text-white hover:bg-green-600 transition"
+          className="w-full px-4 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
         >
-          Lọc khoảng giá
+          ✨ Lọc khoảng giá tùy chỉnh
         </button>
       </div>
 
       {/* Popup nhập khoảng giá */}
       {isPopupOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-80 shadow-lg">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800 text-center">
-              Nhập khoảng giá
-            </h3>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl p-8 w-96 shadow-2xl animate-scale-in border border-gray-200">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 gradient-text">
+                💰 Nhập khoảng giá
+              </h3>
+              <button
+                onClick={() => setIsPopupOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all duration-300 text-gray-600 hover:text-gray-900"
+              >
+                ✕
+              </button>
+            </div>
 
-            <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-col gap-5 mb-6">
               <div>
-                <label className="text-sm text-gray-600">Giá tối thiểu</label>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  💵 Giá tối thiểu
+                </label>
                 <input
                   type="text"
                   value={formatNumber(minPrice)}
                   onChange={handleMinChange}
                   placeholder="VD: 0"
-                  className="w-full border border-gray-300 rounded-md p-2 mt-1 focus:ring-2 focus:ring-blue-400 outline-none"
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 mt-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-gray-700"
                 />
               </div>
               <div>
-                <label className="text-sm text-gray-600">Giá tối đa</label>
+                <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                  💵 Giá tối đa
+                </label>
                 <input
                   type="text"
                   value={formatNumber(maxPrice)}
                   onChange={handleMaxChange}
                   placeholder="VD: 20.000.000"
-                  className="w-full border border-gray-300 rounded-md p-2 mt-1 focus:ring-2 focus:ring-blue-400 outline-none"
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 mt-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-gray-700"
                 />
               </div>
             </div>
@@ -163,13 +180,13 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setIsPopupOpen(false)}
-                className="px-3 py-2 text-sm border border-gray-300 rounded-md text-gray-600 hover:bg-gray-100"
+                className="px-6 py-2.5 text-sm font-semibold border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300"
               >
                 Hủy
               </button>
               <button
                 onClick={handleApplyRange}
-                className="px-3 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                className="px-6 py-2.5 text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 Áp dụng
               </button>
