@@ -22,7 +22,7 @@ const Header: React.FC = () => {
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white hidden md:block">
         <div className="flex justify-between items-center px-4 sm:px-8 py-2 text-xs font-semibold">
           <div className="flex items-center gap-2">
-            <span className="text-base animate-pulse">🚚</span>
+            <span className="text-base animate-pulse"></span>
             <span>Miễn phí vận chuyển đơn từ 300k</span>
           </div>
           <div className="flex items-center gap-2">
@@ -42,15 +42,14 @@ const Header: React.FC = () => {
           <div className="flex items-center gap-2">
             <div className="relative">
               <div className="w-10 h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-xl group-hover:shadow-purple-500/50 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                <span className="text-2xl md:text-3xl font-black text-white">S</span>
+                <span className="text-2xl md:text-3xl font-black text-white">MĐ</span>
               </div>
-              <div className="absolute -top-0.5 -right-0.5 w-3 h-3 md:w-4 md:h-4 bg-gradient-to-br from-green-400 to-green-600 rounded-full border-2 md:border-3 border-white animate-pulse shadow-md"></div>
             </div>
             <div className="hidden sm:block">
               <h1 className="text-xl md:text-2xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
                 ShopMduc247
               </h1>
-              <p className="text-xs text-gray-500 font-bold">Shopping Hub</p>
+              <p className="text-xs text-gray-500 font-bold">Shopping Mall</p>
             </div>
           </div>
         </Link>
@@ -141,11 +140,11 @@ const Header: React.FC = () => {
         } flex-col md:flex-row gap-1 md:gap-4 px-4 sm:px-8 py-2 md:py-3 text-sm md:text-base font-bold text-gray-700 border-t-2 border-gray-200 bg-gradient-to-r from-gray-50 via-white to-gray-50 md:bg-white`}
       >
         {[
-          { to: '/', label: '🏠 Trang chủ' },
-          { to: '/stores', label: '🏬 Cửa hàng' },
-          { to: '/products', label: '📦 Sản phẩm' },
-          { to: '/new', label: '🎉 Khuyến mãi' },
-          { to: '/support', label: '💬 Hỗ trợ' }
+          { to: '/', label: 'Trang chủ' },
+          { to: '/stores', label: ' Cửa hàng' },
+          { to: '/products', label: ' Sản phẩm' },
+          { to: '/new', label: ' Khuyến mãi' },
+          { to: '/support', label: ' Hỗ trợ' }
         ].map((item, index) => (
           <Link
             key={index}

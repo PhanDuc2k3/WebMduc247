@@ -47,8 +47,8 @@ const mapped: Voucher[] = res.data.map((v) => ({
 
       setVouchers(mapped);
     } catch (err) {
-      console.error("❌ Lỗi khi fetch vouchers:", err);
-      alert("❌ Lỗi khi lấy voucher");
+      console.error("Lỗi khi fetch vouchers:", err);
+      alert("Lỗi khi lấy voucher");
     } finally {
       setLoading(false);
     }
@@ -74,7 +74,7 @@ const mapped: Voucher[] = res.data.map((v) => ({
     <div className="w-full py-8 md:py-12">
       <div className="mb-8 animate-fade-in-down">
         <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-          <span>🎁</span> Kho Voucher
+          Kho Voucher
         </h1>
         <p className="text-gray-600 text-lg">Tận hưởng ưu đãi tốt nhất từ các cửa hàng</p>
       </div>
@@ -88,7 +88,6 @@ const mapped: Voucher[] = res.data.map((v) => ({
               : "bg-white text-gray-600 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
           }`}
         >
-          <span className="text-xl">🎟️</span>
           <span>Voucher có sẵn</span>
         </button>
         <button
@@ -99,7 +98,6 @@ const mapped: Voucher[] = res.data.map((v) => ({
               : "bg-white text-gray-600 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
           }`}
         >
-          <span className="text-xl">💳</span>
           <span>Voucher của tôi</span>
         </button>
       </div>
@@ -120,23 +118,20 @@ const mapped: Voucher[] = res.data.map((v) => ({
         <div className="relative">
           <input
             type="text"
-            placeholder="🔍 Tìm kiếm voucher..."
+            placeholder="Tìm kiếm voucher..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-5 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300"
+            className="w-full px-5 py-3 pl-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300"
           />
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">🎁</span>
         </div>
       </div>
 
       {loading ? (
         <div className="p-8 text-center animate-fade-in">
-          <div className="text-4xl mb-4 animate-pulse">🎁</div>
           <p className="text-gray-600 text-lg font-medium">Đang tải voucher...</p>
         </div>
       ) : filteredVouchers.length === 0 ? (
         <div className="p-8 text-center animate-fade-in">
-          <div className="text-6xl mb-4">🎁</div>
           <p className="text-gray-500 text-lg font-medium mb-2">Không tìm thấy voucher nào</p>
           <p className="text-gray-400 text-sm">Thử lại với từ khóa khác</p>
         </div>
@@ -150,7 +145,7 @@ const mapped: Voucher[] = res.data.map((v) => ({
             >
               <div className="flex justify-between items-start mb-4">
                 <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2">
-                  <span>🎫</span> {v.title}
+                  {v.title}
                 </h2>
                 <span className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-sm shadow-lg">
                   {v.code}
@@ -161,17 +156,17 @@ const mapped: Voucher[] = res.data.map((v) => ({
               
               <div className="text-sm text-gray-700 space-y-2 mb-4">
                 <p className="flex items-center gap-2">
-                  <span>📋</span> Điều kiện: {v.condition}
+                  Điều kiện: {v.condition}
                 </p>
                 <p className="flex items-center gap-2">
-                  <span>📅</span> Ngày áp dụng: <span className="font-bold">{v.startDate.split("T")[0]}</span> → <span className="font-bold">{v.endDate.split("T")[0]}</span>
+                  Ngày áp dụng: <span className="font-bold">{v.startDate.split("T")[0]}</span> → <span className="font-bold">{v.endDate.split("T")[0]}</span>
                 </p>
                 <p className="flex items-center gap-2">
-                  <span>🏪</span> {getStoreLabel(v)}
+                  {getStoreLabel(v)}
                 </p>
                 {v.used && (
                   <p className="text-red-600 font-bold px-3 py-2 bg-red-50 border-2 border-red-200 rounded-xl mt-2 flex items-center gap-2">
-                    <span>⚠️</span> Bạn đã dùng voucher này
+                    Bạn đã dùng voucher này
                   </p>
                 )}
               </div>
@@ -180,10 +175,10 @@ const mapped: Voucher[] = res.data.map((v) => ({
                 <div className="mt-4">
                   <div className="flex justify-between text-xs font-bold text-gray-700 mb-2">
                     <span className="flex items-center gap-1">
-                      <span>📊</span> Đã sử dụng: {v.usagePercent}%
+                      Đã sử dụng: {v.usagePercent}%
                     </span>
                     <span className="flex items-center gap-1">
-                      <span>✅</span> Còn lại: {100 - v.usagePercent}%
+                      Còn lại: {100 - v.usagePercent}%
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">

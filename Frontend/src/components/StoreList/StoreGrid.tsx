@@ -4,9 +4,10 @@ import type { StoreType } from "../../types/store";
 
 interface Props {
   stores: StoreType[];
+  onlineStores?: string[];
 }
 
-const StoreGrid: React.FC<Props> = ({ stores }) => {
+const StoreGrid: React.FC<Props> = ({ stores, onlineStores = [] }) => {
   return (
     <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {stores.map((store, index) => (
@@ -25,6 +26,7 @@ const StoreGrid: React.FC<Props> = ({ stores }) => {
             createdAt={store.createdAt}
             isActive={store.isActive}
             customCategory={store.customCategory}
+            isOnline={onlineStores.includes(store._id)}
           />
         </div>
       ))}

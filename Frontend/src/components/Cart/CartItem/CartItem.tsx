@@ -109,12 +109,12 @@ const handleUpdateQuantity = async (newQuantity: number) => {
           <div className="flex flex-wrap gap-2 mb-3">
             {item.variation?.color && (
               <span className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">
-                🎨 {item.variation.color}
+                {item.variation.color}
               </span>
             )}
             {item.variation?.size && (
               <span className="text-xs bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-semibold">
-                📏 {item.variation.size}
+                {item.variation.size}
               </span>
             )}
             {item.variation?.additionalPrice && item.variation.additionalPrice > 0 && (
@@ -176,7 +176,7 @@ const handleUpdateQuantity = async (newQuantity: number) => {
         className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-600 hover:border-red-300 border-2 border-transparent transition-all duration-300 transform hover:scale-110 active:scale-95 group/remove"
         title="Xóa sản phẩm"
       >
-        <span className="text-xl group-hover/remove:rotate-90 transition-transform duration-300">✕</span>
+        <span className="text-xl group-hover/remove:rotate-90 transition-transform duration-300">×</span>
       </button>
     </div>
   );

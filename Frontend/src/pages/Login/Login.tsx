@@ -4,6 +4,7 @@ import axiosClient from "@/api/axiosClient";
 import { Mail, Lock } from "lucide-react";
 import { useChat } from "../../context/chatContext";
 import { toast } from "react-toastify";
+import { getSocket } from "../../socket";
 
 const Login: React.FC = () => {
   const [activeTab, setActiveTab] = useState("login");
@@ -13,7 +14,8 @@ const Login: React.FC = () => {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { setCurrentUserId, socket } = useChat();
+  const { setCurrentUserId } = useChat();
+  const socket = getSocket();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,7 +98,7 @@ if (data.user) {
           ShopMDuc247
         </h1>
         <p className="text-gray-600 text-center text-lg">
-          Chào mừng bạn quay trở lại! 👋
+          Chào mừng bạn quay trở lại!
         </p>
       </div>
 
@@ -118,7 +120,7 @@ if (data.user) {
                 navigate("/login");
               }}
             >
-              🔐 Đăng nhập
+              Đăng nhập
             </button>
             <button
               className={`w-1/2 py-3 text-center font-bold rounded-xl transition-all duration-300 ${
@@ -131,7 +133,7 @@ if (data.user) {
                 navigate("/register");
               }}
             >
-              ✨ Đăng ký
+              Đăng ký
             </button>
           </div>
         </div>
@@ -203,7 +205,7 @@ if (data.user) {
                 Đang xử lý...
               </span>
             ) : (
-              "🚀 Đăng nhập ngay"
+              "Đăng nhập ngay"
             )}
           </button>
         </form>

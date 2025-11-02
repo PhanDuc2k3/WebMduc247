@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ thêm
+import { useNavigate } from "react-router-dom";
 import messageApi from "../../../api/messageApi";
 import { useChat } from "../../../context/chatContext";
 
@@ -27,10 +27,10 @@ export default function ChatList({
 }: Props) {
   const [chats, setChats] = useState<Chat[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const { socket, unreadMessages, setUnreadMessages, onlineUsers, setOnlineUsers } = useChat();
-  const navigate = useNavigate(); // ✅ thêm
+  const { unreadMessages, setUnreadMessages, onlineUsers } = useChat();
+  const navigate = useNavigate();
 
-  // Fetch danh sách chat
+  // 📥 Fetch danh sách chat
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -40,40 +40,65 @@ export default function ChatList({
         const res = await messageApi.getUserConversations(currentUserId);
         console.log("[ChatList] API response:", res.data);
 
-        const mappedChats: Chat[] = (res.data as any[])
-          .map((conv) => {
-            const participants = conv.participants || [];
-            const participant = participants.find(
-              (p: any) => p._id !== currentUserId
-            );
+const mappedChats: Chat[] = (res.data as any[])
+  .map((conv) => {
+    console.log("[ChatList] Raw conversation:", conv);
 
-            if (!participant) return null;
+    const participants = conv.participants || [];
+    // ép kiểu về string để so sánh an toàn
+    const participant =
+      participants.find((p: any) => String(p._id) !== String(currentUserId)) ||
+      participants[0]; // fallback
 
-            const lastMsg =
-              conv.lastMessage?.text ||
-              conv.lastMessage?.content ||
-              (conv.lastMessage?.attachments?.length ? "[Đính kèm]" : "") ||
-              conv.lastMessage ||
-              "";
+    if (!participant) {
+      console.warn("[ChatList] ⚠️ Không tìm thấy participant trong conv:", conv._id);
+      return null;
+    }
 
-            const chat: Chat = {
-              conversationId:
-                conv.conversationId ||
-                conv._id?.toString() ||
-                "unknown_conversation",
-              name: participant.fullName || "Người dùng ẩn danh",
-              avatarUrl: participant.avatarUrl || "/default-avatar.png",
-              lastMessage: lastMsg,
-              participantId: participant._id,
-              online: false,
-            };
+    const lastMsg =
+      conv.lastMessage?.text ||
+      conv.lastMessage?.content ||
+      (conv.lastMessage?.attachments?.length ? "[Đính kèm]" : "") ||
+      conv.lastMessage ||
+      "";
 
-            return chat;
-          })
-          .filter((c): c is Chat => Boolean(c?.conversationId));
+    const chat: Chat = {
+      conversationId: conv._id?.toString() || conv.conversationId,
+      name: participant.fullName || participant.name || "Người dùng ẩn danh",
+      avatarUrl: participant.avatarUrl || "/default-avatar.png",
+      lastMessage: lastMsg,
+      participantId: participant._id,
+      online: Array.isArray(onlineUsers)
+        ? onlineUsers.includes(String(participant._id))
+        : false,
+    };
+
+    return chat;
+  })
+  .filter((c): c is Chat => Boolean(c?.conversationId));
+
 
         console.log("[ChatList] Mapped chats:", mappedChats);
-        setChats(mappedChats);
+
+        // ✅ Giữ lại trạng thái online từ danh sách cũ
+        setChats((prev) => {
+          const prevMap = new Map(prev.map((c) => [c.conversationId, c]));
+          const merged = mappedChats.map((chat) => {
+            const old = prevMap.get(chat.conversationId);
+            return old ? { ...chat, online: old.online } : chat;
+          });
+          return merged;
+        });
+
+        // ✅ Cập nhật tin chưa đọc
+        const unreadData: Record<string, number> = {};
+        res.data.forEach((conv: any) => {
+          const convId = conv.conversationId || conv._id?.toString();
+          if (convId && conv.unreadCount > 0) {
+            unreadData[convId] = conv.unreadCount;
+          }
+        });
+        setUnreadMessages((prev) => ({ ...prev, ...unreadData }));
       } catch (err) {
         console.error("[ChatList] Fetch chats error:", err);
       } finally {
@@ -82,23 +107,12 @@ export default function ChatList({
     };
 
     fetchChats();
-  }, [currentUserId, onlineUsers]);
+  }, [currentUserId]);
 
-  // Kết nối socket & nhận danh sách online
-  useEffect(() => {
-    if (!socket) return;
-    if (!socket.connected) socket.connect();
-    if (currentUserId) socket.emit("user_connected", currentUserId);
-
-    socket.on("update_online_users", (users: string[]) => setOnlineUsers(users));
-    return () => {
-      socket.off("update_online_users");
-    };
-  }, [socket, currentUserId]);
-
-  // ✅ Cập nhật online realtime
+  // 🔁 Cập nhật trạng thái online realtime
   useEffect(() => {
     if (!onlineUsers) return;
+    console.log("[ChatList] Updating chat online status, online users:", onlineUsers);
     setChats((prev) =>
       prev.map((c) => ({
         ...c,
@@ -107,26 +121,26 @@ export default function ChatList({
     );
   }, [onlineUsers]);
 
-  // ✅ Chọn chat và cập nhật URL
+  // 🖱 Chọn chat
   const handleSelectChat = (chat: Chat) => {
     if (!chat.conversationId) return;
 
     console.log("[ChatList] 🖱 Chọn chat:", chat);
     onSelectChat(chat);
 
-    // Cập nhật URL
     navigate(`/messages/${chat.conversationId}`);
 
-    // Reset tin chưa đọc
+    // reset tin chưa đọc
     setUnreadMessages((prev) => ({
       ...prev,
       [chat.conversationId]: 0,
     }));
   };
 
-  // UI
+  // 🧩 UI
   return (
     <div className="w-1/3 bg-white border-r-2 border-gray-200 overflow-hidden flex flex-col">
+      {/* Header */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 border-b-2 border-gray-200">
         <h2 className="text-2xl font-bold text-white flex items-center gap-3">
           <span>💬</span> Tin nhắn
@@ -134,6 +148,7 @@ export default function ChatList({
         <p className="text-white/90 text-sm mt-1">{chats.length} cuộc trò chuyện</p>
       </div>
 
+      {/* Body */}
       <div className="flex-1 overflow-y-auto">
         {loading ? (
           <div className="p-8 text-center animate-fade-in">
@@ -164,9 +179,11 @@ export default function ChatList({
                   alt={chat.name}
                   className="w-14 h-14 rounded-full object-cover border-3 border-white shadow-lg"
                 />
-                {chat.online && (
-                  <span className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white rounded-full shadow-lg"></span>
-                )}
+                <span
+                  className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 border-2 border-white rounded-full shadow-lg ${
+                    chat.online ? "bg-green-500" : "bg-gray-400"
+                  }`}
+                ></span>
               </div>
 
               <div className="flex-1 relative">

@@ -1,6 +1,8 @@
 import { io, type Socket } from "socket.io-client";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL || 
+  "http://localhost:5050";
 
 let socket: Socket;
 

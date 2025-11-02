@@ -26,6 +26,9 @@ const messageApi = {
 
   getOrCreateConversation: (payload: { senderId: string; receiverId: string }) =>
     axiosClient.post("/api/messages/conversation", payload),
+
+  markAsRead: (conversationId: string, userId: string) =>
+    axiosClient.post(`/api/messages/mark-read/${conversationId}`, { userId }),
 };
 
 export default messageApi;

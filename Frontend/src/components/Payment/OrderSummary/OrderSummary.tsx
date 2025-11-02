@@ -200,7 +200,6 @@ const orderPayload: CreateOrderData = {
   if (loading) {
     return (
       <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 text-center animate-fade-in">
-        <div className="text-4xl mb-4 animate-pulse">💳</div>
         <p className="text-gray-600 text-lg font-medium">Đang tải tóm tắt đơn hàng...</p>
       </div>
     );
@@ -209,7 +208,6 @@ const orderPayload: CreateOrderData = {
   if (!cart) {
     return (
       <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 text-center animate-fade-in">
-        <div className="text-4xl mb-4">❌</div>
         <p className="text-red-500 text-lg font-medium">Không lấy được dữ liệu giỏ hàng</p>
       </div>
     );
@@ -219,7 +217,7 @@ const orderPayload: CreateOrderData = {
     <div className="bg-white rounded-2xl shadow-2xl border-2 border-gray-200 overflow-hidden sticky top-6">
       <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 border-b-2 border-gray-200">
         <h2 className="text-2xl font-bold text-white flex items-center gap-3">
-          <span>💰</span> Tóm tắt đơn hàng
+          Tóm tắt đơn hàng
         </h2>
         <p className="text-white/90 text-sm mt-1">Kiểm tra thông tin trước khi thanh toán</p>
       </div>
@@ -234,12 +232,11 @@ const orderPayload: CreateOrderData = {
           onClick={handleCheckout}
           className="w-full mt-6 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-2"
         >
-          <span className="text-2xl">💳</span>
           <span>Thanh toán ngay</span>
         </button>
         <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl mt-4">
           <p className="text-yellow-800 text-sm font-semibold flex items-center gap-2">
-            <span>⚠️</span> Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi xác nhận
+            Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi xác nhận
           </p>
         </div>
       </div>

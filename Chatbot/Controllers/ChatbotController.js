@@ -4,6 +4,7 @@ const { GoogleGenAI } = require("@google/genai");
 const VectorStore = require("../models/VectorStore");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
+const Store = require("../models/Store");
 const cosineSim = require("../utils/cosineSim");
 const Redis = require("ioredis");
 
@@ -54,23 +55,45 @@ async function retrieveTopKProducts(queryVector, k = 5) {
   docs = docs.map((d) => ({ ...d._doc, score: cosineSim(queryVector, d.vector || []) }));
   const topK = docs.sort((a, b) => b.score - a.score).slice(0, k);
 
+  // Lấy toàn bộ thông tin sản phẩm từ database dựa vào docId
+  const productIds = topK.map((d) => d.docId).filter((id) => id);
+  const fullProducts = await Product.find({ _id: { $in: productIds }, isActive: true })
+    .populate('store', 'name logoUrl');
+
+  // Map lại để có đầy đủ thông tin
+  const enrichedProducts = topK.map((doc) => {
+    const fullProduct = fullProducts.find((p) => p._id.toString() === doc.docId.toString());
+    return {
+      ...doc,
+      metadata: fullProduct || doc.metadata, // dùng full product nếu có, nếu không dùng metadata từ vector
+    };
+  });
+
   // fallback nếu score quá thấp
   if (topK.every((d) => d.score < 0.2)) {
-    const allProducts = await Product.find({ isActive: true });
+    const allProducts = await Product.find({ isActive: true }).populate('store', 'name logoUrl');
     const directMatch = allProducts.filter((p) =>
       normalizeText(p.name).includes(normalizeText(queryVector.join(" ")))
     );
-    if (directMatch.length > 0) return directMatch.map((p) => ({ metadata: p, vector: [] }));
+    if (directMatch.length > 0) return directMatch.map((p) => ({ metadata: p, vector: [], score: 0.5 }));
   }
 
-  return topK.map((d) => d);
+  return enrichedProducts;
 }
 
 // ====== Detect Intent ======
 function isProductIntent(message) {
   const keywords = [
     "tìm", "xem", "mua", "iphone", "điện thoại", "laptop",
-    "tai nghe", "macbook", "truyện", "sách",
+    "tai nghe", "macbook", "truyện", "sách", "cửa hàng",
+    "store", "sản phẩm", "product",
+  ];
+  return keywords.some((k) => message.toLowerCase().includes(k));
+}
+
+function isStoreIntent(message) {
+  const keywords = [
+    "cửa hàng", "store", "shop", "nhà sách", "điện tử",
   ];
   return keywords.some((k) => message.toLowerCase().includes(k));
 }
@@ -97,7 +120,8 @@ async function chatWithGemini(req, res) {
   if (!message) return res.status(400).json({ reply: "Thiếu message!" });
 
   let action = "chat";
-  if (isProductIntent(message)) action = "find_product";
+  if (isStoreIntent(message)) action = "find_store";
+  else if (isProductIntent(message)) action = "find_product";
   if (userId && message.toLowerCase().includes("đơn hàng")) action = "check_order";
 
   try {
@@ -112,8 +136,22 @@ async function chatWithGemini(req, res) {
         const topProducts = await retrieveTopKProducts(queryVector, 5);
 
         const dataText = topProducts
-          .map((p) => `• ${p.metadata.name} (Brand: ${p.metadata.brand || "N/A"}, Category: ${p.metadata.category || "N/A"})`)
-          .join("\n");
+          .map((p) => {
+            const metadata = p.metadata || {};
+            const price = metadata.salePrice || metadata.price || 0;
+            const discount = metadata.salePrice ? Math.round((1 - metadata.salePrice / metadata.price) * 100) : 0;
+            const storeName = metadata.store?.name || "N/A";
+            
+            return `• ${metadata.name}
+  - Thương hiệu: ${metadata.brand || "N/A"}
+  - Danh mục: ${metadata.category || "N/A"}${metadata.subCategory ? ` (${metadata.subCategory})` : ""}
+  - Giá: ${price.toLocaleString('vi-VN')}đ${discount > 0 ? ` (Giảm ${discount}%)` : ""}
+  - Đánh giá: ⭐ ${metadata.rating?.toFixed(1) || 0} (${metadata.reviewsCount || 0} đánh giá)
+  - Đã bán: ${metadata.soldCount || 0}
+  - Cửa hàng: ${storeName}
+  - Tồn kho: ${metadata.quantity || 0}${metadata.description ? `\n  - Mô tả: ${metadata.description.substring(0, 100)}${metadata.description.length > 100 ? '...' : ''}` : ""}`;
+          })
+          .join("\n\n");
 
         const prompt = `
 Bạn là chatbot e-commerce. 
@@ -124,7 +162,7 @@ Dữ liệu sản phẩm:
 ${dataText || "Không có sản phẩm nào phù hợp."}
 
 Người dùng hỏi: "${message}"
-Hãy trả lời ngắn gọn, thân thiện, tập trung vào gợi ý sản phẩm.
+Hãy trả lời ngắn gọn, thân thiện, tập trung vào gợi ý sản phẩm. Nhấn mạnh thông tin giá cả, đánh giá và cửa hàng.
         `;
 
         const chatRes = await ai.models.generateContent({
@@ -158,15 +196,98 @@ Hãy trả lời ngắn gọn, thân thiện, tập trung vào gợi ý sản ph
         if (!orders.length) {
           reply = "Bạn chưa có đơn hàng nào.";
         } else {
+          const statusMap = {
+            pending: "Chờ xác nhận",
+            confirmed: "Đã xác nhận",
+            packed: "Đã đóng gói",
+            shipped: "Đang vận chuyển",
+            delivered: "Đã giao hàng",
+            cancelled: "Đã hủy",
+          };
+          
+          const paymentStatusMap = {
+            pending: "Chưa thanh toán",
+            paid: "Đã thanh toán",
+            failed: "Thanh toán thất bại",
+          };
+
           reply = "Các đơn hàng gần đây của bạn:\n" + orders
-            .map((o) => `• Mã: ${o._id}, Trạng thái: ${o.status}, Ngày: ${o.createdAt.toLocaleString()}`)
-            .join("\n");
+            .map((o) => {
+              const currentStatus = o.statusHistory[o.statusHistory.length - 1]?.status || "pending";
+              const statusText = statusMap[currentStatus] || currentStatus;
+              const paymentStatus = paymentStatusMap[o.paymentInfo?.status] || "N/A";
+              return `• Mã: ${o.orderCode}\n  Trạng thái: ${statusText}\n  Thanh toán: ${paymentStatus}\n  Tổng tiền: ${o.total.toLocaleString('vi-VN')}đ\n  Ngày: ${o.createdAt.toLocaleString('vi-VN')}`;
+            })
+            .join("\n\n");
         }
 
         await saveChatHistory(userId, "user", message);
         await saveChatHistory(userId, "bot", reply);
 
         return res.json({ reply, orders });
+      }
+
+      // --- FIND STORE ---
+      case "find_store": {
+        const stores = await Store.find({ isActive: true });
+
+        if (!stores.length) {
+          reply = "Hiện tại không có cửa hàng nào hoạt động.";
+          return res.json({ reply, stores: [] });
+        }
+
+        const dataText = stores
+          .map((s) => {
+            const categoryMap = {
+              electronics: "Điện tử & Công nghệ",
+              fashion: "Thời trang",
+              home: "Đồ gia dụng",
+              books: "Sách & Văn phòng phẩm",
+              other: "Khác",
+            };
+            
+            return `• ${s.name}
+  - Danh mục: ${categoryMap[s.category] || s.category}${s.customCategory ? ` (${s.customCategory})` : ""}
+  - Mô tả: ${s.description}
+  - Địa chỉ: ${s.storeAddress}
+  - Đánh giá: ⭐ ${s.rating?.toFixed(1) || 0}${s.contactPhone ? `\n  - Liên hệ: ${s.contactPhone}` : ""}`;
+          })
+          .join("\n\n");
+
+        const prompt = `
+Bạn là chatbot e-commerce. 
+Lịch sử trò chuyện:
+${historyText || "(Không có tin nhắn trước đó)"}
+
+Danh sách cửa hàng:
+${dataText}
+
+Người dùng hỏi: "${message}"
+Hãy giới thiệu các cửa hàng phù hợp một cách ngắn gọn, thân thiện.
+        `;
+
+        const chatRes = await ai.models.generateContent({
+          model: chatModelName,
+          contents: prompt,
+          config: { temperature: 0.3 },
+        });
+
+        reply = chatRes.text || reply;
+
+        if (userId) {
+          await saveChatHistory(userId, "user", message);
+          await saveChatHistory(userId, "bot", reply);
+        }
+
+        return res.json({
+          reply,
+          stores: stores.map((s) => ({
+            id: s._id,
+            name: s.name,
+            category: s.category,
+            description: s.description,
+          })),
+        });
       }
 
       // --- DEFAULT CHAT ---

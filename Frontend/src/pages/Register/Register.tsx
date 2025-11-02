@@ -43,7 +43,7 @@ const handleRegister = async (e: React.FormEvent) => {
     });
 
     // Hiển thị toast và chờ toast tắt mới navigate
-    toast.success(res.data.message || "Đăng ký thành công 🎉", {
+    toast.success(res.data.message || "Đăng ký thành công", {
       autoClose: 1500, // thời gian toast hiển thị
       onClose: () => {
         navigate("/login"); // chuyển hướng sau khi toast tắt
@@ -73,7 +73,7 @@ const handleRegister = async (e: React.FormEvent) => {
             ShopMDuc247
           </h1>
           <p className="text-gray-600 text-center text-lg">
-            Tạo tài khoản mới ngay hôm nay! 🎉
+            Tạo tài khoản mới ngay hôm nay!
           </p>
         </div>
 
@@ -95,7 +95,7 @@ const handleRegister = async (e: React.FormEvent) => {
                   navigate("/login");
                 }}
               >
-                🔐 Đăng nhập
+                Đăng nhập
               </button>
               <button
                 className={`w-1/2 py-3 text-center font-bold rounded-xl transition-all duration-300 ${
@@ -108,7 +108,7 @@ const handleRegister = async (e: React.FormEvent) => {
                   navigate("/register");
                 }}
               >
-                ✨ Đăng ký
+                Đăng ký
               </button>
             </div>
           </div>
@@ -233,7 +233,7 @@ const handleRegister = async (e: React.FormEvent) => {
                   Đang xử lý...
                 </span>
               ) : (
-                "✨ Đăng ký ngay"
+                "Đăng ký ngay"
               )}
             </button>
           </form>

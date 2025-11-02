@@ -3,6 +3,7 @@ import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import messageApi from "../../../api/messageApi";
 import { useChat } from "../../../context/chatContext";
 import { useLocation } from "react-router-dom";
+import { getSocket } from "../../../socket";
 
 interface ChatWindowProps {
   conversationId: string;
@@ -44,14 +45,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const { socket } = useChat();
   const location = useLocation();
+  const socket = getSocket();
+  const { setUnreadMessages } = useChat();
 
   useEffect(() => {
     if (location.state?.initialMessages?.length) {
       setMessages(location.state.initialMessages);
+      
+      // Mark as read when opening from initial messages
+      const markAsRead = async () => {
+        if (!conversationId || conversationId === "temp") return;
+        try {
+          await messageApi.markAsRead(conversationId, currentUserId);
+          setUnreadMessages((prev) => ({ ...prev, [conversationId]: 0 }));
+        } catch (err) {
+          console.error("[ChatWindow] Error marking as read:", err);
+        }
+      };
+      markAsRead();
     }
-  }, [location.state]);
+  }, [location.state, conversationId, currentUserId, setUnreadMessages]);
 
   useEffect(() => {
     if (!conversationId || conversationId === "temp") return;
@@ -61,12 +75,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       try {
         const res = await messageApi.getMessages(conversationId);
         setMessages(res.data);
+        
+        // Mark messages as read when opening chat
+        try {
+          await messageApi.markAsRead(conversationId, currentUserId);
+          setUnreadMessages((prev) => ({ ...prev, [conversationId]: 0 }));
+        } catch (err) {
+          console.error("[ChatWindow] Error marking as read:", err);
+        }
       } catch (err) {
         console.error("[ChatWindow]  Lỗi fetch messages:", err);
       }
     };
     fetchMessages();
-  }, [conversationId]);
+  }, [conversationId, currentUserId, setUnreadMessages]);
 
 useEffect(() => {
   if (!conversationId || !socket) return;

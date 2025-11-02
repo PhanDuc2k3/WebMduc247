@@ -4,8 +4,9 @@ const http = require("http");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const { Server } = require("socket.io");
+const path = require("path");
 
-dotenv.config();
+dotenv.config({ path: path.join(__dirname, ".env") });
 
 const app = express();
 app.use(cors({

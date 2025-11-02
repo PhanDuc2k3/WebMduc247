@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import { Heart } from "lucide-react";
 import { Link } from "react-router-dom";
+import FavoriteButton from "../../Favorite/FavoriteButton";
 
 interface Product {
   _id: string;
@@ -51,15 +51,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </>
         )}
 
-        <button className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm rounded-full p-2 shadow-lg hover:bg-red-50 transition-all duration-300 group-hover:scale-110 z-20">
-          <Heart size={18} className="text-red-500 group-hover:fill-red-500 transition-all duration-300" />
-        </button>
+        <div className="absolute top-3 right-3 z-20">
+          <FavoriteButton productId={product._id} />
+        </div>
 
         <Link
           to={`/products/${product._id}`}
           className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-sm font-bold px-6 py-2 rounded-full opacity-0 transform translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 hover:from-orange-600 hover:to-orange-700 shadow-xl z-20"
         >
-          Xem chi tiết →
+          Xem
         </Link>
       </div>
 

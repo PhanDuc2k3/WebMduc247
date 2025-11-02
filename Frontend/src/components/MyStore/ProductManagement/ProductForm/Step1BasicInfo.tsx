@@ -12,7 +12,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
   return (
     <div className="animate-fade-in-up">
       <h2 className="text-2xl font-bold mb-6 gradient-text flex items-center gap-2">
-        <span>📋</span> Thông tin cơ bản
+        Thông tin cơ bản
       </h2>
       
       <div className="space-y-6">
@@ -31,7 +31,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              <span>🏷️</span> Thương hiệu
+              Thương hiệu
             </label>
             <input
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
@@ -42,7 +42,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              <span>📱</span> Model
+              Model
             </label>
             <input
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
@@ -56,7 +56,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              <span>📂</span> Danh mục
+              Danh mục
             </label>
             <input
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
@@ -67,7 +67,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              <span>🔖</span> Danh mục con
+              Danh mục con
             </label>
             <input
               className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
@@ -81,7 +81,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              <span>💰</span> Giá bán <span className="text-red-500">*</span>
+              Giá bán <span className="text-red-500">*</span>
             </label>
             <input
               type="number"
@@ -93,7 +93,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
           </div>
           <div>
             <label className="block text-sm font-bold text-gray-700 mb-2">
-              <span>🏷️</span> Giá giảm giá (nếu có)
+              Giá giảm giá (nếu có)
             </label>
             <input
               type="number"
@@ -107,7 +107,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
 
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">
-            <span>📝</span> Mô tả sản phẩm
+            Mô tả sản phẩm
           </label>
           <textarea
             rows={4}
@@ -124,7 +124,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
           className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           onClick={() => setStep(2)}
         >
-          Tiếp tục <span>➡️</span>
+          Tiếp tục
         </button>
       </div>
     </div>

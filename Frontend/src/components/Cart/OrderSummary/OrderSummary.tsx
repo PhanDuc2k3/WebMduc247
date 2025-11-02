@@ -47,7 +47,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl border-2 border-gray-200 p-6 lg:p-8 animate-fade-in-right">
       <div className="flex items-center gap-3 mb-6">
-        <span className="text-3xl">📋</span>
         <h2 className="text-2xl font-bold text-gray-900 gradient-text">Tóm tắt đơn hàng</h2>
       </div>
 
@@ -55,14 +54,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <div className="space-y-4 mb-6">
         <div className="flex justify-between items-center p-4 bg-blue-50 rounded-xl border border-blue-200">
           <span className="text-gray-700 font-semibold flex items-center gap-2">
-            <span>💰</span> Tạm tính
+            Tạm tính
           </span>
           <span className="font-bold text-lg text-gray-900">{formatPrice(subtotal)}</span>
         </div>
 
         <div className="flex justify-between items-center p-4 bg-red-50 rounded-xl border border-red-200">
           <span className="text-gray-700 font-semibold flex items-center gap-2">
-            <span>🎁</span> Giảm giá
+            Giảm giá
           </span>
           <span className="font-bold text-lg text-red-600">
             {discount > 0 ? `-${formatPrice(discount)}` : "0₫"}
@@ -73,10 +72,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           shippingFee > 0 ? "bg-green-50 border-green-200" : "bg-purple-50 border-purple-200"
         }`}>
           <span className="text-gray-700 font-semibold flex items-center gap-2">
-            <span>🚚</span> Phí vận chuyển
+            Phí vận chuyển
           </span>
           <span className={`font-bold text-lg ${shippingFee > 0 ? "text-green-600" : "text-purple-600"}`}>
-            {shippingFee > 0 ? formatPrice(shippingFee) : "✨ Miễn phí"}
+            {shippingFee > 0 ? formatPrice(shippingFee) : "Miễn phí"}
           </span>
         </div>
       </div>
@@ -85,7 +84,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <div className="border-t-2 border-gray-300 pt-6 mb-6">
         <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-300">
           <span className="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <span>💳</span> Tổng cộng
+            Tổng cộng
           </span>
           <span className="text-2xl font-extrabold text-red-600">{formatPrice(total)}</span>
         </div>
@@ -103,7 +102,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       >
         {selectedItems && selectedItems.length > 0 ? (
           <span className="flex items-center justify-center gap-2">
-            <span>💳</span> Thanh toán ({selectedItems.length} sản phẩm)
+            Thanh toán ({selectedItems.length} sản phẩm)
           </span>
         ) : (
           "Vui lòng chọn sản phẩm"
@@ -113,7 +112,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       {/* Additional info */}
       <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
         <p className="text-xs text-yellow-800 flex items-center gap-2">
-          <span>⚠️</span>
           <span>Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi thanh toán</span>
         </p>
       </div>

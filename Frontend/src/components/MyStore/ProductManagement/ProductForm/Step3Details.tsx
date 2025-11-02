@@ -51,27 +51,26 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
   return (
     <div className="animate-fade-in-up">
       <h2 className="text-2xl font-bold mb-6 gradient-text flex items-center gap-2">
-        <span>🎨</span> Chi tiết & Biến thể
+        Chi tiết & Biến thể
       </h2>
 
       {/* 🔹 Biến thể sản phẩm */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-6">
           <label className="text-lg font-bold text-gray-700 flex items-center gap-2">
-            <span>🔀</span> Biến thể sản phẩm
+            Biến thể sản phẩm
           </label>
           <button
             onClick={addVariation}
             type="button"
             className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           >
-            <span>➕</span> Thêm biến thể
+            Thêm biến thể
           </button>
         </div>
 
         {formData.variations.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
-            <div className="text-6xl mb-4">🎨</div>
             <p className="text-gray-600 font-medium">Chưa có biến thể nào</p>
             <p className="text-sm text-gray-400 mt-2">Nhấn "Thêm biến thể" để bắt đầu</p>
           </div>
@@ -87,7 +86,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <label className="block text-sm font-bold text-gray-700 mb-2">
-                      <span>🏷️</span> Loại sản phẩm:
+                      Loại sản phẩm:
                     </label>
                     <input
                       placeholder="VD: Màu sắc, chất liệu, kích thước..."
@@ -101,7 +100,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                     type="button"
                     className="ml-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
                   >
-                    <span>🗑️</span> Xóa
+                    Xóa
                   </button>
                 </div>
 
@@ -120,7 +119,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div>
                             <label className="block text-xs font-bold text-gray-700 mb-2">
-                              <span>📝</span> Tên tùy chọn
+                              Tên tùy chọn
                             </label>
                             <input
                               placeholder="VD: 128GB, XL, 500g"
@@ -134,7 +133,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
 
                           <div>
                             <label className="block text-xs font-bold text-gray-700 mb-2">
-                              <span>💰</span> Giá cộng thêm
+                              Giá cộng thêm
                             </label>
                             <input
                               type="number"
@@ -154,7 +153,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
 
                           <div>
                             <label className="block text-xs font-bold text-gray-700 mb-2">
-                              <span>📦</span> Số lượng tồn
+                              Số lượng tồn
                             </label>
                             <input
                               type="number"
@@ -177,7 +176,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                   onClick={() => addOption(i)}
                   className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm"
                 >
-                  <span>➕</span> Thêm tùy chọn
+                  Thêm tùy chọn
                 </button>
               </div>
             ))}
@@ -192,14 +191,14 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
           className="bg-gradient-to-r from-gray-400 to-gray-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           onClick={() => setStep(2)}
         >
-          <span>⬅️</span> Quay lại
+          Quay lại
         </button>
         <button
           type="button"
           className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           onClick={() => setStep(4)}
         >
-          Tiếp tục <span>➡️</span>
+          Tiếp tục
         </button>
       </div>
     </div>
