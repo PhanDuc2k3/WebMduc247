@@ -19,6 +19,7 @@ import Message from "./pages/Messages/Message";
 import Product from "./pages/ProductList/ProductList";
 import NewPage from "./pages/New/NewPage"
 import SupportPage from "./pages/Support/SupportPage"
+import Whitelist from "./pages/Whitelist/Whitelist"
 
 const AppRouter = () => (
   <Routes>
@@ -43,6 +44,7 @@ const AppRouter = () => (
       <Route path="/products" element={<Product />} />
       <Route path="/new" element={<NewPage />} />
       <Route path="/support" element={<SupportPage/>}/>
+      <Route path="/whitelist" element={<Whitelist />} />
     </Route>
 
     <Route path="/s" element={<Navigate to="/login" />} />

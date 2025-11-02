@@ -45,10 +45,10 @@ export default function OrderStatus({ statusHistory }: OrderStatusProps) {
       <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <span>📦</span> Trạng thái đơn hàng
+            Trạng thái đơn hàng
           </h2>
           <span className="px-4 py-2 text-sm font-bold rounded-full bg-gradient-to-r from-orange-100 to-yellow-100 border-2 border-orange-300 text-orange-700">
-            {steps.find((s) => !s.done)?.title || "✅ Hoàn tất"}
+            {steps.find((s) => !s.done)?.title || "Hoàn tất"}
           </span>
         </div>
       </div>

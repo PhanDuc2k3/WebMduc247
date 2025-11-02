@@ -49,10 +49,10 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
 
       if (!res.ok) throw new Error(data.message || "Cập nhật thất bại");
 
-      alert("✅ Cập nhật trạng thái đơn hàng thành công!");
+      alert("Cập nhật trạng thái đơn hàng thành công!");
     } catch (err: any) {
-      console.error("🔥 Lỗi cập nhật đơn hàng:", err);
-      alert(`❌ Lỗi: ${err.message}`);
+      console.error("Lỗi cập nhật đơn hàng:", err);
+      alert(`Lỗi: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
     <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
       <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <span>⚙️</span> Cập nhật đơn hàng
+          Cập nhật đơn hàng
         </h2>
         <p className="text-gray-600 text-sm mt-1">Chỉnh sửa trạng thái đơn hàng</p>
       </div>
@@ -70,7 +70,7 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
         {/* Chọn trạng thái */}
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">
-            <span>📋</span> Trạng thái đơn hàng
+            Trạng thái đơn hàng
           </label>
           <select
             value={status}
@@ -88,7 +88,7 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
         {/* Ghi chú */}
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">
-            <span>📝</span> Ghi chú
+            Ghi chú
           </label>
           <textarea
             value={note}
@@ -112,12 +112,10 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
           >
             {loading ? (
               <>
-                <span className="animate-spin">⏳</span>
                 <span>Đang cập nhật...</span>
               </>
             ) : (
               <>
-                <span>💾</span>
                 <span>Cập nhật đơn hàng</span>
               </>
             )}
@@ -127,7 +125,7 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
             onClick={() => window.print()}
             className="w-full px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-600 text-white text-sm font-bold rounded-xl hover:from-gray-500 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
           >
-            <span>🖨️</span> In hóa đơn
+            <span>In hóa đơn</span>
           </button>
         </div>
       </div>

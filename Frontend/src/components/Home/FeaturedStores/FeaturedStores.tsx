@@ -3,11 +3,13 @@ import StoreCard from "./StoreCard";
 import storeApi from "../../../api/storeApi";
 import type { StoreType } from "../../../types/store";
 import { useNavigate } from "react-router-dom";
+import { useChat } from "../../../context/chatContext";
 
 const FeaturedStores: React.FC = () => {
   const [stores, setStores] = useState<StoreType[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { onlineStores } = useChat();
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -83,6 +85,7 @@ const FeaturedStores: React.FC = () => {
               createdAt={store.createdAt}
               isActive={store.isActive}
               customCategory={store.customCategory}
+              isOnline={onlineStores.includes(store._id)}
             />
           </div>
         ))}

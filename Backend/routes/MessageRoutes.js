@@ -6,6 +6,7 @@ const {
   sendMessage,
   getMessages,
   getUserConversations,
+  markMessagesAsRead,
 } = require("../controllers/Messages");
 
 // 🟩 Lấy danh sách hội thoại của user
@@ -25,5 +26,8 @@ router.post(
 
 // 🟩 Lấy tất cả tin nhắn trong 1 conversation
 router.get("/:conversationId", getMessages);
+
+// 🟩 Đánh dấu tin nhắn đã đọc
+router.post("/mark-read/:conversationId", markMessagesAsRead);
 
 module.exports = router;

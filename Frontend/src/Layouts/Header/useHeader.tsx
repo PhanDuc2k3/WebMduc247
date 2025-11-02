@@ -31,7 +31,6 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
   const [lastSeen, setLastSeen] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
-  const socket = getSocket();
 
   // --- fetch user profile
   const fetchUser = async () => {
@@ -74,20 +73,11 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
 
   // --- Socket online status
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!user._id) return;
 
-    let userId: string | null = null;
-    try {
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      userId = payload.userId || payload.id || payload.sub;
-    } catch (err) {
-      console.warn("[UserContext] token parse error", err);
-    }
-    if (!userId) return;
-
+    const socket = getSocket();
     if (!socket.connected) socket.connect();
-    socket.emit("joinUser", userId);
+    socket.emit("user_connected", user._id);
 
     const handler = (data: { online: boolean; lastSeen: string }) => {
       setOnline(data.online);
@@ -98,13 +88,14 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
     return () => {
       if (socket && typeof socket.off === "function") socket.off("userOnlineStatus", handler);
     };
-  }, [socket]);
+  }, [user._id]);
 
   // --- Logout
   const handleLogout = () => {
     const userLocal = JSON.parse(localStorage.getItem("user") || "{}");
     const userId = userLocal._id || userLocal.id;
 
+    const socket = getSocket();
     if (socket && socket.connected && userId) socket.emit("user_disconnected", userId);
     setTimeout(() => socket.disconnect(), 300);
 

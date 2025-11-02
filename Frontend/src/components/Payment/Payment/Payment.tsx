@@ -22,7 +22,7 @@ const Payment: React.FC<PaymentProps> = ({ onChange }) => {
     <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
       <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
         <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <span>💳</span> Phương thức thanh toán
+          Phương thức thanh toán
         </h2>
         <p className="text-gray-600 text-sm mt-1">Chọn cách thanh toán</p>
       </div>
@@ -49,9 +49,6 @@ const Payment: React.FC<PaymentProps> = ({ onChange }) => {
               className="mr-4 w-5 h-5 cursor-pointer"
             />
             <span className="font-bold text-lg text-gray-900">
-              {method.id === "cod" && "💰 "}
-              {method.id === "momo" && "💗 "}
-              {method.id === "vnpay" && "🦄 "}
               {method.label}
             </span>
           </label>

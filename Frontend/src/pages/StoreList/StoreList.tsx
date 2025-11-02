@@ -4,11 +4,13 @@ import StoreGrid from "../../components/StoreList/StoreGrid";
 import StoreLoading from "../../components/StoreList/StoreLoading";
 import type { StoreType } from "../../types/store";
 import storeApi from "../../api/storeApi"; // dùng API đã tách
+import { useChat } from "../../context/chatContext";
 
 const StoreList: React.FC = () => {
   const [stores, setStores] = useState<StoreType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const { onlineStores } = useChat();
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -16,17 +18,20 @@ const StoreList: React.FC = () => {
         const res = await storeApi.getAllActiveStores();
         const data = res.data; // axios trả về data trong res.data
 
-        const mappedStores: StoreType[] = data.stores.map((s: any) => ({
-          _id: s._id,
-          owner: { _id: s.owner?._id || "" },
-          name: s.name,
-          description: s.description,
-          join: `Tham gia từ ${new Date(s.createdAt).getFullYear()}`,
-          status: s.isActive ? "Đang online" : "Offline",
-          tags: s.category ? [s.category] : [],
-          logoUrl: s.logoUrl,
-          bannerUrl: s.bannerUrl,
-        }));
+        const mappedStores: StoreType[] = data.stores.map((s: any) => {
+          // Note: Real online status will be updated via socket
+          return {
+            _id: s._id,
+            owner: { _id: s.owner?._id || "" },
+            name: s.name,
+            description: s.description,
+            join: `Tham gia từ ${new Date(s.createdAt).getFullYear()}`,
+            status: s.isActive ? "Đang online" : "Offline",
+            tags: s.category ? [s.category] : [],
+            logoUrl: s.logoUrl,
+            bannerUrl: s.bannerUrl,
+          };
+        });
 
         setStores(mappedStores);
       } catch (err) {
@@ -70,7 +75,7 @@ const StoreList: React.FC = () => {
 
       <div className="animate-fade-in-up delay-300">
         {filteredStores.length > 0 ? (
-          <StoreGrid stores={filteredStores} />
+          <StoreGrid stores={filteredStores} onlineStores={onlineStores} />
         ) : (
           <div className="text-center py-16 animate-fade-in">
             <div className="text-6xl mb-4">🏪</div>

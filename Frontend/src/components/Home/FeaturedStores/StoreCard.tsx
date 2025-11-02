@@ -2,10 +2,12 @@ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../../api/axiosClient";
 import type { StoreType } from "../../../types/store";
+import FavoriteButton from "../../Favorite/FavoriteButton";
 
 interface StoreCardProps extends Partial<StoreType> {
   storeId: string;
   ownerId?: string; // ID chủ cửa hàng
+  isOnline?: boolean; // Real-time online status from socket
 }
 
 const StoreCard: React.FC<StoreCardProps> = ({
@@ -18,6 +20,7 @@ const StoreCard: React.FC<StoreCardProps> = ({
   createdAt,
   isActive,
   customCategory,
+  isOnline = false,
 }) => {
   const navigate = useNavigate();
 
@@ -96,7 +99,9 @@ const StoreCard: React.FC<StoreCardProps> = ({
 
   // 🕒 Thông tin hiển thị
   const joinDate = createdAt ? new Date(createdAt).toLocaleDateString() : "—";
-  const statusText = isActive ? "Đang online" : "Offline";
+  // Use real-time online status if available, otherwise fallback to isActive
+  const showOnline = isOnline !== undefined ? isOnline : isActive;
+  const statusText = showOnline ? "Đang online" : "Offline";
   const tags = customCategory ? [customCategory] : [];
 
   if (!storeId) {
@@ -105,7 +110,7 @@ const StoreCard: React.FC<StoreCardProps> = ({
   }
 
   return (
-    <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-md hover:shadow-2xl hover:border-blue-400 transition-all duration-500 p-6 flex flex-col overflow-hidden min-w-[250px] transform hover:-translate-y-2 animate-scale-in group">
+    <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-md hover:shadow-2xl hover:border-blue-400 transition-all duration-500 p-6 flex flex-col overflow-hidden min-w-[250px] transform hover:-translate-y-2 animate-scale-in group relative">
       {bannerUrl && (
         <div className="h-32 w-full overflow-hidden rounded-xl mb-4 relative">
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
@@ -115,6 +120,14 @@ const StoreCard: React.FC<StoreCardProps> = ({
             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
             loading="lazy"
           />
+          <div className="absolute top-2 right-2 z-20">
+            <FavoriteButton storeId={storeId} />
+          </div>
+        </div>
+      )}
+      {!bannerUrl && (
+        <div className="absolute top-2 right-2 z-20">
+          <FavoriteButton storeId={storeId} />
         </div>
       )}
 
@@ -155,12 +168,12 @@ const StoreCard: React.FC<StoreCardProps> = ({
           ))}
           <span
             className={`text-xs px-3 py-1 rounded-full font-semibold shadow-sm transition-all duration-300 ${
-              isActive 
+              showOnline 
                 ? "bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 group-hover:from-green-200 group-hover:to-emerald-200" 
                 : "bg-gray-100 text-gray-600"
             }`}
           >
-            {isActive ? "🟢 " : "⚫ "}{statusText}
+            {showOnline ? "🟢 " : "⚫ "}{statusText}
           </span>
         </div>
 

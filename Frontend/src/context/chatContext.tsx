@@ -1,19 +1,17 @@
 // src/context/chatContext.tsx
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { io, type Socket } from "socket.io-client";
+import { getSocket } from "../socket";
 import { toast } from "react-toastify";
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
- // dev
-
 interface ChatContextType {
-  socket: Socket | null;
   unreadMessages: Record<string, number>;
   setUnreadMessages: React.Dispatch<React.SetStateAction<Record<string, number>>>;
   currentUserId: string | null;
   setCurrentUserId: React.Dispatch<React.SetStateAction<string | null>>;
   onlineUsers: string[];
   setOnlineUsers: React.Dispatch<React.SetStateAction<string[]>>;
+  onlineStores: string[];
+  setOnlineStores: React.Dispatch<React.SetStateAction<string[]>>;
   sendMessageNotification: (
     conversationId: string,
     message: string,
@@ -26,10 +24,10 @@ interface ChatContextType {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [socket, setSocket] = useState<Socket | null>(null);
   const [unreadMessages, setUnreadMessages] = useState<Record<string, number>>({});
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
+  const [onlineStores, setOnlineStores] = useState<string[]>([]);
   const [canPlayAudio, setCanPlayAudio] = useState(false);
 
   const [audio] = useState(() => new Audio("/sound/poppop.mp3"));
@@ -46,68 +44,55 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // Kết nối socket
-useEffect(() => {
-  console.log("[Chat] Connecting socket to:", SOCKET_URL);
-  const newSocket = io(SOCKET_URL, {
-    reconnection: true,
-    transports: ["websocket"],
-    withCredentials: true,
-  });
-
-  newSocket.on("connect", () => {
-    console.log("[Chat] ✅ Socket connected:", newSocket.id);
-  });
-
-  newSocket.on("connect_error", (err) => {
-    console.error("[Chat] ❌ Socket connect error:", err.message);
-  });
-
-  setSocket(newSocket);
-  return () => {
-    if (newSocket.connected) newSocket.disconnect();
-  };
-}, []);
-
-
   // Khi có currentUserId → emit user_connected + join user room
   useEffect(() => {
-    if (!socket || !currentUserId) return;
+    const socket = getSocket();
+    if (!currentUserId) return;
 
     const handleConnect = () => {
+      console.log("[ChatContext] Socket connected, emitting user_connected for:", currentUserId);
       socket.emit("user_connected", currentUserId);
       socket.emit("join_user_room", currentUserId);
       socket.emit("get_online_users");
     };
 
     socket.on("connect", handleConnect);
-    if (socket.connected) handleConnect();
+    if (socket.connected) {
+      console.log("[ChatContext] Socket already connected, calling handleConnect");
+      handleConnect();
+    }
 
     return () => {
       socket.off("connect", handleConnect);
     };
-  }, [socket, currentUserId]);
+  }, [currentUserId]);
 
-  // Theo dõi danh sách online
+  // Theo dõi danh sách online users và stores
   useEffect(() => {
-    if (!socket) return;
+    const socket = getSocket();
 
-    const handleOnlineUsers = (users: string[]) => setOnlineUsers(users);
-    const handleUserConnected = (userId: string) =>
-      setOnlineUsers((prev) => [...new Set([...prev, userId])]);
-    const handleUserDisconnected = (userId: string) =>
-      setOnlineUsers((prev) => prev.filter((id) => id !== userId));
+    const handleOnlineUsers = (users: string[]) => {
+      console.log("[ChatContext] Received online users:", users);
+      setOnlineUsers(users);
+    };
+
+    const handleOnlineStores = (stores: string[]) => {
+      console.log("[ChatContext] Received online stores:", stores);
+      setOnlineStores(stores);
+    };
 
     socket.on("update_online_users", handleOnlineUsers);
-    socket.on("user_connected", handleUserConnected);
-    socket.on("user_disconnected", handleUserDisconnected);
+    socket.on("update_online_stores", handleOnlineStores);
+
+    // Request initial online lists
+    socket.emit("get_online_users");
+    socket.emit("get_online_stores");
 
     return () => {
       socket.off("update_online_users", handleOnlineUsers);
-      socket.off("user_connected", handleUserConnected);
-      socket.off("user_disconnected", handleUserDisconnected);
+      socket.off("update_online_stores", handleOnlineStores);
     };
-  }, [socket]);
+  }, []);
 
   // Bật quyền play audio sau tương tác đầu tiên
   useEffect(() => {
@@ -131,7 +116,7 @@ useEffect(() => {
 
   // Nhận notify_message
   useEffect(() => {
-    if (!socket) return;
+    const socket = getSocket();
 
     const handleNotifyMessage = (data: {
       conversationId: string;
@@ -176,7 +161,7 @@ useEffect(() => {
     return () => {
       socket.off("notify_message", handleNotifyMessage);
     };
-  }, [socket, canPlayAudio, audio]);
+  }, [canPlayAudio, audio]);
 
   const sendMessageNotification = (
     conversationId: string,
@@ -185,6 +170,7 @@ useEffect(() => {
     senderName: string,
     recipientId?: string
   ) => {
+    const socket = getSocket();
     if (!socket || !socket.connected) return;
     socket.emit("send_message_notification", { conversationId, message, senderId, senderName, recipientId });
   };
@@ -192,13 +178,14 @@ useEffect(() => {
   return (
     <ChatContext.Provider
       value={{
-        socket,
         unreadMessages,
         setUnreadMessages,
         currentUserId,
         setCurrentUserId,
         onlineUsers,
         setOnlineUsers,
+        onlineStores,
+        setOnlineStores,
         sendMessageNotification,
       }}
     >

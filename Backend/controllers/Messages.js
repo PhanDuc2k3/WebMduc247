@@ -119,20 +119,59 @@ exports.getUserConversations = async (req, res) => {
       .populate("participants", "fullName avatarUrl _id")
       .lean();
 
-    const formattedConversations = conversations.map((conv) => {
-      const otherUser = conv.participants.find((p) => p._id.toString() !== userId);
-      return {
-        conversationId: conv._id,
-        lastMessage: conv.lastMessage || "",
-        participants: conv.participants,
-        name: otherUser?.fullName || "Người dùng",
-        avatarUrl: otherUser?.avatarUrl || "/default-avatar.png",
-        online: otherUser?.online || false,
-      };
-    });
+    // Calculate unread count for each conversation
+    const formattedConversations = await Promise.all(
+      conversations.map(async (conv) => {
+        const otherUser = conv.participants.find((p) => p._id.toString() !== userId);
+        
+        // Count unread messages (messages not read by current user)
+        const unreadCount = await Message.countDocuments({
+          conversationId: conv._id,
+          sender: { $ne: userId }, // Messages from other user
+          readBy: { $ne: userId }, // Not read by current user
+        });
+
+        return {
+          conversationId: conv._id,
+          lastMessage: conv.lastMessage || "",
+          participants: conv.participants,
+          name: otherUser?.fullName || "Người dùng",
+          avatarUrl: otherUser?.avatarUrl || "/default-avatar.png",
+          online: otherUser?.online || false,
+          unreadCount,
+        };
+      })
+    );
 
     res.status(200).json(formattedConversations);
   } catch (err) {
     res.status(500).json({ message: "Lỗi lấy danh sách hội thoại", error: err.message });
+  }
+};
+
+exports.markMessagesAsRead = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const { userId } = req.body;
+
+    if (!conversationId || !userId) {
+      return res.status(400).json({ message: "Thiếu conversationId hoặc userId" });
+    }
+
+    // Mark all unread messages in this conversation as read for this user
+    await Message.updateMany(
+      {
+        conversationId,
+        sender: { $ne: userId }, // Messages from other user
+        readBy: { $ne: userId }, // Not already read by this user
+      },
+      {
+        $addToSet: { readBy: userId },
+      }
+    );
+
+    res.status(200).json({ message: "Đã đánh dấu đã đọc" });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi đánh dấu đã đọc", error: err.message });
   }
 };

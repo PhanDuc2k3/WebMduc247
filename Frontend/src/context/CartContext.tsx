@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, type ReactNode } from "react";
-import { io, type Socket } from "socket.io-client";
 import axiosClient from "../api/axiosClient";
+import { getSocket } from "../socket";
 
 interface CartItem {
   productId: string;
@@ -28,9 +28,6 @@ interface Props {
   children: ReactNode;
 }
 
-// Socket init
-let socket: Socket | null = null;
-
 export const CartProvider: React.FC<Props> = ({ children }) => {
   const storedCart = localStorage.getItem("cart");
   const initialCart: CartItem[] = storedCart ? JSON.parse(storedCart) : [];
@@ -44,20 +41,20 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
   const [socketConnected, setSocketConnected] = useState(false);
 
   // --- Emit cart update via socket (queue if not connected)
-    const emitCartUpdate = (uid: string, cartData: CartItem[]) => {
-      const s = socket;
-      const count = cartData.reduce((sum, i) => sum + i.quantity, 0);
-      if (!s) return;
-  
-      if (!s.connected) {
-        s.once("connect", () => {
-          s.emit("cartUpdated", { userId: uid, cart: cartData, cartCount: count });
-        });
-        s.connect();
-      } else {
-        s.emit("cartUpdated", { userId: uid, cart: cartData, cartCount: count });
-      }
-    };
+  const emitCartUpdate = (uid: string, cartData: CartItem[]) => {
+    const socket = getSocket();
+    const count = cartData.reduce((sum, i) => sum + i.quantity, 0);
+    if (!socket) return;
+
+    if (!socket.connected) {
+      socket.once("connect", () => {
+        socket.emit("cartUpdated", { userId: uid, cart: cartData, cartCount: count });
+      });
+      socket.connect();
+    } else {
+      socket.emit("cartUpdated", { userId: uid, cart: cartData, cartCount: count });
+    }
+  };
 
   // --- Add to cart
   const addToCart = (item: CartItem) => {
@@ -136,19 +133,14 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
   useEffect(() => {
     if (!userId) return;
 
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:5050";
-
-if (!socket) {
-  socket = io(SOCKET_URL, { autoConnect: false });
-}
-
+    const socket = getSocket();
 
     if (!socket.connected) socket.connect();
 
     socket.on("connect", () => {
-      console.log("[Cart] Socket connected:", socket?.id);
+      console.log("[Cart] Socket connected:", socket.id);
       setSocketConnected(true);
-      socket?.emit("joinUserCart", userId);
+      socket.emit("joinUserCart", userId);
     });
 
     socket.on("disconnect", () => {
@@ -169,9 +161,9 @@ if (!socket) {
     fetchCart();
 
     return () => {
-      socket?.off("cartUpdated", handler);
-      socket?.off("connect");
-      socket?.off("disconnect");
+      socket.off("cartUpdated", handler);
+      socket.off("connect");
+      socket.off("disconnect");
     };
   }, [userId]);
 

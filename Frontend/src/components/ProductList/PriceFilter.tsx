@@ -67,7 +67,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
       {/* Thanh kéo chọn giá tối đa */}
       <div className="mb-6 p-4 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl border border-blue-100">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-semibold text-gray-700">💰 Khoảng giá:</span>
+          <span className="text-sm font-semibold text-gray-700">Khoảng giá:</span>
           <span className="font-bold text-lg text-blue-600">
             0 - {(price * 1_000_000).toLocaleString("vi-VN")}₫
           </span>
@@ -91,10 +91,10 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
       {/* Lọc nhanh theo mức giá cố định */}
       <div className="flex flex-col gap-2 mb-6">
         {[
-          { label: "Dưới 1 triệu", value: "duoi1tr", emoji: "💵" },
-          { label: "Từ 1 - 5 triệu", value: "1-5tr", emoji: "💴" },
-          { label: "Từ 5 - 10 triệu", value: "5-10tr", emoji: "💶" },
-          { label: "Trên 10 triệu", value: "tren10tr", emoji: "💷" },
+          { label: "Dưới 1 triệu", value: "duoi1tr" },
+          { label: "Từ 1 - 5 triệu", value: "1-5tr" },
+          { label: "Từ 5 - 10 triệu", value: "5-10tr" },
+          { label: "Trên 10 triệu", value: "tren10tr" },
         ].map((opt) => (
           <label
             key={opt.value}
@@ -112,7 +112,6 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
               onChange={(e) => setSelectedPrice(e.target.value)}
               className="accent-blue-500 w-4 h-4"
             />
-            <span className="text-xl">{opt.emoji}</span>
             <span className="text-sm font-medium flex-1">{opt.label}</span>
           </label>
         ))}
@@ -124,13 +123,13 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
           onClick={handleReset}
           className="w-full px-4 py-2.5 text-sm font-semibold rounded-xl border-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 shadow-sm hover:shadow-md"
         >
-          🔄 Xóa lọc
+          Xóa lọc
         </button>
         <button
           onClick={() => setIsPopupOpen(true)}
           className="w-full px-4 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 transition-all duration-300 shadow-md hover:shadow-lg transform hover:scale-105"
         >
-          ✨ Lọc khoảng giá tùy chỉnh
+          Lọc khoảng giá tùy chỉnh
         </button>
       </div>
 
@@ -140,20 +139,20 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
           <div className="bg-white rounded-2xl p-8 w-96 shadow-2xl animate-scale-in border border-gray-200">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-bold text-gray-900 gradient-text">
-                💰 Nhập khoảng giá
+                Nhập khoảng giá
               </h3>
               <button
                 onClick={() => setIsPopupOpen(false)}
                 className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all duration-300 text-gray-600 hover:text-gray-900"
               >
-                ✕
+                ×
               </button>
             </div>
 
             <div className="flex flex-col gap-5 mb-6">
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  💵 Giá tối thiểu
+                  Giá tối thiểu
                 </label>
                 <input
                   type="text"
@@ -165,7 +164,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                  💵 Giá tối đa
+                  Giá tối đa
                 </label>
                 <input
                   type="text"
