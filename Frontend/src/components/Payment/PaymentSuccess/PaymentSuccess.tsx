@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import orderApi from '../../../api/orderApi';
+import paymentApi from '../../../api/paymentApi';
 
 const PaymentSuccess: React.FC = () => {
   const [status, setStatus] = useState<'pending' | 'success' | 'fail'>('pending');
@@ -8,7 +10,7 @@ const PaymentSuccess: React.FC = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const orderCode = searchParams.get("orderCode"); // <-- dùng orderCode từ URL
+    const orderCode = searchParams.get("orderCode");
 
     if (!orderCode || !token) {
       setStatus("fail");
@@ -21,20 +23,18 @@ const PaymentSuccess: React.FC = () => {
     if (resultCode === "0") {
       const markPaid = async () => {
         try {
-          const res = await fetch(`http://localhost:5000/api/payment/mark-paid/${orderCode}`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.message || "Không thể mark paid");
+          const res = await paymentApi.markOrderPaid(orderCode);
+          const data = res.data;
           console.log("Order marked paid:", data);
           setStatus("success");
           localStorage.removeItem("lastOrderId");
           localStorage.removeItem("lastOrderCode");
           // redirect sang trang chi tiết đơn hàng
           setTimeout(() => navigate(`/order/${data.orderId}`), 1000);
-        } catch (err) {
+        } catch (err: any) {
           console.error("Mark paid failed:", err);
+          const errorMessage = err.response?.data?.message || err.message || "Không thể đánh dấu đã thanh toán";
+          alert(errorMessage);
           setStatus("fail");
         }
       };
@@ -48,24 +48,23 @@ const PaymentSuccess: React.FC = () => {
 
     const checkPayment = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/orders/code/${orderCode}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Không lấy được trạng thái");
+        const res = await orderApi.getOrderByCode(orderCode);
+        const data = res.data;
 
         if (data.paymentInfo?.status === "paid") {
           setStatus("success");
           clearInterval(intervalId);
           clearTimeout(timeoutId);
+          localStorage.removeItem("lastOrderId");
+          localStorage.removeItem("lastOrderCode");
           setTimeout(() => navigate(`/order/${data._id}`), 1000);
         } else if (data.paymentInfo?.status === "failed") {
           setStatus("fail");
           clearInterval(intervalId);
           clearTimeout(timeoutId);
         }
-      } catch (err) {
-        console.error(err);
+      } catch (err: any) {
+        console.error("Check payment failed:", err);
         setStatus("fail");
         clearInterval(intervalId);
         clearTimeout(timeoutId);

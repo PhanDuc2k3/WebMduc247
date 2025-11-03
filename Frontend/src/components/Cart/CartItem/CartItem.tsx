@@ -45,26 +45,38 @@ const CartItem: React.FC<CartItemProps> = ({
 const [localQuantity, setLocalQuantity] = useState(item.quantity);
 
 const handleUpdateQuantity = async (newQuantity: number) => {
-  if (newQuantity < 1) return;
-  if (loading) return;
-  
-  setLocalQuantity(newQuantity); // cập nhật tạm UI ngay
+  if (newQuantity < 1 || loading) return;
+
+  // ✅ Cập nhật số lượng và thành tiền tạm thời để UI phản hồi tức thì
+  const updatedSubtotal = (item.salePrice ?? item.price) * newQuantity;
+  setLocalQuantity(newQuantity);
+  item.subtotal = updatedSubtotal;
+
   setLoading(true);
 
   try {
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    await axiosClient.put(`/api/cart/update`, { itemId: item._id, quantity: newQuantity }, { headers: { Authorization: `Bearer ${token}` } });
-    fetchCart(); // fetch chính xác từ backend
+    await axiosClient.put(
+      `/api/cart/update`,
+      { itemId: item._id, quantity: newQuantity },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // ✅ Đồng bộ lại từ server (nếu cần, đảm bảo chính xác)
+    fetchCart();
   } catch (error) {
     console.error(error);
     toast.error("Cập nhật số lượng thất bại.");
-    setLocalQuantity(item.quantity); // revert nếu fail
+    // Revert lại nếu có lỗi
+    setLocalQuantity(item.quantity);
+    item.subtotal = (item.salePrice ?? item.price) * item.quantity;
   } finally {
     setLoading(false);
   }
 };
+
   return (
     <div className={`flex items-center gap-4 p-5 rounded-xl border-2 transition-all duration-300 hover:shadow-lg group ${
       selected ? "bg-gradient-to-r from-blue-50 to-purple-50 border-blue-400 shadow-md" : "bg-white border-gray-200 hover:border-gray-300"

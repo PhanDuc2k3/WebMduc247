@@ -14,6 +14,7 @@ const CheckoutPage: React.FC = () => {
   const [shippingFee, setShippingFee] = useState<number>(30000);
   const [paymentMethod, setPaymentMethod] = useState<"cod" | "momo" | "vnpay">("cod");
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
+  const [selectedProducts, setSelectedProducts] = useState<any[]>([]); // ✅ thêm dòng này
 
   const [cartSubtotal, setCartSubtotal] = useState<number>(0);
   const [selectedItemsIds, setSelectedItemsIds] = useState<string[]>([]);
@@ -24,29 +25,60 @@ const CheckoutPage: React.FC = () => {
 
   // Load giỏ hàng và selected items từ localStorage
   useEffect(() => {
-    const fetchCart = async () => {
+    const loadCheckoutItems = async () => {
       try {
         const saved = localStorage.getItem("checkoutItems");
-        const selectedIds = saved ? JSON.parse(saved) : [];
-        setSelectedItemsIds(selectedIds);
+        if (!saved) {
+          console.warn("⚠️ Không có sản phẩm nào được chọn để checkout");
+          return;
+        }
 
-        const { data } = await cartApi.getCart();
-        const filtered = data.items.filter((item: any) =>
-          selectedIds.includes(item._id)
-        );
+        const parsed = JSON.parse(saved);
+        
+        // Kiểm tra nếu là mảng ID (format cũ) hoặc mảng objects (format mới)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Nếu phần tử đầu tiên là string -> đó là mảng ID (format cũ)
+          if (typeof parsed[0] === "string") {
+            // Format cũ: mảng ID, cần fetch từ API
+            const selectedIds = parsed as string[];
+            setSelectedItemsIds(selectedIds);
+            
+            const { data } = await cartApi.getCart();
+            const filtered = data.items.filter((item: any) =>
+              selectedIds.includes(item._id)
+            );
 
-        const subtotal = filtered.reduce(
-          (sum: number, item: any) => sum + item.subtotal,
-          0
-        );
-        setCartSubtotal(subtotal);
+            const subtotal = filtered.reduce(
+              (sum: number, item: any) => sum + item.subtotal,
+              0
+            );
+
+            setCartSubtotal(subtotal);
+            setSelectedProducts(filtered);
+          } else {
+            // Format mới: mảng objects, dùng trực tiếp
+            const products = parsed as any[];
+            setSelectedProducts(products);
+            
+            const ids = products.map((p: any) => p._id);
+            setSelectedItemsIds(ids);
+
+            const subtotal = products.reduce(
+              (sum: number, item: any) => sum + (item.subtotal || 0),
+              0
+            );
+
+            setCartSubtotal(subtotal);
+          }
+        }
       } catch (err) {
-        console.error("❌ Lỗi fetch cart:", err);
+        console.error("❌ Lỗi load checkout items:", err);
       }
     };
 
-    fetchCart();
+    loadCheckoutItems();
   }, []);
+
 
   const handleVoucherPreview = (discountValue: number, code: string) => {
     setVoucherDiscount(discountValue);
@@ -70,7 +102,7 @@ const CheckoutPage: React.FC = () => {
             <Address onSelect={setSelectedAddressId} />
           </div>
           <div className="animate-fade-in-up delay-300">
-            <Product selectedItems={selectedItemsIds} />
+            <Product selectedItems={selectedProducts} />
           </div>
           <div className="animate-fade-in-up delay-400">
             <Delivery onChange={setShippingFee} />

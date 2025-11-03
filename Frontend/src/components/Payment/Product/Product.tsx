@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from "react";
-import cartApi from "../../../api/cartApi"; // dùng cartApi
+import React from "react";
 
 interface CartItem {
   _id: string;
-  productId: string;
-  storeId: string;
+  productId: string | { _id: string };
+  storeId: string | { _id: string };
   name: string;
   imageUrl: string;
   price: number;
@@ -19,40 +18,12 @@ interface CartItem {
 }
 
 interface ProductProps {
-  selectedItems: string[]; // Nhận từ trang Checkout
+  selectedItems: CartItem[]; // Nhận mảng sản phẩm từ trang Checkout
 }
 
 const Product: React.FC<ProductProps> = ({ selectedItems }) => {
-  const [items, setItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    const fetchCart = async () => {
-      setLoading(true);
-      try {
-        const { data } = await cartApi.getCart(); // ✅ dùng cartApi
-        setItems(data.items || []);
-        console.log("✅ Cart API response:", data);
-      } catch (err) {
-        console.error("🔥 Lỗi khi fetch giỏ hàng:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCart();
-  }, []);
-
-  const filteredItems = items.filter((item) => selectedItems.includes(item._id));
-
-  if (loading) {
-    return (
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 text-center animate-fade-in">
-        <div className="text-4xl mb-4 animate-pulse">🛒</div>
-        <p className="text-gray-600 text-lg font-medium">Đang tải giỏ hàng...</p>
-      </div>
-    );
-  }
+  // Không cần fetch từ API nữa, dùng trực tiếp từ props
+  const filteredItems = Array.isArray(selectedItems) ? selectedItems : [];
 
   return (
     <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">

@@ -101,7 +101,7 @@ exports.addToCart = async (req, res) => {
 
     // Tính toán subtotal, total
     cart.subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
-    cart.total = cart.subtotal - (cart.discount || 0) + (cart.shippingFee || 0);
+    cart.total = cart.subtotal;
 
     await cart.save();
 
@@ -137,7 +137,7 @@ exports.updateQuantity = async (req, res) => {
     item.subtotal = (basePrice + additionalPrice) * quantity;
 
     cart.subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
-    cart.total = cart.subtotal - (cart.discount || 0) + (cart.shippingFee || 0);
+    cart.total = cart.subtotal;
 
     await cart.save();
 
@@ -166,7 +166,7 @@ exports.removeFromCart = async (req, res) => {
     cart.items = cart.items.filter(item => item._id.toString() !== itemId);
 
     cart.subtotal = cart.items.reduce((sum, i) => sum + (i.subtotal || 0), 0);
-    cart.total = cart.subtotal - (cart.discount || 0) + (cart.shippingFee || 0);
+    cart.total = cart.subtotal;
 
     await cart.save();
 

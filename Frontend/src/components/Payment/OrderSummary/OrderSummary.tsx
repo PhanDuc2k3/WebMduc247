@@ -10,6 +10,7 @@ import addressApi from "../../../api/addressApi";
 import type { AddressType } from "../../../api/addressApi";
 import orderApi from "../../../api/orderApi";
 import type { CreateOrderData } from "../../../api/orderApi";
+import paymentApi from "../../../api/paymentApi";
 
 interface OrderSummaryProps {
   shippingFee: number;
@@ -27,7 +28,7 @@ interface CartResponse {
     _id: string;
     subtotal: number;
     quantity: number;
-    productId: string;
+    productId: string | { _id: string };
     variation?: { color?: string; size?: string; additionalPrice?: number };
   }[];
 }
@@ -68,17 +69,40 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     const fetchSelectedSubtotal = async () => {
       try {
         const saved = localStorage.getItem("checkoutItems");
-        const selectedIds: string[] = saved ? JSON.parse(saved) : [];
-        if (!selectedIds.length || !cart?.items) {
+        if (!saved) {
           setSelectedCartSubtotal(0);
           return;
         }
 
-        const subtotal = cart.items
-          .filter((item) => selectedIds.includes(item._id))
-          .reduce((sum, item) => sum + item.subtotal, 0);
+        const parsed = JSON.parse(saved);
+        
+        // Kiểm tra nếu là mảng ID (format cũ) hoặc mảng objects (format mới)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          if (typeof parsed[0] === "string") {
+            // Format cũ: mảng ID
+            const selectedIds: string[] = parsed;
+            if (!cart?.items) {
+              setSelectedCartSubtotal(0);
+              return;
+            }
 
-        setSelectedCartSubtotal(subtotal);
+            const subtotal = cart.items
+              .filter((item) => selectedIds.includes(item._id))
+              .reduce((sum, item) => sum + item.subtotal, 0);
+
+            setSelectedCartSubtotal(subtotal);
+          } else {
+            // Format mới: mảng objects
+            const products = parsed as any[];
+            const subtotal = products.reduce(
+              (sum: number, item: any) => sum + (item.subtotal || 0),
+              0
+            );
+            setSelectedCartSubtotal(subtotal);
+          }
+        } else {
+          setSelectedCartSubtotal(0);
+        }
       } catch (err) {
         console.error(err);
         setSelectedCartSubtotal(0);
@@ -114,18 +138,44 @@ const handleCheckout = async () => {
   if (!selectedAddress) return alert("Vui lòng chọn địa chỉ giao hàng!");
 
   const selectedItemsSaved = localStorage.getItem("checkoutItems");
-  const selectedItemIds: string[] = selectedItemsSaved ? JSON.parse(selectedItemsSaved) : [];
-  if (!selectedItemIds.length) return alert("Không có sản phẩm nào để thanh toán");
+  if (!selectedItemsSaved) {
+    return alert("Không có sản phẩm nào để thanh toán");
+  }
 
   try {
-    // map selected IDs sang items đúng type CreateOrderData.items
-    const itemsForOrder: CreateOrderData["items"] = cart?.items
-      ?.filter(item => selectedItemIds.includes(item._id))
-      .map(item => ({
-        productId: item.productId,
-        quantity: item.quantity,
-        variation: item.variation,
-      })) || [];
+    const parsed = JSON.parse(selectedItemsSaved);
+    let itemsForOrder: CreateOrderData["items"] = [];
+
+    // Kiểm tra nếu là mảng ID (format cũ) hoặc mảng objects (format mới)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      if (typeof parsed[0] === "string") {
+        // Format cũ: mảng ID, cần lấy từ cart
+        const selectedItemIds: string[] = parsed;
+        if (!cart?.items) {
+          return alert("Không lấy được dữ liệu giỏ hàng");
+        }
+
+        itemsForOrder = cart.items
+          .filter(item => selectedItemIds.includes(item._id))
+          .map(item => ({
+            productId: typeof item.productId === 'string' ? item.productId : item.productId._id,
+            quantity: item.quantity,
+            variation: item.variation,
+          }));
+      } else {
+        // Format mới: mảng objects, dùng trực tiếp
+        const products = parsed as any[];
+        itemsForOrder = products.map((item: any) => ({
+          productId: typeof item.productId === 'string' ? item.productId : (item.productId?._id || item.productId),
+          quantity: item.quantity,
+          variation: item.variation,
+        }));
+      }
+    }
+
+    if (!itemsForOrder.length) {
+      return alert("Không có sản phẩm nào để thanh toán");
+    }
 
     const shippingAddressString = `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`;
 
@@ -163,24 +213,29 @@ const orderPayload: CreateOrderData = {
     localStorage.removeItem("checkoutItems");
 
     if (paymentMethod === "momo") {
-      const payRes = await fetch("/api/payment/momo", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
-        },
-        body: JSON.stringify({
+      try {
+        const payRes = await paymentApi.createMoMoPayment({
           amount: orderData.order.total,
           orderInfo: `Thanh toán đơn hàng #${orderData.order.orderCode}`,
           orderCode: orderData.order.orderCode,
-        }),
-      });
+        });
 
-      const payData = await payRes.json();
-      console.log("=== Response MoMo ===", payData);
-      if (!payRes.ok || !payData.payUrl) throw new Error("Không lấy được payUrl từ MoMo");
-      window.location.href = payData.payUrl;
-      return;
+        const payData = payRes.data;
+        console.log("=== Response MoMo ===", payData);
+        
+        if (!payData.payUrl) {
+          throw new Error(payData.message || "Không lấy được payUrl từ MoMo");
+        }
+        
+        // Chuyển hướng đến trang thanh toán MoMo
+        window.location.href = payData.payUrl;
+        return;
+      } catch (err: any) {
+        console.error("=== Lỗi tạo thanh toán MoMo ===", err);
+        const errorMessage = err.response?.data?.message || err.message || "Không thể tạo thanh toán MoMo";
+        alert(errorMessage);
+        throw new Error(errorMessage);
+      }
     }
 
     if (paymentMethod === "vnpay") {

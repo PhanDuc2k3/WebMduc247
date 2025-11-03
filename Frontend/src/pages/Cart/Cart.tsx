@@ -6,7 +6,7 @@ import cartApi from "../../api/cartApi"; // ✅ dùng axiosClient
 
 interface CartItem {
   _id: string;
-  productId: string;
+  productId: string | { _id: string };
   storeId: string | { _id: string; name: string; logoUrl?: string };
   name: string;
   imageUrl?: string;
@@ -21,8 +21,6 @@ interface Cart {
   userId: string;
   items: CartItem[];
   subtotal: number;
-  discount: number;
-  shippingFee: number;
   total: number;
 }
 
@@ -101,7 +99,11 @@ export default function CartPage() {
       alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán");
       return;
     }
-    localStorage.setItem("checkoutItems", JSON.stringify(selectedItems));
+    // Lưu toàn bộ sản phẩm được chọn thay vì chỉ ID
+    const selectedProducts = cart?.items.filter((item) =>
+      selectedItems.includes(item._id)
+    ) || [];
+    localStorage.setItem("checkoutItems", JSON.stringify(selectedProducts));
     navigate("/checkout");
   };
 
@@ -167,10 +169,6 @@ export default function CartPage() {
           <div className="lg:w-[400px] space-y-4 animate-fade-in-right delay-300">
             <div className="sticky top-[180px]">
               <OrderSummary
-                subtotal={selectedTotal}
-                discount={0}
-                shippingFee={cart.shippingFee ?? 0}
-                total={selectedTotal + (cart.shippingFee ?? 0)}
                 selectedItems={selectedItems}
               />
             </div>
