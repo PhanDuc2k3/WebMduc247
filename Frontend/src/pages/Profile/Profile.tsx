@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { User } from "lucide-react";
 import ProfileInfo from "../../components/Profile/ProfileInfo/ProfileInfo";
 import ProfileTabs from "../../components/Profile/ProfileTabs/ProfileTabs";
 import ProfileOrders from "../../components/Profile/ProfileOrders/ProfileOrders";
@@ -112,7 +113,7 @@ const Profile: React.FC = () => {
     return (
       <div className="w-full py-16 flex items-center justify-center animate-fade-in">
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-pulse">👤</div>
+          <User size={64} className="mx-auto mb-4 animate-pulse text-gray-400" />
           <p className="text-gray-600 text-lg font-medium">
             Đang tải thông tin người dùng...
           </p>
@@ -125,19 +126,20 @@ const Profile: React.FC = () => {
     <div className="w-full py-8 md:py-12">
       <div className="mb-8 animate-fade-in-down">
         <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-          <span>👤</span> Trang cá nhân
+          <User size={32} className="text-gray-700" />
+          Trang cá nhân
         </h1>
         <p className="text-gray-600 text-lg">
           Quản lý thông tin và đơn hàng của bạn
         </p>
       </div>
 
-      {/* 🧍 Thông tin user */}
+      {/* Thông tin user */}
       <div className="mb-6 animate-fade-in-up delay-100">
         <ProfileInfo user={user} onEdit={() => setIsEditing(true)} />
       </div>
 
-      {/* 🧭 Tabs điều hướng */}
+      {/* Tabs điều hướng */}
       <div className="mb-6 animate-fade-in-up delay-200">
         <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
@@ -175,7 +177,7 @@ const Profile: React.FC = () => {
         {activeTab === "settings" && <ProfileSettings />}
       </div>
 
-      {/* 🔹 Modal đánh giá sản phẩm */}
+      {/* Modal đánh giá sản phẩm */}
       {reviewProductId && reviewOrderId && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 animate-fade-in">
           <div className="bg-white rounded-2xl w-full max-w-2xl p-8 relative shadow-2xl animate-scale-in">

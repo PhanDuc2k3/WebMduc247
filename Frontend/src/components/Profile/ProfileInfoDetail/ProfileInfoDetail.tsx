@@ -1,4 +1,5 @@
 import React, { useState, useRef } from "react";
+import { FileText, Camera, Calendar, Users, User, Store, Crown, Check, X, Mail, Phone } from "lucide-react";
 import userApi from "../../../api/userApi"
 interface ProfileInfoDetailProps {
   isEditing: boolean;
@@ -52,7 +53,7 @@ const handleUpdate = async () => {
 
     window.dispatchEvent(new Event("userUpdated"));
   } catch (err) {
-    console.error("❌ Lỗi cập nhật:", err);
+    console.error("Lỗi cập nhật:", err);
   }
 };
 
@@ -66,7 +67,7 @@ const handleUpdate = async () => {
   return (
     <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 lg:p-8 animate-fade-in-up">
       <div className="flex items-center gap-3 mb-6">
-        <span className="text-3xl">📝</span>
+        <FileText size={24} className="text-gray-700" />
         <div className="text-2xl font-bold text-gray-900 gradient-text">Thông tin cá nhân</div>
       </div>
 
@@ -89,9 +90,9 @@ const handleUpdate = async () => {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
           >
-            📷 Chọn ảnh đại diện
+            <Camera size={16} /> Chọn ảnh đại diện
           </button>
         </div>
       )}
@@ -99,7 +100,9 @@ const handleUpdate = async () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <div className="space-y-6">
           <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <span className="text-sm font-semibold text-gray-600 mb-2 block">👤 Họ và tên</span>
+            <span className="text-sm font-semibold text-gray-600 mb-2 block flex items-center gap-2">
+              <User size={16} /> Họ và tên
+            </span>
             {isEditing ? (
               <input
                 type="text"
@@ -114,12 +117,16 @@ const handleUpdate = async () => {
           </div>
 
           <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <span className="text-sm font-semibold text-gray-600 mb-2 block">📧 Email</span>
+            <span className="text-sm font-semibold text-gray-600 mb-2 block flex items-center gap-2">
+              <Mail size={16} /> Email
+            </span>
             <div className="text-lg font-bold text-gray-900">{user.email}</div>
           </div>
 
           <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-            <span className="text-sm font-semibold text-gray-600 mb-2 block">📱 Số điện thoại</span>
+            <span className="text-sm font-semibold text-gray-600 mb-2 block flex items-center gap-2">
+              <Phone size={16} /> Số điện thoại
+            </span>
             {isEditing ? (
               <input
                 type="text"
@@ -136,21 +143,33 @@ const handleUpdate = async () => {
 
         <div className="space-y-6">
           <div className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200">
-            <span className="text-sm font-semibold text-gray-600 mb-2 block">📅 Ngày tham gia</span>
+            <span className="text-sm font-semibold text-gray-600 mb-2 block flex items-center gap-2">
+              <Calendar size={16} /> Ngày tham gia
+            </span>
             <div className="text-lg font-bold text-gray-900">
               {new Date(user.createdAt).toLocaleDateString("vi-VN")}
             </div>
           </div>
 
           <div className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl border border-purple-200">
-            <span className="text-sm font-semibold text-gray-600 mb-2 block">👥 Trạng thái tài khoản</span>
+            <span className="text-sm font-semibold text-gray-600 mb-2 block flex items-center gap-2">
+              <Users size={16} /> Trạng thái tài khoản
+            </span>
             {user.role && (
-              <span className="inline-block px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 rounded-full text-sm font-bold border-2 border-blue-300">
-                {user.role === "buyer"
-                  ? "👤 Người mua"
-                  : user.role === "seller"
-                  ? "🏪 Người bán"
-                  : "👑 Admin"}
+              <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 rounded-full text-sm font-bold border-2 border-blue-300">
+                {user.role === "buyer" ? (
+                  <>
+                    <User size={14} /> Người mua
+                  </>
+                ) : user.role === "seller" ? (
+                  <>
+                    <Store size={14} /> Người bán
+                  </>
+                ) : (
+                  <>
+                    <Crown size={14} /> Admin
+                  </>
+                )}
               </span>
             )}
           </div>
@@ -161,15 +180,15 @@ const handleUpdate = async () => {
         <div className="flex gap-4 mt-8 justify-center sm:justify-start">
           <button
             onClick={handleUpdate}
-            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
           >
-            ✅ Cập nhật
+            <Check size={16} /> Cập nhật
           </button>
           <button
             onClick={handleCancel}
-            className="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 text-base font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105"
+            className="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 hover:border-gray-400 text-base font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2"
           >
-            ❌ Hủy
+            <X size={16} /> Hủy
           </button>
         </div>
       )}

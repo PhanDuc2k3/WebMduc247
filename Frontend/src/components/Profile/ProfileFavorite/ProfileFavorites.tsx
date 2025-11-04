@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Clock, ShoppingBag, Store, Heart, Star } from "lucide-react";
 import favoriteApi from "../../../api/favoriteApi";
 import type { ProductType } from "../../../types/product";
 import type { StoreType } from "../../../types/store";
@@ -42,7 +43,7 @@ const ProfileFavorites: React.FC = () => {
     return (
       <div className="bg-white rounded-xl shadow p-8">
         <div className="text-center py-16">
-          <div className="text-4xl mb-4 animate-pulse">⏳</div>
+          <Clock size={48} className="mx-auto mb-4 animate-pulse text-gray-400" />
           <p className="text-gray-500 font-medium">Đang tải yêu thích...</p>
         </div>
       </div>
@@ -55,30 +56,28 @@ const ProfileFavorites: React.FC = () => {
       <div className="flex gap-4 mb-6 border-b border-gray-200">
         <button
           onClick={() => setActiveTab("products")}
-          className={`pb-3 px-4 font-bold transition-all duration-300 relative ${
+          className={`pb-3 px-4 font-bold transition-all duration-300 relative flex items-center gap-2 ${
             activeTab === "products"
               ? "text-blue-600"
               : "text-gray-500 hover:text-gray-700"
           }`}
         >
-          <span className="flex items-center gap-2">
-            <span>🛍️</span> Sản phẩm ({products.length})
-          </span>
+          <ShoppingBag size={18} />
+          Sản phẩm ({products.length})
           {activeTab === "products" && (
             <span className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"></span>
           )}
         </button>
         <button
           onClick={() => setActiveTab("stores")}
-          className={`pb-3 px-4 font-bold transition-all duration-300 relative ${
+          className={`pb-3 px-4 font-bold transition-all duration-300 relative flex items-center gap-2 ${
             activeTab === "stores"
               ? "text-blue-600"
               : "text-gray-500 hover:text-gray-700"
           }`}
         >
-          <span className="flex items-center gap-2">
-            <span>🏪</span> Cửa hàng ({stores.length})
-          </span>
+          <Store size={18} />
+          Cửa hàng ({stores.length})
           {activeTab === "stores" && (
             <span className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"></span>
           )}
@@ -135,7 +134,7 @@ const ProfileFavorites: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-16">
-              <div className="text-6xl mb-4">❤️</div>
+              <Heart size={64} className="mx-auto mb-4 text-gray-300" />
               <p className="text-gray-500 text-lg font-medium mb-2">
                 Chưa có sản phẩm yêu thích nào
               </p>
@@ -181,7 +180,8 @@ const ProfileFavorites: React.FC = () => {
                       {store.description}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>⭐ {store.rating || 0}</span>
+                      <Star size={14} className="text-yellow-500 fill-yellow-500" />
+                      <span>{store.rating || 0}</span>
                     </div>
                   </Link>
                   <div className="absolute top-3 right-3">
@@ -195,7 +195,7 @@ const ProfileFavorites: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-16">
-              <div className="text-6xl mb-4">🏪</div>
+              <Store size={64} className="mx-auto mb-4 text-gray-300" />
               <p className="text-gray-500 text-lg font-medium mb-2">
                 Chưa có cửa hàng yêu thích nào
               </p>

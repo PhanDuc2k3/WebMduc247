@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Package, Star, Eye, ShoppingBag, Calendar } from "lucide-react";
 import reviewApi from "../../../api/apiReview";
 
 interface OrderItem {
@@ -46,11 +47,11 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // 🧩 LOG debug props nhận được
-  console.group("🟢 [ProfileOrders] Render Component");
-  console.log("📦 Props.orders:", orders);
-  console.log("⏳ Props.loading:", loading);
-  console.log("🔢 Số lượng orders:", orders?.length || 0);
+  // LOG debug props nhận được
+  console.group("[ProfileOrders] Render Component");
+  console.log("Props.orders:", orders);
+  console.log("Props.loading:", loading);
+  console.log("Số lượng orders:", orders?.length || 0);
   console.groupEnd();
 
   // state chứa reviews theo productId
@@ -59,31 +60,31 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
   // fetch reviews theo productId
   const fetchReviews = async (productId: string) => {
     try {
-      console.log("🔍 Gọi API review cho productId:", productId);
+      console.log("Gọi API review cho productId:", productId);
       const res = await reviewApi.getReviewsByProduct(productId);
-      console.log("✅ Review data:", res.data);
+      console.log("Review data:", res.data);
       setReviews((prev) => ({ ...prev, [productId]: res.data }));
     } catch (err) {
-      console.error("❌ Lỗi fetch reviews:", err);
+      console.error("Lỗi fetch reviews:", err);
     }
   };
 
   // khi có orders thì fetch review cho từng product
   useEffect(() => {
-    console.log("📦 useEffect chạy — orders thay đổi:", orders);
+    console.log("useEffect chạy — orders thay đổi:", orders);
 
     if (orders?.length > 0) {
       orders.forEach((order) => {
-        console.log("🧾 Kiểm tra order:", order._id);
+        console.log("Kiểm tra order:", order._id);
         order.items.forEach((item) => {
-          console.log("📦 Sản phẩm trong order:", item.productId, item.name);
+          console.log("Sản phẩm trong order:", item.productId, item.name);
           if (!reviews[item.productId]) {
             fetchReviews(item.productId);
           }
         });
       });
     } else {
-      console.warn("⚠️ Không có đơn hàng để fetch review!");
+      console.warn("Không có đơn hàng để fetch review!");
     }
   }, [orders]);
 
@@ -101,11 +102,11 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
     return map[latest] || latest;
   };
 
-  // 🧩 LOG logic hiển thị
+  // LOG logic hiển thị
   if (loading) {
     return (
       <div className="p-8 text-center animate-fade-in">
-        <div className="text-4xl mb-4 animate-pulse">📦</div>
+        <Package size={48} className="mx-auto mb-4 animate-pulse text-gray-400" />
         <p className="text-gray-600 text-lg font-medium">Đang tải đơn hàng...</p>
       </div>
     );
@@ -114,14 +115,14 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
   if (!orders || orders.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 text-center animate-fade-in">
-        <div className="text-6xl mb-4">📦</div>
+        <Package size={64} className="mx-auto mb-4 text-gray-300" />
         <h3 className="text-2xl font-bold text-gray-900 mb-2">Chưa có đơn hàng nào</h3>
         <p className="text-gray-500 mb-6">Bắt đầu mua sắm ngay hôm nay!</p>
         <button
           onClick={() => navigate("/products")}
-          className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+          className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 mx-auto"
         >
-          🛍️ Mua sắm ngay
+          <ShoppingBag size={18} /> Mua sắm ngay
         </button>
       </div>
     );
@@ -147,8 +148,8 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                   <span className="text-lg font-bold text-gray-900">
                     Đơn hàng #{order._id.slice(-8).toUpperCase()}
                   </span>
-                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                    📅 {order.date}
+                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full flex items-center gap-2">
+                    <Calendar size={14} /> {order.date}
                   </span>
                 </div>
 
@@ -191,18 +192,18 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                         <button
                           key={item.productId}
                           onClick={() => onReview(item.productId, order._id)}
-                          className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl text-sm font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105"
+                          className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl text-sm font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
                         >
-                          ⭐ Đánh giá
+                          <Star size={16} /> Đánh giá
                         </button>
                       ))}
                     </>
                   ) : (
                     <button
                       onClick={() => navigate(`/order/${order._id}`)}
-                      className="w-full px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 transform hover:scale-105"
+                      className="w-full px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
                     >
-                      👁️ Xem chi tiết
+                      <Eye size={16} /> Xem chi tiết
                     </button>
                   )}
 

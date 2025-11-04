@@ -1,4 +1,5 @@
 import React from "react";
+import { User, Store, Crown, Mail, Phone, Calendar, Edit, LogOut } from "lucide-react";
 
 interface ProfileInfoProps {
   user: any; // nhận user từ cha
@@ -34,27 +35,35 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
               {user.fullName}
             </span>
             {user.role && (
-              <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 text-sm px-4 py-1.5 rounded-full font-bold border-2 border-blue-300 shadow-sm">
-                {user.role === "buyer"
-                  ? "👤 Người mua"
-                  : user.role === "seller"
-                  ? "🏪 Người bán"
-                  : "👑 Admin"}
+              <span className="bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 text-sm px-4 py-1.5 rounded-full font-bold border-2 border-blue-300 shadow-sm flex items-center gap-2">
+                {user.role === "buyer" ? (
+                  <>
+                    <User size={14} /> Người mua
+                  </>
+                ) : user.role === "seller" ? (
+                  <>
+                    <Store size={14} /> Người bán
+                  </>
+                ) : (
+                  <>
+                    <Crown size={14} /> Admin
+                  </>
+                )}
               </span>
             )}
           </div>
 
           <div className="flex flex-wrap items-center gap-4 text-gray-600 text-base mb-4 justify-center sm:justify-start">
             <span className="flex items-center gap-2">
-              <span>📧</span> {user.email}
+              <Mail size={16} /> {user.email}
             </span>
             {user.phone && (
               <span className="flex items-center gap-2">
-                <span>📱</span> {user.phone}
+                <Phone size={16} /> {user.phone}
               </span>
             )}
             <span className="flex items-center gap-2">
-              <span>📅</span> Tham gia{" "}
+              <Calendar size={16} /> Tham gia{" "}
               {new Date(user.createdAt).toLocaleDateString("vi-VN")}
             </span>
           </div>
@@ -62,15 +71,15 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
           <div className="flex gap-3 justify-center sm:justify-start">
             <button
               onClick={onEdit}
-              className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
             >
-              ✏️ Chỉnh sửa
+              <Edit size={16} /> Chỉnh sửa
             </button>
             <button
               onClick={handleLogout}
-              className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-red-50 hover:border-red-400 hover:text-red-600 text-base font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105"
+              className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-red-50 hover:border-red-400 hover:text-red-600 text-base font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2"
             >
-              🚪 Đăng xuất
+              <LogOut size={16} /> Đăng xuất
             </button>
           </div>
         </div>
