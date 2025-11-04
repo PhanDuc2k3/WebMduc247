@@ -41,23 +41,23 @@ const Home: React.FC = () => {
   return (
     <div className="w-full py-8 md:py-12 lg:py-16">
       <div className="space-y-16 md:space-y-20 lg:space-y-24">
-        <div ref={(el) => (sectionsRef.current[0] = el)} className="reveal">
+        <div ref={(el) => { sectionsRef.current[0] = el; }} className="reveal">
           <Banner />
         </div>
 
-        <div ref={(el) => (sectionsRef.current[1] = el)} className="reveal">
+        <div ref={(el) => { sectionsRef.current[1] = el; }} className="reveal">
           <Categories />
         </div>
 
-        <div ref={(el) => (sectionsRef.current[2] = el)} className="reveal">
+        <div ref={(el) => { sectionsRef.current[2] = el; }} className="reveal">
           <FeaturedProducts />
         </div>
 
-        <div ref={(el) => (sectionsRef.current[3] = el)} className="reveal">
+        <div ref={(el) => { sectionsRef.current[3] = el; }} className="reveal">
           <FeaturedStores />
         </div>
 
-        <div ref={(el) => (sectionsRef.current[4] = el)} className="reveal">
+        <div ref={(el) => { sectionsRef.current[4] = el; }} className="reveal">
           <SellerBox />
         </div>
       </div>

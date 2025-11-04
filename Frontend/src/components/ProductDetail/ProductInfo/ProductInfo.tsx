@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from "react";
-import { Heart, AlertTriangle, CheckCircle, XCircle } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Heart, AlertTriangle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import axiosClient from "../../../api/axiosClient";
 import { toast } from "react-toastify"; 
 import "react-toastify/dist/ReactToastify.css";
-import { useCart } from "../../../context/CartContext"; // <--- BỔ SUNG: Import hook useCart
+import { useCart } from "../../../context/CartContext";
+import favoriteApi from "../../../api/favoriteApi";
 
 interface VariationOption {
   name: string;
@@ -45,8 +47,31 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     null
   );
   const [loading, setLoading] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const navigate = useNavigate();
   
-  const { fetchCart } = useCart(); // <--- BỔ SUNG: Lấy hàm fetchCart từ CartContext
+  const { fetchCart } = useCart();
+  
+  // Kiểm tra trạng thái yêu thích
+  useEffect(() => {
+    const checkFavorite = async () => {
+      const token = localStorage.getItem("token");
+      if (!token || !product._id) return;
+      
+      try {
+        const res = await favoriteApi.checkFavorite(product._id);
+        setIsFavorite(res.data.isFavorite);
+      } catch (err) {
+        // Nếu chưa đăng nhập, không hiển thị lỗi
+        if ((err as any).response?.status !== 401) {
+          console.error("Lỗi kiểm tra yêu thích:", err);
+        }
+      }
+    };
+    
+    checkFavorite();
+  }, [product._id]);
 
   const colors: string[] = Array.from(
     new Set(product.variations?.map((v) => v.color) || [])
@@ -110,7 +135,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
 
-      fetchCart(); // <--- GỌI HÀM NÀY ĐỂ CẬP NHẬT CART COUNT TRONG CONTEXT VÀ TRÊN HEADER
+      fetchCart();
 
       toast.success(
         <div className="flex items-center gap-2">
@@ -125,6 +150,137 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       );
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handler cho nút "Mua ngay"
+  const handleBuyNow = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.warning("Vui lòng đăng nhập để mua hàng!");
+      return;
+    }
+
+    if (!selectedColor || !selectedStorage || !selectedOption) {
+      toast.warning(
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-yellow-500" size={18} />
+          <span>Vui lòng chọn màu sắc và dung lượng!</span>
+        </div>
+      );
+      return;
+    }
+
+    const variation = product.variations?.find(
+      (v) => v.color === selectedColor
+    );
+    const option = variation?.options.find((o) => o.name === selectedStorage);
+
+    if (!variation || !option) return;
+
+    const payload = {
+      productId: product._id,
+      quantity,
+      variationId: variation._id,
+      optionId: option._id,
+    };
+
+    try {
+      setLoading(true);
+
+      // Thêm vào cart
+      const res = await axiosClient.post("/api/cart/add", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      fetchCart();
+
+      // Lấy cart item vừa thêm để chuyển đến checkout
+      const cartData = res.data;
+      // Tìm item dựa trên productId và variation (để chắc chắn là item vừa thêm)
+      const newItem = cartData.items?.find((item: any) => {
+        const itemProductId = typeof item.productId === 'object' ? item.productId._id : item.productId;
+        const itemVariationId = item.variation?.variationId || item.variationId;
+        const itemOptionId = item.variation?.optionId || item.optionId;
+        
+        return (
+          itemProductId?.toString() === product._id.toString() &&
+          itemVariationId?.toString() === variation._id.toString() &&
+          itemOptionId?.toString() === option._id.toString()
+        );
+      });
+
+      if (newItem) {
+        // Lưu item vào localStorage để checkout
+        localStorage.setItem("checkoutItems", JSON.stringify([newItem]));
+        // Chuyển đến checkout
+        navigate("/checkout");
+      } else {
+        // Fallback: nếu không tìm thấy item chính xác, lấy item cuối cùng có cùng productId
+        const matchingItems = cartData.items?.filter((item: any) => {
+          const itemProductId = typeof item.productId === 'object' ? item.productId._id : item.productId;
+          return itemProductId?.toString() === product._id.toString();
+        });
+        
+        if (matchingItems && matchingItems.length > 0) {
+          // Lấy item cuối cùng (item vừa thêm thường ở cuối)
+          const fallbackItem = matchingItems[matchingItems.length - 1];
+          localStorage.setItem("checkoutItems", JSON.stringify([fallbackItem]));
+          navigate("/checkout");
+        } else {
+          toast.error("Không thể lấy thông tin sản phẩm vừa thêm!");
+        }
+      }
+    } catch (err: any) {
+      console.error("Lỗi mua ngay:", err);
+      toast.error(
+        err.response?.data?.message || "Lỗi khi thực hiện mua ngay!"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handler cho nút "Yêu thích"
+  const handleToggleFavorite = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.warning("Vui lòng đăng nhập để thêm vào yêu thích!");
+      return;
+    }
+
+    setFavoriteLoading(true);
+    try {
+      if (isFavorite) {
+        // Xóa khỏi yêu thích
+        await favoriteApi.removeFavorite({ productId: product._id });
+        setIsFavorite(false);
+        toast.success("Đã xóa khỏi yêu thích");
+      } else {
+        // Thêm vào yêu thích
+        const res = await favoriteApi.addFavorite({ productId: product._id });
+        // Kiểm tra response - có thể đã tồn tại (status 200) hoặc mới tạo (status 201)
+        setIsFavorite(true);
+        toast.success(res.data?.message || "Đã thêm vào yêu thích");
+      }
+    } catch (err: any) {
+      console.error("Lỗi yêu thích:", err);
+      
+      // Xử lý các loại lỗi khác nhau
+      const errorMessage = err.response?.data?.message || err.message || "Lỗi khi cập nhật yêu thích!";
+      const statusCode = err.response?.status;
+      
+      // Nếu đã yêu thích rồi (409 Conflict) - coi như success và set isFavorite = true
+      if (statusCode === 409 || statusCode === 200 || errorMessage.includes("Đã yêu thích") || errorMessage.includes("đã yêu thích")) {
+        setIsFavorite(true);
+        toast.success("Đã thêm vào yêu thích");
+        return; // Thoát sớm để không hiển thị error
+      }
+      
+      // Các lỗi khác
+      toast.error(errorMessage);
+    } finally {
+      setFavoriteLoading(false);
     }
   };
 
@@ -252,9 +408,20 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
       {/* Nút hành động */}
       <div className="flex flex-col sm:flex-row gap-3 animate-fade-in-up delay-500 pt-4 border-t border-gray-200">
-        <button className="flex items-center justify-center gap-2 px-6 py-3.5 border-2 border-gray-300 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 hover:border-red-400 hover:text-red-600 transition-all duration-300 transform hover:scale-105">
-          <Heart size={20} className={selectedColor ? "fill-red-500 text-red-500" : ""} /> 
-          <span>Yêu thích</span>
+        <button 
+          onClick={handleToggleFavorite}
+          disabled={favoriteLoading}
+          className={`flex items-center justify-center gap-2 px-6 py-3.5 border-2 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed ${
+            isFavorite
+              ? "border-red-400 bg-red-50 text-red-600"
+              : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-red-400 hover:text-red-600"
+          }`}
+        >
+          <Heart 
+            size={20} 
+            className={isFavorite ? "fill-red-500 text-red-500" : ""} 
+          /> 
+          <span>{favoriteLoading ? "..." : "Yêu thích"}</span>
         </button>
         <button
           onClick={handleAddToCart}
@@ -269,8 +436,18 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
             "🛒 Thêm vào giỏ"
           )}
         </button>
-        <button className="flex-1 px-6 py-3.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
-          ⚡ Mua ngay
+        <button 
+          onClick={handleBuyNow}
+          disabled={loading}
+          className="flex-1 px-6 py-3.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          {loading ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="animate-spin">⏳</span> Đang xử lý...
+            </span>
+          ) : (
+            "⚡ Mua ngay"
+          )}
         </button>
       </div>
 

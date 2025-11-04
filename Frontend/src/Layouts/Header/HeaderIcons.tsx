@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Heart, Gift, ShoppingCart, MessageCircle } from "lucide-react";
 import { useChat } from "../../context/chatContext";
+import WalletIcon from "../../components/Wallet/WalletIcon";
 
 interface Props {
   cartCount: number;
@@ -15,6 +16,7 @@ export const HeaderIcons: React.FC<Props> = ({ cartCount }) => {
 
   return (
     <>
+      <WalletIcon />
       <Link to="/Whitelist" className="hidden md:flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group">
         <Heart size={18} className="group-hover:scale-125 transition-transform" /> 
         <span className="hidden xl:inline text-sm font-bold">Yêu thích</span>

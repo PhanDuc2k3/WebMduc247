@@ -11,10 +11,11 @@ import type { AddressType } from "../../../api/addressApi";
 import orderApi from "../../../api/orderApi";
 import type { CreateOrderData } from "../../../api/orderApi";
 import paymentApi from "../../../api/paymentApi";
+import walletApi from "../../../api/walletApi";
 
 interface OrderSummaryProps {
   shippingFee: number;
-  paymentMethod: "cod" | "momo" | "vnpay";
+  paymentMethod: "cod" | "momo" | "vietqr" | "wallet";
   addressId: string | null;
   discount: number;
   voucherCode?: string;
@@ -238,13 +239,78 @@ const orderPayload: CreateOrderData = {
       }
     }
 
-    if (paymentMethod === "vnpay") {
-      alert("Chức năng thanh toán VNPay đang phát triển!");
-      return;
-    }
+    if (paymentMethod === "vietqr") {
+      try {
+        const payRes = await paymentApi.createVietQRPayment({
+          amount: orderData.order.total,
+          orderInfo: `Thanh toán đơn hàng #${orderData.order.orderCode}`,
+          orderCode: orderData.order.orderCode,
+        });
 
-    alert("Tạo đơn hàng thành công!");
-    navigate(`/order/${orderData.order._id}`);
+        const payData = payRes.data;
+        console.log("=== Response VietQR ===", payData);
+        
+        if (!payData.qrCodeUrl) {
+          throw new Error("Không lấy được QR code từ VietQR");
+        }
+        
+        // Lưu thông tin QR code vào localStorage để hiển thị ở trang thanh toán
+        localStorage.setItem("vietqrData", JSON.stringify({
+          qrCodeUrl: payData.qrCodeUrl,
+          amount: payData.amount,
+          accountNo: payData.accountNo,
+          accountName: payData.accountName,
+          orderInfo: payData.orderInfo,
+          orderCode: orderData.order.orderCode,
+        }));
+        
+        // Chuyển đến trang hiển thị QR code
+        navigate(`/payment-qr?orderCode=${encodeURIComponent(orderData.order.orderCode)}`);
+        return;
+      } catch (err: any) {
+        console.error("=== Lỗi tạo thanh toán VietQR ===", err);
+        const errorMessage = err.response?.data?.message || err.message || "Không thể tạo thanh toán VietQR";
+                  alert(errorMessage);
+          throw new Error(errorMessage);
+        }
+      }
+
+      if (paymentMethod === "wallet") {
+        try {
+          const totalAmount = orderData.order.total;
+          
+          // Kiểm tra số dư ví trước
+          const walletRes = await walletApi.getWallet();
+          const walletBalance = walletRes.data.wallet.balance;
+          
+          if (walletBalance < totalAmount) {
+            alert(`Số dư ví không đủ! Số dư hiện tại: ${walletBalance.toLocaleString('vi-VN')}₫. Vui lòng nạp thêm tiền vào ví.`);
+            navigate('/wallet');
+            return;
+          }
+          
+          // Thanh toán bằng ví
+          const payRes = await walletApi.payWithWallet({
+            orderCode: orderData.order.orderCode,
+            amount: totalAmount,
+          });
+          
+          console.log("=== Response Wallet Payment ===", payRes.data);
+          
+          alert("Thanh toán thành công!");
+          navigate(`/order/${orderData.order._id}`);
+          return;
+        } catch (err: any) {
+          console.error("=== Lỗi thanh toán bằng ví ===", err);
+          const errorMessage = err.response?.data?.message || err.message || "Không thể thanh toán bằng ví";
+          alert(errorMessage);
+          throw new Error(errorMessage);
+        }
+      }
+
+      // COD - không cần thanh toán ngay
+      alert("Tạo đơn hàng thành công!");
+      navigate(`/order/${orderData.order._id}`);
   } catch (err) {
     console.error("=== Lỗi handleCheckout ===", err);
     alert(err instanceof Error ? err.message : "Có lỗi xảy ra khi thanh toán");

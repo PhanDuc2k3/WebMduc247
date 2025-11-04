@@ -17,7 +17,7 @@ import { Phone, Mail, MessageSquare, MapPin, ShoppingCart, Eye, CreditCard, Gift
         },
         {
           q: "Có những phương thức thanh toán nào?",
-          a: "Chúng tôi hỗ trợ nhiều phương thức thanh toán: Thanh toán khi nhận hàng (COD), Thẻ tín dụng/ghi nợ (Visa, Mastercard), Ví điện tử (Momo, ZaloPay, VNPay), Chuyển khoản ngân hàng."
+                      a: "Chúng tôi hỗ trợ nhiều phương thức thanh toán: Thanh toán khi nhận hàng (COD), Thẻ tín dụng/ghi nợ (Visa, Mastercard), Ví điện tử (Momo, ZaloPay), Thanh toán QR (VietQR), Chuyển khoản ngân hàng."
         },
         {
           q: "Tôi có thể hủy đơn hàng không?",

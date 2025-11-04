@@ -12,7 +12,7 @@ import type { AddressType } from "../../api/addressApi";
 
 const CheckoutPage: React.FC = () => {
   const [shippingFee, setShippingFee] = useState<number>(30000);
-  const [paymentMethod, setPaymentMethod] = useState<"cod" | "momo" | "vnpay">("cod");
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "momo" | "vietqr" | "wallet">("cod");
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [selectedProducts, setSelectedProducts] = useState<any[]>([]); // ✅ thêm dòng này
 

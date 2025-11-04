@@ -6,53 +6,95 @@ const Store = require('../models/Store');
 // THÊM YÊU THÍCH
 // ==========================
 exports.addFavorite = async (req, res) => {
+  let userId, productId, storeId;
+
   try {
-    const userId = req.user.userId;
-    const { productId, storeId } = req.body;
+    // ✅ Lấy userId từ token (đã có middleware xác thực)
+    userId = req.user?.userId;
+    if (!userId) return res.status(401).json({ message: "Chưa đăng nhập" });
 
-    if (!productId && !storeId) {
-      return res.status(400).json({ message: 'Vui lòng cung cấp productId hoặc storeId' });
-    }
+    ({ productId, storeId } = req.body);
+    console.log("Add favorite request:", { userId, productId, storeId });
 
-    // Kiểm tra product/store có tồn tại không
+    if (!productId && !storeId)
+      return res
+        .status(400)
+        .json({ message: "Vui lòng cung cấp productId hoặc storeId" });
+
+    // ✅ Kiểm tra tồn tại product hoặc store
     if (productId) {
       const product = await Product.findById(productId);
-      if (!product) {
-        return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
-      }
+      if (!product)
+        return res.status(404).json({ message: "Sản phẩm không tồn tại" });
+      if (!storeId && product.store) storeId = product.store;
     }
 
     if (storeId) {
       const store = await Store.findById(storeId);
-      if (!store) {
-        return res.status(404).json({ message: 'Cửa hàng không tồn tại' });
+      if (!store)
+        return res.status(404).json({ message: "Cửa hàng không tồn tại" });
+    }
+
+    // ✅ Xây dựng query và dữ liệu favorite
+    const query = { user: userId };
+    if (productId) query.product = productId;
+    if (storeId) query.store = storeId;
+
+    const favoriteData = { ...query };
+
+    // ✅ Kiểm tra nếu đã tồn tại -> return success
+    const existing = await Favorite.findOne(query);
+    if (existing)
+      return res.status(200).json({
+        message: "Đã có trong danh sách yêu thích",
+        favorite: existing,
+      });
+
+    // ✅ Tạo mới
+    try {
+      const favorite = new Favorite(favoriteData);
+      await favorite.save();
+
+      console.log("Favorite created successfully:", favorite._id);
+      return res
+        .status(201)
+        .json({ message: "Đã thêm vào yêu thích", favorite });
+    } catch (saveError) {
+      // 🔁 Xử lý lỗi duplicate key (race condition)
+      if (
+        saveError.code === 11000 ||
+        saveError.message?.includes("E11000") ||
+        saveError.name === "MongoServerError"
+      ) {
+        const existingDup = await Favorite.findOne(query);
+        return res.status(200).json({
+          message: "Đã có trong danh sách yêu thích",
+          favorite: existingDup,
+        });
       }
+      throw saveError;
     }
-
-    // Kiểm tra đã yêu thích chưa
-    const existingFavorite = await Favorite.findOne({
-      user: userId,
-      ...(productId ? { product: productId } : {}),
-      ...(storeId ? { store: storeId } : {})
-    });
-
-    if (existingFavorite) {
-      return res.status(400).json({ message: 'Đã yêu thích rồi' });
-    }
-
-    // Tạo favorite mới
-    const favorite = new Favorite({
-      user: userId,
-      ...(productId ? { product: productId } : {}),
-      ...(storeId ? { store: storeId } : {})
-    });
-
-    await favorite.save();
-
-    res.status(201).json({ message: 'Đã thêm vào yêu thích', favorite });
   } catch (error) {
-    console.error('Add favorite error:', error);
-    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+    console.error("Add favorite error:", error);
+
+    // ✅ Nếu duplicate key lọt ra ngoài
+    if (
+      error.code === 11000 ||
+      error.message?.includes("E11000") ||
+      error.name === "MongoServerError"
+    ) {
+      const query = { user: userId };
+      if (productId) query.product = productId;
+      if (storeId) query.store = storeId;
+
+      const existing = await Favorite.findOne(query);
+      return res.status(200).json({
+        message: "Đã có trong danh sách yêu thích",
+        favorite: existing,
+      });
+    }
+
+    res.status(500).json({ message: "Lỗi máy chủ", error: error.message });
   }
 };
 
@@ -75,12 +117,19 @@ exports.removeFavorite = async (req, res) => {
     });
 
     if (!favorite) {
-      return res.status(404).json({ message: 'Không tìm thấy yêu thích' });
+      // Nếu không tìm thấy, vẫn trả về success (idempotent)
+      return res.status(200).json({ message: 'Đã xóa khỏi yêu thích (hoặc không tồn tại)' });
     }
 
     res.status(200).json({ message: 'Đã xóa khỏi yêu thích' });
   } catch (error) {
     console.error('Remove favorite error:', error);
+    
+    // Xử lý các loại lỗi khác nhau
+    if (error.name === 'CastError') {
+      return res.status(400).json({ message: 'ID không hợp lệ', error: error.message });
+    }
+    
     res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
   }
 };

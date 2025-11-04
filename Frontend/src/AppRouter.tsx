@@ -14,12 +14,14 @@ import StorePage from "./pages/Store/Store";
 import Checkout from "./pages/Payment/Payment";
 import OrderPage from "./pages/Order/Order";
 import PaymentSuccess from "./components/Payment/PaymentSuccess/PaymentSuccess";
+import PaymentQR from "./pages/Payment/PaymentQR";
 import StoreList from "./pages/StoreList/StoreList";
 import Message from "./pages/Messages/Message";
 import Product from "./pages/ProductList/ProductList";
 import NewPage from "./pages/New/NewPage"
 import SupportPage from "./pages/Support/SupportPage"
 import Whitelist from "./pages/Whitelist/Whitelist"
+import WalletPage from "./pages/Wallet/Wallet"
 
 const AppRouter = () => (
   <Routes>
@@ -37,6 +39,7 @@ const AppRouter = () => (
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/order/:orderId" element={<OrderPage />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
+      <Route path="/payment-qr" element={<PaymentQR />} />
       <Route path="/stores" element={<StoreList />} />
       <Route path="/messages/:id?" element={<Message />} />
       <Route path="/message" element={<Navigate to="/messages" replace />} />
@@ -45,6 +48,7 @@ const AppRouter = () => (
       <Route path="/new" element={<NewPage />} />
       <Route path="/support" element={<SupportPage/>}/>
       <Route path="/whitelist" element={<Whitelist />} />
+      <Route path="/wallet" element={<WalletPage />} />
     </Route>
 
     <Route path="/s" element={<Navigate to="/login" />} />

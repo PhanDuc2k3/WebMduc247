@@ -24,7 +24,7 @@ interface OrderItem {
   quantity: number;
   subtotal: number;
   variation?: Variation;
-  storeId: string;
+  storeId: string | { _id: string } | any; // storeId có thể là string hoặc object
 }
 
 interface PaymentInfoType {
@@ -46,6 +46,7 @@ interface ShippingAddressType {
 }
 
 interface UserInfoType {
+  _id?: string;
   fullName: string;
   email: string;
   phone: string;
@@ -58,11 +59,13 @@ interface StoreInfoType {
   email?: string;
   phone?: string;
   logoUrl?: string;
+  ownerId?: string;
 }
 
 interface Order {
   _id: string;
   orderCode: string;
+  userId?: string;
   items: OrderItem[];
   subtotal: number;
   shippingFee: number;
@@ -80,34 +83,38 @@ export default function OrderPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [storeInfo, setStoreInfo] = useState<StoreInfoType | null>(null);
   const [myStoreId, setMyStoreId] = useState<string | null>(null);
+  const [isSeller, setIsSeller] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  let userRole: string = "buyer";
-  const userStr = localStorage.getItem("user");
-  if (userStr) {
-    try {
-      const parsedUser = JSON.parse(userStr);
-      userRole = parsedUser.role || "buyer";
-    } catch (err) {
-      console.error("Lỗi parse user từ localStorage:", err);
-    }
-  }
-
-  const isSeller = userRole === "seller";
-
+  // Fetch user profile từ API để lấy role và store info chính xác
   useEffect(() => {
-    const fetchMyStore = async () => {
-      if (!isSeller) return;
+    const fetchUserProfile = async () => {
       try {
-        const res = await axiosClient.get("/api/stores/me");
-        setMyStoreId(res.data.store._id);
+        const res = await axiosClient.get("/api/users/profile");
+        const profile = res.data.user || res.data;
+        
+        // Kiểm tra role
+        const userRole = profile.role || "buyer";
+        setIsSeller(userRole === "seller");
+        
+        // Nếu là seller, fetch store info
+        if (userRole === "seller") {
+          try {
+            const storeRes = await axiosClient.get("/api/stores/me");
+            setMyStoreId(storeRes.data.store?._id || null);
+          } catch (storeErr) {
+            console.error("Lỗi fetch store:", storeErr);
+            setMyStoreId(null);
+          }
+        }
       } catch (err) {
-        console.error("Lỗi fetch store:", err);
-        setMyStoreId(null);
+        console.error("Lỗi fetch user profile:", err);
+        setIsSeller(false);
       }
     };
-    fetchMyStore();
-  }, [isSeller]);
+    
+    fetchUserProfile();
+  }, []);
 
   useEffect(() => {
     if (!orderId) return;
@@ -132,15 +139,31 @@ export default function OrderPage() {
         };
         setOrder(mappedOrder);
 
-        if (!isSeller && mappedOrder.items.length > 0) {
+        // Lấy thông tin store
+        if (mappedOrder.items.length > 0) {
           const storeId = mappedOrder.items[0].storeId;
-          const storeRes = await axiosClient.get(`/api/stores/${storeId}`);
-          setStoreInfo({
-            name: storeRes.data.store.name,
-            email: storeRes.data.store.owner?.email || "",
-            phone: storeRes.data.store.owner?.phone || "",
-            logoUrl: storeRes.data.store.logoUrl || "/avatar.png",
-          });
+          // storeId có thể là string hoặc object có _id
+          const storeIdString = typeof storeId === 'string' 
+            ? storeId 
+            : ((storeId as any)?._id || storeId);
+          
+          // Nếu là người mua → luôn lấy thông tin store để hiển thị
+          // Nếu là seller → cũng cần để so sánh xem có phải chủ hàng không
+          if (storeIdString) {
+            try {
+              const storeRes = await axiosClient.get(`/api/stores/${storeIdString}`);
+              const owner = storeRes.data.store.owner;
+              setStoreInfo({
+                name: storeRes.data.store.name,
+                email: owner?.email || storeRes.data.store.contactEmail || "",
+                phone: owner?.phone || storeRes.data.store.contactPhone || "",
+                logoUrl: storeRes.data.store.logoUrl || "/avatar.png",
+                ownerId: owner?._id || owner?.id || null, // Lưu ownerId để nhắn tin
+              });
+            } catch (err) {
+              console.error("Lỗi fetch store info:", err);
+            }
+          }
         }
       } catch (err) {
         console.error("Lỗi fetch order:", err);
@@ -149,7 +172,7 @@ export default function OrderPage() {
       }
     };
     fetchOrder();
-  }, [orderId, isSeller]);
+  }, [orderId, isSeller, myStoreId]);
 
   if (loading) {
     return (
@@ -175,26 +198,54 @@ export default function OrderPage() {
 
   const currentStatus = order.statusHistory[order.statusHistory.length - 1].status;
 
-  const displayedUser = isSeller
+  // Kiểm tra xem có phải là chủ hàng của order này không
+  const orderStoreIdRaw = order.items[0]?.storeId;
+  // storeId có thể là string hoặc object có _id
+  const orderStoreId = typeof orderStoreIdRaw === 'string' 
+    ? orderStoreIdRaw 
+    : ((orderStoreIdRaw as any)?._id || orderStoreIdRaw);
+  
+  const isOwnerSeller =
+    isSeller &&
+    myStoreId &&
+    orderStoreId &&
+    String(orderStoreId) === String(myStoreId);
+
+  // Debug log để kiểm tra
+  console.log("🔍 Debug Order Info:", {
+    isSeller,
+    myStoreId,
+    orderStoreId,
+    orderStoreIdRaw,
+    isOwnerSeller,
+    hasStoreInfo: !!storeInfo,
+    hasUserInfo: !!order.userInfo,
+    comparison: orderStoreId && myStoreId ? String(orderStoreId) === String(myStoreId) : false,
+    userInfo: order.userInfo,
+  });
+
+  // Logic hiển thị thông tin:
+  // - Nếu là chủ hàng (isOwnerSeller) → hiển thị thông tin người mua (order.userInfo)
+  // - Nếu là người mua (không phải seller) → hiển thị thông tin người bán (storeInfo)
+  const displayedUser = isOwnerSeller
     ? {
-        fullName: order.userInfo.fullName,
-        email: order.userInfo.email,
-        phone: order.userInfo.phone,
+        // Chủ hàng xem thông tin người mua
+        fullName: order.userInfo?.fullName || "Khách hàng",
+        email: order.userInfo?.email || "",
+        phone: order.userInfo?.phone || "",
         role: "Khách hàng",
-        avatarUrl: order.userInfo.avatarUrl || "/avatar.png",
+        avatarUrl: order.userInfo?.avatarUrl || "/avatar.png",
+        userId: order.userInfo?._id || order.userId || "", // ID người mua để nhắn tin
       }
     : {
+        // Người mua xem thông tin người bán (store)
         fullName: storeInfo?.name || "Cửa hàng",
         email: storeInfo?.email || "",
         phone: storeInfo?.phone || "",
         role: "Chủ cửa hàng",
         avatarUrl: storeInfo?.logoUrl || "/avatar.png",
+        userId: storeInfo?.ownerId || "", // ID chủ cửa hàng để nhắn tin
       };
-
-  const isOwnerSeller =
-    isSeller &&
-    myStoreId &&
-    order.items[0]?.storeId?.toString() === myStoreId.toString();
 
   return (
     <div className="w-full py-8 md:py-12">

@@ -1,19 +1,20 @@
 import React, { useState } from "react";
 
 interface PaymentProps {
-  onChange?: (methodId: "cod" | "momo" | "vnpay") => void; // ✅ khớp với CheckoutPage
+  onChange?: (methodId: "cod" | "momo" | "vietqr" | "wallet") => void; // ✅ khớp với CheckoutPage
 }
 
 const Payment: React.FC<PaymentProps> = ({ onChange }) => {
-  const [selectedMethod, setSelectedMethod] = useState<"cod" | "momo" | "vnpay">("cod");
+  const [selectedMethod, setSelectedMethod] = useState<"cod" | "momo" | "vietqr" | "wallet">("cod");
 
-  const methods: { id: "cod" | "momo" | "vnpay"; label: string }[] = [
+  const methods: { id: "cod" | "momo" | "vietqr" | "wallet"; label: string }[] = [
     { id: "cod", label: "Thanh toán khi nhận hàng (COD)" },
     { id: "momo", label: "Ví MoMo" },
-    { id: "vnpay", label: "VNPay" },
+    { id: "vietqr", label: "VietQR" },
+    { id: "wallet", label: "Ví của tôi" },
   ];
 
-  const handleSelect = (methodId: "cod" | "momo" | "vnpay") => {
+  const handleSelect = (methodId: "cod" | "momo" | "vietqr" | "wallet") => {
     setSelectedMethod(methodId);
     onChange?.(methodId);
   };
@@ -36,7 +37,9 @@ const Payment: React.FC<PaymentProps> = ({ onChange }) => {
                   ? "border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg" 
                   : method.id === "momo"
                   ? "border-pink-500 bg-gradient-to-br from-pink-50 to-rose-50 shadow-lg"
-                  : "border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg"
+                  : method.id === "vietqr"
+                  ? "border-blue-500 bg-gradient-to-br from-blue-50 to-cyan-50 shadow-lg"
+                  : "border-purple-500 bg-gradient-to-br from-purple-50 to-indigo-50 shadow-lg"
                 : "border-gray-300 hover:border-blue-300"
             }`}
             onClick={() => handleSelect(method.id)}

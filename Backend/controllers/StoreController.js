@@ -179,7 +179,7 @@ exports.getMyStore = async (req, res) => {
 
 exports.getStoreById = async (req, res) => {
   try {
-    const store = await Store.findById(req.params.id);
+    const store = await Store.findById(req.params.id).populate('owner', 'fullName email phone');
     if (!store || !store.isActive) return res.status(404).json({ message: 'Không tìm thấy cửa hàng' });
 
     const products = await Product.find({ store: store._id });

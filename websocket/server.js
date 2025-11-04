@@ -41,7 +41,11 @@ cartSocketRouter.setIo(io);
 app.use("/api/cart-socket", cartSocketRouter);
 
 // --- Chat socket (nếu có)
-require("./websocket/chatSocket")(io);
+const chatSocketApp = require("./websocket/chatSocket")(io);
+// Mount chat socket app vào route /api/socket để có endpoint /api/socket/emit
+if (chatSocketApp) {
+  app.use("/api/socket", chatSocketApp);
+}
 
 // --- Socket connection logging
 io.on("connection", (socket) => {

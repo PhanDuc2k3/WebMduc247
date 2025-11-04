@@ -11,7 +11,7 @@ export interface CreateOrderData {
     phone: string;
     address: string;
   };
-  paymentMethod: "cod" | "momo" | "vnpay";
+  paymentMethod: "cod" | "momo" | "vietqr" | "wallet";
   voucherCode?: string;
 }
 

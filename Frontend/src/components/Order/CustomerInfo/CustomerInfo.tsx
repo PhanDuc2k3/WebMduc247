@@ -1,4 +1,6 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+import axiosClient from "../../../api/axiosClient";
 
 interface CustomerInfoProps {
   customer: {
@@ -7,10 +9,62 @@ interface CustomerInfoProps {
     phone: string;
     email: string;
     avatarUrl?: string;
+    userId?: string; // ID của người cần nhắn tin (ownerId hoặc userId)
   };
 }
 
 const CustomerInfo: React.FC<CustomerInfoProps> = ({ customer }) => {
+  const navigate = useNavigate();
+
+  const handleMessage = async () => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (!stored) {
+        alert("⚠️ Vui lòng đăng nhập để nhắn tin");
+        return;
+      }
+
+      const currentUser = JSON.parse(stored);
+      const senderId = currentUser._id || currentUser.id;
+      const receiverId = customer.userId;
+
+      if (!senderId || !receiverId) {
+        alert("Không tìm thấy ID người dùng");
+        return;
+      }
+
+      // Tạo hoặc lấy conversation
+      const res = await axiosClient.post("/api/messages/conversation", {
+        senderId,
+        receiverId,
+      });
+
+      const conversation = res.data.conversation || res.data;
+
+      // Xây chatUser
+      const chatUser = {
+        _id: receiverId,
+        name: customer.fullName,
+        avatar: customer.avatarUrl || "/default-avatar.png",
+      };
+
+      // Lấy tin nhắn ban đầu
+      const msgRes = await axiosClient.get(`/api/messages/${conversation._id}`);
+      const initialMessages = msgRes.data || [];
+
+      // Điều hướng đến trang chat
+      navigate(`/messages/${conversation._id}`, {
+        state: {
+          chatUser,
+          initialMessages,
+        },
+      });
+    } catch (err: any) {
+      console.error("Lỗi khi mở chat:", err);
+      alert(err.response?.data?.message || "Không thể mở cuộc trò chuyện. Vui lòng thử lại.");
+    }
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
       <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
@@ -38,23 +92,27 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ customer }) => {
               {customer.role}
             </p>
             <div className="space-y-2">
-              <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <span>📞</span> {customer.phone}
-              </p>
-              <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                <span>✉️</span> {customer.email}
-              </p>
+              {customer.phone && (
+                <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <span>📞</span> {customer.phone}
+                </p>
+              )}
+              {customer.email && (
+                <p className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <span>✉️</span> {customer.email}
+                </p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Actions */}
         <div className="flex flex-col space-y-2">
-          <button className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-bold rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2">
+          <button
+            onClick={handleMessage}
+            className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-sm font-bold rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+          >
             <span>💬</span> Nhắn tin
-          </button>
-          <button className="w-full px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm font-bold rounded-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2">
-            <span>📞</span> Gọi ngay
           </button>
         </div>
       </div>
