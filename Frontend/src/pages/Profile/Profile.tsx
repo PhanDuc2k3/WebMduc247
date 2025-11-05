@@ -179,27 +179,15 @@ const Profile: React.FC = () => {
 
       {/* Modal đánh giá sản phẩm */}
       {reviewProductId && reviewOrderId && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50 animate-fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-2xl p-8 relative shadow-2xl animate-scale-in">
-            <button
-              onClick={() => {
-                setReviewProductId(null);
-                setReviewOrderId(null);
-              }}
-              className="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 hover:bg-red-50 hover:text-red-600 flex items-center justify-center text-gray-500 font-bold text-xl transition-all duration-300 transform hover:scale-110"
-            >
-              ✕
-            </button>
-
-            <ProductReview
-              productId={reviewProductId}
-              orderId={reviewOrderId}
-              onClose={() => {
-                setReviewProductId(null);
-                setReviewOrderId(null);
-              }}
-            />
-          </div>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0)' }}>
+          <ProductReview
+            productId={reviewProductId}
+            orderId={reviewOrderId}
+            onClose={() => {
+              setReviewProductId(null);
+              setReviewOrderId(null);
+            }}
+          />
         </div>
       )}
     </div>

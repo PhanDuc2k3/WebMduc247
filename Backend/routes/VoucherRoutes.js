@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const {
   getAvailableVouchers,
+  getAvailableVouchersForCheckout,
   createVoucher,
   updateVoucher,
   deleteVoucher,
@@ -12,6 +13,7 @@ const {
 const auth = require("../middlewares/authMiddleware");
 
 router.get("/", auth, getAvailableVouchers);
+router.post("/checkout", auth, getAvailableVouchersForCheckout);
 router.post("/preview", auth, previewVoucher);
 router.post("/apply", auth, applyVoucher);
 

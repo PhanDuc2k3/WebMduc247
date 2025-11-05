@@ -19,6 +19,8 @@ const messageRoutes = require('./routes/MessageRoutes');
 const bannerRoutes = require("./routes/BannerRoutes");
 const favoriteRoutes = require("./routes/FavoriteRoutes");
 const walletRoutes = require("./routes/WalletRoutes");
+const promotionRoutes = require("./routes/PromotionRoutes");
+const adminStatisticsRoutes = require("./routes/AdminStatisticsRoutes");
 // const chatbotRoutes = require("./routes/ChatbotRoutes"); // 👈 chatbot
 
 dotenv.config();
@@ -67,8 +69,10 @@ app.use('/api/payment', paymentRoutes);
 app.use('/api/review', reviewRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/banner', bannerRoutes);
+app.use('/api/promotions', promotionRoutes);
 app.use('/api/favorites', favoriteRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/admin/statistics', adminStatisticsRoutes);
 // app.use('/api/chatbot', chatbotRoutes); // 👈 chatbot route
 
 // 🧩 Middleware xử lý lỗi route không tồn tại

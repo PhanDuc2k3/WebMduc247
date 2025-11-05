@@ -1,119 +1,146 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import voucherApi from "../../../api/voucherApi";
-import type { VoucherPreviewRequest, VoucherPreviewResponse } from "../../../api/voucherApi";
-
+import type { AvailableVoucher } from "../../../api/voucherApi";
+import VoucherPopup from "./VoucherPopup";
 
 interface VoucherBoxProps {
   subtotal: number;
-  onPreview: (discount: number, code: string) => void; // gửi discount tạm thời về parent
+  shippingFee: number;
+  selectedItems?: string[]; // IDs của các sản phẩm được chọn
+  onPreview: (productDiscount: number, productCode: string | null, freeshipDiscount: number, freeshipCode: string | null) => void;
 }
 
-interface VoucherInfo {
-  code: string;
-  title: string;
-  description: string;
-  minOrderValue: number;
-  valid: boolean; // đơn hàng có đạt điều kiện minOrderValue
-}
+const VoucherBox: React.FC<VoucherBoxProps> = ({ subtotal, shippingFee, selectedItems = [], onPreview }) => {
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedProductVoucher, setSelectedProductVoucher] = useState<AvailableVoucher | null>(null);
+  const [selectedFreeshipVoucher, setSelectedFreeshipVoucher] = useState<AvailableVoucher | null>(null);
+  const [loading, setLoading] = useState(false);
 
-const VoucherBox: React.FC<VoucherBoxProps> = ({ subtotal, onPreview }) => {
-  const [voucher, setVoucher] = useState("");
-  const [info, setInfo] = useState<VoucherInfo | null>(null);
-
-  const previewVoucher = async () => {
-    if (!voucher) {
-      alert("Vui lòng nhập mã voucher!");
-      return;
-    }
-
-    try {
-      const reqData: VoucherPreviewRequest = {
-        code: voucher,
-        orderTotal: subtotal,
-      };
-
-      // Gọi API preview voucher qua axios
-      const res = await voucherApi.previewVoucher(reqData);
-      const data: VoucherPreviewResponse = res.data;
-
-      if (data.discountAmount === undefined) {
-        alert(data.message || "Voucher không hợp lệ hoặc lỗi server");
-        return;
-      }
-
-      const vInfo: VoucherInfo = {
-        code: data.code,
-        title: `Giảm ${data.discountAmount.toLocaleString("vi-VN")}₫`, // hiển thị tạm
-        description: "Voucher áp dụng cho đơn hàng",
-        minOrderValue: 0, // nếu backend trả minOrderValue có thể lấy
-        valid: subtotal >= (data.finalTotal + data.discountAmount), // kiểm tra đơn hàng đạt điều kiện
-      };
-
-      setInfo(vInfo);
-
-      if (vInfo.valid) {
-        onPreview(data.discountAmount, vInfo.code);
-        alert("Voucher hợp lệ, đã áp dụng tạm thời!");
+  // Gọi callback khi voucher thay đổi
+  useEffect(() => {
+    const productDiscount = selectedProductVoucher ? selectedProductVoucher.discount : 0;
+    const productCode = selectedProductVoucher ? selectedProductVoucher.code : null;
+    // Tính lại discount cho freeship voucher dựa trên shippingFee hiện tại
+    let freeshipDiscount = 0;
+    let freeshipCode = selectedFreeshipVoucher ? selectedFreeshipVoucher.code : null;
+    if (selectedFreeshipVoucher) {
+      if (selectedFreeshipVoucher.discountType === "fixed") {
+        freeshipDiscount = Math.min(selectedFreeshipVoucher.discountValue, shippingFee);
       } else {
-        alert(`Đơn hàng chưa đạt điều kiện, không thể áp dụng voucher`);
+        freeshipDiscount = Math.min(
+          (shippingFee * selectedFreeshipVoucher.discountValue) / 100,
+          selectedFreeshipVoucher.maxDiscount || shippingFee,
+          shippingFee
+        );
       }
-    } catch (err) {
-      console.error(err);
-      alert("Lỗi server");
     }
+    onPreview(productDiscount, productCode, freeshipDiscount, freeshipCode);
+  }, [selectedProductVoucher, selectedFreeshipVoucher, shippingFee, onPreview]);
+
+  const handleSelectProductVoucher = (voucher: AvailableVoucher | null) => {
+    setSelectedProductVoucher(voucher);
+  };
+
+  const handleSelectFreeshipVoucher = (voucher: AvailableVoucher | null) => {
+    setSelectedFreeshipVoucher(voucher);
+  };
+
+  const handleRemoveProductVoucher = () => {
+    setSelectedProductVoucher(null);
+  };
+
+  const handleRemoveFreeshipVoucher = () => {
+    setSelectedFreeshipVoucher(null);
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          Mã giảm giá
-        </h2>
-        <p className="text-gray-600 text-sm mt-1">Nhập mã voucher của bạn</p>
-      </div>
-      <div className="p-6 space-y-4">
-        <div className="flex gap-3">
-          <input
-            type="text"
-            value={voucher}
-            onChange={(e) => setVoucher(e.target.value)}
-            placeholder="Nhập mã voucher"
-            className="flex-1 border-2 border-gray-200 rounded-xl px-5 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all duration-300"
-          />
-          <button
-            onClick={previewVoucher}
-            className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 whitespace-nowrap"
-          >
-            Áp dụng
-          </button>
+    <>
+      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
+        <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            Mã giảm giá
+          </h2>
+          <p className="text-gray-600 text-sm mt-1">Chọn voucher để áp dụng giảm giá</p>
         </div>
-
-        {info && (
-          <div
-            className={`border-2 p-5 rounded-2xl animate-scale-in ${
-              info.valid
-                ? "bg-gradient-to-br from-green-50 to-emerald-50 border-green-300"
-                : "bg-gradient-to-br from-red-50 to-rose-50 border-red-300"
-            }`}
+        <div className="p-6 space-y-4">
+          <button
+            onClick={() => {
+              console.log("🔘 Click chọn voucher button");
+              console.log("Subtotal:", subtotal);
+              console.log("Selected items:", selectedItems);
+              setIsPopupOpen(true);
+            }}
+            className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="font-bold text-xl">
-                {info.title}
+            Chọn voucher
+          </button>
+
+          {/* Hiển thị voucher đã chọn */}
+          {selectedProductVoucher && (
+            <div className="border-2 p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 border-green-300">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="font-bold text-lg">{selectedProductVoucher.title}</div>
+                  <div className="text-sm text-gray-600 mt-1">Giảm giá sản phẩm</div>
+                  <div className="text-xs text-gray-500 mt-1">Mã: {selectedProductVoucher.code}</div>
+                  <div className="text-red-600 font-semibold mt-1">
+                    Giảm: {selectedProductVoucher.discount.toLocaleString("vi-VN")}₫
+                  </div>
+                </div>
+                <button
+                  onClick={handleRemoveProductVoucher}
+                  className="text-red-500 hover:text-red-700 text-lg font-bold ml-4"
+                >
+                  ✕
+                </button>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                info.valid ? "bg-green-200 text-green-700" : "bg-red-200 text-red-700"
-              }`}>
-                {info.code}
-              </span>
             </div>
-            <div className="text-gray-700 text-sm">
-              <p>{info.description}</p>
-              <p>Điều kiện: từ {(info.minOrderValue ?? 0).toLocaleString("vi-VN")}₫</p>
+          )}
+
+          {selectedFreeshipVoucher && (
+            <div className="border-2 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-300">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <div className="font-bold text-lg">{selectedFreeshipVoucher.title}</div>
+                  <div className="text-sm text-gray-600 mt-1">Miễn phí vận chuyển</div>
+                  <div className="text-xs text-gray-500 mt-1">Mã: {selectedFreeshipVoucher.code}</div>
+                  <div className="text-red-600 font-semibold mt-1">
+                    Giảm: {selectedFreeshipVoucher.discount.toLocaleString("vi-VN")}₫
+                  </div>
+                </div>
+                <button
+                  onClick={handleRemoveFreeshipVoucher}
+                  className="text-red-500 hover:text-red-700 text-lg font-bold ml-4"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+          {!selectedProductVoucher && !selectedFreeshipVoucher && (
+            <div className="text-center text-gray-500 text-sm py-2">
+              Chưa có voucher nào được chọn
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+
+      {/* Popup chọn voucher */}
+      {isPopupOpen && (
+        <VoucherPopup
+          isOpen={isPopupOpen}
+          onClose={() => setIsPopupOpen(false)}
+          subtotal={subtotal}
+          shippingFee={shippingFee}
+          selectedItems={selectedItems}
+          selectedProductVoucher={selectedProductVoucher}
+          selectedFreeshipVoucher={selectedFreeshipVoucher}
+          onSelectProduct={handleSelectProductVoucher}
+          onSelectFreeship={handleSelectFreeshipVoucher}
+        />
+      )}
+    </>
   );
 };
 

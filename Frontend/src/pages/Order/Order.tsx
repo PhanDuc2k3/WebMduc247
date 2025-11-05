@@ -6,6 +6,7 @@ import PaymentInfo from "../../components/Order/PaymentInfo/PaymentInfo";
 import CustomerInfo from "../../components/Order/CustomerInfo/CustomerInfo";
 import ShippingInfo from "../../components/Order/ShippingInfo/ShippingInfo";
 import OrderUpdate from "../../components/Order/OrderUpdate/OrderUpdate";
+import BuyerConfirmDelivery from "../../components/Order/BuyerConfirmDelivery/BuyerConfirmDelivery";
 import orderApi from "../../api/orderApi";
 import axiosClient from "../../api/axiosClient";
 
@@ -276,6 +277,28 @@ export default function OrderPage() {
           />
           {isOwnerSeller && (
             <OrderUpdate orderId={order._id} currentStatus={currentStatus} />
+          )}
+          {!isOwnerSeller && currentStatus === "shipped" && (
+            <BuyerConfirmDelivery orderId={order._id} onConfirm={async () => {
+              // Reload order sau khi confirm
+              const res = await orderApi.getOrderById(order._id);
+              const data = res.data;
+              const estimatedDelivery =
+                typeof data.shippingInfo?.estimatedDelivery === "number"
+                  ? data.shippingInfo.estimatedDelivery
+                  : data.shippingInfo?.estimatedDelivery?.$date?.$numberLong
+                  ? parseInt(data.shippingInfo.estimatedDelivery.$date.$numberLong)
+                  : Date.now();
+              const mappedOrder: Order = {
+                ...data,
+                shippingInfo: {
+                  method: data.shippingInfo?.method || "Chưa xác định",
+                  estimatedDelivery,
+                  trackingNumber: data.shippingInfo?.trackingNumber || "",
+                },
+              };
+              setOrder(mappedOrder);
+            }} />
           )}
         </div>
       </div>

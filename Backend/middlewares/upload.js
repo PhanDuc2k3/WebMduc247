@@ -9,7 +9,8 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
+// Storage cho messages
+const messagesStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'messages',
@@ -18,10 +19,24 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const upload = multer({ storage, limits: { fileSize: 25 * 1024 * 1024 } });
+// Storage cho reviews
+const reviewsStorage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'reviews',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'jfif'],
+    transformation: [{ width: 2000, crop: 'limit' }],
+  },
+});
+
+// Upload cho messages (mặc định)
+const upload = multer({ storage: messagesStorage, limits: { fileSize: 25 * 1024 * 1024 } });
+
+// Upload cho reviews
+const uploadReview = multer({ storage: reviewsStorage, limits: { fileSize: 25 * 1024 * 1024 } });
 
 const logUpload = (req, res, next) => {
   next();
 };
 
-module.exports = { upload, logUpload };
+module.exports = { upload, uploadReview, logUpload };

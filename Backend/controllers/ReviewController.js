@@ -27,7 +27,22 @@ exports.createReview = async (req, res) => {
     const hasItem = order.items.some(item => item.productId.toString() === productId);
     if (!hasItem) return res.status(400).json({ message: "Bạn chưa mua sản phẩm này" });
 
-    const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+    // Kiểm tra xem user đã đánh giá sản phẩm này chưa
+    const existingReview = await Review.findOne({
+      userId: user.userId,
+      productId: productId,
+      orderId: orderId,
+    });
+
+    if (existingReview) {
+      return res.status(400).json({ 
+        message: "Bạn đã đánh giá sản phẩm này rồi. Bạn chỉ có thể sửa đánh giá 1 lần.",
+        review: existingReview 
+      });
+    }
+
+    // Lấy Cloudinary URL từ req.files (khi dùng CloudinaryStorage, path sẽ là Cloudinary URL)
+    const images = req.files ? req.files.map(f => f.path || f.url || f.secure_url) : [];
 
     const review = new Review({
       productId,
@@ -40,6 +55,7 @@ exports.createReview = async (req, res) => {
       rating,
       comment,
       images,
+      editCount: 0,
     });
 
     await review.save();
@@ -70,5 +86,87 @@ exports.getReviewsByProduct = async (req, res) => {
     res.json(reviews);
   } catch (err) {
     res.status(500).json({ message: "Lỗi khi lấy đánh giá", error: err.message });
+  }
+};
+
+// Lấy review của user cho sản phẩm trong đơn hàng cụ thể
+exports.getReviewByUserAndProduct = async (req, res) => {
+  try {
+    const { orderId, productId } = req.params;
+    const user = req.user;
+
+    if (!user || !user.userId) {
+      return res.status(401).json({ message: "Chưa đăng nhập" });
+    }
+
+    const review = await Review.findOne({
+      userId: user.userId,
+      productId: productId,
+      orderId: orderId,
+    });
+
+    if (!review) {
+      return res.status(404).json({ message: "Chưa có đánh giá", review: null });
+    }
+
+    res.json({ message: "Đã tìm thấy đánh giá", review });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi khi lấy đánh giá", error: err.message });
+  }
+};
+
+// Cập nhật review (chỉ cho phép sửa 1 lần)
+exports.updateReview = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const { rating, comment } = req.body;
+    const user = req.user;
+
+    if (!user || !user.userId) {
+      return res.status(401).json({ message: "Chưa đăng nhập" });
+    }
+
+    const review = await Review.findById(reviewId);
+    if (!review) {
+      return res.status(404).json({ message: "Đánh giá không tồn tại" });
+    }
+
+    // Kiểm tra quyền sở hữu
+    if (review.userId.toString() !== user.userId.toString()) {
+      return res.status(403).json({ message: "Bạn không có quyền sửa đánh giá này" });
+    }
+
+    // Kiểm tra số lần đã sửa
+    if (review.editCount >= 1) {
+      return res.status(400).json({ message: "Bạn đã sửa đánh giá 1 lần rồi. Không thể sửa thêm." });
+    }
+
+    // Cập nhật ảnh nếu có - lấy Cloudinary URL từ req.files
+    let images = review.images || [];
+    if (req.files && req.files.length > 0) {
+      const newImages = req.files.map(f => f.path || f.url || f.secure_url);
+      images = [...images, ...newImages];
+    }
+
+    // Cập nhật review
+    review.rating = rating || review.rating;
+    review.comment = comment !== undefined ? comment : review.comment;
+    review.images = images;
+    review.editCount = review.editCount + 1;
+    await review.save();
+
+    // Cập nhật avg rating cho product
+    const stats = await Review.aggregate([
+      { $match: { productId: review.productId } },
+      { $group: { _id: "$productId", avgRating: { $avg: "$rating" } } },
+    ]);
+
+    if (stats.length > 0) {
+      await Product.findByIdAndUpdate(review.productId, { rating: stats[0].avgRating });
+    }
+
+    res.json({ message: "Cập nhật đánh giá thành công", review });
+  } catch (err) {
+    res.status(500).json({ message: "Lỗi khi cập nhật đánh giá", error: err.message });
   }
 };

@@ -57,9 +57,15 @@ const OrderSchema = new mongoose.Schema(
     subtotal: { type: Number, required: true, default: 0 },
     shippingFee: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
+    shippingDiscount: { type: Number, default: 0 },
     total: { type: Number, required: true, default: 0 },
 
-    // Voucher
+    // Voucher - hỗ trợ cả 2 loại voucher cùng lúc
+    productVoucher: { type: mongoose.Schema.Types.ObjectId, ref: "Voucher", default: null },
+    productVoucherCode: { type: String, default: "" },
+    freeshipVoucher: { type: mongoose.Schema.Types.ObjectId, ref: "Voucher", default: null },
+    freeshipVoucherCode: { type: String, default: "" },
+    // Giữ lại cho tương thích ngược
     voucher: { type: mongoose.Schema.Types.ObjectId, ref: "Voucher", default: null },
     voucherCode: { type: String, default: "" },
 

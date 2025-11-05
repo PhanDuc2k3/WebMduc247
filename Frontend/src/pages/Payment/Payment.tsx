@@ -19,7 +19,9 @@ const CheckoutPage: React.FC = () => {
   const [cartSubtotal, setCartSubtotal] = useState<number>(0);
   const [selectedItemsIds, setSelectedItemsIds] = useState<string[]>([]);
   const [voucherDiscount, setVoucherDiscount] = useState<number>(0);
-  const [selectedVoucherCode, setSelectedVoucherCode] = useState<string | undefined>(undefined);
+  const [shippingDiscount, setShippingDiscount] = useState<number>(0);
+  const [productVoucherCode, setProductVoucherCode] = useState<string | null>(null);
+  const [freeshipVoucherCode, setFreeshipVoucherCode] = useState<string | null>(null);
 
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -80,10 +82,17 @@ const CheckoutPage: React.FC = () => {
   }, []);
 
 
-  const handleVoucherPreview = (discountValue: number, code: string) => {
-    setVoucherDiscount(discountValue);
-    setSelectedVoucherCode(code);
-    console.log(`✅ Voucher ${code} áp dụng, giảm ${discountValue}₫`);
+  const handleVoucherPreview = (
+    productDiscount: number,
+    productCode: string | null,
+    freeshipDiscount: number,
+    freeshipCode: string | null
+  ) => {
+    setVoucherDiscount(productDiscount);
+    setShippingDiscount(freeshipDiscount);
+    setProductVoucherCode(productCode);
+    setFreeshipVoucherCode(freeshipCode);
+    console.log(`✅ Voucher product: ${productCode || "Không"} (${productDiscount}₫), freeship: ${freeshipCode || "Không"} (${freeshipDiscount}₫)`);
   };
 
   return (
@@ -112,7 +121,12 @@ const CheckoutPage: React.FC = () => {
         {/* Cột phải - Sticky */}
         <div className="w-full lg:w-1/3 space-y-6">
           <div className="animate-fade-in-up delay-500">
-            <VoucherBox subtotal={cartSubtotal} onPreview={handleVoucherPreview} />
+            <VoucherBox 
+              subtotal={cartSubtotal} 
+              shippingFee={shippingFee} 
+              selectedItems={selectedItemsIds}
+              onPreview={handleVoucherPreview} 
+            />
           </div>
           <div className="animate-fade-in-up delay-600">
             <Payment onChange={setPaymentMethod} />
@@ -123,7 +137,9 @@ const CheckoutPage: React.FC = () => {
               paymentMethod={paymentMethod}
               addressId={selectedAddressId}
               discount={voucherDiscount}
-              voucherCode={selectedVoucherCode}
+              shippingDiscount={shippingDiscount}
+              productVoucherCode={productVoucherCode}
+              freeshipVoucherCode={freeshipVoucherCode}
             />
           </div>
         </div>

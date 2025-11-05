@@ -12,6 +12,11 @@ const voucherSchema = new mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String, required: true },
     condition: { type: String, required: true },
+    voucherType: {
+      type: String,
+      enum: ["product", "freeship"],
+      default: "product"
+    },
     discountType: {
       type: String,
       enum: ["fixed", "percent"],                     

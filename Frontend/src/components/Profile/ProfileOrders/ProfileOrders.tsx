@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Star, Eye, ShoppingBag, Calendar } from "lucide-react";
+import { Package, Star, Eye, ShoppingBag, Calendar, CheckCircle } from "lucide-react";
 import reviewApi from "../../../api/apiReview";
+import orderApi from "../../../api/orderApi";
 
 interface OrderItem {
   name: string;
@@ -47,46 +48,76 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  // LOG debug props nhận được
-  console.group("[ProfileOrders] Render Component");
-  console.log("Props.orders:", orders);
-  console.log("Props.loading:", loading);
-  console.log("Số lượng orders:", orders?.length || 0);
-  console.groupEnd();
+  // LOG debug props nhận được (chỉ trong dev mode)
+  if (import.meta.env.DEV) {
+    console.group("[ProfileOrders] Render Component");
+    console.log("Props.orders:", orders);
+    console.log("Props.loading:", loading);
+    console.log("Số lượng orders:", orders?.length || 0);
+    console.groupEnd();
+  }
 
   // state chứa reviews theo productId
   const [reviews, setReviews] = useState<Record<string, Review[]>>({});
+  
+  // Track các productId đã fetch để tránh fetch trùng lặp
+  const fetchedProductIdsRef = useRef<Set<string>>(new Set());
 
   // fetch reviews theo productId
   const fetchReviews = async (productId: string) => {
+    if (!productId || fetchedProductIdsRef.current.has(productId)) return;
+    
+    // Đánh dấu đã fetch
+    fetchedProductIdsRef.current.add(productId);
+    
     try {
-      console.log("Gọi API review cho productId:", productId);
+      if (import.meta.env.DEV) {
+        console.log("Gọi API review cho productId:", productId);
+      }
       const res = await reviewApi.getReviewsByProduct(productId);
-      console.log("Review data:", res.data);
+      if (import.meta.env.DEV) {
+        console.log("Review data:", res.data);
+      }
       setReviews((prev) => ({ ...prev, [productId]: res.data }));
-    } catch (err) {
-      console.error("Lỗi fetch reviews:", err);
+    } catch (err: any) {
+      // Chỉ log lỗi thực sự, không log 404 hoặc lỗi không quan trọng
+      if (err.response?.status !== 404) {
+        console.error("Lỗi fetch reviews:", err);
+      }
+      // Nếu lỗi, remove khỏi set để có thể retry sau
+      fetchedProductIdsRef.current.delete(productId);
     }
   };
 
   // khi có orders thì fetch review cho từng product
   useEffect(() => {
-    console.log("useEffect chạy — orders thay đổi:", orders);
+    // Chỉ xử lý khi không đang loading và có orders
+    if (loading || !orders || orders.length === 0) {
+      return;
+    }
 
-    if (orders?.length > 0) {
-      orders.forEach((order) => {
-        console.log("Kiểm tra order:", order._id);
+    if (import.meta.env.DEV) {
+      console.log("useEffect chạy — orders thay đổi:", orders);
+    }
+
+    // Collect unique product IDs để tránh fetch trùng lặp
+    const productIds = new Set<string>();
+    
+    orders.forEach((order) => {
+      if (order.items && order.items.length > 0) {
         order.items.forEach((item) => {
-          console.log("Sản phẩm trong order:", item.productId, item.name);
-          if (!reviews[item.productId]) {
-            fetchReviews(item.productId);
+          if (item.productId) {
+            productIds.add(item.productId);
           }
         });
-      });
-    } else {
-      console.warn("Không có đơn hàng để fetch review!");
-    }
-  }, [orders]);
+      }
+    });
+
+    // Fetch reviews cho các product chưa fetch
+    productIds.forEach((productId) => {
+      fetchReviews(productId);
+    });
+  }, [orders, loading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getShippingStatus = (history: StatusHistory[]) => {
     if (!history || history.length === 0) return "Chờ xác nhận";
@@ -198,6 +229,24 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                         </button>
                       ))}
                     </>
+                  ) : getShippingStatus(order.statusHistory) === "Đang giao hàng" ? (
+                    <button
+                      onClick={async () => {
+                        if (window.confirm("Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã giao hàng'.")) {
+                          try {
+                            await orderApi.confirmDelivery(order._id);
+                            alert("Xác nhận nhận hàng thành công!");
+                            window.location.reload();
+                          } catch (err: any) {
+                            console.error("Lỗi xác nhận nhận hàng:", err);
+                            alert(err.response?.data?.message || "Lỗi khi xác nhận nhận hàng!");
+                          }
+                        }
+                      }}
+                      className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle size={16} /> Đã nhận hàng
+                    </button>
                   ) : (
                     <button
                       onClick={() => navigate(`/order/${order._id}`)}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 interface MenuItem {
   label: string;
-  icon: string;
+  icon?: string;
   key: string;
   badge?: number;
 }
@@ -16,13 +16,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange })
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const menuItems: MenuItem[] = [
-    { label: 'Dashboard', icon: '🏠', key: 'dashboard' },
-    { label: 'Người dùng', icon: '👥', key: 'users' },
-    { label: 'Duyệt đơn bán', icon: '📋', key: 'sellerRequest', badge: 3 },
-    { label: 'Banner', icon: '🎨', key: 'banner' },
-    { label: 'Cửa hàng', icon: '🏬', key: 'stores' },
-    { label: 'Đơn hàng', icon: '🛒', key: 'orders' },
-    { label: 'Voucher', icon: '🎁', key: 'vouchers' },
+    { label: 'Dashboard', key: 'dashboard' },
+    { label: 'Người dùng', key: 'users' },
+    { label: 'Duyệt đơn bán', key: 'sellerRequest', badge: 3 },
+    { label: 'Banner', key: 'banner' },
+    { label: 'Cửa hàng', key: 'stores' },
+    { label: 'Đơn hàng', key: 'orders' },
+    { label: 'Voucher', key: 'vouchers' },
+    { label: 'Tin tức Khuyến mãi', key: 'promotions' },
   ];
 
   return (
@@ -37,7 +38,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange })
           {!isCollapsed && (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
-                <span className="text-2xl">🎛️</span>
+                <span className="text-white font-bold text-sm">A</span>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Admin</h1>
@@ -66,9 +67,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange })
                 : 'hover:bg-purple-800/50 hover:scale-105'
             }`}
           >
-            <span className={`text-2xl transition-transform duration-300 ${activeMenu === item.key ? 'scale-110' : 'group-hover:scale-110'}`}>
-              {item.icon}
-            </span>
+            {item.icon && (
+              <span className={`text-2xl transition-transform duration-300 ${activeMenu === item.key ? 'scale-110' : 'group-hover:scale-110'}`}>
+                {item.icon}
+              </span>
+            )}
             {!isCollapsed && (
               <>
                 <span className={`font-bold transition-colors ${activeMenu === item.key ? 'text-white' : 'text-purple-200'}`}>
@@ -93,7 +96,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange })
       <div className="p-4 border-t border-purple-800">
         {!isCollapsed && (
           <div className="bg-gradient-to-r from-purple-800 to-pink-800 rounded-xl p-4">
-            <p className="text-white text-sm font-bold mb-2">💡 Need Help?</p>
+            <p className="text-white text-sm font-bold mb-2">Need Help?</p>
             <p className="text-purple-200 text-xs">Contact admin support</p>
           </div>
         )}

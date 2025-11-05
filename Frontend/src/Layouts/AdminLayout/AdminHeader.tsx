@@ -104,13 +104,13 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onSearch }) => {
                 </div>
                 <div className="p-2">
                   <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors text-gray-700 font-medium">
-                    👤 Profile
+                    Profile
                   </button>
                   <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors text-gray-700 font-medium">
-                    ⚙️ Settings
+                    Settings
                   </button>
                   <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-purple-50 transition-colors text-gray-700 font-medium">
-                    🔓 Logout
+                    Logout
                   </button>
                 </div>
               </div>

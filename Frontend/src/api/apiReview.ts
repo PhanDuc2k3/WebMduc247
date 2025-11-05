@@ -13,9 +13,19 @@ const reviewApi = {
       headers: { "Content-Type": "multipart/form-data" },
     }),
 
-  // Lấy tất cả review của 1 sản phẩm (GET /api/review/:productId/reviews)
+  // Lấy tất cả review của 1 sản phẩm (GET /api/review/product/:productId/reviews)
   getReviewsByProduct: (productId: string) =>
-    axiosClient.get(`/api/review/${productId}/reviews`),
+    axiosClient.get(`/api/review/product/${productId}/reviews`),
+
+  // Lấy review của user cho sản phẩm trong đơn hàng cụ thể
+  getReviewByUserAndProduct: (orderId: string, productId: string) =>
+    axiosClient.get(`/api/review/order/${orderId}/product/${productId}/user-review`),
+
+  // Cập nhật review (PUT /api/review/:reviewId)
+  updateReview: (reviewId: string, data: FormData) =>
+    axiosClient.put(`/api/review/${reviewId}`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+    }),
 };
 
 export default reviewApi;

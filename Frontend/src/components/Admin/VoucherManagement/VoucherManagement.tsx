@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import voucherApi, { VoucherType } from '../../../api/voucherApi';
+import voucherApi from '../../../api/voucherApi';
+import type { VoucherType } from '../../../api/voucherApi';
 import { Edit, Trash2, Plus, Search, Gift } from 'lucide-react';
 
 const VoucherManagement: React.FC = () => {
@@ -10,8 +11,11 @@ const VoucherManagement: React.FC = () => {
   const [editingVoucher, setEditingVoucher] = useState<VoucherType | null>(null);
   const [formData, setFormData] = useState<VoucherType>({
     code: '',
+    title: '',
     description: '',
-    discountType: 'percentage',
+    condition: '',
+    voucherType: 'product',
+    discountType: 'percent',
     discountValue: 0,
     minOrderValue: 0,
     maxDiscount: 0,
@@ -83,8 +87,11 @@ const VoucherManagement: React.FC = () => {
       setEditingVoucher(null);
       setFormData({
         code: '',
+        title: '',
         description: '',
-        discountType: 'percentage',
+        condition: '',
+        voucherType: 'product',
+        discountType: 'percent',
         discountValue: 0,
         minOrderValue: 0,
         maxDiscount: 0,
@@ -109,7 +116,7 @@ const VoucherManagement: React.FC = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20">
         <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
-        <p className="text-gray-600 text-lg font-medium">⏳ Đang tải voucher...</p>
+        <p className="text-gray-600 text-lg font-medium">Đang tải voucher...</p>
       </div>
     );
   }
@@ -118,7 +125,7 @@ const VoucherManagement: React.FC = () => {
     <div className="p-6 lg:p-8">
       <div className="mb-6 animate-fade-in-down">
         <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <span>🎁</span> Quản lý Voucher
+          <span>��</span> Quản lý Voucher
         </h2>
         <p className="text-gray-600 text-sm">
           Quản lý và tạo các mã giảm giá cho khách hàng
@@ -145,8 +152,11 @@ const VoucherManagement: React.FC = () => {
             setEditingVoucher(null);
             setFormData({
               code: '',
+              title: '',
               description: '',
-              discountType: 'percentage',
+              condition: '',
+              voucherType: 'product',
+              discountType: 'percent',
               discountValue: 0,
               minOrderValue: 0,
               maxDiscount: 0,
@@ -196,7 +206,7 @@ const VoucherManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="font-bold text-green-600">
-                      {voucher.discountType === 'percentage'
+                      {voucher.discountType === 'percent'
                         ? `${voucher.discountValue}%`
                         : `${voucher.discountValue.toLocaleString('vi-VN')}đ`}
                     </span>
@@ -247,7 +257,7 @@ const VoucherManagement: React.FC = () => {
         </div>
       ) : (
         <div className="text-center py-20 animate-fade-in-up">
-          <div className="text-8xl mb-4 animate-bounce">🎁</div>
+          <div className="text-8xl mb-4 animate-bounce">��</div>
           <p className="text-gray-500 text-lg font-medium">Không tìm thấy voucher nào</p>
         </div>
       )}
@@ -258,9 +268,9 @@ const VoucherManagement: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="p-6 border-b-2 border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold gradient-text">
-                  {editingVoucher ? '✏️ Sửa voucher' : '➕ Thêm voucher mới'}
-                </h3>
+                                  <h3 className="text-2xl font-bold gradient-text">
+                    {editingVoucher ? 'Sửa voucher' : 'Thêm voucher mới'}
+                  </h3>
                 <button
                   onClick={() => {
                     setShowForm(false);
@@ -286,13 +296,52 @@ const VoucherManagement: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Tiêu đề *</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  placeholder="Nhập tiêu đề voucher"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả *</label>
                 <textarea
                   rows={3}
+                  required
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  placeholder="Nhập mô tả voucher"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Điều kiện *</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={formData.condition}
+                  onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  placeholder="Nhập điều kiện áp dụng voucher"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Loại voucher *</label>
+                <select
+                  required
+                  value={formData.voucherType || 'product'}
+                  onChange={(e) => setFormData({ ...formData, voucherType: e.target.value as 'product' | 'freeship' })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                >
+                  <option value="product">Giảm giá sản phẩm</option>
+                  <option value="freeship">Miễn phí vận chuyển</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -301,10 +350,10 @@ const VoucherManagement: React.FC = () => {
                   <select
                     required
                     value={formData.discountType}
-                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value as 'percentage' | 'fixed' })}
+                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value as 'percent' | 'fixed' })}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   >
-                    <option value="percentage">Phần trăm (%)</option>
+                    <option value="percent">Phần trăm (%)</option>
                     <option value="fixed">Số tiền cố định</option>
                   </select>
                 </div>
@@ -334,7 +383,7 @@ const VoucherManagement: React.FC = () => {
                   />
                 </div>
 
-                {formData.discountType === 'percentage' && (
+                {formData.discountType === 'percent' && (
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Giảm tối đa</label>
                     <input
@@ -402,7 +451,7 @@ const VoucherManagement: React.FC = () => {
                   type="submit"
                   className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                 >
-                  {editingVoucher ? '💾 Lưu thay đổi' : '➕ Tạo voucher'}
+                  {editingVoucher ? '�� Lưu thay đổi' : '➕ Tạo voucher'}
                 </button>
                 <button
                   type="button"
@@ -424,4 +473,8 @@ const VoucherManagement: React.FC = () => {
 };
 
 export default VoucherManagement;
+
+
+
+
 

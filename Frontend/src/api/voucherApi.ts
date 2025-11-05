@@ -1,58 +1,103 @@
-import axiosClient from "./axiosClient";
+  import axiosClient from "./axiosClient";
 
-export interface VoucherType {
-  _id?: string;
-  code: string;
-  description?: string;
-  discountType: "percentage" | "fixed";
-  discountValue: number;
-  minOrderValue?: number;
-  maxDiscount?: number; // áp dụng nếu discountType = percentage
-  startDate: string;    // ISO string
-  endDate: string;      // ISO string
-  usageLimit?: number;
-  usedCount?: number;
-  isActive?: boolean;
-  createdBy?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+  export interface VoucherType {
+    _id?: string;
+    code: string;
+    title: string;
+    description: string;
+    condition: string;
+    voucherType?: "product" | "freeship";
+    discountType: "percent" | "fixed";
+    discountValue: number;
+    minOrderValue?: number;
+    maxDiscount?: number; // Áp dụng nếu discountType = percent
+    startDate: string;    // ISO string
+    endDate: string;      // ISO string
+    usageLimit?: number;
+    usedCount?: number;
+    isActive?: boolean;
+    createdBy?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  }
 
-// Kiểu request để preview/apply voucher
-export interface VoucherPreviewRequest {
-  code: string;
-  orderTotal: number;
-}
+  // Kiểu request để preview/apply voucher
+  export interface VoucherPreviewRequest {
+    code: string;
+    subtotal?: number; // Subtotal của các sản phẩm được chọn trong checkout
+    shippingFee?: number; // Để tính discount freeship chính xác
+  }
 
-export interface VoucherPreviewResponse {
-  code: string;
-  discountAmount: number;
-  finalTotal: number;
-  message?: string;
-}
+  export interface VoucherPreviewResponse {
+    message: string;
+    discount: number;
+    voucher: {
+      id: string;
+      code: string;
+      title: string;
+      description: string;
+      voucherType: "product" | "freeship";
+      minOrderValue: number;
+      discountValue: number;
+      storeName: string;
+      storeCategory: string;
+      usagePercent: number;
+      used: boolean;
+    };
+  }
 
-const voucherApi = {
-  // Lấy danh sách voucher khả dụng
-  getAvailableVouchers: () => axiosClient.get<VoucherType[]>("/api/vouchers"),
+  // Interface cho voucher khả dụng trong checkout
+  export interface AvailableVoucher {
+    id: string;
+    code: string;
+    title: string;
+    description: string;
+    condition: string;
+    voucherType: "product" | "freeship";
+    discountType: "percent" | "fixed";
+    discountValue: number;
+    maxDiscount?: number;
+    minOrderValue: number;
+    storeName: string;
+    storeCategory: string;
+    isGlobal: boolean;
+    discount: number; // Discount đã tính toán sẵn
+    usagePercent: number;
+    used: boolean;
+  }
 
-  // Tạo voucher mới
-  createVoucher: (data: VoucherType) => axiosClient.post<VoucherType>("/api/vouchers", data),
+  export interface AvailableVouchersResponse {
+    productVouchers: AvailableVoucher[];
+    freeshipVouchers: AvailableVoucher[];
+    subtotal: number;
+  }
 
-  // Cập nhật voucher
-  updateVoucher: (id: string, data: VoucherType) =>
-    axiosClient.put<VoucherType>(`/api/vouchers/${id}`, data),
+  const voucherApi = {
+    // Lấy danh sách voucher khả dụng
+    getAvailableVouchers: () => axiosClient.get<VoucherType[]>("/api/vouchers"),
 
-  // Xóa voucher
-  deleteVoucher: (id: string) =>
-    axiosClient.delete<{ message: string }>(`/api/vouchers/${id}`),
+    // Lấy danh sách voucher khả dụng cho checkout (dựa trên selectedItems)
+    getAvailableVouchersForCheckout: (data: { subtotal?: number; selectedItems?: string[] }) =>
+      axiosClient.post<AvailableVouchersResponse>("/api/vouchers/checkout", data),
 
-  // Xem trước voucher: tính discount dựa trên tổng tiền đơn hàng
-  previewVoucher: (data: VoucherPreviewRequest) =>
-    axiosClient.post<VoucherPreviewResponse>("/api/vouchers/preview", data),
+    // Tạo voucher mới
+    createVoucher: (data: VoucherType) => axiosClient.post<VoucherType>("/api/vouchers", data),
 
-  // Áp dụng voucher vào đơn hàng
-  applyVoucher: (data: VoucherPreviewRequest) =>
-    axiosClient.post<VoucherPreviewResponse>("/api/vouchers/apply", data),
-};
+    // Cập nhật voucher
+    updateVoucher: (id: string, data: VoucherType) =>
+      axiosClient.put<VoucherType>(`/api/vouchers/${id}`, data),
 
-export default voucherApi;
+    // Xóa voucher
+    deleteVoucher: (id: string) =>
+      axiosClient.delete<{ message: string }>(`/api/vouchers/${id}`),
+
+    // Xem trước voucher: tính discount dựa trên tổng tiền đơn hàng
+    previewVoucher: (data: VoucherPreviewRequest) =>
+      axiosClient.post<VoucherPreviewResponse>("/api/vouchers/preview", data),
+
+    // Áp dụng voucher vào đơn hàng
+    applyVoucher: (data: VoucherPreviewRequest) =>
+      axiosClient.post<VoucherPreviewResponse>("/api/vouchers/apply", data),
+  };
+
+  export default voucherApi;

@@ -19,6 +19,7 @@ import StoreList from "./pages/StoreList/StoreList";
 import Message from "./pages/Messages/Message";
 import Product from "./pages/ProductList/ProductList";
 import NewPage from "./pages/New/NewPage"
+import PromotionDetail from "./pages/Promotion/PromotionDetail"
 import SupportPage from "./pages/Support/SupportPage"
 import Whitelist from "./pages/Whitelist/Whitelist"
 import WalletPage from "./pages/Wallet/Wallet"
@@ -46,6 +47,7 @@ const AppRouter = () => (
 
       <Route path="/products" element={<Product />} />
       <Route path="/new" element={<NewPage />} />
+      <Route path="/promotion/:id" element={<PromotionDetail />} />
       <Route path="/support" element={<SupportPage/>}/>
       <Route path="/whitelist" element={<Whitelist />} />
       <Route path="/wallet" element={<WalletPage />} />

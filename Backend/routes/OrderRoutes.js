@@ -9,6 +9,7 @@ const {
   getOrdersBySeller,
   getOrderByCode,
   markOrderPaid,
+  confirmDelivery,
 } = require("../controllers/OrderController");
 const auth = require("../middlewares/authMiddleware");
 
@@ -21,6 +22,7 @@ router.post("/orders/:id/pay", markOrderPaid);
 
 router.get("/", auth, getAllOrders);
 router.put("/:id/status", auth, updateOrderStatus);
+router.post("/:id/confirm-delivery", auth, confirmDelivery); // Buyer xác nhận đã nhận hàng
 router.get("/:id", auth, getOrderById);
 
 module.exports = router;

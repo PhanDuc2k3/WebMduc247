@@ -13,7 +13,9 @@ exports.createOrder = async (req, res) => {
       paymentMethod,
       note,
       shippingFee = 0,
-      voucherCode,
+      voucherCode, // Giữ lại cho tương thích ngược
+      productVoucherCode, // Voucher giảm giá sản phẩm
+      freeshipVoucherCode, // Voucher miễn phí ship
       selectedItems,
     } = req.body;
 
@@ -32,29 +34,86 @@ exports.createOrder = async (req, res) => {
     if (filteredItems.length === 0)
       return res.status(400).json({ message: "Không có sản phẩm nào được chọn" });
 
-    // Voucher
+    // Voucher - hỗ trợ cả 2 loại voucher cùng lúc
     let discount = 0;
-    let voucher = null;
-    if (voucherCode) {
-      voucher = await Voucher.findOne({ code: voucherCode.toUpperCase(), isActive: true });
-      if (!voucher) return res.status(400).json({ message: "Voucher không hợp lệ" });
+    let shippingDiscount = 0;
+    let productVoucher = null;
+    let freeshipVoucher = null;
+    let oldVoucher = null; // Cho tương thích ngược
 
-      const now = new Date();
-      if (voucher.startDate > now || voucher.endDate < now)
-        return res.status(400).json({ message: "Voucher chưa bắt đầu hoặc đã hết hạn" });
+    const now = new Date();
+    const subtotalFiltered = filteredItems.reduce((sum, item) => sum + item.subtotal, 0);
 
-      const subtotalFiltered = filteredItems.reduce((sum, item) => sum + item.subtotal, 0);
-      if (subtotalFiltered < voucher.minOrderValue)
-        return res.status(400).json({ message: `Đơn hàng tối thiểu ${voucher.minOrderValue}₫` });
+    // Xử lý voucher cũ (tương thích ngược)
+    if (voucherCode && !productVoucherCode && !freeshipVoucherCode) {
+      oldVoucher = await Voucher.findOne({ code: voucherCode.toUpperCase(), isActive: true });
+      if (oldVoucher) {
+        if (oldVoucher.startDate > now || oldVoucher.endDate < now)
+          return res.status(400).json({ message: "Voucher chưa bắt đầu hoặc đã hết hạn" });
+        if (subtotalFiltered < oldVoucher.minOrderValue)
+          return res.status(400).json({ message: `Đơn hàng tối thiểu ${oldVoucher.minOrderValue}₫` });
 
-      discount = voucher.discountType === "fixed"
-        ? voucher.discountValue
-        : Math.min((subtotalFiltered * voucher.discountValue) / 100, voucher.maxDiscount || Infinity);
+        const voucherType = oldVoucher.voucherType || "product";
+        if (voucherType === "freeship") {
+          freeshipVoucher = oldVoucher;
+        } else {
+          productVoucher = oldVoucher;
+        }
+      }
+    }
 
-      voucher.usedCount = (voucher.usedCount || 0) + 1;
-      voucher.usersUsed = voucher.usersUsed || [];
-      voucher.usersUsed.push(userId);
-      await voucher.save();
+    // Xử lý product voucher
+    if (productVoucherCode) {
+      productVoucher = await Voucher.findOne({ code: productVoucherCode.toUpperCase(), isActive: true, voucherType: "product" });
+      if (!productVoucher) return res.status(400).json({ message: "Voucher giảm giá sản phẩm không hợp lệ" });
+      if (productVoucher.startDate > now || productVoucher.endDate < now)
+        return res.status(400).json({ message: "Voucher giảm giá sản phẩm chưa bắt đầu hoặc đã hết hạn" });
+      if (subtotalFiltered < productVoucher.minOrderValue)
+        return res.status(400).json({ message: `Đơn hàng tối thiểu ${productVoucher.minOrderValue}₫ để sử dụng voucher này` });
+
+      // Tính discount cho product voucher
+      let calculatedDiscount = 0;
+      if (productVoucher.discountType === "fixed") {
+        calculatedDiscount = productVoucher.discountValue;
+      } else {
+        calculatedDiscount = (subtotalFiltered * productVoucher.discountValue) / 100;
+        if (productVoucher.maxDiscount) {
+          calculatedDiscount = Math.min(calculatedDiscount, productVoucher.maxDiscount);
+        }
+      }
+      discount = Math.min(calculatedDiscount, subtotalFiltered);
+
+      productVoucher.usedCount = (productVoucher.usedCount || 0) + 1;
+      productVoucher.usersUsed = productVoucher.usersUsed || [];
+      productVoucher.usersUsed.push(userId);
+      await productVoucher.save();
+    }
+
+    // Xử lý freeship voucher
+    if (freeshipVoucherCode) {
+      freeshipVoucher = await Voucher.findOne({ code: freeshipVoucherCode.toUpperCase(), isActive: true, voucherType: "freeship" });
+      if (!freeshipVoucher) return res.status(400).json({ message: "Voucher miễn phí ship không hợp lệ" });
+      if (freeshipVoucher.startDate > now || freeshipVoucher.endDate < now)
+        return res.status(400).json({ message: "Voucher miễn phí ship chưa bắt đầu hoặc đã hết hạn" });
+      if (subtotalFiltered < freeshipVoucher.minOrderValue)
+        return res.status(400).json({ message: `Đơn hàng tối thiểu ${freeshipVoucher.minOrderValue}₫ để sử dụng voucher này` });
+
+      // Tính discount cho freeship voucher
+      let calculatedShippingDiscount = 0;
+      if (freeshipVoucher.discountType === "fixed") {
+        calculatedShippingDiscount = freeshipVoucher.discountValue;
+      } else {
+        calculatedShippingDiscount = (shippingFee * freeshipVoucher.discountValue) / 100;
+        if (freeshipVoucher.maxDiscount) {
+          calculatedShippingDiscount = Math.min(calculatedShippingDiscount, freeshipVoucher.maxDiscount);
+        }
+      }
+      shippingDiscount = Math.min(calculatedShippingDiscount, shippingFee);
+
+      freeshipVoucher.usedCount = (freeshipVoucher.usedCount || 0) + 1;
+      freeshipVoucher.usersUsed = freeshipVoucher.usersUsed || [];
+      freeshipVoucher.usersUsed.push(userId);
+      await freeshipVoucher.save();
     }
 
     // Fallback shippingAddress
@@ -69,7 +128,16 @@ exports.createOrder = async (req, res) => {
     }
 
     const subtotal = filteredItems.reduce((sum, item) => sum + item.subtotal, 0);
-    const total = subtotal - discount + shippingFee;
+    
+    // Đảm bảo discount không vượt quá subtotal (double check)
+    const finalDiscount = Math.min(discount, subtotal);
+    // Đảm bảo shippingDiscount không vượt quá shippingFee (double check)
+    const finalShippingDiscount = Math.min(shippingDiscount, shippingFee);
+    
+    // Tính total: subtotal - discount + shippingFee - shippingDiscount
+    // Với product voucher: discount chỉ trừ subtotal, shippingDiscount = 0
+    // Với freeship voucher: discount = 0, shippingDiscount chỉ trừ shippingFee
+    const total = Math.max(0, subtotal - finalDiscount + shippingFee - finalShippingDiscount);
     const orderCode = "ORD-" + Date.now();
 
     const order = new Order({
@@ -105,10 +173,17 @@ exports.createOrder = async (req, res) => {
       statusHistory: [{ status: "pending", note: "Đơn hàng được tạo", timestamp: new Date() }],
       subtotal,
       shippingFee,
-      discount,
+      discount: finalDiscount,
+      shippingDiscount: finalShippingDiscount,
       total,
-      voucher: voucher ? voucher._id : null,
-      voucherCode: voucher ? voucher.code : "",
+      // Lưu cả 2 voucher mới
+      productVoucher: productVoucher ? productVoucher._id : null,
+      productVoucherCode: productVoucher ? productVoucher.code : "",
+      freeshipVoucher: freeshipVoucher ? freeshipVoucher._id : null,
+      freeshipVoucherCode: freeshipVoucher ? freeshipVoucher.code : "",
+      // Giữ lại cho tương thích ngược
+      voucher: oldVoucher ? oldVoucher._id : (productVoucher ? productVoucher._id : (freeshipVoucher ? freeshipVoucher._id : null)),
+      voucherCode: oldVoucher ? oldVoucher.code : (productVoucher ? productVoucher.code : (freeshipVoucher ? freeshipVoucher.code : "")),
       note: note || "",
     });
 
@@ -165,8 +240,9 @@ exports.updateOrderStatus = async (req, res) => {
     // Thêm lịch sử trạng thái
     order.statusHistory.push({ status, note, timestamp: new Date() });
 
-    // ✅ Nếu trạng thái là delivered, tăng soldCount cho tất cả sản phẩm
+    // ✅ Nếu trạng thái là delivered, tăng soldCount và trừ stock
     if (status === "delivered") {
+      // Tăng soldCount
       const bulkOps = order.items.map(item => ({
         updateOne: {
           filter: { _id: item.productId },
@@ -177,6 +253,36 @@ exports.updateOrderStatus = async (req, res) => {
       if (bulkOps.length > 0) {
         await Product.bulkWrite(bulkOps);
       }
+
+      // Trừ stock cho từng sản phẩm
+      for (const item of order.items) {
+        const product = await Product.findById(item.productId);
+        if (!product) continue;
+
+        // Nếu có variation và option
+        if (item.variation?.variationId && item.variation?.optionId) {
+          const variationIndex = product.variations.findIndex(
+            v => v._id?.toString() === item.variation.variationId.toString()
+          );
+          
+          if (variationIndex !== -1) {
+            const optionIndex = product.variations[variationIndex].options.findIndex(
+              opt => opt._id?.toString() === item.variation.optionId.toString()
+            );
+            
+            if (optionIndex !== -1) {
+              const option = product.variations[variationIndex].options[optionIndex];
+              option.stock = Math.max(0, option.stock - item.quantity);
+              await product.save();
+              continue;
+            }
+          }
+        }
+
+        // Nếu không có variation, trừ quantity tổng
+        product.quantity = Math.max(0, product.quantity - item.quantity);
+        await product.save();
+      }
     }
 
     await order.save();
@@ -184,6 +290,86 @@ exports.updateOrderStatus = async (req, res) => {
     res.status(200).json({ message: "Cập nhật trạng thái thành công", order });
   } catch (error) {
     console.error("Lỗi updateOrderStatus:", error);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// Buyer xác nhận đã nhận hàng
+exports.confirmDelivery = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+
+    const order = await Order.findById(id);
+    if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+
+    // Kiểm tra quyền: chỉ buyer của order mới được xác nhận
+    if (order.userId.toString() !== userId.toString()) {
+      return res.status(403).json({ message: "Bạn không có quyền xác nhận đơn hàng này" });
+    }
+
+    // Kiểm tra trạng thái hiện tại phải là "shipped"
+    const currentStatus = order.statusHistory[order.statusHistory.length - 1]?.status;
+    if (currentStatus !== "shipped") {
+      return res.status(400).json({ 
+        message: `Không thể xác nhận. Trạng thái hiện tại: ${currentStatus}. Chỉ có thể xác nhận khi đơn hàng đang giao.` 
+      });
+    }
+
+    // Cập nhật trạng thái thành "delivered"
+    order.statusHistory.push({ 
+      status: "delivered", 
+      note: "Khách hàng đã xác nhận nhận hàng", 
+      timestamp: new Date() 
+    });
+
+    // Tăng soldCount và trừ stock
+    const bulkOps = order.items.map(item => ({
+      updateOne: {
+        filter: { _id: item.productId },
+        update: { $inc: { soldCount: item.quantity } }
+      }
+    }));
+
+    if (bulkOps.length > 0) {
+      await Product.bulkWrite(bulkOps);
+    }
+
+    // Trừ stock cho từng sản phẩm
+    for (const item of order.items) {
+      const product = await Product.findById(item.productId);
+      if (!product) continue;
+
+      // Nếu có variation và option
+      if (item.variation?.variationId && item.variation?.optionId) {
+        const variationIndex = product.variations.findIndex(
+          v => v._id?.toString() === item.variation.variationId.toString()
+        );
+        
+        if (variationIndex !== -1) {
+          const optionIndex = product.variations[variationIndex].options.findIndex(
+            opt => opt._id?.toString() === item.variation.optionId.toString()
+          );
+          
+          if (optionIndex !== -1) {
+            const option = product.variations[variationIndex].options[optionIndex];
+            option.stock = Math.max(0, option.stock - item.quantity);
+            await product.save();
+            continue;
+          }
+        }
+      }
+
+      // Nếu không có variation, trừ quantity tổng
+      product.quantity = Math.max(0, product.quantity - item.quantity);
+      await product.save();
+    }
+
+    await order.save();
+
+    res.status(200).json({ message: "Xác nhận nhận hàng thành công", order });
+  } catch (error) {
+    console.error("Lỗi confirmDelivery:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 };

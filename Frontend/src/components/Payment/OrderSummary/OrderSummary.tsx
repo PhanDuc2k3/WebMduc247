@@ -18,7 +18,9 @@ interface OrderSummaryProps {
   paymentMethod: "cod" | "momo" | "vietqr" | "wallet";
   addressId: string | null;
   discount: number;
-  voucherCode?: string;
+  shippingDiscount?: number;
+  productVoucherCode?: string | null;
+  freeshipVoucherCode?: string | null;
 }
 
 interface CartResponse {
@@ -39,7 +41,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   paymentMethod,
   addressId,
   discount,
-  voucherCode,
+  shippingDiscount,
+  productVoucherCode,
+  freeshipVoucherCode,
 }) => {
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,7 +137,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     fetchAddress();
   }, [addressId]);
 
-  const total = selectedCartSubtotal - discount + shippingFee;
+  const total = Math.max(0, selectedCartSubtotal - discount + shippingFee - (shippingDiscount || 0));
 
 const handleCheckout = async () => {
   if (!selectedAddress) return alert("Vui lòng chọn địa chỉ giao hàng!");
@@ -181,15 +185,16 @@ const handleCheckout = async () => {
     const shippingAddressString = `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`;
 
 const orderPayload: CreateOrderData = {
-  items: itemsForOrder,
-  shippingAddress: {
-    fullName: selectedAddress.fullName,
-    phone: selectedAddress.phone,
-    address: `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`,
-  },
-  paymentMethod,
-  voucherCode,
-};
+    items: itemsForOrder,
+    shippingAddress: {
+      fullName: selectedAddress.fullName,
+      phone: selectedAddress.phone,
+      address: `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`,
+    },
+    paymentMethod,
+    productVoucherCode: productVoucherCode || undefined,
+    freeshipVoucherCode: freeshipVoucherCode || undefined,
+  };
 
 
 
@@ -345,7 +350,7 @@ const orderPayload: CreateOrderData = {
       <div className="p-6 space-y-4 bg-gradient-to-br from-white to-gray-50">
         <Subtotal subtotal={selectedCartSubtotal} />
         {discount > 0 && <CartDiscount voucherDiscount={discount} />}
-        <ShippingFee shippingFee={shippingFee} />
+        <ShippingFee shippingFee={shippingFee} shippingDiscount={shippingDiscount || 0} />
         <div className="border-t-2 border-gray-300 pt-4 mt-4">
           <TotalAmount total={total} />
         </div>

@@ -1,0 +1,460 @@
+import React, { useEffect, useState } from 'react';
+import promotionApi from '../../../api/promotionApi';
+import type { PromotionType } from '../../../api/promotionApi';
+import { Edit, Trash2, Plus, Search, Tag, Eye } from 'lucide-react';
+
+const PromotionManagement: React.FC = () => {
+  const [promotions, setPromotions] = useState<PromotionType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingPromotion, setEditingPromotion] = useState<PromotionType | null>(null);
+  const [formData, setFormData] = useState<Partial<PromotionType>>({
+    title: '',
+    description: '',
+    content: '',
+    category: 'Khác',
+    tags: [],
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    isActive: true,
+  });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+
+  useEffect(() => {
+    fetchPromotions();
+  }, []);
+
+  const fetchPromotions = async () => {
+    try {
+      setLoading(true);
+      const response = await promotionApi.getAllPromotions();
+      setPromotions(response.data || []);
+    } catch (error: any) {
+      console.error('Error fetching promotions:', error);
+      alert(error?.response?.data?.message || 'Lỗi khi tải danh sách tin tức khuyến mãi');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (promotionId: string) => {
+    if (!window.confirm('Bạn có chắc muốn xóa tin tức khuyến mãi này?')) return;
+    
+    try {
+      await promotionApi.deletePromotion(promotionId);
+      alert('Đã xóa tin tức khuyến mãi thành công!');
+      fetchPromotions();
+    } catch (error: any) {
+      console.error('Error deleting promotion:', error);
+      alert(error?.response?.data?.message || 'Lỗi khi xóa tin tức khuyến mãi');
+    }
+  };
+
+  const handleEdit = (promotion: PromotionType) => {
+    setEditingPromotion(promotion);
+    setFormData({
+      title: promotion.title,
+      description: promotion.description,
+      content: promotion.content || '',
+      category: promotion.category,
+      tags: promotion.tags || [],
+      startDate: promotion.startDate ? new Date(promotion.startDate).toISOString().split('T')[0] : '',
+      endDate: promotion.endDate ? new Date(promotion.endDate).toISOString().split('T')[0] : '',
+      isActive: promotion.isActive,
+    });
+    setImagePreview(promotion.imageUrl || '');
+    setImageFile(null);
+    setShowForm(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const submitData = new FormData();
+      submitData.append('title', formData.title || '');
+      submitData.append('description', formData.description || '');
+      submitData.append('content', formData.content || formData.description || '');
+      submitData.append('category', formData.category || 'Khác');
+      submitData.append('tags', Array.isArray(formData.tags) ? formData.tags.join(',') : '');
+      submitData.append('startDate', formData.startDate || new Date().toISOString());
+      submitData.append('endDate', formData.endDate || new Date().toISOString());
+      submitData.append('isActive', String(formData.isActive ?? true));
+
+      if (imageFile) {
+        submitData.append('image', imageFile);
+      }
+
+      if (editingPromotion?._id) {
+        await promotionApi.updatePromotion(editingPromotion._id, submitData);
+        alert('Đã cập nhật tin tức khuyến mãi thành công!');
+      } else {
+        await promotionApi.createPromotion(submitData);
+        alert('Đã tạo tin tức khuyến mãi thành công!');
+      }
+      
+      setShowForm(false);
+      setEditingPromotion(null);
+      setFormData({
+        title: '',
+        description: '',
+        content: '',
+        category: 'Khác',
+        tags: [],
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        isActive: true,
+      });
+      setImageFile(null);
+      setImagePreview('');
+      fetchPromotions();
+    } catch (error: any) {
+      console.error('Error saving promotion:', error);
+      alert(error?.response?.data?.message || 'Lỗi khi lưu tin tức khuyến mãi');
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const filteredPromotions = promotions.filter(
+    (p) =>
+      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
+        <p className="text-gray-600 text-lg font-medium">Đang tải tin tức khuyến mãi...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 lg:p-8">
+      <div className="mb-6 animate-fade-in-down">
+        <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
+          <Tag size={24} />
+          Quản lý Tin tức Khuyến mãi
+        </h2>
+        <p className="text-gray-600 text-sm">
+          Quản lý và tạo các tin tức khuyến mãi cho khách hàng
+        </p>
+      </div>
+
+      {/* Actions */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in-up">
+        {/* Search */}
+        <div className="relative flex-1 max-w-md w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm tin tức khuyến mãi..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+          />
+        </div>
+
+        {/* Add Button */}
+        <button
+          onClick={() => {
+            setEditingPromotion(null);
+            setFormData({
+              title: '',
+              description: '',
+              content: '',
+              category: 'Khác',
+              tags: [],
+              startDate: new Date().toISOString().split('T')[0],
+              endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+              isActive: true,
+            });
+            setImageFile(null);
+            setImagePreview('');
+            setShowForm(true);
+          }}
+          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+        >
+          <Plus size={20} />
+          Thêm mới
+        </button>
+      </div>
+
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+              <h3 className="text-xl font-bold gradient-text">
+                {editingPromotion ? 'Chỉnh sửa' : 'Thêm mới'} Tin tức Khuyến mãi
+              </h3>
+              <button
+                onClick={() => setShowForm(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Tiêu đề <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Nhập tiêu đề..."
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Mô tả <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  required
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Nhập mô tả..."
+                />
+              </div>
+
+              {/* Content */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Nội dung chi tiết
+                </label>
+                <textarea
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  rows={6}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  placeholder="Nhập nội dung chi tiết..."
+                />
+              </div>
+
+              {/* Category & Tags */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Danh mục
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="Sale lớn">Sale lớn</option>
+                    <option value="Flash Sale">Flash Sale</option>
+                    <option value="Freeship">Freeship</option>
+                    <option value="Hoàn tiền">Hoàn tiền</option>
+                    <option value="Đặc biệt">Đặc biệt</option>
+                    <option value="Tân thủ">Tân thủ</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Tags (phân cách bởi dấu phẩy)
+                  </label>
+                  <input
+                    type="text"
+                    value={Array.isArray(formData.tags) ? formData.tags.join(', ') : ''}
+                    onChange={(e) => {
+                      const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t);
+                      setFormData({ ...formData, tags });
+                    }}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    placeholder="Mới, Hot, Khuyến mãi..."
+                  />
+                </div>
+              </div>
+
+              {/* Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Ngày bắt đầu
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                    Ngày kết thúc
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Image */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">
+                  Hình ảnh
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                />
+                {imagePreview && (
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="mt-4 w-full h-48 object-cover rounded-xl"
+                  />
+                )}
+              </div>
+
+              {/* Active */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                />
+                <label className="text-sm font-bold text-gray-700">Kích hoạt</label>
+              </div>
+
+              {/* Buttons */}
+              <div className="flex gap-4 justify-end pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setShowForm(false)}
+                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all duration-300"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg"
+                >
+                  {editingPromotion ? 'Cập nhật' : 'Tạo mới'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Promotions List */}
+      <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+              <tr>
+                <th className="px-6 py-4 text-left font-bold">Tiêu đề</th>
+                <th className="px-6 py-4 text-left font-bold">Danh mục</th>
+                <th className="px-6 py-4 text-left font-bold">Thời gian</th>
+                <th className="px-6 py-4 text-left font-bold">Lượt xem</th>
+                <th className="px-6 py-4 text-left font-bold">Trạng thái</th>
+                <th className="px-6 py-4 text-center font-bold">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {filteredPromotions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
+                    Không có tin tức khuyến mãi nào
+                  </td>
+                </tr>
+              ) : (
+                filteredPromotions.map((promo) => (
+                  <tr key={promo._id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-gray-900">{promo.title}</div>
+                      <div className="text-sm text-gray-500 line-clamp-1">{promo.description}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                        {promo.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {new Date(promo.startDate).toLocaleDateString('vi-VN')} -{' '}
+                      {new Date(promo.endDate).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-1 text-gray-600">
+                        <Eye size={16} />
+                        <span className="font-bold">{promo.views || 0}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          promo.isActive
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        {promo.isActive ? 'Đang hoạt động' : 'Tạm khóa'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => handleEdit(promo)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Chỉnh sửa"
+                        >
+                          <Edit size={18} />
+                        </button>
+                        <button
+                          onClick={() => promo._id && handleDelete(promo._id)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PromotionManagement;
