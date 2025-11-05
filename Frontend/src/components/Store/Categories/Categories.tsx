@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import storeApi from "../../../api/storeApi";
 import type { Product } from "../../../types/store";
 import ProductCard from "../../Home/FeaturedProducts/ProductCard"; // giả sử bạn đã có component này
@@ -14,11 +15,21 @@ interface CategoriesProps {
 }
 
 const Categories: React.FC<CategoriesProps> = ({ storeId }) => {
+  const [searchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Đọc search term từ URL query
+  useEffect(() => {
+    const search = searchParams.get("search");
+    if (search) {
+      setSearchTerm(search);
+    }
+  }, [searchParams]);
 
   // ========================
   // Lấy danh sách category của store
@@ -131,25 +142,37 @@ const Categories: React.FC<CategoriesProps> = ({ storeId }) => {
               <div className="text-4xl mb-4 animate-pulse">⏳</div>
               <p className="text-gray-500 font-medium">Đang tải sản phẩm...</p>
             </div>
-          ) : products.length ? (
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
-              {products.map((product, index) => (
-                <div
-                  key={product._id}
-                  className="animate-slide-up"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <ProductCard product={product} />
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 animate-fade-in">
-              <div className="text-6xl mb-4">📦</div>
-              <p className="text-gray-500 text-lg font-medium mb-2">Chưa có sản phẩm nào</p>
-              <p className="text-gray-400 text-sm">Danh mục này chưa có sản phẩm</p>
-            </div>
-          )}
+          ) : (() => {
+            // Filter sản phẩm theo search term
+            const filteredProducts = products.filter((p) => {
+              if (!searchTerm) return true;
+              return p.name?.toLowerCase().includes(searchTerm.toLowerCase());
+            });
+
+            return filteredProducts.length ? (
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+                {filteredProducts.map((product, index) => (
+                  <div
+                    key={product._id}
+                    className="animate-slide-up"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <ProductCard product={product} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 animate-fade-in">
+                <div className="text-6xl mb-4">{searchTerm ? "🔍" : "📦"}</div>
+                <p className="text-gray-500 text-lg font-medium mb-2">
+                  {searchTerm ? "Không tìm thấy sản phẩm nào" : "Chưa có sản phẩm nào"}
+                </p>
+                <p className="text-gray-400 text-sm">
+                  {searchTerm ? "Hãy thử thay đổi từ khóa tìm kiếm" : "Danh mục này chưa có sản phẩm"}
+                </p>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

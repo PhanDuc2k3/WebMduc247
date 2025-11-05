@@ -1,6 +1,6 @@
 // components/Store/FeaturedProduct/FeaturedProduct.tsx
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import ProductCard from "../../Home/FeaturedProducts/ProductCard";
 import productApi from "../../../api/productApi";
 import type { ProductType } from "../../../types/product";
@@ -14,9 +14,19 @@ interface ProductForCard extends Omit<ProductType, "store"> {
 }
 
 const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Đọc search term từ URL query
+  useEffect(() => {
+    const search = searchParams.get("search");
+    if (search) {
+      setSearchTerm(search);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
@@ -64,10 +74,26 @@ const FeaturedProduct: React.FC<FeaturedProductProps> = ({ storeId }) => {
     );
   }
 
+  // Filter sản phẩm theo search term
+  const filteredProducts = products.filter((p) => {
+    if (!searchTerm) return true;
+    return p.name.toLowerCase().includes(searchTerm.toLowerCase());
+  });
+
+  if (searchTerm && !filteredProducts.length) {
+    return (
+      <div className="p-8 text-center animate-fade-in">
+        <div className="text-6xl mb-4">🔍</div>
+        <p className="text-gray-500 text-lg font-medium mb-2">Không tìm thấy sản phẩm nào</p>
+        <p className="text-gray-400 text-sm">Hãy thử thay đổi từ khóa tìm kiếm</p>
+      </div>
+    );
+  }
+
   const isDesktop = windowWidth >= 1024;
   const itemsPerRow = Math.floor(windowWidth / 220);
   const visibleCount = isDesktop ? itemsPerRow * 2 : 8;
-  const visibleProducts = products.slice(0, visibleCount);
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
 
   return (
     <section className="p-6 lg:p-8 rounded-2xl bg-gradient-to-br from-gray-50 via-white to-gray-50 shadow-lg border border-gray-200 animate-fade-in-up">

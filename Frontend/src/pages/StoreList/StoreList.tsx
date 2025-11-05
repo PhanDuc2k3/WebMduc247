@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import StoreFilters from "../../components/StoreList/StoreFilters";
 import StoreGrid from "../../components/StoreList/StoreGrid";
 import StoreLoading from "../../components/StoreList/StoreLoading";
@@ -7,10 +8,19 @@ import storeApi from "../../api/storeApi"; // dùng API đã tách
 import { useChat } from "../../context/chatContext";
 
 const StoreList: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [stores, setStores] = useState<StoreType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const { onlineStores } = useChat();
+
+  // Đọc search term từ URL query
+  useEffect(() => {
+    const search = searchParams.get("search");
+    if (search) {
+      setSearchTerm(search);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchStores = async () => {

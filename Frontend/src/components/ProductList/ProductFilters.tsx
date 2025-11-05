@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 interface ProductFiltersProps {
   searchTerm: string;
@@ -51,18 +51,6 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 p-6 rounded-2xl shadow-lg border border-gray-200">
       <div className="flex flex-wrap gap-4">
-        {/* Ô tìm kiếm */}
-        <div className="flex items-center flex-1 min-w-[250px] bg-white border-2 border-gray-200 rounded-xl px-4 py-3 shadow-sm hover:border-blue-400 focus-within:border-blue-500 focus-within:shadow-md transition-all duration-300">
-          <Search className="w-5 h-5 text-gray-400 mr-3" />
-          <input
-            type="text"
-            placeholder="Tìm kiếm sản phẩm..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full outline-none text-sm placeholder-gray-400 text-gray-700"
-          />
-        </div>
-
         {/* Bộ lọc đánh giá */}
         <div className="relative flex-1 min-w-[200px] max-w-[250px]" ref={ratingRef}>
           <button
@@ -79,7 +67,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             />
           </button>
           {ratingOpen && (
-            <div className="absolute z-20 mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fade-in">
+            <div className="absolute z-[9999] mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fade-in">
               {ratingOptions.map((opt) => (
                 <div
                   key={opt}
@@ -112,7 +100,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             />
           </button>
           {regionOpen && (
-            <div className="absolute z-20 mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fade-in">
+            <div className="absolute z-[9999] mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fade-in">
               {regionOptions.map((opt) => (
                 <div
                   key={opt}
@@ -145,7 +133,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
             />
           </button>
           {categoryOpen && (
-            <div className="absolute z-20 mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fade-in max-h-60 overflow-y-auto custom-scrollbar">
+            <div className="absolute z-[9999] mt-2 w-full bg-white border-2 border-gray-200 rounded-xl shadow-xl overflow-hidden animate-fade-in max-h-60 overflow-y-auto custom-scrollbar">
               {categoryOptions.map((opt) => (
                 <div
                   key={opt}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import ProductFilters from "../../components/ProductList/ProductFilters";
 import ProductLoading from "../../components/ProductList/ProductLoading";
 import ProductCard from "../../components/Home/FeaturedProducts/ProductCard";
@@ -7,10 +8,19 @@ import type { ProductType } from "../../types/product";
 import productApi from "../../api/productApi";
 
 const ProductList: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPrice, setSelectedPrice] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  // Đọc search term từ URL query
+  useEffect(() => {
+    const search = searchParams.get("search");
+    if (search) {
+      setSearchTerm(search);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchProducts = async () => {
