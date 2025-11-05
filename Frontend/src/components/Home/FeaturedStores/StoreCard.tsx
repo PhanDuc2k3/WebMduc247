@@ -24,23 +24,13 @@ const StoreCard: React.FC<StoreCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  useEffect(() => {
-    console.group("[StoreCard] 🏪 Props nhận được");
-    console.log("storeId:", storeId);
-    console.log("ownerId:", ownerId);
-    console.log("name:", name);
-    console.log("description:", description);
-    console.groupEnd();
-  }, [storeId, ownerId]);
+  // Removed debug logs
 
   const handleChatNow = async () => {
     try {
-      console.group("[StoreCard] 💬 handleChatNow");
-
       const stored = localStorage.getItem("user");
       if (!stored) {
         alert("⚠️ Vui lòng đăng nhập để chat với cửa hàng");
-        console.groupEnd();
         return;
       }
 
@@ -49,14 +39,9 @@ const StoreCard: React.FC<StoreCardProps> = ({
       const receiverId = ownerId;
 
       if (!senderId || !receiverId) {
-        console.error("❌ Thiếu senderId hoặc receiverId");
         alert("Không tìm thấy ID người dùng hoặc chủ cửa hàng");
-        console.groupEnd();
         return;
       }
-
-      console.log("[StoreCard] 👤 senderId:", senderId);
-      console.log("[StoreCard] 🏪 receiverId:", receiverId);
 
       // ✅ Tạo hoặc lấy conversation
       const res = await axiosClient.post("/api/messages/conversation", {
@@ -65,7 +50,6 @@ const StoreCard: React.FC<StoreCardProps> = ({
       });
 
       const conversation = res.data.conversation || res.data;
-      console.log("✅ Conversation response:", conversation);
 
       // ✅ Xây chatUser (vì BE không trả thông tin người nhận)
       const chatUser = {
@@ -78,34 +62,79 @@ const StoreCard: React.FC<StoreCardProps> = ({
       const msgRes = await axiosClient.get(`/api/messages/${conversation._id}`);
       const initialMessages = msgRes.data || [];
 
-      console.log("[StoreCard] 💬 Initial messages:", initialMessages);
-
       // ✅ Điều hướng đến trang chat + truyền dữ liệu
       navigate(`/messages/${conversation._id}`, {
         state: {
           chatUser,
           initialMessages,
-          fromStoreCard: true, // flag giúp ChatInterface biết là click từ cửa hàng
+          fromStoreCard: true,
         },
       });
-
-      console.groupEnd();
     } catch (err) {
-      console.error("[StoreCard] ❌ Lỗi khi mở chat:", err);
+      console.error("Lỗi khi mở chat:", err);
       alert("Không thể mở cuộc trò chuyện. Vui lòng thử lại.");
-      console.groupEnd();
     }
   };
 
-  // 🕒 Thông tin hiển thị
-  const joinDate = createdAt ? new Date(createdAt).toLocaleDateString() : "—";
+  // 🕒 Thông tin hiển thị - xử lý date với nhiều format
+  const getJoinDate = () => {
+    if (!createdAt) {
+      // Nếu không có createdAt, thử lấy từ joinDate hoặc trả về mặc định
+      return "—";
+    }
+    
+    try {
+      // Xử lý MongoDB date format (nếu có $date)
+      let dateValue = createdAt;
+      
+      // Nếu là object với $date
+      if (typeof createdAt === 'object' && createdAt !== null) {
+        if (createdAt.$date) {
+          dateValue = createdAt.$date.$numberLong 
+            ? new Date(parseInt(createdAt.$date.$numberLong))
+            : createdAt.$date;
+        } else if (createdAt instanceof Date) {
+          dateValue = createdAt;
+        } else if (createdAt.toString) {
+          // Thử parse string representation
+          dateValue = new Date(createdAt.toString());
+        }
+      }
+      
+      const date = new Date(dateValue);
+      if (isNaN(date.getTime())) {
+        // Nếu parse thất bại, thử format khác
+        if (typeof createdAt === 'string') {
+          const altDate = new Date(createdAt.replace(/-/g, '/'));
+          if (!isNaN(altDate.getTime())) {
+            return altDate.toLocaleDateString("vi-VN", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit"
+            });
+          }
+        }
+        return "—";
+      }
+      
+      return date.toLocaleDateString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
+    } catch (err) {
+      // Silent fail - không log error để tránh spam console
+      return "—";
+    }
+  };
+  
+  const joinDate = getJoinDate();
   // Use real-time online status if available, otherwise fallback to isActive
   const showOnline = isOnline !== undefined ? isOnline : isActive;
   const statusText = showOnline ? "Đang online" : "Offline";
   const tags = customCategory ? [customCategory] : [];
 
   if (!storeId) {
-    console.warn("[StoreCard] ⚠️ Không có storeId — không render được");
     return <div className="p-4 text-red-500">❌ Không tìm thấy cửa hàng</div>;
   }
 

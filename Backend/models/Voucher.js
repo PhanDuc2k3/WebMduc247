@@ -29,8 +29,16 @@ const voucherSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Store",
     },
+    stores: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Store",
+    }], // Danh sách cửa hàng được áp dụng voucher (admin có thể chọn nhiều)
     categories: [{ type: String }],
-    global: { type: Boolean, default: false },
+    global: { type: Boolean, default: false }, // true = áp dụng cho tất cả cửa hàng
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    }, // Người tạo voucher (admin hoặc seller)
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     usageLimit: { type: Number, default: 100 },

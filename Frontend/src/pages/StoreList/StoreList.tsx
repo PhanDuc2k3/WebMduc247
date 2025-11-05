@@ -18,16 +18,34 @@ const StoreList: React.FC = () => {
         const res = await storeApi.getAllActiveStores();
         const data = res.data; // axios trả về data trong res.data
 
+        // Debug: Log raw data từ API
+        console.log("[StoreList] Raw API stores:", data.stores);
+        if (data.stores && data.stores.length > 0) {
+          console.log("[StoreList] First store from API:", data.stores[0]);
+          console.log("[StoreList] First store createdAt:", data.stores[0].createdAt);
+        }
+        
+        // Giống hệt FeaturedStores để đảm bảo consistency
         const mappedStores: StoreType[] = data.stores.map((s: any) => {
-          // Note: Real online status will be updated via socket
+          // Đảm bảo createdAt được truyền đúng format - giống FeaturedStores
+          const createdAtValue = s.createdAt || s.created_at || s.created;
+          
           return {
+            ...s, // ✅ Spread tất cả properties từ API response (giống FeaturedStores)
+            rating: s.rating ?? 0,
+            products: s.products ?? 0,
+            followers: s.followers ?? 0,
+            responseRate: s.responseRate ?? 0,
+            responseTime: s.responseTime ?? "—",
+            joinDate: createdAtValue ? new Date(createdAtValue).toLocaleDateString() : "—",
+            createdAt: createdAtValue, // ✅ Đảm bảo createdAt được truyền vào (giống FeaturedStores)
+            isActive: s.isActive ?? true,
+            customCategory: s.category || s.customCategory,
+            // Giữ lại các field khác từ API response
             _id: s._id,
-            owner: { _id: s.owner?._id || "" },
+            owner: typeof s.owner === 'object' ? s.owner : { _id: s.owner || "" },
             name: s.name,
             description: s.description,
-            join: `Tham gia từ ${new Date(s.createdAt).getFullYear()}`,
-            status: s.isActive ? "Đang online" : "Offline",
-            tags: s.category ? [s.category] : [],
             logoUrl: s.logoUrl,
             bannerUrl: s.bannerUrl,
           };

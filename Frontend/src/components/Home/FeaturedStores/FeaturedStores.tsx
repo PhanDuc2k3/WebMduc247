@@ -16,15 +16,23 @@ const FeaturedStores: React.FC = () => {
       setLoading(true);
       try {
         const { data } = await storeApi.getAllActiveStores();
-        const mappedStores: StoreType[] = data.stores.map((s: any) => ({
-          ...s,
-          rating: s.rating ?? 0,
-          products: s.products ?? 0,
-          followers: s.followers ?? 0,
-          responseRate: s.responseRate ?? 0,
-          responseTime: s.responseTime ?? "—",
-          joinDate: s.joinDate ?? new Date(s.createdAt).toLocaleDateString(),
-        }));
+        const mappedStores: StoreType[] = data.stores.map((s: any) => {
+          // Đảm bảo createdAt được truyền đúng format
+          const createdAtValue = s.createdAt || s.created_at || s.created;
+          
+          return {
+            ...s,
+            rating: s.rating ?? 0,
+            products: s.products ?? 0,
+            followers: s.followers ?? 0,
+            responseRate: s.responseRate ?? 0,
+            responseTime: s.responseTime ?? "—",
+            joinDate: createdAtValue ? new Date(createdAtValue).toLocaleDateString() : "—",
+            createdAt: createdAtValue, // ✅ Đảm bảo createdAt được truyền vào
+            isActive: s.isActive ?? true,
+            customCategory: s.category || s.customCategory,
+          };
+        });
         setStores(mappedStores);
       } catch (err) {
         console.error("Lỗi khi fetch stores:", err);

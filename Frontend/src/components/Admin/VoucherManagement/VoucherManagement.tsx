@@ -24,6 +24,19 @@ const VoucherManagement: React.FC = () => {
     usageLimit: 0,
     isActive: true,
   });
+  
+  // State cho chọn category (chỉ admin)
+  const [isGlobal, setIsGlobal] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  // Danh sách categories có sẵn
+  const availableCategories = [
+    { value: 'electronics', label: 'Điện tử' },
+    { value: 'fashion', label: 'Thời trang' },
+    { value: 'home', label: 'Nội thất' },
+    { value: 'books', label: 'Sách' },
+    { value: 'other', label: 'Khác' },
+  ];
 
   useEffect(() => {
     fetchVouchers();
@@ -62,6 +75,20 @@ const VoucherManagement: React.FC = () => {
       startDate: voucher.startDate ? new Date(voucher.startDate).toISOString().split('T')[0] : '',
       endDate: voucher.endDate ? new Date(voucher.endDate).toISOString().split('T')[0] : '',
     });
+    
+    // Set selected categories và global cho edit
+    if ((voucher as any).global) {
+      setIsGlobal(true);
+      setSelectedCategories([]);
+    } else if ((voucher as any).categories && Array.isArray((voucher as any).categories) && (voucher as any).categories.length > 0) {
+      setIsGlobal(false);
+      setSelectedCategories((voucher as any).categories);
+    } else {
+      // Nếu có store cụ thể = seller tạo, admin không thể edit
+      setIsGlobal(false);
+      setSelectedCategories([]);
+    }
+    
     setShowForm(true);
   };
 
@@ -69,11 +96,23 @@ const VoucherManagement: React.FC = () => {
     e.preventDefault();
     
     try {
-      const submitData = {
+      const submitData: any = {
         ...formData,
         startDate: new Date(formData.startDate).toISOString(),
         endDate: new Date(formData.endDate).toISOString(),
       };
+
+      // Admin: thêm categories hoặc global
+      if (isGlobal) {
+        submitData.global = true;
+        submitData.categories = [];
+      } else if (selectedCategories.length > 0) {
+        submitData.global = false;
+        submitData.categories = selectedCategories;
+      } else {
+        submitData.global = true; // Mặc định global nếu không chọn gì
+        submitData.categories = [];
+      }
 
       if (editingVoucher?._id) {
         await voucherApi.updateVoucher(editingVoucher._id, submitData);
@@ -85,6 +124,8 @@ const VoucherManagement: React.FC = () => {
       
       setShowForm(false);
       setEditingVoucher(null);
+      setSelectedCategories([]);
+      setIsGlobal(false);
       setFormData({
         code: '',
         title: '',
@@ -418,6 +459,70 @@ const VoucherManagement: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                     className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   />
+                </div>
+              </div>
+
+              {/* Phần chọn loại cửa hàng (chỉ Admin) */}
+              <div className="border-2 border-gray-200 rounded-xl p-4 bg-gray-50">
+                <label className="block text-sm font-bold text-gray-700 mb-3">Áp dụng cho cửa hàng</label>
+                
+                <div className="mb-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="storeScope"
+                      checked={isGlobal}
+                      onChange={() => {
+                        setIsGlobal(true);
+                        setSelectedCategories([]);
+                      }}
+                      className="w-4 h-4 text-purple-600"
+                    />
+                    <span className="font-semibold text-gray-700">Áp dụng cho tất cả cửa hàng (Global)</span>
+                  </label>
+                </div>
+
+                <div className="mb-3">
+                  <label className="flex items-center gap-2 cursor-pointer mb-3">
+                    <input
+                      type="radio"
+                      name="storeScope"
+                      checked={!isGlobal}
+                      onChange={() => setIsGlobal(false)}
+                      className="w-4 h-4 text-purple-600"
+                    />
+                    <span className="font-semibold text-gray-700">Áp dụng cho loại cửa hàng</span>
+                  </label>
+                  
+                  {!isGlobal && (
+                    <div className="ml-6 border-2 border-gray-300 rounded-lg p-3 bg-white">
+                      <p className="text-xs text-gray-500 mb-3">Chọn loại cửa hàng để áp dụng voucher:</p>
+                      <div className="space-y-2">
+                        {availableCategories.map((category) => (
+                          <label key={category.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                            <input
+                              type="checkbox"
+                              checked={selectedCategories.includes(category.value)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedCategories([...selectedCategories, category.value]);
+                                } else {
+                                  setSelectedCategories(selectedCategories.filter(c => c !== category.value));
+                                }
+                              }}
+                              className="w-4 h-4 text-purple-600"
+                            />
+                            <span className="text-sm text-gray-700">{category.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                      {selectedCategories.length > 0 && (
+                        <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
+                          Đã chọn: {selectedCategories.map(c => availableCategories.find(cat => cat.value === c)?.label).join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

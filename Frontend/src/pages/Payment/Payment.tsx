@@ -5,10 +5,12 @@ import Delivery from "../../components/Payment/Delivery/Delivery";
 import Payment from "../../components/Payment/Payment/Payment";
 import OrderSummary from "../../components/Payment/OrderSummary/OrderSummary";
 import VoucherBox from "../../components/Payment/VoucherBox/VoucherBox";
+import VoucherPopup from "../../components/Payment/VoucherBox/VoucherPopup";
 
 import cartApi from "../../api/cartApi";
 import addressApi from "../../api/addressApi";
 import type { AddressType } from "../../api/addressApi";
+import type { AvailableVoucher } from "../../api/voucherApi";
 
 const CheckoutPage: React.FC = () => {
   const [shippingFee, setShippingFee] = useState<number>(30000);
@@ -22,6 +24,11 @@ const CheckoutPage: React.FC = () => {
   const [shippingDiscount, setShippingDiscount] = useState<number>(0);
   const [productVoucherCode, setProductVoucherCode] = useState<string | null>(null);
   const [freeshipVoucherCode, setFreeshipVoucherCode] = useState<string | null>(null);
+
+  // State cho voucher popup
+  const [isVoucherPopupOpen, setIsVoucherPopupOpen] = useState<boolean>(false);
+  const [selectedProductVoucher, setSelectedProductVoucher] = useState<AvailableVoucher | null>(null);
+  const [selectedFreeshipVoucher, setSelectedFreeshipVoucher] = useState<AvailableVoucher | null>(null);
 
   const [loading, setLoading] = useState<boolean>(false);
 
@@ -95,6 +102,67 @@ const CheckoutPage: React.FC = () => {
     console.log(`✅ Voucher product: ${productCode || "Không"} (${productDiscount}₫), freeship: ${freeshipCode || "Không"} (${freeshipDiscount}₫)`);
   };
 
+  // Handler cho việc mở/đóng voucher popup
+  const handleOpenVoucherPopup = () => {
+    setIsVoucherPopupOpen(true);
+  };
+
+  const handleCloseVoucherPopup = () => {
+    setIsVoucherPopupOpen(false);
+  };
+
+  // Handler cho việc chọn voucher
+  const handleSelectProductVoucher = (voucher: AvailableVoucher | null) => {
+    setSelectedProductVoucher(voucher);
+    // Tính discount và cập nhật
+    if (voucher) {
+      const productDiscount = voucher.discount;
+      handleVoucherPreview(productDiscount, voucher.code, shippingDiscount, freeshipVoucherCode);
+    } else {
+      handleVoucherPreview(0, null, shippingDiscount, freeshipVoucherCode);
+    }
+  };
+
+  const handleSelectFreeshipVoucher = (voucher: AvailableVoucher | null) => {
+    setSelectedFreeshipVoucher(voucher);
+    // Tính discount cho freeship với shippingFee hiện tại
+    let freeshipDiscount = 0;
+    if (voucher) {
+      if (voucher.discountType === "fixed") {
+        freeshipDiscount = Math.min(voucher.discountValue, shippingFee);
+      } else {
+        freeshipDiscount = Math.min(
+          (shippingFee * voucher.discountValue) / 100,
+          voucher.maxDiscount || shippingFee,
+          shippingFee
+        );
+      }
+      handleVoucherPreview(voucherDiscount, productVoucherCode, freeshipDiscount, voucher.code);
+    } else {
+      handleVoucherPreview(voucherDiscount, productVoucherCode, 0, null);
+    }
+  };
+
+  // Cập nhật discount khi shippingFee thay đổi
+  useEffect(() => {
+    if (selectedFreeshipVoucher) {
+      let freeshipDiscount = 0;
+      if (selectedFreeshipVoucher.discountType === "fixed") {
+        freeshipDiscount = Math.min(selectedFreeshipVoucher.discountValue, shippingFee);
+      } else {
+        freeshipDiscount = Math.min(
+          (shippingFee * selectedFreeshipVoucher.discountValue) / 100,
+          selectedFreeshipVoucher.maxDiscount || shippingFee,
+          shippingFee
+        );
+      }
+      const productDiscount = selectedProductVoucher ? selectedProductVoucher.discount : 0;
+      const productCode = selectedProductVoucher ? selectedProductVoucher.code : null;
+      handleVoucherPreview(productDiscount, productCode, freeshipDiscount, selectedFreeshipVoucher.code);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shippingFee, selectedFreeshipVoucher]);
+
   return (
     <div className="w-full py-8 md:py-12">
       <div className="mb-8 animate-fade-in-down">
@@ -125,7 +193,12 @@ const CheckoutPage: React.FC = () => {
               subtotal={cartSubtotal} 
               shippingFee={shippingFee} 
               selectedItems={selectedItemsIds}
-              onPreview={handleVoucherPreview} 
+              onPreview={handleVoucherPreview}
+              onOpenPopup={handleOpenVoucherPopup}
+              selectedProductVoucher={selectedProductVoucher}
+              selectedFreeshipVoucher={selectedFreeshipVoucher}
+              onRemoveProductVoucher={() => handleSelectProductVoucher(null)}
+              onRemoveFreeshipVoucher={() => handleSelectFreeshipVoucher(null)}
             />
           </div>
           <div className="animate-fade-in-up delay-600">
@@ -144,6 +217,19 @@ const CheckoutPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Voucher Popup - Render ở đây để popup toàn màn hình */}
+      <VoucherPopup
+        isOpen={isVoucherPopupOpen}
+        onClose={handleCloseVoucherPopup}
+        subtotal={cartSubtotal}
+        shippingFee={shippingFee}
+        selectedItems={selectedItemsIds}
+        selectedProductVoucher={selectedProductVoucher}
+        selectedFreeshipVoucher={selectedFreeshipVoucher}
+        onSelectProduct={handleSelectProductVoucher}
+        onSelectFreeship={handleSelectFreeshipVoucher}
+      />
     </div>
   );
 };

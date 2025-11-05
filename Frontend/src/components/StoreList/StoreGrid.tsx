@@ -8,6 +8,12 @@ interface Props {
 }
 
 const StoreGrid: React.FC<Props> = ({ stores, onlineStores = [] }) => {
+  // Debug: Log createdAt từ stores
+  if (stores.length > 0) {
+    console.log("[StoreGrid] First store createdAt:", stores[0].createdAt, "Type:", typeof stores[0].createdAt);
+    console.log("[StoreGrid] First store full object:", stores[0]);
+  }
+  
   return (
     <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {stores.map((store, index) => (

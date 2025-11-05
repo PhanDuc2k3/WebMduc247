@@ -1,57 +1,29 @@
-import React, { useState, useEffect } from "react";
-import voucherApi from "../../../api/voucherApi";
+import React from "react";
 import type { AvailableVoucher } from "../../../api/voucherApi";
-import VoucherPopup from "./VoucherPopup";
 
 interface VoucherBoxProps {
   subtotal: number;
   shippingFee: number;
   selectedItems?: string[]; // IDs của các sản phẩm được chọn
   onPreview: (productDiscount: number, productCode: string | null, freeshipDiscount: number, freeshipCode: string | null) => void;
+  onOpenPopup: () => void; // Callback để mở popup
+  selectedProductVoucher: AvailableVoucher | null; // Voucher đã chọn từ parent
+  selectedFreeshipVoucher: AvailableVoucher | null; // Voucher đã chọn từ parent
+  onRemoveProductVoucher: () => void; // Callback để xóa product voucher
+  onRemoveFreeshipVoucher: () => void; // Callback để xóa freeship voucher
 }
 
-const VoucherBox: React.FC<VoucherBoxProps> = ({ subtotal, shippingFee, selectedItems = [], onPreview }) => {
-  const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [selectedProductVoucher, setSelectedProductVoucher] = useState<AvailableVoucher | null>(null);
-  const [selectedFreeshipVoucher, setSelectedFreeshipVoucher] = useState<AvailableVoucher | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  // Gọi callback khi voucher thay đổi
-  useEffect(() => {
-    const productDiscount = selectedProductVoucher ? selectedProductVoucher.discount : 0;
-    const productCode = selectedProductVoucher ? selectedProductVoucher.code : null;
-    // Tính lại discount cho freeship voucher dựa trên shippingFee hiện tại
-    let freeshipDiscount = 0;
-    let freeshipCode = selectedFreeshipVoucher ? selectedFreeshipVoucher.code : null;
-    if (selectedFreeshipVoucher) {
-      if (selectedFreeshipVoucher.discountType === "fixed") {
-        freeshipDiscount = Math.min(selectedFreeshipVoucher.discountValue, shippingFee);
-      } else {
-        freeshipDiscount = Math.min(
-          (shippingFee * selectedFreeshipVoucher.discountValue) / 100,
-          selectedFreeshipVoucher.maxDiscount || shippingFee,
-          shippingFee
-        );
-      }
-    }
-    onPreview(productDiscount, productCode, freeshipDiscount, freeshipCode);
-  }, [selectedProductVoucher, selectedFreeshipVoucher, shippingFee, onPreview]);
-
-  const handleSelectProductVoucher = (voucher: AvailableVoucher | null) => {
-    setSelectedProductVoucher(voucher);
-  };
-
-  const handleSelectFreeshipVoucher = (voucher: AvailableVoucher | null) => {
-    setSelectedFreeshipVoucher(voucher);
-  };
-
-  const handleRemoveProductVoucher = () => {
-    setSelectedProductVoucher(null);
-  };
-
-  const handleRemoveFreeshipVoucher = () => {
-    setSelectedFreeshipVoucher(null);
-  };
+const VoucherBox: React.FC<VoucherBoxProps> = ({ 
+  subtotal, 
+  shippingFee, 
+  selectedItems = [], 
+  onPreview,
+  onOpenPopup,
+  selectedProductVoucher,
+  selectedFreeshipVoucher,
+  onRemoveProductVoucher,
+  onRemoveFreeshipVoucher
+}) => {
 
   return (
     <>
@@ -68,7 +40,7 @@ const VoucherBox: React.FC<VoucherBoxProps> = ({ subtotal, shippingFee, selected
               console.log("🔘 Click chọn voucher button");
               console.log("Subtotal:", subtotal);
               console.log("Selected items:", selectedItems);
-              setIsPopupOpen(true);
+              onOpenPopup(); // Gọi callback để mở popup từ parent
             }}
             className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
@@ -88,7 +60,7 @@ const VoucherBox: React.FC<VoucherBoxProps> = ({ subtotal, shippingFee, selected
                   </div>
                 </div>
                 <button
-                  onClick={handleRemoveProductVoucher}
+                  onClick={onRemoveProductVoucher}
                   className="text-red-500 hover:text-red-700 text-lg font-bold ml-4"
                 >
                   ✕
@@ -97,26 +69,40 @@ const VoucherBox: React.FC<VoucherBoxProps> = ({ subtotal, shippingFee, selected
             </div>
           )}
 
-          {selectedFreeshipVoucher && (
-            <div className="border-2 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-300">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="font-bold text-lg">{selectedFreeshipVoucher.title}</div>
-                  <div className="text-sm text-gray-600 mt-1">Miễn phí vận chuyển</div>
-                  <div className="text-xs text-gray-500 mt-1">Mã: {selectedFreeshipVoucher.code}</div>
-                  <div className="text-red-600 font-semibold mt-1">
-                    Giảm: {selectedFreeshipVoucher.discount.toLocaleString("vi-VN")}₫
+          {selectedFreeshipVoucher && (() => {
+            // Tính discount cho freeship với shippingFee hiện tại
+            let freeshipDiscount = 0;
+            if (selectedFreeshipVoucher.discountType === "fixed") {
+              freeshipDiscount = Math.min(selectedFreeshipVoucher.discountValue, shippingFee);
+            } else {
+              freeshipDiscount = Math.min(
+                (shippingFee * selectedFreeshipVoucher.discountValue) / 100,
+                selectedFreeshipVoucher.maxDiscount || shippingFee,
+                shippingFee
+              );
+            }
+            
+            return (
+              <div className="border-2 p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-300">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="font-bold text-lg">{selectedFreeshipVoucher.title}</div>
+                    <div className="text-sm text-gray-600 mt-1">Miễn phí vận chuyển</div>
+                    <div className="text-xs text-gray-500 mt-1">Mã: {selectedFreeshipVoucher.code}</div>
+                    <div className="text-red-600 font-semibold mt-1">
+                      Giảm: {freeshipDiscount.toLocaleString("vi-VN")}₫
+                    </div>
                   </div>
+                  <button
+                    onClick={onRemoveFreeshipVoucher}
+                    className="text-red-500 hover:text-red-700 text-lg font-bold ml-4"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button
-                  onClick={handleRemoveFreeshipVoucher}
-                  className="text-red-500 hover:text-red-700 text-lg font-bold ml-4"
-                >
-                  ✕
-                </button>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {!selectedProductVoucher && !selectedFreeshipVoucher && (
             <div className="text-center text-gray-500 text-sm py-2">
@@ -125,21 +111,6 @@ const VoucherBox: React.FC<VoucherBoxProps> = ({ subtotal, shippingFee, selected
           )}
         </div>
       </div>
-
-      {/* Popup chọn voucher */}
-      {isPopupOpen && (
-        <VoucherPopup
-          isOpen={isPopupOpen}
-          onClose={() => setIsPopupOpen(false)}
-          subtotal={subtotal}
-          shippingFee={shippingFee}
-          selectedItems={selectedItems}
-          selectedProductVoucher={selectedProductVoucher}
-          selectedFreeshipVoucher={selectedFreeshipVoucher}
-          onSelectProduct={handleSelectProductVoucher}
-          onSelectFreeship={handleSelectFreeshipVoucher}
-        />
-      )}
     </>
   );
 };
