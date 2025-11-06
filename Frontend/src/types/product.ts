@@ -24,6 +24,7 @@ export interface StoreRef {
   _id: string;
   name?: string;
   logoUrl?: string;
+  storeAddress?: string; // Địa chỉ cửa hàng
 }
 
 // 🔹 Dữ liệu sản phẩm trả về từ backend
@@ -54,6 +55,7 @@ export interface ProductType {
   isActive: boolean;
   store: string | StoreRef; // ✅ string (id) hoặc object (populated)
   features: string[];
+  createdAt?: string | Date; // Thêm createdAt cho sorting
 }
 
 // 🔹 Dữ liệu form tạm trong frontend

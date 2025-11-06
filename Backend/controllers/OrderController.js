@@ -4,7 +4,8 @@ const mongoose = require("mongoose");
 const Voucher = require("../models/Voucher");
 const User = require("../models/Users"); 
 const Product = require("../models/Product");
-const Store = require("../models/Store")
+const Store = require("../models/Store");
+const { sendOrderConfirmationEmail } = require("../utils/emailService");
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -194,6 +195,15 @@ exports.createOrder = async (req, res) => {
     cart.subtotal = cart.items.reduce((sum, item) => sum + item.subtotal, 0);
     cart.total = cart.subtotal;
     await cart.save();
+
+    // Gửi email xác nhận đơn hàng
+    try {
+      await sendOrderConfirmationEmail(order, user);
+    } catch (emailError) {
+      console.error('Error sending order confirmation email:', emailError);
+      // Không throw error để không ảnh hưởng đến việc tạo order
+      // Order đã được tạo thành công, chỉ là không gửi được email
+    }
 
     res.status(201).json({ message: "Tạo đơn hàng thành công", order, cart });
 

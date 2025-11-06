@@ -76,6 +76,9 @@
     // Lấy danh sách voucher khả dụng
     getAvailableVouchers: () => axiosClient.get<VoucherType[]>("/api/vouchers"),
 
+    // Lấy tất cả voucher cho admin (bao gồm cả đã khóa)
+    getAllVouchers: () => axiosClient.get<VoucherType[]>("/api/vouchers/all"),
+
     // Lấy danh sách voucher khả dụng cho checkout (dựa trên selectedItems)
     getAvailableVouchersForCheckout: (data: { subtotal?: number; selectedItems?: string[] }) =>
       axiosClient.post<AvailableVouchersResponse>("/api/vouchers/checkout", data),
@@ -86,6 +89,10 @@
     // Cập nhật voucher
     updateVoucher: (id: string, data: VoucherType) =>
       axiosClient.put<VoucherType>(`/api/vouchers/${id}`, data),
+
+    // Bật/tắt khóa voucher
+    toggleVoucherStatus: (id: string) =>
+      axiosClient.put<{ message: string; voucher: VoucherType }>(`/api/vouchers/${id}/toggle-status`),
 
     // Xóa voucher
     deleteVoucher: (id: string) =>

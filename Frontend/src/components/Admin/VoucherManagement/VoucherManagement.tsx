@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import voucherApi from '../../../api/voucherApi';
 import type { VoucherType } from '../../../api/voucherApi';
-import { Edit, Trash2, Plus, Search, Gift } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, Gift, Lock, Unlock } from 'lucide-react';
 
 const VoucherManagement: React.FC = () => {
   const [vouchers, setVouchers] = useState<VoucherType[]>([]);
@@ -45,7 +45,8 @@ const VoucherManagement: React.FC = () => {
   const fetchVouchers = async () => {
     try {
       setLoading(true);
-      const response = await voucherApi.getAvailableVouchers();
+      // Sử dụng getAllVouchers để lấy tất cả voucher (bao gồm cả đã khóa)
+      const response = await voucherApi.getAllVouchers();
       setVouchers(response.data || []);
     } catch (error: any) {
       console.error('Error fetching vouchers:', error);
@@ -65,6 +66,17 @@ const VoucherManagement: React.FC = () => {
     } catch (error: any) {
       console.error('Error deleting voucher:', error);
       alert(error?.response?.data?.message || 'Lỗi khi xóa voucher');
+    }
+  };
+
+  const handleToggleStatus = async (voucherId: string) => {
+    try {
+      const response = await voucherApi.toggleVoucherStatus(voucherId);
+      alert(response.data.message);
+      fetchVouchers();
+    } catch (error: any) {
+      console.error('Error toggling voucher status:', error);
+      alert(error?.response?.data?.message || 'Lỗi khi thay đổi trạng thái voucher');
     }
   };
 
@@ -234,26 +246,33 @@ const VoucherManagement: React.FC = () => {
               {filteredVouchers.map((voucher, index) => (
                 <tr
                   key={voucher._id}
-                  className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in-up"
+                  className={`hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in-up ${
+                    !voucher.isActive ? 'bg-gray-50 opacity-75' : ''
+                  }`}
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-bold text-gray-900">{voucher.code}</span>
+                    <div className="flex items-center gap-2">
+                      {!voucher.isActive && <Lock size={16} className="text-gray-400" />}
+                      <span className={`font-bold ${!voucher.isActive ? 'text-gray-500' : 'text-gray-900'}`}>
+                        {voucher.code}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-700 max-w-xs truncate">
+                    <div className={`text-sm max-w-xs truncate ${!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}`}>
                       {voucher.description || 'Không có mô tả'}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-bold text-green-600">
+                    <span className={`font-bold ${!voucher.isActive ? 'text-gray-400' : 'text-green-600'}`}>
                       {voucher.discountType === 'percent'
                         ? `${voucher.discountValue}%`
                         : `${voucher.discountValue.toLocaleString('vi-VN')}đ`}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-gray-700">
+                    <span className={!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}>
                       {voucher.minOrderValue ? `${voucher.minOrderValue.toLocaleString('vi-VN')}đ` : 'Không có'}
                     </span>
                   </td>
@@ -267,7 +286,7 @@ const VoucherManagement: React.FC = () => {
                       className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
                         voucher.isActive
                           ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
-                          : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
+                          : 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
                       }`}
                     >
                       {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
@@ -282,6 +301,20 @@ const VoucherManagement: React.FC = () => {
                         <Edit size={16} />
                         Sửa
                       </button>
+                      {voucher._id && (
+                        <button
+                          onClick={() => handleToggleStatus(voucher._id)}
+                          className={`${
+                            voucher.isActive
+                              ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50'
+                              : 'text-green-600 hover:text-green-900 hover:bg-green-50'
+                          } px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1`}
+                          title={voucher.isActive ? 'Khóa voucher' : 'Mở khóa voucher'}
+                        >
+                          {voucher.isActive ? <Lock size={16} /> : <Unlock size={16} />}
+                          {voucher.isActive ? 'Khóa' : 'Mở khóa'}
+                        </button>
+                      )}
                       <button
                         onClick={() => voucher._id && handleDelete(voucher._id)}
                         className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"

@@ -42,11 +42,14 @@ const handleRegister = async (e: React.FormEvent) => {
       password,
     });
 
-    // Hiển thị toast và chờ toast tắt mới navigate
-    toast.success(res.data.message || "Đăng ký thành công", {
-      autoClose: 1500, // thời gian toast hiển thị
+    // Hiển thị toast và chuyển đến trang xác thực email
+    toast.success(res.data.message || "Đăng ký thành công! Vui lòng kiểm tra email.", {
+      autoClose: 2000,
       onClose: () => {
-        navigate("/login"); // chuyển hướng sau khi toast tắt
+        // Chuyển đến trang xác thực email với email trong state
+        navigate("/verify-email", { 
+          state: { email: email } 
+        });
       },
     });
 
@@ -203,23 +206,34 @@ const handleRegister = async (e: React.FormEvent) => {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+            <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors"
+                 onClick={() => setAcceptTerms(!acceptTerms)}>
               <input
                 type="checkbox"
+                id="acceptTerms"
                 checked={acceptTerms}
                 onChange={(e) => setAcceptTerms(e.target.checked)}
-                className="w-4 h-4 accent-blue-600 rounded mt-0.5"
+                onClick={(e) => e.stopPropagation()}
+                className="w-5 h-5 accent-blue-600 rounded mt-0.5 cursor-pointer flex-shrink-0 relative z-10"
               />
-              <span className="text-sm text-gray-700">
+              <label htmlFor="acceptTerms" className="text-sm text-gray-700 cursor-pointer flex-1">
                 Tôi đồng ý với{" "}
-                <a href="#" className="text-blue-600 hover:text-blue-700 hover:underline font-semibold">
+                <a 
+                  href="#" 
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-blue-600 hover:text-blue-700 hover:underline font-semibold"
+                >
                   Điều khoản sử dụng
                 </a>{" "}
                 và{" "}
-                <a href="#" className="text-blue-600 hover:text-blue-700 hover:underline font-semibold">
+                <a 
+                  href="#" 
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-blue-600 hover:text-blue-700 hover:underline font-semibold"
+                >
                   Chính sách bảo mật
                 </a>
-              </span>
+              </label>
             </div>
 
             <button

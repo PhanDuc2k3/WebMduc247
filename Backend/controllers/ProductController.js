@@ -100,7 +100,7 @@ exports.getProducts = async (req, res) => {
 
     // Lấy dữ liệu thô theo filter + pagination + sort
     let query = Product.find(filter)
-      .populate("store", "name logoUrl")
+      .populate("store", "name logoUrl storeAddress")
       .skip(Number(skip))
       .limit(Number(limit));
 

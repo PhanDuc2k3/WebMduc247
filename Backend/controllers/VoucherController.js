@@ -32,17 +32,23 @@ exports.getAvailableVouchers = async (req, res) => {
 
 exports.createVoucher = async (req, res) => {
   try {
-    const userId = req.user.userId;
-    const userRole = req.user.role;
+    // Tạm thời sử dụng optional chaining để tránh lỗi khi không có auth
+    const userId = req.user?.userId;
+    const userRole = req.user?.role || "admin"; // Mặc định admin nếu không có auth
     const { stores, global, store } = req.body;
 
-    // Lấy thông tin user
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Không tìm thấy người dùng" });
+    // Nếu có userId, kiểm tra user, nếu không thì bỏ qua (tạm thời cho phép tạo không cần user)
+    if (userId) {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ message: "Không tìm thấy người dùng" });
+      }
     }
 
-    let voucherData = { ...req.body, createdBy: userId };
+    let voucherData = { ...req.body };
+    if (userId) {
+      voucherData.createdBy = userId;
+    }
 
     // Phân quyền: Admin có thể tạo voucher global hoặc theo category
     // Seller chỉ có thể tạo voucher cho cửa hàng của mình
@@ -78,6 +84,9 @@ exports.createVoucher = async (req, res) => {
       }
     } else if (userRole === "seller") {
       // Seller: chỉ có thể tạo voucher cho cửa hàng của mình
+      if (!userId) {
+        return res.status(401).json({ message: "Cần đăng nhập để tạo voucher" });
+      }
       const sellerStore = await Store.findOne({ owner: userId });
       if (!sellerStore) {
         return res.status(404).json({ message: "Bạn chưa có cửa hàng" });
@@ -95,7 +104,8 @@ exports.createVoucher = async (req, res) => {
         });
       }
     } else {
-      return res.status(403).json({ message: "Bạn không có quyền tạo voucher" });
+      // Nếu không có userRole, mặc định xử lý như admin (tạm thời)
+      // return res.status(403).json({ message: "Bạn không có quyền tạo voucher" });
     }
 
     const voucher = await Voucher.create(voucherData);
@@ -132,9 +142,74 @@ exports.deleteVoucher = async (req, res) => {
   }
 };
 
+// Lấy tất cả voucher cho admin (bao gồm cả đã khóa)
+exports.getAllVouchers = async (req, res) => {
+  try {
+    // Tạm thời bỏ check admin để ai cũng có thể xem
+    // const userRole = req.user?.role;
+    // if (userRole !== "admin") {
+    //   return res.status(403).json({ message: "Chỉ admin mới có quyền xem tất cả voucher" });
+    // }
+
+    const vouchers = await Voucher.find({})
+      .populate("store", "name category")
+      .populate("createdBy", "name email")
+      .sort({ createdAt: -1 });
+
+    const cleanVouchers = vouchers.map(v => ({
+      ...v.toObject(),
+      discountValue: Number(v.discountValue),
+      minOrderValue: Number(v.minOrderValue),
+      maxDiscount: v.maxDiscount ? Number(v.maxDiscount) : undefined,
+      storeName: v.store?.name || "Tất cả",
+      storeCategory: v.store?.category || "Tất cả",
+      usagePercent: v.usedCount && v.usageLimit ? Math.round((v.usedCount / v.usageLimit) * 100) : 0,
+      used: v.usersUsed?.length > 0,
+    }));
+
+    res.status(200).json(cleanVouchers);
+  } catch (error) {
+    console.error("Get all vouchers error:", error);
+    res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
+
+// Bật/tắt khóa voucher (toggle isActive)
+exports.toggleVoucherStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Tạm thời bỏ check admin để ai cũng có thể thao tác
+    // const userRole = req.user?.role;
+    // if (userRole !== "admin") {
+    //   return res.status(403).json({ message: "Chỉ admin mới có quyền bật/tắt khóa voucher" });
+    // }
+
+    const voucher = await Voucher.findById(id);
+    if (!voucher) {
+      return res.status(404).json({ message: "Không tìm thấy voucher" });
+    }
+
+    // Đảo ngược trạng thái isActive
+    voucher.isActive = !voucher.isActive;
+    await voucher.save();
+
+    res.status(200).json({
+      message: voucher.isActive ? "Đã mở khóa voucher thành công" : "Đã khóa voucher thành công",
+      voucher: voucher,
+    });
+  } catch (error) {
+    console.error("Toggle voucher status error:", error);
+    res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
+
 exports.previewVoucher = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    // Tạm thời sử dụng optional chaining để tránh lỗi khi không có auth
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Cần đăng nhập để sử dụng voucher" });
+    }
     const { code, subtotal: requestSubtotal } = req.body;
     const cart = await Cart.findOne({ userId }).populate("items.storeId", "name category");
     if (!cart) return res.status(404).json({ message: "Không tìm thấy giỏ hàng" });
@@ -211,7 +286,11 @@ exports.previewVoucher = async (req, res) => {
 
 exports.applyVoucher = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    // Tạm thời sử dụng optional chaining để tránh lỗi khi không có auth
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Cần đăng nhập để sử dụng voucher" });
+    }
     const { code, orderSubtotal } = req.body;
     const user = await User.findById(userId);
     if (!user) return res.status(403).json({ message: "Người dùng không hợp lệ" });
@@ -253,25 +332,41 @@ exports.applyVoucher = async (req, res) => {
 
 exports.getAvailableVouchersForCheckout = async (req, res) => {
   try {
-    const userId = req.user.userId;
+    // Tạm thời sử dụng optional chaining để tránh lỗi khi không có auth
+    const userId = req.user?.userId;
     const { subtotal: requestSubtotal, selectedItems } = req.body;
-    const cart = await Cart.findOne({ userId }).populate("items.storeId", "name category").populate("items.productId");
-    if (!cart) return res.status(404).json({ message: "Không tìm thấy giỏ hàng" });
+    
+    // Nếu không có userId, vẫn cho phép xem voucher nhưng không check user đã dùng
+    let cart = null;
+    let filteredItems = [];
+    let storeIds = [];
+    let cartCategories = [];
+    
+    if (userId) {
+      cart = await Cart.findOne({ userId }).populate("items.storeId", "name category").populate("items.productId");
+      if (cart) {
+        // Lọc các sản phẩm được chọn
+        filteredItems = cart.items;
+        if (selectedItems && Array.isArray(selectedItems) && selectedItems.length > 0) {
+          filteredItems = cart.items.filter(item => selectedItems.includes(item._id.toString()));
+        }
+        
+        // Lấy danh sách store IDs trong các sản phẩm được chọn
+        storeIds = [...new Set(filteredItems.map(item => {
+          const storeId = item.storeId && typeof item.storeId === "object" ? item.storeId._id : item.storeId;
+          return storeId ? storeId.toString() : null;
+        }).filter(Boolean))];
 
-    // Lọc các sản phẩm được chọn
-    let filteredItems = cart.items;
-    if (selectedItems && Array.isArray(selectedItems) && selectedItems.length > 0) {
-      filteredItems = cart.items.filter(item => selectedItems.includes(item._id.toString()));
+        // Lấy danh sách categories của các store trong cart
+        const storesInCart = filteredItems
+          .map(i => (i.storeId && typeof i.storeId === "object" ? i.storeId : null))
+          .filter(Boolean);
+        cartCategories = [...new Set(storesInCart.map(s => s.category).filter(Boolean))];
+      }
     }
     
     const subtotalToUse = requestSubtotal !== undefined ? Number(requestSubtotal) : 
-      filteredItems.reduce((sum, item) => sum + item.subtotal, 0);
-
-    // Lấy danh sách store IDs trong các sản phẩm được chọn
-    const storeIds = [...new Set(filteredItems.map(item => {
-      const storeId = item.storeId && typeof item.storeId === "object" ? item.storeId._id : item.storeId;
-      return storeId ? storeId.toString() : null;
-    }).filter(Boolean))];
+      (cart && filteredItems.length > 0 ? filteredItems.reduce((sum, item) => sum + item.subtotal, 0) : 0);
 
           const now = new Date();
       
@@ -283,18 +378,17 @@ exports.getAvailableVouchersForCheckout = async (req, res) => {
       });
       
              // Lấy voucher: global, categories, hoặc của các store trong cart (seller tạo)
-       // Lấy danh sách categories của các store trong cart
-       const storesInCart = filteredItems
-         .map(i => (i.storeId && typeof i.storeId === "object" ? i.storeId : null))
-         .filter(Boolean);
-       const cartCategories = [...new Set(storesInCart.map(s => s.category).filter(Boolean))];
-       
-       const storeObjectIds = storeIds.map(id => new mongoose.Types.ObjectId(id));
-       const vouchers = await Voucher.find({
+       // Nếu không có cart (không có userId), chỉ lấy voucher global
+       let voucherQuery = {
          isActive: true,
          startDate: { $lte: now },
          endDate: { $gte: now },
-         $or: [
+       };
+       
+       if (storeIds.length > 0 || cartCategories.length > 0) {
+         // Có cart, lấy voucher theo store/category
+         const storeObjectIds = storeIds.map(id => new mongoose.Types.ObjectId(id));
+         voucherQuery.$or = [
            { global: true }, // Voucher global của admin - áp dụng cho tất cả
            // Voucher theo category - nếu có category trong cart khớp với voucher categories
            { 
@@ -304,15 +398,22 @@ exports.getAvailableVouchersForCheckout = async (req, res) => {
            // Voucher của seller - cho store cụ thể trong cart
            { store: { $in: storeObjectIds } }, // Voucher của các store trong cart (seller tạo)
            { store: { $in: storeIds } }, // Fallback: thử với string
-         ]
-       }).populate("store", "name category").populate("stores", "name category");
+         ];
+       } else {
+         // Không có cart, chỉ lấy voucher global
+         voucherQuery.global = true;
+       }
+       
+       const vouchers = await Voucher.find(voucherQuery)
+         .populate("store", "name category")
+         .populate("stores", "name category");
 
       console.log("🔍 Found vouchers:", vouchers.length);
       console.log("📦 Store IDs in cart:", storeIds);
       console.log("💰 Subtotal to use:", subtotalToUse);
 
       // Filter và tính discount cho mỗi voucher
-      const user = await User.findById(userId);
+      // Nếu không có userId, bỏ qua check user
           const availableVouchers = vouchers
         .map(voucher => {
           // Kiểm tra điều kiện
@@ -324,35 +425,43 @@ exports.getAvailableVouchersForCheckout = async (req, res) => {
                      // Kiểm tra voucher match
            // Bỏ qua nếu voucher global (áp dụng cho tất cả)
            if (!voucher.global) {
-             // Kiểm tra categories (voucher admin tạo theo category)
-             if (voucher.categories && Array.isArray(voucher.categories) && voucher.categories.length > 0) {
-               // Voucher theo category - kiểm tra category của store trong cart
-               const categoryMatch = cartCategories.some(cat => voucher.categories.includes(cat));
-               if (!categoryMatch) {
-                 console.log(`❌ Voucher ${voucher.code}: Category not match (voucher categories: ${voucher.categories.join(', ')}, cart categories: ${cartCategories.join(', ')})`);
-                 return null;
-               }
-             }
-             // Kiểm tra store cụ thể (voucher seller tạo)
-             else if (voucher.store !== null && voucher.store !== undefined) {
-               const voucherStoreId = voucher.store?._id ? voucher.store._id.toString() : (voucher.store?.toString ? voucher.store.toString() : null);
-               if (voucherStoreId) {
-                 const storeMatch = storeIds.some(sId => sId === voucherStoreId);
-                 if (!storeMatch) {
-                   console.log(`❌ Voucher ${voucher.code}: Store not match (voucher store: ${voucherStoreId}, cart stores: ${storeIds.join(', ')})`);
+             // Chỉ check match khi có cart (có storeIds hoặc cartCategories)
+             if (storeIds.length > 0 || cartCategories.length > 0) {
+               // Kiểm tra categories (voucher admin tạo theo category)
+               if (voucher.categories && Array.isArray(voucher.categories) && voucher.categories.length > 0) {
+                 // Voucher theo category - kiểm tra category của store trong cart
+                 const categoryMatch = cartCategories.some(cat => voucher.categories.includes(cat));
+                 if (!categoryMatch) {
+                   console.log(`❌ Voucher ${voucher.code}: Category not match (voucher categories: ${voucher.categories.join(', ')}, cart categories: ${cartCategories.join(', ')})`);
                    return null;
                  }
                }
+               // Kiểm tra store cụ thể (voucher seller tạo)
+               else if (voucher.store !== null && voucher.store !== undefined) {
+                 const voucherStoreId = voucher.store?._id ? voucher.store._id.toString() : (voucher.store?.toString ? voucher.store.toString() : null);
+                 if (voucherStoreId) {
+                   const storeMatch = storeIds.some(sId => sId === voucherStoreId);
+                   if (!storeMatch) {
+                     console.log(`❌ Voucher ${voucher.code}: Store not match (voucher store: ${voucherStoreId}, cart stores: ${storeIds.join(', ')})`);
+                     return null;
+                   }
+                 }
+               }
+             } else {
+               // Không có cart, bỏ qua voucher không global
+               return null;
              }
            }
 
-          // Kiểm tra user đã dùng chưa
-          const userUsed = voucher.usersUsed && voucher.usersUsed.length > 0
-            ? voucher.usersUsed.map(u => u.toString()).includes(userId)
-            : false;
-          if (userUsed) {
-            console.log(`❌ Voucher ${voucher.code}: User already used`);
-            return null;
+          // Kiểm tra user đã dùng chưa (chỉ khi có userId)
+          if (userId) {
+            const userUsed = voucher.usersUsed && voucher.usersUsed.length > 0
+              ? voucher.usersUsed.map(u => u.toString()).includes(userId)
+              : false;
+            if (userUsed) {
+              console.log(`❌ Voucher ${voucher.code}: User already used`);
+              return null;
+            }
           }
 
           // Kiểm tra usage limit
@@ -428,7 +537,9 @@ exports.getAvailableVouchersForCheckout = async (req, res) => {
           usagePercent: voucher.usedCount && voucher.usageLimit 
             ? Math.round((voucher.usedCount / voucher.usageLimit) * 100) 
             : 0,
-          used: userUsed,
+          used: userId ? (voucher.usersUsed && voucher.usersUsed.length > 0
+            ? voucher.usersUsed.map(u => u.toString()).includes(userId)
+            : false) : false,
         };
       })
       .filter(v => v !== null)

@@ -10,7 +10,9 @@ const {
   requestSeller,
   getAllSellerRequests,
   handleSellerRequest,
-  logout
+  logout,
+  verifyEmail,
+  resendVerificationCode
 } = require('../controllers/UserController');
 
 const authMiddleware = require('../middlewares/authMiddleware');
@@ -22,6 +24,8 @@ const router = express.Router();
 router.post('/register', register);
 router.post('/login', login);
 router.post('/logout', authMiddleware,logout);
+router.post('/verify-email', verifyEmail);
+router.post('/resend-verification', resendVerificationCode);
 // Profile (người dùng tự sửa thông tin)
 router.get('/profile', authMiddleware, getProfile);
 router.put('/profile', authMiddleware, upload.single('avatar'), updateProfile);

@@ -2,6 +2,7 @@ const User = require('../models/Users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Store = require('../models/Store');
+const { sendVerificationEmail } = require('../utils/emailService');
 
 // ==========================
 // ĐĂNG KÝ
@@ -13,14 +14,46 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin' });
 
     const existingUser = await User.findOne({ email });
-    if (existingUser)
-      return res.status(400).json({ message: 'Email đã được sử dụng' });
+    if (existingUser) {
+      // Nếu user đã tồn tại nhưng chưa verify, xóa và tạo lại
+      if (!existingUser.isVerified) {
+        await User.findByIdAndDelete(existingUser._id);
+      } else {
+        return res.status(400).json({ message: 'Email đã được sử dụng' });
+      }
+    }
+
+    // Tạo mã xác thực 6 chữ số
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ email, password: hashedPassword, fullName, phone });
+    const newUser = new User({ 
+      email, 
+      password: hashedPassword, 
+      fullName, 
+      phone,
+      isVerified: false,
+      verificationCode,
+      verificationCodeExpires
+    });
     await newUser.save();
 
-    res.status(201).json({ message: 'Đăng ký thành công' });
+    // Gửi email xác thực
+    try {
+      await sendVerificationEmail(email, verificationCode, fullName);
+      res.status(201).json({ 
+        message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.',
+        email: email // Trả về email để frontend có thể hiển thị
+      });
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      // Xóa user nếu không gửi được email
+      await User.findByIdAndDelete(newUser._id);
+      return res.status(500).json({ 
+        message: 'Không thể gửi email xác thực. Vui lòng thử lại sau.' 
+      });
+    }
   } catch (error) {
     console.error('Register error:', error);
     res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
@@ -44,6 +77,26 @@ exports.login = async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid)
       return res.status(400).json({ message: 'Email hoặc mật khẩu không đúng' });
+
+    // Kiểm tra email đã được xác thực chưa
+    // Chỉ yêu cầu xác thực nếu:
+    // 1. isVerified = false VÀ
+    // 2. Có verificationCode (tức là tài khoản mới đã đăng ký nhưng chưa verify)
+    // Các tài khoản cũ (không có verificationCode) được coi là đã xác thực
+    if (user.isVerified === false && user.verificationCode) {
+      return res.status(403).json({ 
+        message: 'Tài khoản chưa được xác thực. Vui lòng kiểm tra email và xác thực tài khoản.',
+        email: user.email,
+        needsVerification: true
+      });
+    }
+
+    // Nếu là tài khoản cũ (isVerified = false nhưng không có verificationCode), tự động verify
+    if (user.isVerified === false && !user.verificationCode) {
+      user.isVerified = true;
+      await user.save();
+      console.log(`✅ Tự động xác thực tài khoản cũ: ${user.email}`);
+    }
 
     const token = jwt.sign(
       { userId: user._id, role: user.role },
@@ -314,6 +367,96 @@ if (action === 'approve') {
 
   } catch (error) {
     console.error('Handle seller request error:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+  }
+};
+
+// ==========================
+// XÁC THỰC EMAIL
+// ==========================
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { email, verificationCode } = req.body;
+
+    if (!email || !verificationCode) {
+      return res.status(400).json({ message: 'Vui lòng nhập email và mã xác thực' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy tài khoản với email này' });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: 'Tài khoản đã được xác thực' });
+    }
+
+    // Kiểm tra mã xác thực
+    if (user.verificationCode !== verificationCode) {
+      return res.status(400).json({ message: 'Mã xác thực không đúng' });
+    }
+
+    // Kiểm tra mã còn hiệu lực không
+    if (new Date() > user.verificationCodeExpires) {
+      return res.status(400).json({ message: 'Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới' });
+    }
+
+    // Xác thực thành công
+    user.isVerified = true;
+    user.verificationCode = null;
+    user.verificationCodeExpires = null;
+    await user.save();
+
+    res.status(200).json({ message: 'Xác thực email thành công! Bạn có thể đăng nhập ngay bây giờ.' });
+  } catch (error) {
+    console.error('Verify email error:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+  }
+};
+
+// ==========================
+// GỬI LẠI MÃ XÁC THỰC
+// ==========================
+exports.resendVerificationCode = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Vui lòng nhập email' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy tài khoản với email này' });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: 'Tài khoản đã được xác thực' });
+    }
+
+    // Tạo mã xác thực mới
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+
+    user.verificationCode = verificationCode;
+    user.verificationCodeExpires = verificationCodeExpires;
+    await user.save();
+
+    // Gửi email xác thực
+    try {
+      await sendVerificationEmail(email, verificationCode, user.fullName);
+      res.status(200).json({ 
+        message: 'Đã gửi lại mã xác thực. Vui lòng kiểm tra email.',
+        email: email
+      });
+    } catch (emailError) {
+      console.error('Error sending verification email:', emailError);
+      return res.status(500).json({ 
+        message: 'Không thể gửi email xác thực. Vui lòng thử lại sau.' 
+      });
+    }
+  } catch (error) {
+    console.error('Resend verification code error:', error);
     res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
   }
 };

@@ -23,62 +23,64 @@ const Login: React.FC = () => {
     try {
       const res = await axiosClient.post("/api/users/login", { email, password });
 
-     if (res.status === 200) {
-  const data = res.data;
+      if (res.status === 200) {
+        const data = res.data;
 
-  // Hiển thị toast và chờ toast tắt mới navigate
-  toast.success(data.message || "Đăng nhập thành công", {
-    onClose: () => {
-      // Lưu token và user
-      localStorage.setItem("token", data.token);
+        // Lưu token và user
+        if (data.user) {
+          // ✅ Dự phòng cả _id và id (tránh lỗi undefined)
+          const userId = data.user._id || data.user.id;
 
-if (data.user) {
-  // ✅ Dự phòng cả _id và id (tránh lỗi undefined)
-  const userId = data.user._id || data.user.id;
+          const userData = {
+            _id: userId, // 🔹 luôn có id ở đây
+            fullName: data.user.fullName,
+            avatarUrl: data.user.avatarUrl || "",
+            online: true,
+            lastSeen: new Date().toISOString(),
+          };
 
-  const userData = {
-    _id: userId, // 🔹 luôn có id ở đây
-    fullName: data.user.fullName,
-    avatarUrl: data.user.avatarUrl || "",
-    online: true,
-    lastSeen: new Date().toISOString(),
-  };
+          // ✅ Lưu localStorage
+          localStorage.setItem("user", JSON.stringify(userData));
+          localStorage.setItem("token", data.token);
+          window.dispatchEvent(new Event("userUpdated"));
 
-  // ✅ Lưu localStorage
-  localStorage.setItem("user", JSON.stringify(userData));
-  localStorage.setItem("token", data.token);
-  window.dispatchEvent(new Event("userUpdated"));
+          // ✅ Cập nhật context và socket
+          if (userId) {
+            setCurrentUserId(userId);
+            if (socket && socket.connected) {
+              socket.emit("user_connected", userId);
+              console.log("[Login] ✅ Đã emit user_connected:", userId);
+            } else {
+              console.warn("[Login] ⚠️ Socket chưa kết nối, không thể emit user_connected");
+            }
+          } else {
+            console.error("[Login] ❌ Không tìm thấy userId trong phản hồi login", data.user);
+          }
+        }
 
-  // ✅ Cập nhật context và socket
-  if (userId) {
-    setCurrentUserId(userId);
-    if (socket && socket.connected) {
-      socket.emit("user_connected", userId);
-      console.log("[Login] ✅ Đã emit user_connected:", userId);
-    } else {
-      console.warn("[Login] ⚠️ Socket chưa kết nối, không thể emit user_connected");
-    }
-  } else {
-    console.error("[Login] ❌ Không tìm thấy userId trong phản hồi login", data.user);
-  }
-
-  // ✅ Toast xong mới navigate
-  toast.success(data.message || "Đăng nhập thành công", {
-    autoClose: 1500,
-    onClose: () => navigate("/"),
-  });
-}
-
-
-      navigate("/"); // Chuyển hướng sau khi toast tắt
-    },
-    autoClose: 1500, // thời gian toast hiển thị trước khi gọi onClose
-  });
-}
-
+        // ✅ Toast xong mới navigate
+        toast.success(data.message || "Đăng nhập thành công", {
+          autoClose: 1500,
+          onClose: () => navigate("/"),
+        });
+      }
     } catch (err: any) {
-      const message = err.response?.data?.message || "Đăng nhập thất bại, vui lòng thử lại";
-      toast.error(message);
+      // Kiểm tra nếu tài khoản chưa được xác thực
+      if (err.response?.status === 403 && err.response?.data?.needsVerification) {
+        const userEmail = err.response?.data?.email || email;
+        toast.error(err.response?.data?.message || "Tài khoản chưa được xác thực", {
+          autoClose: 3000,
+          onClose: () => {
+            // Chuyển đến trang xác thực email
+            navigate("/verify-email", { 
+              state: { email: userEmail } 
+            });
+          },
+        });
+      } else {
+        const message = err.response?.data?.message || "Đăng nhập thất bại, vui lòng thử lại";
+        toast.error(message);
+      }
     } finally {
       setLoading(false);
     }

@@ -3,6 +3,7 @@ import Layout from "./Layouts/Layout";
 import AdminLayout from "./Layouts/AdminLayout/AdminLayout";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
+import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
 import Home from "./pages/Home/Home";
 import Profile from "./pages/Profile/Profile";
 import MyStore from "./pages/MyStore/MyStore";
@@ -28,6 +29,7 @@ const AppRouter = () => (
   <Routes>
     <Route path="/login" element={<Login />} />
     <Route path="/register" element={<Register />} />
+    <Route path="/verify-email" element={<VerifyEmail />} />
 
     <Route element={<Layout />}>  
       <Route path="/" element={<Home />} />

@@ -49,6 +49,14 @@ requestSeller: (formData: FormData) => {
   // Admin: cập nhật thông tin người dùng theo ID
   updateUser: (userId: string, data: Record<string, any>) =>
     axiosClient.put(`/api/users/${userId}`, data),
+
+  // Xác thực email
+  verifyEmail: (data: { email: string; verificationCode: string }) =>
+    axiosClient.post("/api/users/verify-email", data),
+
+  // Gửi lại mã xác thực
+  resendVerificationCode: (data: { email: string }) =>
+    axiosClient.post("/api/users/resend-verification", data),
 };
 
 export default userApi;

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import ProductFilters from "../../components/ProductList/ProductFilters";
 import ProductLoading from "../../components/ProductList/ProductLoading";
 import ProductCard from "../../components/Home/FeaturedProducts/ProductCard";
@@ -7,12 +8,65 @@ import PriceFilter from "../../components/ProductList/PriceFilter";
 import type { ProductType } from "../../types/product";
 import productApi from "../../api/productApi";
 
+type SortType = "relevant" | "newest" | "bestselling" | "price";
+
 const ProductList: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [products, setProducts] = useState<ProductType[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPrice, setSelectedPrice] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [sortBy, setSortBy] = useState<SortType>("relevant");
+  const [priceSort, setPriceSort] = useState<"low" | "high">("low");
+  const [showPriceDropdown, setShowPriceDropdown] = useState(false);
+  const [ratingFilter, setRatingFilter] = useState<string>("");
+  const [locationFilter, setLocationFilter] = useState<string>("");
+  const [showRatingDropdown, setShowRatingDropdown] = useState(false);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const priceDropdownRef = useRef<HTMLDivElement>(null);
+  const ratingDropdownRef = useRef<HTMLDivElement>(null);
+  const locationDropdownRef = useRef<HTMLDivElement>(null);
+
+  const ratingOptions = [
+    { value: "", label: "Tất cả đánh giá" },
+    { value: "4.5", label: "4.5 sao trở lên" },
+    { value: "4", label: "4 sao trở lên" },
+    { value: "3.5", label: "3.5 sao trở lên" },
+    { value: "3", label: "3 sao trở lên" },
+  ];
+
+  const locationOptions = [
+    { value: "", label: "Tất cả địa chỉ" },
+    { value: "Hà Nội", label: "Hà Nội" },
+    { value: "TP. Hồ Chí Minh", label: "TP. Hồ Chí Minh" },
+    { value: "Đà Nẵng", label: "Đà Nẵng" },
+    { value: "Cần Thơ", label: "Cần Thơ" },
+    { value: "Huế", label: "Huế" },
+  ];
+
+  // Map location từ tiếng Việt sang tiếng Anh và các biến thể
+  const getLocationVariants = (location: string): string[] => {
+    if (!location) return [];
+    const variants: string[] = [location.toLowerCase()];
+    
+    // Map các tên địa danh phổ biến
+    const locationMap: Record<string, string[]> = {
+      "hà nội": ["hanoi", "ha noi", "hà nội", "ha noi city"],
+      "tp. hồ chí minh": ["ho chi minh", "ho chi minh city", "hcm", "sài gòn", "saigon", "tp. hồ chí minh", "tp hcm"],
+      "đà nẵng": ["da nang", "danang", "đà nẵng"],
+      "cần thơ": ["can tho", "cantho", "cần thơ"],
+      "huế": ["hue", "huế"],
+    };
+
+    const normalized = location.toLowerCase();
+    if (locationMap[normalized]) {
+      variants.push(...locationMap[normalized]);
+    }
+    
+    return [...new Set(variants)]; // Remove duplicates
+  };
 
   // Đọc search term từ URL query
   useEffect(() => {
@@ -51,7 +105,15 @@ const ProductList: React.FC = () => {
           isFeatured: p.isFeatured || false,
           viewsCount: p.viewsCount || 0,
           isActive: p.isActive ?? true,
-          store: p.store || "",
+          store: typeof p.store === 'object' && p.store 
+            ? { 
+                _id: p.store._id || p.store,
+                name: p.store.name,
+                logoUrl: p.store.logoUrl,
+                storeAddress: p.store.storeAddress || p.store.address || ""
+              }
+            : p.store || "",
+          createdAt: p.createdAt || p.created_at || new Date().toISOString(),
         }));
 
         setProducts(mapped);
@@ -65,8 +127,25 @@ const ProductList: React.FC = () => {
     fetchProducts();
   }, []);
 
-  // 🔎 Lọc sản phẩm theo giá + tên
-  const filteredProducts = products
+  // Đóng dropdown khi click ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (priceDropdownRef.current && !priceDropdownRef.current.contains(e.target as Node)) {
+        setShowPriceDropdown(false);
+      }
+      if (ratingDropdownRef.current && !ratingDropdownRef.current.contains(e.target as Node)) {
+        setShowRatingDropdown(false);
+      }
+      if (locationDropdownRef.current && !locationDropdownRef.current.contains(e.target as Node)) {
+        setShowLocationDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // 🔎 Lọc và sắp xếp sản phẩm
+  let filteredProducts = products
     .filter((p) => {
       if (!selectedPrice) return true;
 
@@ -83,7 +162,60 @@ const ProductList: React.FC = () => {
 
       return true;
     })
-    .filter((p) => !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    .filter((p) => !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter((p) => {
+      // Filter theo rating
+      if (ratingFilter) {
+        const minRating = parseFloat(ratingFilter);
+        return (p.rating || 0) >= minRating;
+      }
+      return true;
+    })
+    .filter((p) => {
+      // Filter theo location dựa trên storeAddress của store chứa product
+      if (locationFilter) {
+        // Nếu store là object và có storeAddress
+        if (typeof p.store === 'object' && p.store && 'storeAddress' in p.store && p.store.storeAddress) {
+          const storeAddress = p.store.storeAddress.toLowerCase();
+          // Lấy tất cả các biến thể của location filter (Hà Nội -> Hanoi, Hà Nội, etc.)
+          const locationVariants = getLocationVariants(locationFilter);
+          // Kiểm tra storeAddress có chứa bất kỳ biến thể nào không
+          return locationVariants.some(variant => storeAddress.includes(variant));
+        }
+        // Nếu store chỉ là string (ID), không thể filter theo location
+        return false; // Bỏ qua sản phẩm không có thông tin store đầy đủ
+      }
+      return true;
+    });
+
+  // Sắp xếp sản phẩm
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
+    if (sortBy === "newest") {
+      return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+    }
+    if (sortBy === "bestselling") {
+      return (b.soldCount || 0) - (a.soldCount || 0);
+    }
+    if (sortBy === "price") {
+      return priceSort === "low" ? a.price - b.price : b.price - a.price;
+    }
+    // relevant: giữ nguyên thứ tự (theo search relevance nếu có)
+    return 0;
+  });
+
+  // Tính pagination
+  const productsPerPage = 12;
+  const startIndex = (currentPage - 1) * productsPerPage;
+  const endIndex = startIndex + productsPerPage;
+  const paginatedProducts = sortedProducts.slice(startIndex, endIndex);
+  const calculatedTotalPages = Math.ceil(sortedProducts.length / productsPerPage);
+
+  useEffect(() => {
+    setTotalPages(calculatedTotalPages);
+    if (currentPage > calculatedTotalPages && calculatedTotalPages > 0) {
+      setCurrentPage(1);
+    }
+  }, [calculatedTotalPages, currentPage]);
 
   if (loading) return <ProductLoading />;
 
@@ -98,9 +230,7 @@ const ProductList: React.FC = () => {
         </p>
       </div>
 
-      <div className="mb-6 animate-fade-in-up delay-200">
-        <ProductFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-      </div>
+
 
       <div className="flex flex-col lg:flex-row gap-6 mt-8">
         {/* Bộ lọc giá */}
@@ -114,25 +244,218 @@ const ProductList: React.FC = () => {
 
         {/* Danh sách sản phẩm */}
         <div className="lg:w-4/5 animate-fade-in-right delay-300">
-          {filteredProducts.length > 0 && (
-            <div className="mb-4 flex items-center justify-between">
-              <p className="text-gray-600 font-medium">
-                Tìm thấy <span className="text-blue-600 font-bold">{filteredProducts.length}</span> sản phẩm
-              </p>
-            </div>
-          )}
-          
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
-            {filteredProducts.length > 0 ? (
-              filteredProducts.map((p, index) => (
-                <div 
-                  key={p._id} 
-                  className="w-full animate-slide-up"
-                  style={{ animationDelay: `${index * 0.05}s` }}
+          {/* Thanh sắp xếp và pagination */}
+          <div className="mb-4 bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex items-center justify-between flex-wrap gap-4">
+            {/* Sắp xếp */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-gray-700 font-medium text-sm">Sắp xếp theo:</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => setSortBy("relevant")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    sortBy === "relevant"
+                      ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                      : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
+                  }`}
                 >
-                  <ProductCard product={p} />
+                  Liên Quan
+                </button>
+                <button
+                  onClick={() => setSortBy("newest")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    sortBy === "newest"
+                      ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                      : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  Mới Nhất
+                </button>
+                <button
+                  onClick={() => setSortBy("bestselling")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    sortBy === "bestselling"
+                      ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                      : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
+                  }`}
+                >
+                  Bán Chạy
+                </button>
+                {/* Dropdown Đánh giá tốt nhất */}
+                <div className="relative" ref={ratingDropdownRef}>
+                  <button
+                    onClick={() => setShowRatingDropdown(!showRatingDropdown)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                      ratingFilter
+                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                        : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    Đánh giá tốt nhất
+                    <ChevronDown size={14} className={ratingFilter ? "text-white" : "text-gray-500"} />
+                  </button>
+                  {showRatingDropdown && (
+                    <div className="absolute left-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-fade-in z-[9999]">
+                      {ratingOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setRatingFilter(option.value);
+                            setShowRatingDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
+                            ratingFilter === option.value
+                              ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium"
+                              : "text-gray-700"
+                          } ${option.value ? "border-t border-gray-100" : ""}`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              ))
+                {/* Dropdown Địa chỉ */}
+                <div className="relative" ref={locationDropdownRef}>
+                  <button
+                    onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                      locationFilter
+                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                        : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    Địa chỉ
+                    <ChevronDown size={14} className={locationFilter ? "text-white" : "text-gray-500"} />
+                  </button>
+                  {showLocationDropdown && (
+                    <div className="absolute left-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-fade-in z-[9999]">
+                      {locationOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setLocationFilter(option.value);
+                            setShowLocationDropdown(false);
+                          }}
+                          className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
+                            locationFilter === option.value
+                              ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium"
+                              : "text-gray-700"
+                          } ${option.value ? "border-t border-gray-100" : ""}`}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="relative" ref={priceDropdownRef}>
+                  <button
+                    onClick={() => {
+                      if (sortBy === "price") {
+                        setShowPriceDropdown(!showPriceDropdown);
+                      } else {
+                        setSortBy("price");
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                      sortBy === "price"
+                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                        : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    Giá
+                    <ChevronDown size={14} className={sortBy === "price" ? "text-white" : "text-gray-500"} />
+                  </button>
+                  {showPriceDropdown && sortBy === "price" && (
+                    <div className="absolute left-0 top-full mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-fade-in z-[9999]">
+                      <button
+                        onClick={() => {
+                          setPriceSort("low");
+                          setShowPriceDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
+                          priceSort === "low" ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium" : "text-gray-700"
+                        }`}
+                      >
+                        Thấp đến cao
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPriceSort("high");
+                          setShowPriceDropdown(false);
+                        }}
+                        className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors border-t border-gray-100 ${
+                          priceSort === "high" ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium" : "text-gray-700"
+                        }`}
+                      >
+                        Cao đến thấp
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="flex items-center gap-4">
+              <span className="text-gray-700 text-sm">
+                <span className="text-red-500 font-bold">{currentPage}</span>/{totalPages}
+              </span>
+              <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                  className={`px-3 py-2 border-r border-gray-200 transition-colors ${
+                    currentPage === 1
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                  className={`px-3 py-2 transition-colors ${
+                    currentPage === totalPages
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Grid sản phẩm */}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
+            {paginatedProducts.length > 0 ? (
+              paginatedProducts.map((p, index) => {
+                // Map ProductType sang Product cho ProductCard
+                const productForCard = {
+                  _id: p._id,
+                  name: p.name,
+                  price: p.price,
+                  salePrice: p.salePrice,
+                  images: p.images,
+                  rating: p.rating,
+                  reviewsCount: p.reviewsCount,
+                  soldCount: p.soldCount,
+                  store: typeof p.store === 'string' 
+                    ? p.store 
+                    : { name: p.store.name || 'Unknown Store' }
+                };
+                return (
+                  <div 
+                    key={p._id} 
+                    className="w-full animate-slide-up"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <ProductCard product={productForCard} />
+                  </div>
+                );
+              })
             ) : (
               <div className="col-span-full text-center py-16 animate-fade-in">
                 <div className="text-6xl mb-4">😔</div>
