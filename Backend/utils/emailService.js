@@ -9,13 +9,24 @@ if (!process.env.RESEND_API_KEY) {
 }
 
 // Email từ (phải là domain đã verify trên Resend)
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+// Ví dụ: noreply@yourdomain.com, hello@yourdomain.com
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL;
+
+if (!FROM_EMAIL) {
+  console.warn('⚠️ RESEND_FROM_EMAIL chưa được cấu hình trong .env');
+  console.warn('⚠️ Vui lòng cấu hình RESEND_FROM_EMAIL với email từ domain đã verify trên Resend');
+}
 
 // Gửi email xác thực với retry
 const sendVerificationEmail = async (email, verificationCode, fullName, retries = 2) => {
   // Kiểm tra nếu không có cấu hình email
   if (!process.env.RESEND_API_KEY) {
     console.warn('⚠️ RESEND_API_KEY chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  if (!FROM_EMAIL) {
+    console.warn('⚠️ RESEND_FROM_EMAIL chưa được cấu hình. Bỏ qua gửi email.');
     return false;
   }
 
@@ -107,16 +118,24 @@ const sendVerificationEmail = async (email, verificationCode, fullName, retries 
         subject: 'Xác thực tài khoản ShopMDuc247',
         html: htmlContent,
       });
+      console.log("API KEY:", process.env.RESEND_API_KEY);
 
       if (error) {
         throw new Error(error.message || 'Resend API error');
       }
 
-      console.log(`✅ Verification email sent to ${email} (ID: ${data?.id})`);
+      console.log(`✅ Verification email sent successfully to ${email} from ${FROM_EMAIL} (ID: ${data?.id})`);
       return true;
     } catch (error) {
       const isLastAttempt = attempt === retries;
       const errorMessage = error.message || error.toString();
+      
+      // Kiểm tra lỗi domain chưa verify
+      if (errorMessage.includes('domain') && (errorMessage.includes('not verified') || errorMessage.includes('unverified'))) {
+        console.error(`❌ Domain chưa được verify trên Resend. Vui lòng verify domain tại resend.com/domains`);
+        console.error(`❌ Sau khi verify, cập nhật RESEND_FROM_EMAIL trong .env với email từ domain đã verify`);
+        return false; // Không retry nếu domain chưa verify
+      }
       
       console.error(`❌ Email send attempt ${attempt + 1}/${retries + 1} failed:`, errorMessage);
       
@@ -138,6 +157,11 @@ const sendOrderConfirmationEmail = async (order, user, retries = 2) => {
   // Kiểm tra nếu không có cấu hình email
   if (!process.env.RESEND_API_KEY) {
     console.warn('⚠️ RESEND_API_KEY chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  if (!FROM_EMAIL) {
+    console.warn('⚠️ RESEND_FROM_EMAIL chưa được cấu hình. Bỏ qua gửi email.');
     return false;
   }
 
@@ -485,11 +509,18 @@ const sendOrderConfirmationEmail = async (order, user, retries = 2) => {
         throw new Error(error.message || 'Resend API error');
       }
 
-      console.log(`✅ Order confirmation email sent to ${user.email} for order #${order.orderCode} (ID: ${data?.id})`);
+      console.log(`✅ Order confirmation email sent successfully to ${user.email} from ${FROM_EMAIL} for order #${order.orderCode} (ID: ${data?.id})`);
       return true;
     } catch (error) {
       const isLastAttempt = attempt === retries;
       const errorMessage = error.message || error.toString();
+      
+      // Kiểm tra lỗi domain chưa verify
+      if (errorMessage.includes('domain') && (errorMessage.includes('not verified') || errorMessage.includes('unverified'))) {
+        console.error(`❌ Domain chưa được verify trên Resend. Vui lòng verify domain tại resend.com/domains`);
+        console.error(`❌ Sau khi verify, cập nhật RESEND_FROM_EMAIL trong .env với email từ domain đã verify`);
+        return false; // Không retry nếu domain chưa verify
+      }
       
       console.error(`❌ Email send attempt ${attempt + 1}/${retries + 1} failed:`, errorMessage);
       
