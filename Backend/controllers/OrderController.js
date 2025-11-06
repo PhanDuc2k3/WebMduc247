@@ -18,22 +18,122 @@ exports.createOrder = async (req, res) => {
       productVoucherCode, // Voucher giảm giá sản phẩm
       freeshipVoucherCode, // Voucher miễn phí ship
       selectedItems,
+      items, // Items trực tiếp từ "Mua ngay" (không cần cart)
     } = req.body;
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "Người dùng không tồn tại" });
 
-    const cart = await Cart.findOne({ userId }).populate("items.productId");
-    if (!cart || cart.items.length === 0)
-      return res.status(400).json({ message: "Giỏ hàng trống" });
+    let filteredItems = [];
 
-    // Lọc các sản phẩm được chọn
-    let filteredItems = cart.items;
-    if (selectedItems && Array.isArray(selectedItems)) {
-      filteredItems = cart.items.filter(item => selectedItems.includes(item._id.toString()));
+    // Nếu có items trực tiếp (từ "Mua ngay"), tạo order từ items đó
+    if (items && Array.isArray(items) && items.length > 0) {
+      // Kiểm tra xem items đã có đầy đủ thông tin chưa (từ cart item)
+      const hasFullInfo = items[0] && items[0].name && items[0].price !== undefined;
+      
+      if (hasFullInfo) {
+        // Items đã có đầy đủ thông tin (từ cart), dùng trực tiếp
+        filteredItems = items.map(item => {
+          const productId = typeof item.productId === 'object' ? item.productId._id : item.productId;
+          const storeId = typeof item.storeId === 'object' ? item.storeId._id : item.storeId;
+          
+          return {
+            productId: productId,
+            storeId: storeId,
+            name: item.name,
+            imageUrl: item.imageUrl || '',
+            price: item.price,
+            salePrice: item.salePrice || item.price,
+            quantity: item.quantity,
+            variation: item.variation || null,
+            subtotal: item.subtotal || ((item.salePrice || item.price) + (item.variation?.additionalPrice || 0)) * item.quantity,
+          };
+        });
+      } else {
+        // Items chỉ có productId, quantity, variation - cần query từ database
+        const productIds = items.map(item => {
+          return typeof item.productId === 'object' ? item.productId._id : item.productId;
+        });
+        const products = await Product.find({ _id: { $in: productIds } }).populate('store');
+        
+        // Tạo cart items từ products
+        filteredItems = items.map(item => {
+          const productId = typeof item.productId === 'object' ? item.productId._id : item.productId;
+          const product = products.find(p => p._id.toString() === productId.toString());
+          if (!product) {
+            throw new Error(`Không tìm thấy sản phẩm với ID: ${productId}`);
+          }
+
+          // Tính giá
+          let price = product.price;
+          let salePrice = product.salePrice || product.price;
+          let additionalPrice = 0;
+          let variationData = null;
+
+          // Xử lý variation nếu có
+          if (item.variation && product.variations && product.variations.length > 0) {
+            // Format 1: có variationId và optionId (từ cart item)
+            if (item.variation.variationId && item.variation.optionId) {
+              const variation = product.variations.find(v => 
+                v._id && v._id.toString() === item.variation.variationId.toString()
+              );
+              
+              if (variation && variation.options) {
+                const option = variation.options.find(o => 
+                  o._id && o._id.toString() === item.variation.optionId.toString()
+                );
+                
+                if (option) {
+                  additionalPrice = option.additionalPrice || 0;
+                  variationData = {
+                    color: variation.color || '',
+                    size: option.name || '',
+                    additionalPrice: additionalPrice
+                  };
+                }
+              }
+            } 
+            // Format 2: có color và size trực tiếp (từ cart item đã được transform)
+            else if (item.variation.color || item.variation.size) {
+              variationData = {
+                color: item.variation.color || '',
+                size: item.variation.size || '',
+                additionalPrice: item.variation.additionalPrice || 0
+              };
+              additionalPrice = item.variation.additionalPrice || 0;
+            }
+          }
+
+          const finalPrice = salePrice + additionalPrice;
+          const subtotal = finalPrice * item.quantity;
+
+          return {
+            productId: product._id,
+            storeId: product.store?._id || product.store,
+            name: product.name,
+            imageUrl: product.images && product.images.length > 0 ? product.images[0] : '',
+            price: price,
+            salePrice: salePrice,
+            quantity: item.quantity,
+            variation: variationData,
+            subtotal: subtotal,
+          };
+        });
+      }
+    } else {
+      // Logic cũ: lấy từ cart
+      const cart = await Cart.findOne({ userId }).populate("items.productId");
+      if (!cart || cart.items.length === 0)
+        return res.status(400).json({ message: "Giỏ hàng trống" });
+
+      // Lọc các sản phẩm được chọn
+      filteredItems = cart.items;
+      if (selectedItems && Array.isArray(selectedItems)) {
+        filteredItems = cart.items.filter(item => selectedItems.includes(item._id.toString()));
+      }
+      if (filteredItems.length === 0)
+        return res.status(400).json({ message: "Không có sản phẩm nào được chọn" });
     }
-    if (filteredItems.length === 0)
-      return res.status(400).json({ message: "Không có sản phẩm nào được chọn" });
 
     // Voucher - hỗ trợ cả 2 loại voucher cùng lúc
     let discount = 0;
@@ -152,8 +252,12 @@ exports.createOrder = async (req, res) => {
         avatarUrl: user.avatarUrl,
       },
       items: filteredItems.map(item => ({
-        productId: item.productId._id,
-        storeId: item.storeId,
+        productId: typeof item.productId === 'object' && item.productId._id 
+          ? item.productId._id 
+          : item.productId,
+        storeId: typeof item.storeId === 'object' && item.storeId._id
+          ? item.storeId._id
+          : item.storeId,
         name: item.name,
         imageUrl: item.imageUrl,
         price: item.price,
@@ -190,11 +294,23 @@ exports.createOrder = async (req, res) => {
 
     await order.save();
 
-    // Xóa các item đã đặt ra khỏi cart
-    cart.items = cart.items.filter(item => !filteredItems.find(fi => fi._id.toString() === item._id.toString()));
-    cart.subtotal = cart.items.reduce((sum, item) => sum + item.subtotal, 0);
-    cart.total = cart.subtotal;
-    await cart.save();
+    // Chỉ xóa items khỏi cart nếu order được tạo từ cart (không phải từ "Mua ngay")
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      const cart = await Cart.findOne({ userId });
+      if (cart) {
+        // Xóa các item đã đặt ra khỏi cart
+        const selectedItemIds = selectedItems && Array.isArray(selectedItems) 
+          ? selectedItems.map(id => id.toString())
+          : filteredItems.map(item => item._id?.toString());
+        
+        cart.items = cart.items.filter(item => 
+          !selectedItemIds.includes(item._id.toString())
+        );
+        cart.subtotal = cart.items.reduce((sum, item) => sum + item.subtotal, 0);
+        cart.total = cart.subtotal;
+        await cart.save();
+      }
+    }
 
     // Gửi email xác nhận đơn hàng
     try {
@@ -205,7 +321,17 @@ exports.createOrder = async (req, res) => {
       // Order đã được tạo thành công, chỉ là không gửi được email
     }
 
-    res.status(201).json({ message: "Tạo đơn hàng thành công", order, cart });
+    // Lấy cart để trả về (nếu có)
+    let cartData = null;
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      cartData = await Cart.findOne({ userId });
+    }
+
+    res.status(201).json({ 
+      message: "Tạo đơn hàng thành công", 
+      order, 
+      cart: cartData 
+    });
 
   } catch (error) {
     console.error("Lỗi createOrder:", error);
@@ -446,6 +572,17 @@ exports.markOrderPaid = async (req, res) => {
     order.statusHistory.push({ status: "paid", note: "Thanh toán online thành công", timestamp: new Date() });
 
     await order.save();
+
+    // Chuyển tiền vào ví chủ cửa hàng
+    const { transferToStoreWallets } = require("../utils/walletService");
+    try {
+      const paymentMethod = order.paymentInfo.method || "ONLINE";
+      await transferToStoreWallets(order.orderCode, paymentMethod, req.body.paymentId || "ONLINE_PAYMENT");
+      console.log(`[OrderController] ✅ Đã chuyển tiền vào ví chủ cửa hàng cho order ${order.orderCode}`);
+    } catch (walletError) {
+      console.error(`[OrderController] ❌ Lỗi chuyển tiền vào ví:`, walletError);
+      // Không throw error để không ảnh hưởng đến response
+    }
 
     return res.json({ message: "Order marked as paid", orderId: order._id, paymentInfo: order.paymentInfo });
   } catch (err) {

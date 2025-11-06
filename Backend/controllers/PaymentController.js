@@ -89,6 +89,16 @@ exports.momoCallback = async (req, res) => {
           order.paymentInfo.status = 'paid';
           order.paymentInfo.paymentId = transId;
           await order.save();
+          
+          // Chuyển tiền vào ví chủ cửa hàng
+          const { transferToStoreWallets } = require("../utils/walletService");
+          try {
+            await transferToStoreWallets(actualOrderCode, 'MOMO', transId);
+            console.log(`[PaymentController] ✅ Đã chuyển tiền vào ví chủ cửa hàng cho order ${actualOrderCode}`);
+          } catch (walletError) {
+            console.error(`[PaymentController] ❌ Lỗi chuyển tiền vào ví:`, walletError);
+            // Không throw error để không ảnh hưởng đến response
+          }
         }
       }
     }

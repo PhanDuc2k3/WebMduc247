@@ -193,6 +193,16 @@ exports.payWithWallet = async (req, res) => {
       order.paymentInfo.paymentId = transactionId;
       await order.save();
 
+      // Chuyển tiền vào ví chủ cửa hàng
+      const { transferToStoreWallets } = require("../utils/walletService");
+      try {
+        await transferToStoreWallets(order.orderCode, 'WALLET', transactionId);
+        console.log(`[WalletController] ✅ Đã chuyển tiền vào ví chủ cửa hàng cho order ${order.orderCode}`);
+      } catch (walletError) {
+        console.error(`[WalletController] ❌ Lỗi chuyển tiền vào ví:`, walletError);
+        // Không throw error để không ảnh hưởng đến response
+      }
+
     res.json({
       message: 'Thanh toán thành công',
       wallet: {

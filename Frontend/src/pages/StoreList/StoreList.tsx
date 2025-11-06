@@ -11,16 +11,12 @@ const StoreList: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [stores, setStores] = useState<StoreType[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({
+    rating: "Đánh giá cao nhất",
+    region: "Tất cả khu vực",
+    category: "Tất cả ngành hàng",
+  });
   const { onlineStores } = useChat();
-
-  // Đọc search term từ URL query
-  useEffect(() => {
-    const search = searchParams.get("search");
-    if (search) {
-      setSearchTerm(search);
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -74,9 +70,72 @@ const StoreList: React.FC = () => {
 
   if (loading) return <StoreLoading />;
 
-  const filteredStores = stores.filter((s) =>
-    s.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter stores dựa trên filters
+  let filteredStores = stores.filter((s) => {
+    // Filter theo region (khu vực) - hỗ trợ cả tiếng Việt và tiếng Anh
+    const matchesRegion = filters.region === "Tất cả khu vực" || 
+                         (s.storeAddress && (() => {
+                           const address = s.storeAddress.toLowerCase();
+                           
+                           // Map các khu vực với các biến thể tên
+                           const regionVariants: { [key: string]: string[] } = {
+                             "hà nội": ["hà nội", "hanoi", "ha noi", "ha noi city"],
+                             "tp. hồ chí minh": ["hồ chí minh", "ho chi minh", "hcm", "tp. hồ chí minh", "tp hcm", "sài gòn", "saigon"],
+                             "đà nẵng": ["đà nẵng", "da nang", "danang"],
+                             "cần thơ": ["cần thơ", "can tho", "cantho"],
+                             "huế": ["huế", "hue"]
+                           };
+                           
+                           const selectedRegion = filters.region.toLowerCase();
+                           const variants = regionVariants[selectedRegion];
+                           
+                           if (variants) {
+                             // Kiểm tra xem address có chứa bất kỳ biến thể nào không
+                             return variants.some(variant => address.includes(variant));
+                           }
+                           
+                           // Fallback: tìm kiếm trực tiếp
+                           return address.includes(selectedRegion);
+                         })());
+
+    // Filter theo category (ngành hàng)
+    // Map category tiếng Việt sang tiếng Anh
+    const categoryMap: { [key: string]: string } = {
+      "Tất cả ngành hàng": "",
+      "Điện tử": "electronics",
+      "Thời trang": "fashion",
+      "Hoa quả": "other",
+      "Thực phẩm": "other",
+      "Gia dụng": "home",
+      "Mỹ phẩm": "other",
+      "Sách": "books",
+      "Đồ chơi": "other",
+      "Khác": "other",
+    };
+
+    const selectedCategory = categoryMap[filters.category] || "";
+    const matchesCategory = 
+      filters.category === "Tất cả ngành hàng" ||
+      s.category?.toLowerCase() === selectedCategory.toLowerCase() ||
+      s.customCategory?.toLowerCase().includes(filters.category.toLowerCase());
+
+    return matchesRegion && matchesCategory;
+  });
+
+  // Sort stores dựa trên rating filter
+  filteredStores = [...filteredStores].sort((a, b) => {
+    switch (filters.rating) {
+      case "Đánh giá cao nhất":
+        return (b.rating || 0) - (a.rating || 0);
+      case "Đánh giá trung bình":
+        // Sắp xếp theo rating gần với trung bình (3.5)
+        const avgA = Math.abs((a.rating || 0) - 3.5);
+        const avgB = Math.abs((b.rating || 0) - 3.5);
+        return avgA - avgB;
+      default:
+        return 0;
+    }
+  });
 
   return (
     <div className="w-full py-8 md:py-12">
@@ -89,8 +148,10 @@ const StoreList: React.FC = () => {
         </p>
       </div>
 
-      <div className="mb-6 animate-fade-in-up delay-200">
-        <StoreFilters searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+      <div className="mb-6 animate-fade-in-up delay-200" style={{ position: 'relative', zIndex: 100 }}>
+        <StoreFilters 
+          onFilterChange={setFilters}
+        />
       </div>
 
       {filteredStores.length > 0 && (
@@ -111,7 +172,7 @@ const StoreList: React.FC = () => {
               Không tìm thấy cửa hàng nào
             </p>
             <p className="text-gray-400 text-sm">
-              Hãy thử thay đổi từ khóa tìm kiếm
+              Hãy thử thay đổi bộ lọc
             </p>
           </div>
         )}

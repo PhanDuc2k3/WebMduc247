@@ -210,7 +210,32 @@ exports.getStoreById = async (req, res) => {
 exports.getAllActiveStores = async (req, res) => {
   try {
     const stores = await Store.find({ isActive: true }).populate('owner', 'fullName email');
-    res.status(200).json({ message: 'Lấy danh sách cửa hàng thành công', stores });
+    
+    // Tính rating cho mỗi store dựa trên reviews của products
+    const storesWithRating = await Promise.all(
+      stores.map(async (store) => {
+        const products = await Product.find({ store: store._id });
+        const productIds = products.map(p => p._id);
+        
+        // Lấy tất cả reviews của products trong store
+        const reviews = await Review.find({ productId: { $in: productIds } });
+        
+        // Tính rating trung bình từ reviews
+        let avgRating = 0;
+        if (reviews.length > 0) {
+          const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+          avgRating = totalRating / reviews.length;
+        }
+        
+        return {
+          ...store.toObject(),
+          rating: Math.round(avgRating * 10) / 10, // Làm tròn 1 chữ số thập phân
+          reviewsCount: reviews.length
+        };
+      })
+    );
+    
+    res.status(200).json({ message: 'Lấy danh sách cửa hàng thành công', stores: storesWithRating });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi khi lấy danh sách cửa hàng', error: error.message });
   }
