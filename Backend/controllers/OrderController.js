@@ -312,11 +312,10 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    // Gửi email xác nhận đơn hàng
-    try {
-      await sendOrderConfirmationEmail(order, user);
-    } catch (emailError) {
-      console.error('Error sending order confirmation email:', emailError);
+    // Gửi email xác nhận đơn hàng (không block nếu email service không khả dụng)
+    const emailSent = await sendOrderConfirmationEmail(order, user);
+    if (!emailSent) {
+      console.warn(`⚠️ Không thể gửi email xác nhận đơn hàng cho order ${order.orderCode}`);
       // Không throw error để không ảnh hưởng đến việc tạo order
       // Order đã được tạo thành công, chỉ là không gửi được email
     }

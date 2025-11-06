@@ -39,19 +39,21 @@ exports.register = async (req, res) => {
     });
     await newUser.save();
 
-    // Gửi email xác thực
-    try {
-      await sendVerificationEmail(email, verificationCode, fullName);
+    // Gửi email xác thực (không block nếu email service không khả dụng)
+    const emailSent = await sendVerificationEmail(email, verificationCode, fullName);
+    if (emailSent) {
       res.status(201).json({ 
         message: 'Đăng ký thành công! Vui lòng kiểm tra email để xác thực tài khoản.',
         email: email // Trả về email để frontend có thể hiển thị
       });
-    } catch (emailError) {
-      console.error('Error sending verification email:', emailError);
-      // Xóa user nếu không gửi được email
-      await User.findByIdAndDelete(newUser._id);
-      return res.status(500).json({ 
-        message: 'Không thể gửi email xác thực. Vui lòng thử lại sau.' 
+    } else {
+      // Email không gửi được nhưng vẫn cho phép đăng ký
+      // User có thể yêu cầu gửi lại mã xác thực
+      console.warn(`⚠️ Không thể gửi email xác thực cho ${email}, nhưng vẫn cho phép đăng ký`);
+      res.status(201).json({ 
+        message: 'Đăng ký thành công! Tuy nhiên, email xác thực không thể gửi được. Vui lòng sử dụng tính năng "Gửi lại mã xác thực".',
+        email: email,
+        emailNotSent: true
       });
     }
   } catch (error) {
@@ -442,17 +444,20 @@ exports.resendVerificationCode = async (req, res) => {
     user.verificationCodeExpires = verificationCodeExpires;
     await user.save();
 
-    // Gửi email xác thực
-    try {
-      await sendVerificationEmail(email, verificationCode, user.fullName);
+    // Gửi email xác thực (không block nếu email service không khả dụng)
+    const emailSent = await sendVerificationEmail(email, verificationCode, user.fullName);
+    if (emailSent) {
       res.status(200).json({ 
         message: 'Đã gửi lại mã xác thực. Vui lòng kiểm tra email.',
         email: email
       });
-    } catch (emailError) {
-      console.error('Error sending verification email:', emailError);
-      return res.status(500).json({ 
-        message: 'Không thể gửi email xác thực. Vui lòng thử lại sau.' 
+    } else {
+      // Email không gửi được nhưng vẫn trả về success với thông báo
+      console.warn(`⚠️ Không thể gửi lại email xác thực cho ${email}`);
+      res.status(200).json({ 
+        message: 'Mã xác thực đã được tạo mới. Tuy nhiên, email không thể gửi được. Vui lòng thử lại sau.',
+        email: email,
+        emailNotSent: true
       });
     }
   } catch (error) {

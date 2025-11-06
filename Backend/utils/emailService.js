@@ -13,25 +13,46 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER, // Email của bạn
     pass: process.env.EMAIL_PASSWORD, // App password của Gmail
   },
+  // Thêm timeout configuration
+  connectionTimeout: 10000, // 10 giây timeout cho kết nối
+  socketTimeout: 10000, // 10 giây timeout cho socket
+  greetingTimeout: 10000, // 10 giây timeout cho greeting
+  // Retry configuration
+  pool: true, // Sử dụng connection pool
+  maxConnections: 1,
+  maxMessages: 3,
+  // Tùy chọn khác
+  secure: true, // Sử dụng TLS
+  tls: {
+    rejectUnauthorized: false // Cho phép self-signed certificates (nếu cần)
+  }
 });
 
-// Kiểm tra kết nối email service
+// Kiểm tra kết nối email service (với timeout)
 transporter.verify(function (error, success) {
   if (error) {
-    console.error('❌ Email service connection error:', error);
+    console.error('❌ Email service connection error:', error.message);
+    console.warn('⚠️ Email service không khả dụng. Email verification sẽ bị bỏ qua.');
   } else {
     console.log('✅ Email service is ready to send messages');
   }
 });
 
-// Gửi email xác thực
-const sendVerificationEmail = async (email, verificationCode, fullName) => {
-  try {
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Xác thực tài khoản ShopMDuc247',
-      html: `
+// Gửi email xác thực với timeout và retry
+const sendVerificationEmail = async (email, verificationCode, fullName, retries = 2) => {
+  // Kiểm tra nếu không có cấu hình email
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    console.warn('⚠️ EMAIL_USER hoặc EMAIL_PASSWORD chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: 'Xác thực tài khoản ShopMDuc247',
+        html: `
         <!DOCTYPE html>
         <html>
         <head>
@@ -119,20 +140,54 @@ const sendVerificationEmail = async (email, verificationCode, fullName) => {
         </body>
         </html>
       `,
-    };
+      };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`Verification email sent to ${email}`);
-    return true;
-  } catch (error) {
-    console.error('Error sending verification email:', error);
-    throw error;
+      // Gửi email với timeout
+      const sendPromise = transporter.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Email send timeout after 15 seconds')), 15000);
+      });
+
+      await Promise.race([sendPromise, timeoutPromise]);
+      console.log(`✅ Verification email sent to ${email}`);
+      return true;
+    } catch (error) {
+      const isLastAttempt = attempt === retries;
+      const errorMessage = error.message || error.toString();
+      
+      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED' || errorMessage.includes('timeout')) {
+        console.error(`❌ Email send attempt ${attempt + 1}/${retries + 1} failed (timeout/connection error):`, errorMessage);
+        
+        if (isLastAttempt) {
+          console.error('❌ All email send attempts failed. Email service may be unavailable.');
+          // Không throw error, chỉ log và return false
+          return false;
+        }
+        
+        // Đợi một chút trước khi retry
+        await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
+        continue;
+      } else {
+        // Lỗi khác, không retry
+        console.error('❌ Error sending verification email:', errorMessage);
+        return false;
+      }
+    }
   }
+  
+  return false;
 };
 
-// Gửi email xác nhận đơn hàng
-const sendOrderConfirmationEmail = async (order, user) => {
-  try {
+// Gửi email xác nhận đơn hàng với timeout và retry
+const sendOrderConfirmationEmail = async (order, user, retries = 2) => {
+  // Kiểm tra nếu không có cấu hình email
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+    console.warn('⚠️ EMAIL_USER hoặc EMAIL_PASSWORD chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
     // Format số tiền
     const formatCurrency = (amount) => {
       return new Intl.NumberFormat('vi-VN', {
@@ -467,15 +522,42 @@ const sendOrderConfirmationEmail = async (order, user) => {
         </body>
         </html>
       `,
-    };
+      };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`Order confirmation email sent to ${user.email} for order #${order.orderCode}`);
-    return true;
-  } catch (error) {
-    console.error('Error sending order confirmation email:', error);
-    throw error;
+      // Gửi email với timeout
+      const sendPromise = transporter.sendMail(mailOptions);
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Email send timeout after 15 seconds')), 15000);
+      });
+
+      await Promise.race([sendPromise, timeoutPromise]);
+      console.log(`✅ Order confirmation email sent to ${user.email} for order #${order.orderCode}`);
+      return true;
+    } catch (error) {
+      const isLastAttempt = attempt === retries;
+      const errorMessage = error.message || error.toString();
+      
+      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNREFUSED' || errorMessage.includes('timeout')) {
+        console.error(`❌ Email send attempt ${attempt + 1}/${retries + 1} failed (timeout/connection error):`, errorMessage);
+        
+        if (isLastAttempt) {
+          console.error('❌ All email send attempts failed. Email service may be unavailable.');
+          // Không throw error, chỉ log và return false
+          return false;
+        }
+        
+        // Đợi một chút trước khi retry
+        await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
+        continue;
+      } else {
+        // Lỗi khác, không retry
+        console.error('❌ Error sending order confirmation email:', errorMessage);
+        return false;
+      }
+    }
   }
+  
+  return false;
 };
 
 module.exports = {
