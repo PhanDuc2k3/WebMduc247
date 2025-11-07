@@ -30,7 +30,8 @@ export interface DepositData {
 
 export interface WithdrawData {
   amount: number;
-  description?: string;
+  bankName: string;
+  accountNumber: string;
 }
 
 export interface PayWithWalletData {

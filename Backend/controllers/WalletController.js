@@ -104,10 +104,14 @@ exports.deposit = async (req, res) => {
 exports.withdraw = async (req, res) => {
   try {
     const userId = req.user.userId;
-    const { amount, description } = req.body;
+    const { amount, bankName, accountNumber } = req.body;
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ message: 'Số tiền không hợp lệ' });
+    }
+
+    if (!bankName || !accountNumber) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin ngân hàng' });
     }
 
     const wallet = await Wallet.findOne({ userId });
@@ -119,12 +123,14 @@ exports.withdraw = async (req, res) => {
       return res.status(400).json({ message: 'Số dư không đủ' });
     }
 
+    const description = `Rút tiền về ${bankName} - ${accountNumber}`;
+
     const transaction = {
       type: 'withdraw',
       amount: parseFloat(amount),
       method: 'wallet',
-      description: description || `Rút tiền từ ví`,
-      status: 'completed'
+      description: description,
+      status: 'pending' // Chuyển sang pending để admin xử lý
     };
 
     wallet.transactions.push(transaction);
@@ -132,7 +138,7 @@ exports.withdraw = async (req, res) => {
     await wallet.save();
 
     res.json({
-      message: 'Rút tiền thành công',
+      message: 'Yêu cầu rút tiền đã được gửi, vui lòng chờ xử lý',
       wallet: {
         balance: wallet.balance,
         transaction: transaction
