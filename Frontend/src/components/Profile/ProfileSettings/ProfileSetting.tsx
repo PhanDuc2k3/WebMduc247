@@ -24,19 +24,19 @@ const settings = [
 ];
 
 const ProfileSettings: React.FC = () => (
-  <div className="bg-white rounded-xl shadow p-8">
-    <h3 className="font-semibold text-xl mb-6">Cài đặt tài khoản</h3>
-    <div className="space-y-6">
+  <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border-2 border-gray-100 p-4 md:p-6 lg:p-8">
+    <h3 className="font-semibold text-lg sm:text-xl mb-4 md:mb-6">Cài đặt tài khoản</h3>
+    <div className="space-y-3 md:space-y-4 lg:space-y-6">
       {settings.map((item) => (
         <div
           key={item.title}
-          className="border rounded-xl p-6 flex items-center justify-between"
+          className="border-2 border-gray-200 rounded-lg md:rounded-xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4"
         >
-          <div>
-            <div className="text-lg font-medium mb-1">{item.title}</div>
-            <div className="text-base text-gray-500">{item.desc}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm sm:text-base md:text-lg font-medium mb-1">{item.title}</div>
+            <div className="text-xs sm:text-sm md:text-base text-gray-500">{item.desc}</div>
           </div>
-          <button className="bg-gray-100 px-6 py-2 rounded text-base font-medium hover:bg-gray-200">
+          <button className="bg-gray-100 px-4 py-2 md:px-6 md:py-2.5 rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base font-medium hover:bg-gray-200 transition-all duration-300 flex-shrink-0 w-full sm:w-auto">
             {item.btn}
           </button>
         </div>

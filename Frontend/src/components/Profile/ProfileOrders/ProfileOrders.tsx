@@ -137,69 +137,69 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
   // LOG logic hiển thị
   if (loading) {
     return (
-      <div className="p-8 text-center animate-fade-in">
-        <Package size={48} className="mx-auto mb-4 animate-pulse text-gray-400" />
-        <p className="text-gray-600 text-lg font-medium">Đang tải đơn hàng...</p>
+      <div className="p-6 md:p-8 text-center animate-fade-in">
+        <Package size={40} className="mx-auto mb-3 md:mb-4 animate-pulse text-gray-400" />
+        <p className="text-gray-600 text-sm md:text-base lg:text-lg font-medium">Đang tải đơn hàng...</p>
       </div>
     );
   }
 
   if (!orders || orders.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 text-center animate-fade-in">
-        <Package size={64} className="mx-auto mb-4 text-gray-300" />
-        <h3 className="text-2xl font-bold text-gray-900 mb-2">Chưa có đơn hàng nào</h3>
-        <p className="text-gray-500 mb-6">Bắt đầu mua sắm ngay hôm nay!</p>
+      <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border-2 border-gray-200 p-6 md:p-8 lg:p-12 text-center animate-fade-in">
+        <Package size={48} className="mx-auto mb-3 md:mb-4 text-gray-300" />
+        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">Chưa có đơn hàng nào</h3>
+        <p className="text-gray-500 text-sm md:text-base mb-4 md:mb-6">Bắt đầu mua sắm ngay hôm nay!</p>
         <button
           onClick={() => navigate("/products")}
-          className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 mx-auto"
+          className="px-6 md:px-8 py-2.5 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 mx-auto"
         >
-          <ShoppingBag size={18} /> Mua sắm ngay
+          <ShoppingBag size={16} className="md:w-[18px] md:h-[18px]" /> Mua sắm ngay
         </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-6 lg:p-8 animate-fade-in-up">
-        <h3 className="text-2xl font-bold text-gray-900 gradient-text flex items-center gap-3 mb-6">
+    <div className="space-y-4 md:space-y-6">
+      <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border-2 border-gray-200 p-4 md:p-6 lg:p-8 animate-fade-in-up">
+        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 gradient-text flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
           <span>📦</span> Lịch sử đơn hàng
         </h3>
 
         {orders.map((order, index) => (
           <div
             key={order._id || index}
-            className="border-2 border-gray-200 rounded-xl p-6 mb-6 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-all duration-300 animate-fade-in-up last:mb-0"
+            className="border-2 border-gray-200 rounded-lg md:rounded-xl p-4 md:p-6 mb-4 md:mb-6 bg-gradient-to-br from-white to-gray-50 hover:shadow-lg transition-all duration-300 animate-fade-in-up last:mb-0"
             style={{ animationDelay: `${index * 0.1}s` }}
           >
-            <div className="flex flex-col md:flex-row justify-between gap-6">
+            <div className="flex flex-col md:flex-row justify-between gap-4 md:gap-6">
               {/* Bên trái */}
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-lg font-bold text-gray-900">
+              <div className="flex-1 min-w-0">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 md:gap-3 mb-3 md:mb-4">
+                  <span className="text-sm sm:text-base md:text-lg font-bold text-gray-900 truncate">
                     Đơn hàng #{order._id.slice(-8).toUpperCase()}
                   </span>
-                  <span className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full flex items-center gap-2">
-                    <Calendar size={14} /> {order.date}
+                  <span className="text-xs md:text-sm text-gray-500 bg-gray-100 px-2 md:px-3 py-1 rounded-full flex items-center gap-1.5 md:gap-2 flex-shrink-0">
+                    <Calendar size={12} className="md:w-3.5 md:h-3.5" /> {order.date}
                   </span>
                 </div>
 
                 {/* Danh sách sản phẩm */}
-                <div className="space-y-4">
+                <div className="space-y-2 md:space-y-4">
                   {order.items.map((item, idx) => (
-                    <div key={`${item.productId}-${idx}`} className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 hover:border-blue-300 transition-all duration-300">
-                      <div className="relative">
+                    <div key={`${item.productId}-${idx}`} className="flex items-center gap-2 md:gap-4 p-3 md:p-4 bg-white rounded-lg md:rounded-xl border border-gray-200 hover:border-blue-300 transition-all duration-300">
+                      <div className="relative flex-shrink-0">
                         <img
                           src={item.imgUrl || "/default-avatar.png"}
                           alt={item.name}
-                          className="w-20 h-20 rounded-xl object-cover border-2 border-gray-200"
+                          className="w-16 h-16 md:w-20 md:h-20 rounded-lg md:rounded-xl object-cover border-2 border-gray-200"
                           loading="lazy"
                         />
                       </div>
-                      <div className="flex-1">
-                        <div className="text-base font-bold text-gray-900 mb-1 line-clamp-2">{item.name}</div>
-                        <div className="text-sm text-gray-600">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-1 line-clamp-2">{item.name}</div>
+                        <div className="text-[10px] sm:text-xs md:text-sm text-gray-600">
                           Số lượng: <span className="font-bold text-blue-600">{item.qty}</span> x <span className="font-bold">{item.price}</span>
                         </div>
                       </div>
@@ -209,24 +209,24 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
               </div>
 
               {/* Bên phải */}
-              <div className="flex flex-col items-end gap-4 min-w-[250px]">
-                <div className="text-2xl font-extrabold text-blue-600 mb-2">
+              <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-end md:items-end gap-3 md:gap-4 sm:min-w-[200px] md:min-w-[250px]">
+                <div className="text-xl sm:text-2xl font-extrabold text-blue-600 mb-1 md:mb-2">
                   {order.total}
                 </div>
-                <span className="px-4 py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-sm font-bold border-2 border-green-300">
+                <span className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-xs md:text-sm font-bold border-2 border-green-300 whitespace-nowrap">
                   ✓ {getShippingStatus(order.statusHistory)}
                 </span>
 
-                <div className="flex flex-col gap-2 w-full">
+                <div className="flex flex-col gap-2 w-full sm:w-auto md:w-full">
                   {getShippingStatus(order.statusHistory) === "Đã nhận hàng" ? (
                     <>
                       {order.items.map((item) => (
                         <button
                           key={item.productId}
                           onClick={() => onReview(item.productId, order._id)}
-                          className="w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl text-sm font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
+                          className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
                         >
-                          <Star size={16} /> Đánh giá
+                          <Star size={14} className="md:w-4 md:h-4" /> Đánh giá
                         </button>
                       ))}
                     </>
@@ -247,16 +247,16 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                           }
                         }
                       }}
-                      className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl text-sm font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
+                      className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
                     >
-                      <CheckCircle size={16} /> Đã nhận hàng
+                      <CheckCircle size={14} className="md:w-4 md:h-4" /> Đã nhận hàng
                     </button>
                   ) : (
                     <button
                       onClick={() => navigate(`/order/${order._id}`)}
-                      className="w-full px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl text-sm font-bold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-2"
+                      className="w-full px-3 md:px-4 py-1.5 md:py-2 border-2 border-gray-300 text-gray-700 rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
                     >
-                      <Eye size={16} /> Xem chi tiết
+                      <Eye size={14} className="md:w-4 md:h-4" /> Xem chi tiết
                     </button>
                   )}
 
@@ -265,7 +265,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                       onClick={() =>
                         navigate(`/products/${order.items[0].productId}`)
                       }
-                      className="w-full px-4 py-2 bg-white border-2 border-blue-300 text-blue-600 rounded-xl text-sm font-bold hover:bg-blue-50 transition-all duration-300 transform hover:scale-105"
+                      className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-white border-2 border-blue-300 text-blue-600 rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-blue-50 transition-all duration-300 transform hover:scale-105"
                     >
                       🛒 Mua lại
                     </button>

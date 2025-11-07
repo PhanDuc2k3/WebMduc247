@@ -111,10 +111,10 @@ const Profile: React.FC = () => {
 
   if (!user) {
     return (
-      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+      <div className="w-full py-8 md:py-16 flex items-center justify-center animate-fade-in p-4">
         <div className="text-center">
-          <User size={64} className="mx-auto mb-4 animate-pulse text-gray-400" />
-          <p className="text-gray-600 text-lg font-medium">
+          <User size={48} className="mx-auto mb-3 md:mb-4 animate-pulse text-gray-400" />
+          <p className="text-gray-600 text-sm md:text-lg font-medium">
             Đang tải thông tin người dùng...
           </p>
         </div>
@@ -123,24 +123,24 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="w-full py-8 md:py-12">
-      <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-          <User size={32} className="text-gray-700" />
+    <div className="w-full p-3 md:p-4 lg:p-6 xl:p-8">
+      <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-gray-900 gradient-text flex items-center gap-2 md:gap-3">
+          <User size={24} className="text-gray-700" />
           Trang cá nhân
         </h1>
-        <p className="text-gray-600 text-lg">
+        <p className="text-gray-600 text-sm md:text-base lg:text-lg">
           Quản lý thông tin và đơn hàng của bạn
         </p>
       </div>
 
       {/* Thông tin user */}
-      <div className="mb-6 animate-fade-in-up delay-100">
+      <div className="mb-4 md:mb-6 animate-fade-in-up delay-100">
         <ProfileInfo user={user} onEdit={() => setIsEditing(true)} />
       </div>
 
       {/* Tabs điều hướng */}
-      <div className="mb-6 animate-fade-in-up delay-200">
+      <div className="mb-4 md:mb-6 animate-fade-in-up delay-200">
         <ProfileTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       </div>
 
