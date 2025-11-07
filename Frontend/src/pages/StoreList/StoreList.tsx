@@ -138,27 +138,27 @@ const StoreList: React.FC = () => {
   });
 
   return (
-    <div className="w-full py-8 md:py-12">
+    <div className="w-full p-3 md:p-4 lg:p-6 xl:p-8">
       {/* Header */}
-      <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text">
+      <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
+        <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-gray-900 gradient-text">
           🏬 Danh sách cửa hàng
         </h1>
-        <p className="text-gray-600 text-lg">
+        <p className="text-gray-600 text-sm sm:text-base md:text-lg">
           Khám phá các cửa hàng uy tín trên nền tảng
         </p>
       </div>
 
       {/* Filter Section - ở trên */}
-      <div className="mb-8 animate-fade-in-up delay-200">
+      <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-up delay-200">
         <StoreFilters onFilterChange={setFilters} />
       </div>
 
       {/* List Section - ở dưới filter */}
       <div>
         {filteredStores.length > 0 && (
-          <div className="mb-6 animate-fade-in-up delay-300">
-            <p className="text-gray-600 font-medium">
+          <div className="mb-4 md:mb-6 animate-fade-in-up delay-300">
+            <p className="text-gray-600 font-medium text-sm md:text-base">
               Tìm thấy <span className="text-blue-600 font-bold">{filteredStores.length}</span> cửa hàng
             </p>
           </div>
@@ -168,12 +168,12 @@ const StoreList: React.FC = () => {
           {filteredStores.length > 0 ? (
             <StoreGrid stores={filteredStores} onlineStores={onlineStores} />
           ) : (
-            <div className="text-center py-16 animate-fade-in">
-              <div className="text-6xl mb-4">🏪</div>
-              <p className="text-gray-500 text-lg font-medium mb-2">
+            <div className="text-center py-8 md:py-12 lg:py-16 animate-fade-in">
+              <div className="text-4xl md:text-5xl lg:text-6xl mb-3 md:mb-4">🏪</div>
+              <p className="text-gray-500 text-base md:text-lg font-medium mb-2">
                 Không tìm thấy cửa hàng nào
               </p>
-              <p className="text-gray-400 text-sm">
+              <p className="text-gray-400 text-xs md:text-sm">
                 Hãy thử thay đổi bộ lọc
               </p>
             </div>
@@ -181,8 +181,8 @@ const StoreList: React.FC = () => {
         </div>
 
         {filteredStores.length > 0 && (
-          <div className="mt-8 text-center animate-fade-in-up delay-400">
-            <button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+          <div className="mt-6 md:mt-8 text-center animate-fade-in-up delay-400">
+            <button className="px-6 py-2.5 md:px-8 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold text-sm md:text-base hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
               📥 Tải thêm cửa hàng
             </button>
           </div>

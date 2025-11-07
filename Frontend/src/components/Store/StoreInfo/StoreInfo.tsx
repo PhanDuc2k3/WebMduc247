@@ -26,18 +26,8 @@ const StoreOverview: React.FC<StoreOverviewProps> = ({ store }) => {
       </div>
 
       {/* Additional Info */}
-      <div className="pt-4 md:pt-6 grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-        {store.storeAddress && (
-          <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-blue-50 rounded-lg md:rounded-xl border border-blue-200">
-            <span className="text-xl md:text-2xl">📍</span>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs md:text-sm font-semibold text-gray-600 mb-1">Địa chỉ</p>
-              <p className="text-sm md:text-base text-gray-800 break-words">{store.storeAddress}</p>
-            </div>
-          </div>
-        )}
-        
-        {store.customCategory && (
+      {store.customCategory && (
+        <div className="pt-4 md:pt-6">
           <div className="flex items-start gap-2 md:gap-3 p-3 md:p-4 bg-purple-50 rounded-lg md:rounded-xl border border-purple-200">
             <span className="text-xl md:text-2xl">🏷️</span>
             <div className="min-w-0 flex-1">
@@ -45,8 +35,8 @@ const StoreOverview: React.FC<StoreOverviewProps> = ({ store }) => {
               <p className="text-sm md:text-base text-gray-800 break-words">{store.customCategory}</p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -32,7 +32,16 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       if (error.response?.status === 401) {
         return;
       }
-      console.error("Error checking favorite:", error);
+      // Chỉ log lỗi nếu không phải lỗi network hoặc 404
+      if (error.code !== "ERR_NETWORK" && error.response?.status !== 404) {
+        console.error("Error checking favorite:", error);
+        console.error("Error details:", {
+          message: error.message,
+          status: error.response?.status,
+          data: error.response?.data,
+          url: error.config?.url,
+        });
+      }
     }
   };
 
@@ -63,9 +72,25 @@ const FavoriteButton: React.FC<FavoriteButtonProps> = ({
       }
     } catch (error: any) {
       console.error("Error toggling favorite:", error);
-      toast.error(
-        error.response?.data?.message || "Có lỗi xảy ra khi cập nhật yêu thích"
-      );
+      console.error("Error details:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url,
+      });
+
+      // Xử lý các loại lỗi khác nhau
+      if (error.code === "ERR_NETWORK") {
+        toast.error("Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.");
+      } else if (error.response?.status === 401) {
+        toast.warning("Vui lòng đăng nhập để thêm vào yêu thích");
+      } else if (error.response?.status === 404) {
+        toast.error("Không tìm thấy sản phẩm hoặc cửa hàng");
+      } else {
+        toast.error(
+          error.response?.data?.message || "Có lỗi xảy ra khi cập nhật yêu thích"
+        );
+      }
     } finally {
       setIsLoading(false);
     }

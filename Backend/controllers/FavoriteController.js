@@ -26,46 +26,69 @@ exports.addFavorite = async (req, res) => {
       const product = await Product.findById(productId);
       if (!product)
         return res.status(404).json({ message: "Sản phẩm không tồn tại" });
-      if (!storeId && product.store) storeId = product.store;
+      console.log("✅ Product found:", product._id);
+      // ❌ KHÔNG tự động gán storeId - user có thể favorite product riêng
     }
 
     if (storeId) {
+      console.log("🔍 Checking store with ID:", storeId);
       const store = await Store.findById(storeId);
-      if (!store)
+      if (!store) {
+        console.error("❌ Store not found with ID:", storeId);
         return res.status(404).json({ message: "Cửa hàng không tồn tại" });
+      }
+      console.log("✅ Store found:", store._id, store.name);
     }
 
-    // ✅ Xây dựng query và dữ liệu favorite
+    // ✅ Xây dựng query và dữ liệu favorite - TÁCH RIÊNG product và store
     const query = { user: userId };
-    if (productId) query.product = productId;
-    if (storeId) query.store = storeId;
-
-    const favoriteData = { ...query };
+    let favoriteData;
+    
+    // Chỉ thêm productId hoặc storeId, không kết hợp cả hai
+    // QUAN TRỌNG: Chỉ set field cần thiết để tránh duplicate key error với sparse index
+    if (productId) {
+      query.product = productId;
+      // Chỉ set product field, không set store field
+      favoriteData = { user: userId, product: productId };
+      console.log("📦 Building favorite for PRODUCT:", { query, favoriteData });
+    } else if (storeId) {
+      query.store = storeId;
+      // Chỉ set store field, không set product field
+      favoriteData = { user: userId, store: storeId };
+      console.log("🏪 Building favorite for STORE:", { query, favoriteData });
+    }
 
     // ✅ Kiểm tra nếu đã tồn tại -> return success
+    console.log("🔍 Checking existing favorite with query:", query);
     const existing = await Favorite.findOne(query);
-    if (existing)
+    if (existing) {
+      console.log("✅ Favorite already exists:", existing._id);
       return res.status(200).json({
         message: "Đã có trong danh sách yêu thích",
         favorite: existing,
       });
+    }
+    console.log("✅ No existing favorite found, creating new one...");
 
     // ✅ Tạo mới
     try {
+      console.log("💾 Creating new favorite with data:", favoriteData);
       const favorite = new Favorite(favoriteData);
       await favorite.save();
 
-      console.log("Favorite created successfully:", favorite._id);
+      console.log("✅ Favorite created successfully:", favorite._id);
       return res
         .status(201)
         .json({ message: "Đã thêm vào yêu thích", favorite });
     } catch (saveError) {
+      console.error("❌ Error saving favorite:", saveError);
       // 🔁 Xử lý lỗi duplicate key (race condition)
       if (
         saveError.code === 11000 ||
         saveError.message?.includes("E11000") ||
         saveError.name === "MongoServerError"
       ) {
+        console.log("🔄 Duplicate key error, finding existing favorite...");
         const existingDup = await Favorite.findOne(query);
         return res.status(200).json({
           message: "Đã có trong danh sách yêu thích",
@@ -84,8 +107,12 @@ exports.addFavorite = async (req, res) => {
       error.name === "MongoServerError"
     ) {
       const query = { user: userId };
-      if (productId) query.product = productId;
-      if (storeId) query.store = storeId;
+      // Tách riêng product và store
+      if (productId) {
+        query.product = productId;
+      } else if (storeId) {
+        query.store = storeId;
+      }
 
       const existing = await Favorite.findOne(query);
       return res.status(200).json({
@@ -110,11 +137,15 @@ exports.removeFavorite = async (req, res) => {
       return res.status(400).json({ message: 'Vui lòng cung cấp productId hoặc storeId' });
     }
 
-    const favorite = await Favorite.findOneAndDelete({
-      user: userId,
-      ...(productId ? { product: productId } : {}),
-      ...(storeId ? { store: storeId } : {})
-    });
+    // Tách riêng product và store - chỉ tìm đúng productId HOẶC storeId
+    const query = { user: userId };
+    if (productId) {
+      query.product = productId;
+    } else if (storeId) {
+      query.store = storeId;
+    }
+
+    const favorite = await Favorite.findOneAndDelete(query);
 
     if (!favorite) {
       // Nếu không tìm thấy, vẫn trả về success (idempotent)
@@ -146,11 +177,15 @@ exports.checkFavorite = async (req, res) => {
       return res.status(400).json({ message: 'Vui lòng cung cấp productId hoặc storeId' });
     }
 
-    const favorite = await Favorite.findOne({
-      user: userId,
-      ...(productId ? { product: productId } : {}),
-      ...(storeId ? { store: storeId } : {})
-    });
+    // Tách riêng product và store - chỉ tìm đúng productId HOẶC storeId
+    const query = { user: userId };
+    if (productId) {
+      query.product = productId;
+    } else if (storeId) {
+      query.store = storeId;
+    }
+
+    const favorite = await Favorite.findOne(query);
 
     res.status(200).json({ isFavorite: !!favorite });
   } catch (error) {

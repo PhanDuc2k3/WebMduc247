@@ -1,13 +1,164 @@
-// components/Store/StoreInfo.tsx
-import React from "react";
+// components/Store/StoreHeader.tsx
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import type { StoreType } from "../../../types/store";
-import { MapPin, Star } from "lucide-react";
+import { Star, Heart } from "lucide-react";
+import favoriteApi from "../../../api/favoriteApi";
+import axiosClient from "../../../api/axiosClient";
+import { toast } from "react-toastify";
 
 interface StoreInfoProps {
   store: StoreType;
 }
 
 const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
+  const navigate = useNavigate();
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false);
+  const [isLoadingChat, setIsLoadingChat] = useState(false);
+
+  // Kiểm tra xem store đã được yêu thích chưa
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      try {
+        const response = await favoriteApi.checkFavorite(undefined, store._id);
+        setIsFavorite(response.data.isFavorite);
+      } catch (error: any) {
+        // Nếu chưa đăng nhập, không hiển thị lỗi
+        if (error.response?.status === 401) {
+          return;
+        }
+        // Chỉ log lỗi nếu không phải lỗi network hoặc 404
+        if (error.code !== "ERR_NETWORK" && error.response?.status !== 404) {
+          console.error("Error checking favorite:", error);
+          console.error("Error details:", {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data,
+            url: error.config?.url,
+          });
+        }
+      }
+    };
+    checkFavoriteStatus();
+  }, [store._id]);
+
+  // Xử lý yêu thích - giống FavoriteButton
+  const handleFavorite = async () => {
+    // Kiểm tra đăng nhập
+    const user = localStorage.getItem("user");
+    if (!user) {
+      toast.warning("Vui lòng đăng nhập để thêm vào yêu thích");
+      return;
+    }
+
+    // Kiểm tra store._id
+    if (!store?._id) {
+      console.error("❌ Store ID is missing:", store);
+      toast.error("Không tìm thấy ID cửa hàng");
+      return;
+    }
+
+    console.log("🏪 Adding favorite for store:", store._id, store.name);
+
+    setIsLoadingFavorite(true);
+
+    try {
+      if (isFavorite) {
+        // Xóa khỏi yêu thích
+        console.log("🗑️ Removing favorite for store:", store._id);
+        await favoriteApi.removeFavorite({ storeId: store._id });
+        setIsFavorite(false);
+        toast.success("Đã xóa khỏi yêu thích");
+      } else {
+        // Thêm vào yêu thích
+        console.log("❤️ Adding favorite for store:", store._id);
+        const res = await favoriteApi.addFavorite({ storeId: store._id });
+        console.log("✅ Add favorite response:", res.data);
+        setIsFavorite(true);
+        toast.success("Đã thêm vào yêu thích");
+      }
+    } catch (error: any) {
+      console.error("Error toggling favorite:", error);
+      console.error("Error details:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+        url: error.config?.url,
+      });
+
+      // Xử lý các loại lỗi khác nhau
+      if (error.code === "ERR_NETWORK") {
+        toast.error("Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.");
+      } else if (error.response?.status === 401) {
+        toast.warning("Vui lòng đăng nhập để thêm vào yêu thích");
+      } else if (error.response?.status === 404) {
+        toast.error("Không tìm thấy cửa hàng");
+      } else {
+        toast.error(
+          error.response?.data?.message || "Có lỗi xảy ra khi cập nhật yêu thích"
+        );
+      }
+    } finally {
+      setIsLoadingFavorite(false);
+    }
+  };
+
+  // Xử lý chat - giống y hệt StoreCard
+  const handleChat = async () => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (!stored) {
+        alert("⚠️ Vui lòng đăng nhập để chat với cửa hàng");
+        return;
+      }
+
+      const currentUser = JSON.parse(stored);
+      const senderId = currentUser._id || currentUser.id;
+      const receiverId = typeof store.owner === "string" ? store.owner : store.owner._id;
+
+      if (!senderId || !receiverId) {
+        alert("Không tìm thấy ID người dùng hoặc chủ cửa hàng");
+        return;
+      }
+
+      setIsLoadingChat(true);
+
+      // ✅ Tạo hoặc lấy conversation
+      const res = await axiosClient.post("/api/messages/conversation", {
+        senderId,
+        receiverId,
+      });
+
+      const conversation = res.data.conversation || res.data;
+
+      // ✅ Xây chatUser (vì BE không trả thông tin người nhận)
+      const chatUser = {
+        _id: receiverId,
+        name: store.name || "Cửa hàng",
+        avatar: store.logoUrl || "/default-avatar.png",
+      };
+
+      // ✅ Lấy tin nhắn ban đầu
+      const msgRes = await axiosClient.get(`/api/messages/${conversation._id}`);
+      const initialMessages = msgRes.data || [];
+
+      // ✅ Điều hướng đến trang chat + truyền dữ liệu
+      navigate(`/messages/${conversation._id}`, {
+        state: {
+          chatUser,
+          initialMessages,
+          fromStoreCard: true,
+        },
+      });
+    } catch (err: any) {
+      console.error("Lỗi khi mở chat:", err);
+      alert("Không thể mở cuộc trò chuyện. Vui lòng thử lại.");
+    } finally {
+      setIsLoadingChat(false);
+    }
+  };
+
   if (!store) return <p>Không tìm thấy cửa hàng</p>;
 
   return (
@@ -55,22 +206,32 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
                   </span>
                 </div>
                 <p className="text-sm md:text-base text-gray-600 mb-1.5 md:mb-2 line-clamp-2">{store.description}</p>
-                {store.storeAddress && (
-                  <p className="text-xs md:text-sm text-gray-500 flex items-center gap-1.5 md:gap-2 justify-center sm:justify-start">
-                    <MapPin className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-500 flex-shrink-0" />
-                    <span className="truncate">{store.storeAddress}</span>
-                  </p>
-                )}
               </div>
             </div>
 
             {/* Buttons */}
             <div className="flex gap-2 md:gap-3 flex-wrap w-full sm:w-auto justify-center sm:justify-end">
-              <button className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-xs md:text-sm lg:text-base">
-                💬 Chat ngay
+              <button
+                onClick={handleChat}
+                disabled={isLoadingChat}
+                className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-xs md:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              >
+                {isLoadingChat ? "⏳ Đang tải..." : "💬 Chat ngay"}
               </button>
-              <button className="px-4 py-2 md:px-6 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl font-bold text-gray-700 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-600 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 text-xs md:text-sm lg:text-base">
-                ⭐ Theo dõi
+              <button
+                onClick={handleFavorite}
+                disabled={isLoadingFavorite}
+                className={`px-4 py-2 md:px-6 md:py-3 border-2 rounded-lg md:rounded-xl font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 text-xs md:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-1.5 md:gap-2 ${
+                  isFavorite
+                    ? "bg-gradient-to-r from-red-50 to-pink-50 border-red-400 text-red-600 hover:border-red-500"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-600"
+                }`}
+              >
+                <Heart
+                  size={16}
+                  className={isFavorite ? "fill-red-600 text-red-600" : ""}
+                />
+                {isFavorite ? "Đã yêu thích" : "Yêu thích"}
               </button>
             </div>
           </div>
