@@ -44,6 +44,7 @@ const OrderSchema = new mongoose.Schema(
             "packed",
             "shipped",
             "delivered",
+            "received",
             "cancelled",
           ],
           required: true,

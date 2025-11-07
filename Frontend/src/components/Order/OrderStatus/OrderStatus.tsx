@@ -31,7 +31,8 @@ export default function OrderStatus({ statusHistory }: OrderStatusProps) {
       confirmed: 40,    // Xác nhận: 40%
       packed: 60,       // Đóng gói: 60%
       shipped: 80,      // Vận chuyển: 80%
-      delivered: 100,   // Giao hàng: 100%
+      delivered: 90,    // Đã giao hàng: 90%
+      received: 100,    // Đã nhận hàng: 100%
       cancelled: 100,   // Hủy đơn: 100%
     };
     return progressMap[status] || 0;
@@ -45,12 +46,13 @@ export default function OrderStatus({ statusHistory }: OrderStatusProps) {
       confirmed: { title: "Xác nhận", description: "Đơn hàng đã được xác nhận" },
       packed: { title: "Đóng gói", description: "Sản phẩm đã được đóng gói" },
       shipped: { title: "Vận chuyển", description: "Đơn hàng đang vận chuyển" },
-      delivered: { title: "Giao hàng", description: "Đơn hàng đã được giao" },
+      delivered: { title: "Đã giao hàng", description: "Đơn hàng đã được giao đến khách hàng" },
+      received: { title: "Đã nhận hàng", description: "Khách hàng đã xác nhận nhận hàng" },
       cancelled: { title: "Hủy đơn", description: "Đơn hàng đã bị hủy" },
     };
 
     // Thứ tự hiển thị các bước (không bao gồm cancelled trong flow chính)
-    const statusOrder = ["pending", "confirmed", "packed", "shipped", "delivered"];
+    const statusOrder = ["pending", "confirmed", "packed", "shipped", "delivered", "received"];
     const hasCancelled = currentStatus === "cancelled" || statusHistory.some((h) => h.status === "cancelled");
 
     // Tạo danh sách các bước chính (pending -> delivered)

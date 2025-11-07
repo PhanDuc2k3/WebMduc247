@@ -139,6 +139,7 @@ const StoreList: React.FC = () => {
 
   return (
     <div className="w-full py-8 md:py-12">
+      {/* Header */}
       <div className="mb-8 animate-fade-in-down">
         <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text">
           🏬 Danh sách cửa hàng
@@ -148,43 +149,45 @@ const StoreList: React.FC = () => {
         </p>
       </div>
 
-      <div className="mb-6 animate-fade-in-up delay-200" style={{ position: 'relative', zIndex: 100 }}>
-        <StoreFilters 
-          onFilterChange={setFilters}
-        />
+      {/* Filter Section - ở trên */}
+      <div className="mb-8 animate-fade-in-up delay-200">
+        <StoreFilters onFilterChange={setFilters} />
       </div>
 
-      {filteredStores.length > 0 && (
-        <div className="mb-6 animate-fade-in-up delay-300">
-          <p className="text-gray-600 font-medium">
-            Tìm thấy <span className="text-blue-600 font-bold">{filteredStores.length}</span> cửa hàng
-          </p>
-        </div>
-      )}
-
-      <div className="animate-fade-in-up delay-300">
-        {filteredStores.length > 0 ? (
-          <StoreGrid stores={filteredStores} onlineStores={onlineStores} />
-        ) : (
-          <div className="text-center py-16 animate-fade-in">
-            <div className="text-6xl mb-4">🏪</div>
-            <p className="text-gray-500 text-lg font-medium mb-2">
-              Không tìm thấy cửa hàng nào
-            </p>
-            <p className="text-gray-400 text-sm">
-              Hãy thử thay đổi bộ lọc
+      {/* List Section - ở dưới filter */}
+      <div>
+        {filteredStores.length > 0 && (
+          <div className="mb-6 animate-fade-in-up delay-300">
+            <p className="text-gray-600 font-medium">
+              Tìm thấy <span className="text-blue-600 font-bold">{filteredStores.length}</span> cửa hàng
             </p>
           </div>
         )}
-      </div>
 
-      {filteredStores.length > 0 && (
-        <div className="mt-8 text-center animate-fade-in-up delay-400">
-          <button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
-            📥 Tải thêm cửa hàng
-          </button>
+        <div className="animate-fade-in-up delay-300">
+          {filteredStores.length > 0 ? (
+            <StoreGrid stores={filteredStores} onlineStores={onlineStores} />
+          ) : (
+            <div className="text-center py-16 animate-fade-in">
+              <div className="text-6xl mb-4">🏪</div>
+              <p className="text-gray-500 text-lg font-medium mb-2">
+                Không tìm thấy cửa hàng nào
+              </p>
+              <p className="text-gray-400 text-sm">
+                Hãy thử thay đổi bộ lọc
+              </p>
+            </div>
+          )}
         </div>
-      )}
+
+        {filteredStores.length > 0 && (
+          <div className="mt-8 text-center animate-fade-in-up delay-400">
+            <button className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+              📥 Tải thêm cửa hàng
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

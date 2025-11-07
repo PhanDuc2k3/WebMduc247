@@ -202,6 +202,7 @@ Hãy trả lời ngắn gọn, thân thiện, tập trung vào gợi ý sản ph
             packed: "Đã đóng gói",
             shipped: "Đang vận chuyển",
             delivered: "Đã giao hàng",
+            received: "Đã nhận hàng",
             cancelled: "Đã hủy",
           };
           

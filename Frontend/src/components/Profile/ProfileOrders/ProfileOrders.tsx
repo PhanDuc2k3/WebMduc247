@@ -128,6 +128,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
       packed: "Đã đóng gói",
       shipped: "Đang giao hàng",
       delivered: "Đã giao hàng",
+      received: "Đã nhận hàng",
       cancelled: "Đã hủy đơn",
     };
     return map[latest] || latest;
@@ -217,7 +218,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                 </span>
 
                 <div className="flex flex-col gap-2 w-full">
-                  {getShippingStatus(order.statusHistory) === "Đã giao hàng" ? (
+                  {getShippingStatus(order.statusHistory) === "Đã nhận hàng" ? (
                     <>
                       {order.items.map((item) => (
                         <button
@@ -229,17 +230,20 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                         </button>
                       ))}
                     </>
-                  ) : getShippingStatus(order.statusHistory) === "Đang giao hàng" ? (
+                  ) : getShippingStatus(order.statusHistory) === "Đã giao hàng" ? (
                     <button
                       onClick={async () => {
-                        if (window.confirm("Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã giao hàng'.")) {
+                        if (window.confirm("Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã nhận hàng' và bạn có thể đánh giá sản phẩm.")) {
                           try {
-                            await orderApi.confirmDelivery(order._id);
+                            const response = await orderApi.confirmDelivery(order._id);
                             alert("Xác nhận nhận hàng thành công!");
                             window.location.reload();
                           } catch (err: any) {
                             console.error("Lỗi xác nhận nhận hàng:", err);
-                            alert(err.response?.data?.message || "Lỗi khi xác nhận nhận hàng!");
+                            const errorMessage = err.response?.data?.message 
+                              || err.message 
+                              || "Lỗi khi xác nhận nhận hàng!";
+                            alert(`Lỗi: ${errorMessage}`);
                           }
                         }
                       }}

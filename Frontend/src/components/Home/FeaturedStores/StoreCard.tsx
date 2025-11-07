@@ -139,7 +139,7 @@ const StoreCard: React.FC<StoreCardProps> = ({
   }
 
   return (
-    <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-md hover:shadow-2xl hover:border-blue-400 transition-all duration-500 p-6 flex flex-col overflow-hidden min-w-[250px] transform hover:-translate-y-2 animate-scale-in group relative">
+    <div className="bg-white border-2 border-gray-200 rounded-2xl shadow-md hover:shadow-2xl hover:border-blue-400 transition-all duration-500 p-6 flex flex-col overflow-hidden min-w-[250px] group" style={{ position: 'relative', zIndex: 0 }}>
       {bannerUrl && (
         <div className="h-32 w-full overflow-hidden rounded-xl mb-4 relative">
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>

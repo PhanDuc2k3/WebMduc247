@@ -1,4 +1,6 @@
 const Promotion = require("../models/Promotion");
+const User = require("../models/Users");
+const { createBulkNotifications } = require("../controllers/NotificationController");
 
 // Lấy tất cả tin tức khuyến mãi (public)
 exports.getAllPromotions = async (req, res) => {
@@ -72,6 +74,34 @@ exports.createPromotion = async (req, res) => {
 
     await promotion.save();
     await promotion.populate("createdBy", "fullName email");
+
+    // Tạo notification cho tất cả users khi có tin tức khuyến mãi mới
+    try {
+      if (promotion.isActive) {
+        // Lấy tất cả user IDs (chỉ buyer và seller, không lấy admin)
+        const allUsers = await User.find({ role: { $in: ["buyer", "seller"] } }).select("_id");
+        const userIds = allUsers.map(user => user._id);
+        
+        if (userIds.length > 0) {
+          await createBulkNotifications(userIds, {
+            type: "news",
+            title: "📢 Tin tức khuyến mãi mới!",
+            message: promotion.description || promotion.title,
+            relatedId: promotion._id,
+            link: `/new/${promotion._id}`,
+            icon: "📢",
+            metadata: {
+              promotionId: promotion._id,
+              category: promotion.category,
+            },
+          });
+          console.log(`✅ Đã tạo ${userIds.length} notifications cho tin tức khuyến mãi mới: ${promotion.title}`);
+        }
+      }
+    } catch (notifError) {
+      console.error(`⚠️ Lỗi khi tạo notification cho tin tức khuyến mãi mới:`, notifError);
+      // Không throw error để không ảnh hưởng đến việc tạo promotion
+    }
 
     res.status(201).json({ message: "Tạo tin tức khuyến mãi thành công", promotion });
   } catch (error) {

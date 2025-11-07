@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import { Heart, Gift, ShoppingCart, MessageCircle } from "lucide-react";
 import { useChat } from "../../context/chatContext";
 import WalletIcon from "../../components/Wallet/WalletIcon";
+import NotificationButton from "../../components/Notification/NotificationButton";
 
 interface Props {
   cartCount: number;
+  userId?: string;
 }
 
-export const HeaderIcons: React.FC<Props> = ({ cartCount }) => {
+export const HeaderIcons: React.FC<Props> = ({ cartCount, userId }) => {
   const { unreadMessages } = useChat();
   
   // Calculate total unread messages
@@ -36,6 +38,7 @@ export const HeaderIcons: React.FC<Props> = ({ cartCount }) => {
         </div>
         <span className="hidden xl:inline text-sm font-bold">Giỏ hàng</span>
       </Link>
+      <NotificationButton userId={userId} />
       <Link to="/message" className="hidden md:flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group">
         <div className="relative">
           <MessageCircle size={18} className="group-hover:scale-125 transition-transform" />

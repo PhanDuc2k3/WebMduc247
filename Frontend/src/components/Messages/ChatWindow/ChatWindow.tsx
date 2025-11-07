@@ -4,6 +4,7 @@ import messageApi from "../../../api/messageApi";
 import { useChat } from "../../../context/chatContext";
 import { useLocation } from "react-router-dom";
 import { getSocket } from "../../../socket";
+import OrderMessageCard from "../OrderMessageCard/OrderMessageCard";
 
 interface ChatWindowProps {
   conversationId: string;
@@ -212,6 +213,8 @@ useEffect(() => {
 
         {messages.map((msg) => {
           const isMine = msg.sender === currentUserId;
+          const isOrderMessage = msg.text?.includes("📦 Thông tin đơn hàng #");
+
           return (
             <div
               key={msg._id}
@@ -229,27 +232,33 @@ useEffect(() => {
                   })}
                   {msg.tempId && <span className="italic"> (Đang gửi...)</span>}
                 </div>
-                <div
-                  className={`p-4 rounded-2xl w-fit max-w-md break-words shadow-lg animate-fade-in-up ${
-                    isMine 
-                      ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-tr-none" 
-                      : "bg-white text-gray-900 rounded-tl-none border-2 border-gray-200"
-                  }`}
-                >
-                  {msg.attachments?.length ? (
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {msg.attachments.map((a, i) => (
-                        <img
-                          key={i}
-                          src={a.url}
-                          alt={`attachment-${i}`}
-                          className="w-32 h-32 object-cover rounded-xl shadow-md border-2 border-white"
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                  {msg.text && <div className="font-medium">{msg.text}</div>}
-                </div>
+                {isOrderMessage ? (
+                  <OrderMessageCard message={msg.text || ""} isMine={isMine} />
+                ) : (
+                  <div
+                    className={`p-4 rounded-2xl w-fit max-w-md break-words shadow-lg animate-fade-in-up ${
+                      isMine 
+                        ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-tr-none" 
+                        : "bg-white text-gray-900 rounded-tl-none border-2 border-gray-200"
+                    }`}
+                  >
+                    {msg.attachments?.length ? (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {msg.attachments.map((a, i) => (
+                          <img
+                            key={i}
+                            src={a.url}
+                            alt={`attachment-${i}`}
+                            className="w-32 h-32 object-cover rounded-xl shadow-md border-2 border-white"
+                          />
+                        ))}
+                      </div>
+                    ) : null}
+                    {msg.text && (
+                      <div className="font-medium whitespace-pre-wrap">{msg.text}</div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );

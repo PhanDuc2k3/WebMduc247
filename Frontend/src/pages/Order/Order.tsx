@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { Star } from "lucide-react";
 import OrderStatus from "../../components/Order/OrderStatus/OrderStatus";
 import OrderProduct from "../../components/Order/OrderProduct/OrderProduct";
 import PaymentInfo from "../../components/Order/PaymentInfo/PaymentInfo";
@@ -7,6 +8,7 @@ import CustomerInfo from "../../components/Order/CustomerInfo/CustomerInfo";
 import ShippingInfo from "../../components/Order/ShippingInfo/ShippingInfo";
 import OrderUpdate from "../../components/Order/OrderUpdate/OrderUpdate";
 import BuyerConfirmDelivery from "../../components/Order/BuyerConfirmDelivery/BuyerConfirmDelivery";
+import ProductReview from "../Review/Review";
 import orderApi from "../../api/orderApi";
 import axiosClient from "../../api/axiosClient";
 
@@ -18,6 +20,7 @@ interface Variation {
 
 interface OrderItem {
   _id: string;
+  productId?: string | { _id: string } | any; // productId có thể là string hoặc object
   name: string;
   imageUrl?: string;
   price: number;
@@ -86,6 +89,8 @@ export default function OrderPage() {
   const [myStoreId, setMyStoreId] = useState<string | null>(null);
   const [isSeller, setIsSeller] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [reviewProductId, setReviewProductId] = useState<string | null>(null);
+  const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
 
   // Fetch user profile từ API để lấy role và store info chính xác
   useEffect(() => {
@@ -274,11 +279,14 @@ export default function OrderPage() {
             shippingAddress={order.shippingAddress}
             shippingInfo={order.shippingInfo}
             orderCode={order.orderCode}
+            ownerId={!isOwnerSeller ? storeInfo?.ownerId : undefined}
+            order={!isOwnerSeller ? order : undefined}
+            storeName={storeInfo?.name}
           />
           {isOwnerSeller && (
             <OrderUpdate orderId={order._id} currentStatus={currentStatus} />
           )}
-          {!isOwnerSeller && currentStatus === "shipped" && (
+          {!isOwnerSeller && currentStatus === "delivered" && (
             <BuyerConfirmDelivery orderId={order._id} onConfirm={async () => {
               // Reload order sau khi confirm
               const res = await orderApi.getOrderById(order._id);
@@ -300,8 +308,64 @@ export default function OrderPage() {
               setOrder(mappedOrder);
             }} />
           )}
+          {!isOwnerSeller && currentStatus === "received" && (
+            <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 border-b-2 border-gray-200">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                  <Star size={24} className="text-purple-600" />
+                  Đánh giá sản phẩm
+                </h2>
+                <p className="text-gray-600 text-sm mt-1">Bạn đã nhận được hàng. Hãy chia sẻ đánh giá của bạn!</p>
+              </div>
+              <div className="p-6 space-y-3">
+                {order.items.map((item, idx) => {
+                  // Get productId from item - could be string or object with _id
+                  let actualProductId = '';
+                  if (item.productId) {
+                    if (typeof item.productId === 'string') {
+                      actualProductId = item.productId;
+                    } else if (typeof item.productId === 'object' && item.productId._id) {
+                      actualProductId = item.productId._id;
+                    } else {
+                      actualProductId = String(item.productId);
+                    }
+                  }
+                  
+                  if (!actualProductId) return null;
+                  
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                        setReviewProductId(actualProductId);
+                        setReviewOrderId(order._id);
+                      }}
+                      className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-base font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+                    >
+                      <Star size={20} />
+                      <span>Đánh giá {item.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* Modal đánh giá sản phẩm */}
+      {reviewProductId && reviewOrderId && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+          <ProductReview
+            productId={reviewProductId}
+            orderId={reviewOrderId}
+            onClose={() => {
+              setReviewProductId(null);
+              setReviewOrderId(null);
+            }}
+          />
+        </div>
+      )}
     </div>
   );
 }

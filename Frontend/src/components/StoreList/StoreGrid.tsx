@@ -15,14 +15,10 @@ const StoreGrid: React.FC<Props> = ({ stores, onlineStores = [] }) => {
   }
   
   return (
-    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 relative z-0">
+    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
       {stores.map((store, index) => (
-        <div
+        <StoreCard
           key={store._id}
-          className="animate-slide-up"
-          style={{ animationDelay: `${index * 0.1}s` }}
-        >
-          <StoreCard
             storeId={store._id}
             ownerId={typeof store.owner === "string" ? store.owner : store.owner._id}
             name={store.name}
@@ -34,7 +30,6 @@ const StoreGrid: React.FC<Props> = ({ stores, onlineStores = [] }) => {
             customCategory={store.customCategory}
             isOnline={onlineStores.includes(store._id)}
           />
-        </div>
       ))}
     </div>
   );

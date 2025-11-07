@@ -11,18 +11,21 @@ const BuyerConfirmDelivery: React.FC<BuyerConfirmDeliveryProps> = ({ orderId, on
   const [loading, setLoading] = useState(false);
 
   const handleConfirm = async () => {
-    if (!window.confirm("Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã giao hàng'.")) {
+    if (!window.confirm("Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã nhận hàng' và bạn có thể đánh giá sản phẩm.")) {
       return;
     }
 
     setLoading(true);
     try {
-      await orderApi.confirmDelivery(orderId);
+      const response = await orderApi.confirmDelivery(orderId);
       alert("Xác nhận nhận hàng thành công!");
       onConfirm();
     } catch (err: any) {
       console.error("Lỗi xác nhận nhận hàng:", err);
-      alert(err.response?.data?.message || "Lỗi khi xác nhận nhận hàng!");
+      const errorMessage = err.response?.data?.message 
+        || err.message 
+        || "Lỗi khi xác nhận nhận hàng!";
+      alert(`Lỗi: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -35,7 +38,7 @@ const BuyerConfirmDelivery: React.FC<BuyerConfirmDeliveryProps> = ({ orderId, on
           <Package size={24} className="text-green-600" />
           Xác nhận nhận hàng
         </h2>
-        <p className="text-gray-600 text-sm mt-1">Đơn hàng đang được giao đến bạn</p>
+        <p className="text-gray-600 text-sm mt-1">Đơn hàng đã được giao, vui lòng xác nhận bạn đã nhận được hàng</p>
       </div>
       <div className="p-6">
         <button

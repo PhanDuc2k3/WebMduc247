@@ -177,7 +177,7 @@ const Header: React.FC = () => {
 
         {/* Icons + User */}
         <div className="flex items-center gap-2 sm:gap-3 animate-fade-in-right delay-300">
-          <HeaderIcons cartCount={cartCount} />
+          <HeaderIcons cartCount={cartCount} userId={user._id} />
           <div className="relative">
             {user._id ? (
               <>

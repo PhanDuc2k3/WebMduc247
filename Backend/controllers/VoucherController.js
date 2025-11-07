@@ -3,6 +3,7 @@ const Cart = require("../models/Cart");
 const User = require("../models/Users");
 const Store = require("../models/Store");
 const mongoose = require("mongoose");
+const { createBulkNotifications } = require("../controllers/NotificationController");
 
 exports.getAvailableVouchers = async (req, res) => {
   try {
@@ -109,6 +110,40 @@ exports.createVoucher = async (req, res) => {
     }
 
     const voucher = await Voucher.create(voucherData);
+    
+    // Tạo notification cho tất cả users khi có voucher mới (chỉ voucher global)
+    try {
+      if (voucher.global && voucher.isActive) {
+        // Lấy tất cả user IDs (chỉ buyer và seller, không lấy admin)
+        const allUsers = await User.find({ role: { $in: ["buyer", "seller"] } }).select("_id");
+        const userIds = allUsers.map(user => user._id);
+        
+        if (userIds.length > 0) {
+          const discountText = voucher.discountType === "fixed"
+            ? `${voucher.discountValue.toLocaleString("vi-VN")}₫`
+            : `${voucher.discountValue}%`;
+          
+          await createBulkNotifications(userIds, {
+            type: "voucher",
+            title: "🎁 Voucher mới có sẵn!",
+            message: `${voucher.title} - Giảm ${discountText} cho đơn hàng từ ${voucher.minOrderValue.toLocaleString("vi-VN")}₫. Mã: ${voucher.code}`,
+            relatedId: voucher._id,
+            link: "/voucher",
+            icon: "🎁",
+            metadata: {
+              voucherCode: voucher.code,
+              discountValue: voucher.discountValue,
+              discountType: voucher.discountType,
+            },
+          });
+          console.log(`✅ Đã tạo ${userIds.length} notifications cho voucher mới: ${voucher.code}`);
+        }
+      }
+    } catch (notifError) {
+      console.error(`⚠️ Lỗi khi tạo notification cho voucher mới:`, notifError);
+      // Không throw error để không ảnh hưởng đến việc tạo voucher
+    }
+    
     res.status(201).json(voucher);
   } catch (error) {
     console.error("Create voucher error:", error);

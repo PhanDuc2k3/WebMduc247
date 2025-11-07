@@ -5,7 +5,8 @@ const Voucher = require("../models/Voucher");
 const User = require("../models/Users"); 
 const Product = require("../models/Product");
 const Store = require("../models/Store");
-const { sendOrderConfirmationEmail } = require("../utils/emailService");
+const { sendOrderConfirmationEmail, sendOrderDeliveredEmail } = require("../utils/emailService");
+const { createNotification } = require("../controllers/NotificationController");
 exports.createOrder = async (req, res) => {
   try {
     const userId = req.user.userId;
@@ -312,6 +313,40 @@ exports.createOrder = async (req, res) => {
       }
     }
 
+    // Tạo notification cho buyer khi đơn hàng được tạo thành công
+    try {
+      // Tạo message với tên sản phẩm
+      let message = "";
+      if (order.items.length === 1) {
+        message = `Bạn đã mua sản phẩm "${order.items[0].name}". Tổng tiền: ${order.total.toLocaleString("vi-VN")}₫`;
+      } else if (order.items.length <= 3) {
+        const productNames = order.items.map(item => `"${item.name}"`).join(", ");
+        message = `Bạn đã mua ${order.items.length} sản phẩm: ${productNames}. Tổng tiền: ${order.total.toLocaleString("vi-VN")}₫`;
+      } else {
+        const productNames = order.items.slice(0, 2).map(item => `"${item.name}"`).join(", ");
+        message = `Bạn đã mua ${order.items.length} sản phẩm: ${productNames} và ${order.items.length - 2} sản phẩm khác. Tổng tiền: ${order.total.toLocaleString("vi-VN")}₫`;
+      }
+      
+      await createNotification(userId, {
+        type: "order",
+        title: "🎉 Đơn hàng đã được tạo thành công!",
+        message: message,
+        relatedId: order._id,
+        link: `/order/${order._id}`,
+        icon: "🛒",
+        metadata: {
+          orderCode: order.orderCode,
+          status: "pending",
+          itemCount: order.items.length,
+          total: order.total,
+        },
+      });
+      console.log(`✅ Đã tạo notification cho order mới: ${order.orderCode}`);
+    } catch (notifError) {
+      console.error(`⚠️ Lỗi khi tạo notification cho order mới:`, notifError);
+      // Không throw error để không ảnh hưởng đến việc tạo order
+    }
+
     // Gửi email xác nhận đơn hàng (không block nếu email service không khả dụng)
     const emailSent = await sendOrderConfirmationEmail(order, user);
     if (!emailSent) {
@@ -364,63 +399,106 @@ exports.updateOrderStatus = async (req, res) => {
     const { status, note } = req.body;
 
     // Kiểm tra trạng thái hợp lệ
-    const validStatuses = ["pending", "confirmed", "packed", "shipped", "delivered", "cancelled"];
+    const validStatuses = ["pending", "confirmed", "packed", "shipped", "delivered", "received", "cancelled"];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ message: "Trạng thái không hợp lệ" });
     }
 
-    const order = await Order.findById(id);
+    const order = await Order.findById(id).populate("userId", "fullName email");
     if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+
+    // Lấy trạng thái cũ để kiểm tra xem có phải là lần đầu chuyển sang "delivered" không
+    const previousStatus = order.statusHistory.length > 0 
+      ? order.statusHistory[order.statusHistory.length - 1]?.status 
+      : null;
+
+    // Kiểm tra xem có phải là lần đầu chuyển sang "delivered" không
+    const isFirstTimeDelivered = status === "delivered" && previousStatus !== "delivered";
 
     // Thêm lịch sử trạng thái
     order.statusHistory.push({ status, note, timestamp: new Date() });
 
-    // ✅ Nếu trạng thái là delivered, tăng soldCount và trừ stock
-    if (status === "delivered") {
-      // Tăng soldCount
-      const bulkOps = order.items.map(item => ({
-        updateOne: {
-          filter: { _id: item.productId },
-          update: { $inc: { soldCount: item.quantity } }
-        }
-      }));
-
-      if (bulkOps.length > 0) {
-        await Product.bulkWrite(bulkOps);
-      }
-
-      // Trừ stock cho từng sản phẩm
-      for (const item of order.items) {
-        const product = await Product.findById(item.productId);
-        if (!product) continue;
-
-        // Nếu có variation và option
-        if (item.variation?.variationId && item.variation?.optionId) {
-          const variationIndex = product.variations.findIndex(
-            v => v._id?.toString() === item.variation.variationId.toString()
-          );
-          
-          if (variationIndex !== -1) {
-            const optionIndex = product.variations[variationIndex].options.findIndex(
-              opt => opt._id?.toString() === item.variation.optionId.toString()
-            );
-            
-            if (optionIndex !== -1) {
-              const option = product.variations[variationIndex].options[optionIndex];
-              option.stock = Math.max(0, option.stock - item.quantity);
-              await product.save();
-              continue;
-            }
-          }
-        }
-
-        // Nếu không có variation, trừ quantity tổng
-        product.quantity = Math.max(0, product.quantity - item.quantity);
-        await product.save();
-      }
-    }
+    // ⚠️ KHÔNG trừ stock khi admin set "delivered" - chỉ trừ khi buyer confirm "received"
+    // Stock sẽ được trừ trong confirmDelivery function khi buyer xác nhận đã nhận hàng
 
     await order.save();
+
+    // Tạo notification cho buyer khi order status thay đổi
+    try {
+      const statusMessages = {
+        pending: "Đơn hàng của bạn đã được đặt thành công",
+        confirmed: "Đơn hàng của bạn đã được xác nhận",
+        packed: "Đơn hàng của bạn đã được đóng gói",
+        shipped: "Đơn hàng của bạn đang được vận chuyển",
+        delivered: "Đơn hàng của bạn đã được giao thành công",
+        received: "Bạn đã xác nhận nhận hàng thành công",
+        cancelled: "Đơn hàng của bạn đã bị hủy",
+      };
+
+      const statusIcons = {
+        pending: "📦",
+        confirmed: "✅",
+        packed: "📦",
+        shipped: "🚚",
+        delivered: "🎉",
+        received: "✅",
+        cancelled: "❌",
+      };
+
+      const userId = order.userId?._id || order.userId;
+      if (userId && statusMessages[status]) {
+        await createNotification(userId, {
+          type: "order",
+          title: `Đơn hàng #${order.orderCode}`,
+          message: statusMessages[status],
+          relatedId: order._id,
+          link: `/order/${order._id}`,
+          icon: statusIcons[status] || "📦",
+          metadata: {
+            orderCode: order.orderCode,
+            status,
+          },
+        });
+      }
+    } catch (notifError) {
+      console.error(`⚠️ Lỗi khi tạo notification cho order:`, notifError);
+      // Không throw error để không ảnh hưởng đến việc cập nhật order
+    }
+
+    // Gửi email thông báo khi đơn hàng được chuyển sang "delivered" (chỉ gửi 1 lần)
+    if (isFirstTimeDelivered) {
+      try {
+        // Lấy thông tin user để gửi email
+        let user = null;
+        if (order.userId && typeof order.userId === 'object' && order.userId.email) {
+          // Đã populate userId
+          user = order.userId;
+        } else if (order.userId) {
+          // Chưa populate, cần query lại
+          user = await User.findById(order.userId).select("fullName email");
+        } else if (order.userInfo) {
+          // Dùng userInfo từ order nếu có
+          user = {
+            fullName: order.userInfo.fullName,
+            email: order.userInfo.email
+          };
+        }
+
+        if (user && user.email) {
+          // Gửi email (không block nếu email service không khả dụng)
+          const emailSent = await sendOrderDeliveredEmail(order, user);
+          if (!emailSent) {
+            console.warn(`⚠️ Không thể gửi email thông báo đơn hàng đã giao cho order ${order.orderCode}`);
+            // Không throw error để không ảnh hưởng đến việc cập nhật order
+          }
+        } else {
+          console.warn(`⚠️ Không tìm thấy thông tin user để gửi email cho order ${order.orderCode}`);
+        }
+      } catch (emailError) {
+        console.error(`❌ Lỗi khi gửi email thông báo đơn hàng đã giao:`, emailError);
+        // Không throw error để không ảnh hưởng đến việc cập nhật order
+      }
+    }
 
     res.status(200).json({ message: "Cập nhật trạng thái thành công", order });
   } catch (error) {
@@ -436,76 +514,163 @@ exports.confirmDelivery = async (req, res) => {
     const userId = req.user.userId;
 
     const order = await Order.findById(id);
-    if (!order) return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+    if (!order) {
+      return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
+    }
 
     // Kiểm tra quyền: chỉ buyer của order mới được xác nhận
-    if (order.userId.toString() !== userId.toString()) {
+    if (!order.userId || order.userId.toString() !== userId.toString()) {
       return res.status(403).json({ message: "Bạn không có quyền xác nhận đơn hàng này" });
     }
 
-    // Kiểm tra trạng thái hiện tại phải là "shipped"
-    const currentStatus = order.statusHistory[order.statusHistory.length - 1]?.status;
-    if (currentStatus !== "shipped") {
+    // Kiểm tra trạng thái hiện tại phải là "delivered" (admin đã đánh dấu đã giao)
+    const currentStatus = order.statusHistory && order.statusHistory.length > 0 
+      ? order.statusHistory[order.statusHistory.length - 1]?.status 
+      : null;
+    
+    if (currentStatus !== "delivered") {
       return res.status(400).json({ 
-        message: `Không thể xác nhận. Trạng thái hiện tại: ${currentStatus}. Chỉ có thể xác nhận khi đơn hàng đang giao.` 
+        message: `Không thể xác nhận. Trạng thái hiện tại: ${currentStatus || "unknown"}. Chỉ có thể xác nhận khi đơn hàng đã được giao (delivered).` 
       });
     }
 
-    // Cập nhật trạng thái thành "delivered"
+    // Cập nhật trạng thái thành "received" (khách hàng đã nhận được hàng)
     order.statusHistory.push({ 
-      status: "delivered", 
+      status: "received", 
       note: "Khách hàng đã xác nhận nhận hàng", 
       timestamp: new Date() 
     });
 
-    // Tăng soldCount và trừ stock
-    const bulkOps = order.items.map(item => ({
-      updateOne: {
-        filter: { _id: item.productId },
-        update: { $inc: { soldCount: item.quantity } }
-      }
-    }));
-
-    if (bulkOps.length > 0) {
-      await Product.bulkWrite(bulkOps);
+    // Xử lý stock và soldCount cho từng sản phẩm
+    if (!order.items || order.items.length === 0) {
+      await order.save();
+      return res.status(200).json({ message: "Xác nhận nhận hàng thành công", order });
     }
 
+    const bulkOps = [];
+    
     // Trừ stock cho từng sản phẩm
     for (const item of order.items) {
-      const product = await Product.findById(item.productId);
-      if (!product) continue;
+      // Lấy productId - có thể là string, ObjectId, hoặc object
+      let productId = null;
+      if (item.productId) {
+        if (typeof item.productId === 'string') {
+          productId = item.productId;
+        } else if (typeof item.productId === 'object' && item.productId._id) {
+          productId = item.productId._id.toString();
+        } else if (item.productId.toString) {
+          productId = item.productId.toString();
+        }
+      }
 
-      // Nếu có variation và option
+      if (!productId) {
+        console.warn(`⚠️ Item không có productId hợp lệ:`, item);
+        continue;
+      }
+
+      const product = await Product.findById(productId);
+      if (!product) {
+        console.warn(`⚠️ Không tìm thấy sản phẩm với ID: ${productId}`);
+        continue;
+      }
+
+      // Thêm vào bulkOps để tăng soldCount
+      bulkOps.push({
+        updateOne: {
+          filter: { _id: productId },
+          update: { $inc: { soldCount: item.quantity || 0 } }
+        }
+      });
+
+      // Xử lý variation nếu có
+      let stockUpdated = false;
+      
+      // Kiểm tra nếu có variation với variationId và optionId (format mới)
       if (item.variation?.variationId && item.variation?.optionId) {
         const variationIndex = product.variations.findIndex(
-          v => v._id?.toString() === item.variation.variationId.toString()
+          v => v._id && v._id.toString() === item.variation.variationId.toString()
         );
         
         if (variationIndex !== -1) {
           const optionIndex = product.variations[variationIndex].options.findIndex(
-            opt => opt._id?.toString() === item.variation.optionId.toString()
+            opt => opt._id && opt._id.toString() === item.variation.optionId.toString()
           );
           
           if (optionIndex !== -1) {
             const option = product.variations[variationIndex].options[optionIndex];
-            option.stock = Math.max(0, option.stock - item.quantity);
+            option.stock = Math.max(0, (option.stock || 0) - (item.quantity || 0));
             await product.save();
-            continue;
+            stockUpdated = true;
+          }
+        }
+      }
+      // Kiểm tra nếu có variation với color và size (format cũ)
+      else if (item.variation?.color || item.variation?.size) {
+        // Tìm variation theo color
+        const variationIndex = product.variations.findIndex(
+          v => v.color && v.color.toLowerCase() === (item.variation.color || '').toLowerCase()
+        );
+        
+        if (variationIndex !== -1) {
+          // Tìm option theo size
+          const optionIndex = product.variations[variationIndex].options.findIndex(
+            opt => opt.name && opt.name.toLowerCase() === (item.variation.size || '').toLowerCase()
+          );
+          
+          if (optionIndex !== -1) {
+            const option = product.variations[variationIndex].options[optionIndex];
+            option.stock = Math.max(0, (option.stock || 0) - (item.quantity || 0));
+            await product.save();
+            stockUpdated = true;
           }
         }
       }
 
-      // Nếu không có variation, trừ quantity tổng
-      product.quantity = Math.max(0, product.quantity - item.quantity);
-      await product.save();
+      // Nếu không có variation hoặc không tìm thấy variation, trừ quantity tổng
+      if (!stockUpdated) {
+        product.quantity = Math.max(0, (product.quantity || 0) - (item.quantity || 0));
+        await product.save();
+      }
+    }
+
+    // Tăng soldCount cho tất cả sản phẩm
+    if (bulkOps.length > 0) {
+      try {
+        await Product.bulkWrite(bulkOps);
+      } catch (bulkError) {
+        console.error("⚠️ Lỗi khi bulkWrite soldCount:", bulkError);
+        // Không throw error, chỉ log vì đã trừ stock ở trên
+      }
     }
 
     await order.save();
 
+    // Tạo notification khi buyer xác nhận nhận hàng
+    try {
+      await createNotification(userId, {
+        type: "order",
+        title: `Đơn hàng #${order.orderCode}`,
+        message: "Bạn đã xác nhận nhận hàng thành công. Bây giờ bạn có thể đánh giá sản phẩm!",
+        relatedId: order._id,
+        link: `/order/${order._id}`,
+        icon: "✅",
+        metadata: {
+          orderCode: order.orderCode,
+          status: "received",
+        },
+      });
+    } catch (notifError) {
+      console.error(`⚠️ Lỗi khi tạo notification:`, notifError);
+    }
+
     res.status(200).json({ message: "Xác nhận nhận hàng thành công", order });
   } catch (error) {
-    console.error("Lỗi confirmDelivery:", error);
-    res.status(500).json({ message: "Lỗi server" });
+    console.error("❌ Lỗi confirmDelivery:", error);
+    console.error("Error stack:", error.stack);
+    res.status(500).json({ 
+      message: error.message || "Lỗi server",
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
