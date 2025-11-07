@@ -119,7 +119,7 @@ exports.getUserConversations = async (req, res) => {
       .populate("participants", "fullName avatarUrl _id")
       .lean();
 
-    // Calculate unread count for each conversation
+    // Calculate unread count and get last message for each conversation
     const formattedConversations = await Promise.all(
       conversations.map(async (conv) => {
         const otherUser = conv.participants.find((p) => p._id.toString() !== userId);
@@ -131,9 +131,15 @@ exports.getUserConversations = async (req, res) => {
           readBy: { $ne: userId }, // Not read by current user
         });
 
+        // Get last message from Message collection
+        const lastMessageDoc = await Message.findOne({ conversationId: conv._id })
+          .sort({ createdAt: -1 })
+          .lean();
+
         return {
           conversationId: conv._id,
-          lastMessage: conv.lastMessage || "",
+          lastMessage: lastMessageDoc?.text || lastMessageDoc?.content || conv.lastMessage || "",
+          lastMessageTime: lastMessageDoc?.createdAt || conv.updatedAt,
           participants: conv.participants,
           name: otherUser?.fullName || "Người dùng",
           avatarUrl: otherUser?.avatarUrl || "/default-avatar.png",

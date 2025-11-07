@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Message = require("../models/Message");
+const Conversation = require("../models/Conversation");
 const User = require("../models/Users");
 const express = require("express");
 const { uploadToCloudinary } = require("../helpers/cloudinaryUploader");
@@ -144,6 +145,12 @@ module.exports = (io) => {
           sender,
           text,
           attachments: uploadedFiles,
+        });
+
+        // Cập nhật lastMessage trong Conversation
+        await Conversation.findByIdAndUpdate(conversationId, {
+          lastMessage: text || (uploadedFiles.length > 0 ? "[Đính kèm]" : ""),
+          updatedAt: new Date(),
         });
 
         io.to(conversationId).emit("receiveMessage", newMessage);
