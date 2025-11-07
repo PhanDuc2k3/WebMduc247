@@ -11,10 +11,11 @@ dotenv.config({ path: path.join(__dirname, ".env") });
 const app = express();
 app.use(cors({
   origin: [
-    "http://localhost:5173",
-    "https://webmduc247.onrender.com",
-    "https://web-mduc247.vercel.app",
-    "https://webmduc247-websocket.onrender.com",
+  'https://shopmduc247.online',
+  'http://localhost:5173',
+  'https://webmduc247.onrender.com',
+  'https://web-mduc247.vercel.app',
+  'https://webmduc247-websocket.onrender.com',
   ],
   credentials: true,
 }));
@@ -24,10 +25,11 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      "http://localhost:5173",
-      "https://webmduc247.onrender.com",
-      "https://web-mduc247.vercel.app",
-      "https://webmduc247-websocket.onrender.com"
+  'https://shopmduc247.online',
+  'http://localhost:5173',
+  'https://webmduc247.onrender.com',
+  'https://web-mduc247.vercel.app',
+  'https://webmduc247-websocket.onrender.com',
     ],
     methods: ["GET", "POST"],
     credentials: true,
