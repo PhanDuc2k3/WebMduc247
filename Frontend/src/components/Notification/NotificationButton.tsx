@@ -194,7 +194,7 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
 
       {/* Dropdown */}
       {showDropdown && (
-        <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-2xl shadow-2xl border-2 border-gray-200 overflow-hidden animate-fade-in z-[9999] max-h-[600px] flex flex-col">
+        <div className="absolute right-0 top-full mt-2 w-80 md:w-96 max-w-[90vw] bg-white rounded-2xl shadow-2xl border-2 border-gray-200 overflow-hidden animate-fade-in z-[9999] max-h-[600px] flex flex-col">
           {/* Header */}
           <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-4 flex items-center justify-between">
             <h3 className="text-white font-bold text-lg">Thông báo</h3>

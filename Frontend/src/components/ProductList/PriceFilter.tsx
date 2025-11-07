@@ -135,21 +135,21 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
 
       {/* Popup nhập khoảng giá */}
       {isPopupOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
-          <div className="bg-white rounded-2xl p-8 w-96 shadow-2xl animate-scale-in border border-gray-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-2xl font-bold text-gray-900 gradient-text">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+          <div className="bg-white rounded-2xl p-4 md:p-8 w-full max-w-md shadow-2xl animate-scale-in border border-gray-200 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-4 md:mb-6">
+              <h3 className="text-xl md:text-2xl font-bold text-gray-900">
                 Nhập khoảng giá
               </h3>
               <button
                 onClick={() => setIsPopupOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all duration-300 text-gray-600 hover:text-gray-900"
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-all duration-300 text-gray-600 hover:text-gray-900 text-xl"
               >
                 ×
               </button>
             </div>
 
-            <div className="flex flex-col gap-5 mb-6">
+            <div className="flex flex-col gap-4 md:gap-5 mb-4 md:mb-6">
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-2 block">
                   Giá tối thiểu
@@ -159,7 +159,7 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
                   value={formatNumber(minPrice)}
                   onChange={handleMinChange}
                   placeholder="VD: 0"
-                  className="w-full border-2 border-gray-200 rounded-xl p-3 mt-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-gray-700"
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 text-base md:text-lg mt-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-gray-700"
                 />
               </div>
               <div>
@@ -171,21 +171,21 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
                   value={formatNumber(maxPrice)}
                   onChange={handleMaxChange}
                   placeholder="VD: 20.000.000"
-                  className="w-full border-2 border-gray-200 rounded-xl p-3 mt-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-gray-700"
+                  className="w-full border-2 border-gray-200 rounded-xl p-3 text-base md:text-lg mt-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-gray-700"
                 />
               </div>
             </div>
 
-            <div className="flex justify-end gap-3">
+            <div className="flex flex-col sm:flex-row justify-end gap-3">
               <button
                 onClick={() => setIsPopupOpen(false)}
-                className="px-6 py-2.5 text-sm font-semibold border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300"
+                className="w-full sm:w-auto px-6 py-3 text-sm font-semibold border-2 border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all duration-300"
               >
                 Hủy
               </button>
               <button
                 onClick={handleApplyRange}
-                className="px-6 py-2.5 text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="w-full sm:w-auto px-6 py-3 text-sm font-semibold bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 Áp dụng
               </button>

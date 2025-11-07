@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import ProductFilters from "../../components/ProductList/ProductFilters";
+import { ChevronDown, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
 import ProductLoading from "../../components/ProductList/ProductLoading";
 import ProductCard from "../../components/Home/FeaturedProducts/ProductCard";
 import PriceFilter from "../../components/ProductList/PriceFilter";
@@ -25,6 +24,7 @@ const ProductList: React.FC = () => {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const priceDropdownRef = useRef<HTMLDivElement>(null);
   const ratingDropdownRef = useRef<HTMLDivElement>(null);
   const locationDropdownRef = useRef<HTMLDivElement>(null);
@@ -217,24 +217,32 @@ const ProductList: React.FC = () => {
     }
   }, [calculatedTotalPages, currentPage]);
 
+  // Khóa scroll khi mở mobile filter
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = isMobileFilterOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isMobileFilterOpen]);
+
   if (loading) return <ProductLoading />;
 
   return (
-    <div className="w-full py-8 md:py-12">
-      <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text">
+    <div className="w-full p-3 md:p-4 lg:p-6">
+      {/* Header */}
+      <div className="pb-4 md:pb-6 animate-fade-in-down">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold pb-2 md:pb-3 text-gray-900">
           🛍️ Danh sách sản phẩm
         </h1>
-        <p className="text-gray-600 text-lg">
+        <p className="text-gray-600 text-sm md:text-base lg:text-lg">
           Khám phá các sản phẩm nổi bật được nhiều người yêu thích
         </p>
       </div>
 
-
-
-      <div className="flex flex-col lg:flex-row gap-6 mt-8">
-        {/* Bộ lọc giá */}
-        <div className="lg:w-1/5 bg-white p-6 rounded-2xl shadow-md border border-gray-100 h-fit sticky top-[180px] animate-fade-in-left delay-300">
+      <div className="flex flex-col lg:flex-row gap-3 lg:gap-4">
+        {/* Bộ lọc giá - Desktop */}
+        <div className="hidden lg:block lg:w-1/5 bg-white p-6 rounded-2xl shadow-md border border-gray-100 h-fit sticky top-[180px] animate-fade-in-left delay-300">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-2xl">💰</span>
             <h2 className="text-xl font-bold text-gray-900">Lọc theo giá</h2>
@@ -243,26 +251,36 @@ const ProductList: React.FC = () => {
         </div>
 
         {/* Danh sách sản phẩm */}
-        <div className="lg:w-4/5 animate-fade-in-right delay-300">
+        <div className="w-full lg:w-4/5 animate-fade-in-right delay-300">
+          {/* Mobile Filter Button */}
+          <button
+            onClick={() => setIsMobileFilterOpen(true)}
+            className="lg:hidden pb-3 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+          >
+            <Filter size={20} />
+            <span>Lọc sản phẩm</span>
+          </button>
+
           {/* Thanh sắp xếp và pagination */}
-          <div className="mb-4 bg-white rounded-xl p-4 shadow-sm border border-gray-200 flex items-center justify-between flex-wrap gap-4">
-            {/* Sắp xếp */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-gray-700 font-medium text-sm">Sắp xếp theo:</span>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  onClick={() => setSortBy("relevant")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    sortBy === "relevant"
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
-                      : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
-                  }`}
-                >
+          <div className="pb-4 bg-white rounded-xl p-3 md:p-4 shadow-sm border border-gray-200">
+            {/* Sắp xếp - Mobile: Vertical, Desktop: Horizontal */}
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 md:gap-4">
+              <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 w-full md:w-auto">
+                <span className="text-gray-700 font-medium text-xs md:text-sm whitespace-nowrap">Sắp xếp theo:</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button
+                    onClick={() => setSortBy("relevant")}
+                    className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
+                      sortBy === "relevant"
+                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                        : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
                   Liên Quan
                 </button>
                 <button
                   onClick={() => setSortBy("newest")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
                     sortBy === "newest"
                       ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
                       : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
@@ -272,7 +290,7 @@ const ProductList: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setSortBy("bestselling")}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
                     sortBy === "bestselling"
                       ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
                       : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
@@ -284,14 +302,15 @@ const ProductList: React.FC = () => {
                 <div className="relative" ref={ratingDropdownRef}>
                   <button
                     onClick={() => setShowRatingDropdown(!showRatingDropdown)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                    className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       ratingFilter
                         ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    Đánh giá tốt nhất
-                    <ChevronDown size={14} className={ratingFilter ? "text-white" : "text-gray-500"} />
+                    <span className="hidden sm:inline">Đánh giá tốt nhất</span>
+                    <span className="sm:hidden">Đánh giá</span>
+                    <ChevronDown size={12} className={ratingFilter ? "text-white" : "text-gray-500"} />
                   </button>
                   {showRatingDropdown && (
                     <div className="absolute left-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-fade-in z-[9999]">
@@ -318,14 +337,14 @@ const ProductList: React.FC = () => {
                 <div className="relative" ref={locationDropdownRef}>
                   <button
                     onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                    className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       locationFilter
                         ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
                     Địa chỉ
-                    <ChevronDown size={14} className={locationFilter ? "text-white" : "text-gray-500"} />
+                    <ChevronDown size={12} className={locationFilter ? "text-white" : "text-gray-500"} />
                   </button>
                   {showLocationDropdown && (
                     <div className="absolute left-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-fade-in z-[9999]">
@@ -357,14 +376,14 @@ const ProductList: React.FC = () => {
                         setSortBy("price");
                       }
                     }}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
+                    className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       sortBy === "price"
                         ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
                     Giá
-                    <ChevronDown size={14} className={sortBy === "price" ? "text-white" : "text-gray-500"} />
+                    <ChevronDown size={12} className={sortBy === "price" ? "text-white" : "text-gray-500"} />
                   </button>
                   {showPriceDropdown && sortBy === "price" && (
                     <div className="absolute left-0 top-full mt-1 w-32 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-fade-in z-[9999]">
@@ -393,43 +412,43 @@ const ProductList: React.FC = () => {
                     </div>
                   )}
                 </div>
+                </div>
               </div>
-            </div>
 
-            {/* Pagination */}
-            <div className="flex items-center gap-4">
-              <span className="text-gray-700 text-sm">
-                <span className="text-red-500 font-bold">{currentPage}</span>/{totalPages}
-              </span>
-              <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                  disabled={currentPage === 1}
-                  className={`px-3 py-2 border-r border-gray-200 transition-colors ${
-                    currentPage === 1
-                      ? "text-gray-300 cursor-not-allowed"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <button
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                  disabled={currentPage === totalPages}
-                  className={`px-3 py-2 transition-colors ${
-                    currentPage === totalPages
-                      ? "text-gray-300 cursor-not-allowed"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  <ChevronRight size={16} />
-                </button>
+              {/* Pagination */}
+              <div className="flex items-center justify-between md:justify-end gap-2 md:gap-4 w-full md:w-auto pt-2 md:pt-0">
+                <span className="text-gray-700 text-xs md:text-sm">
+                  <span className="text-red-500 font-bold">{currentPage}</span>/{totalPages}
+                </span>
+                <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                    className={`px-2 py-1.5 md:px-3 md:py-2 border-r border-gray-200 transition-colors ${
+                      currentPage === 1
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                    className={`px-2 py-1.5 md:px-3 md:py-2 transition-colors ${
+                      currentPage === totalPages
+                        ? "text-gray-300 cursor-not-allowed"
+                        : "text-gray-600 hover:bg-gray-50"
+                    }`}
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
 
           {/* Grid sản phẩm */}
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 lg:gap-4">
             {paginatedProducts.length > 0 ? (
               paginatedProducts.map((p, index) => {
                 // Map ProductType sang Product cho ProductCard
@@ -444,7 +463,9 @@ const ProductList: React.FC = () => {
                   soldCount: p.soldCount,
                   store: typeof p.store === 'string' 
                     ? p.store 
-                    : { name: p.store.name || 'Unknown Store' }
+                    : (p.store && typeof p.store === 'object' && 'name' in p.store)
+                    ? { name: p.store.name || 'Unknown Store' }
+                    : 'Unknown Store'
                 };
                 return (
                   <div 
@@ -467,6 +488,46 @@ const ProductList: React.FC = () => {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      </div>
+      </div> {/* Đóng div flex flex-col lg:flex-row */}
+
+      {/* Mobile Filter Drawer */}
+      <div
+        className={`fixed inset-0 z-[9999] lg:hidden transition-all duration-300 ${
+          isMobileFilterOpen ? "visible opacity-100" : "invisible opacity-0 pointer-events-none"
+        }`}
+      >
+        {/* Overlay */}
+        <div
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
+            isMobileFilterOpen ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={() => setIsMobileFilterOpen(false)}
+        ></div>
+        
+        {/* Filter Drawer */}
+        <div
+          className={`absolute top-0 right-0 h-full w-full max-w-sm bg-white shadow-2xl transform transition-transform duration-300 overflow-y-auto ${
+            isMobileFilterOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between z-10">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+              <span>💰</span>
+              Lọc theo giá
+            </h2>
+            <button
+              onClick={() => setIsMobileFilterOpen(false)}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              aria-label="Đóng filter"
+            >
+              <X size={20} className="text-gray-600" />
+            </button>
+          </div>
+          <div className="p-4">
+            <PriceFilter selectedPrice={selectedPrice} setSelectedPrice={setSelectedPrice} />
           </div>
         </div>
       </div>
