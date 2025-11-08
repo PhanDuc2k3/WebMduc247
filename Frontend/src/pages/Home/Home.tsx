@@ -39,8 +39,8 @@ const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full py-8 md:py-12 lg:py-16">
-      <div className="space-y-16 md:space-y-20 lg:space-y-24">
+    <div className="w-full py-4 sm:py-6 md:py-12 lg:py-16">
+      <div className="space-y-8 sm:space-y-12 md:space-y-20 lg:space-y-24">
         <div ref={(el) => { sectionsRef.current[0] = el; }} className="reveal">
           <Banner />
         </div>

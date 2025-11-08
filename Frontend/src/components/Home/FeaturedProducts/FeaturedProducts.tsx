@@ -37,9 +37,9 @@ const FeaturedProducts: React.FC = () => {
   }, []);
 
   if (loading)
-    return <p className="p-6 text-center text-gray-500">⏳ Đang tải sản phẩm...</p>;
+    return <p className="p-4 sm:p-6 text-center text-gray-500 text-sm sm:text-base">⏳ Đang tải sản phẩm...</p>;
   if (!products.length)
-    return <p className="p-6 text-center text-gray-500">❌ Chưa có sản phẩm nổi bật</p>;
+    return <p className="p-4 sm:p-6 text-center text-gray-500 text-sm sm:text-base">❌ Chưa có sản phẩm nổi bật</p>;
 
   const isDesktop = windowWidth >= 1024;
   const itemsPerRow = Math.floor(windowWidth / 220);
@@ -47,17 +47,17 @@ const FeaturedProducts: React.FC = () => {
   const visibleProducts = products.slice(0, visibleCount);
 
   return (
-    <section className="p-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
-      <div className="mb-6 animate-fade-in-down">
-        <h3 className="text-[24px] lg:text-[28px] font-bold mb-2 text-gray-900 gradient-text">
+    <section className="p-3 sm:p-4 md:p-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
+      <div className="mb-4 sm:mb-5 md:mb-6 animate-fade-in-down">
+        <h3 className="text-lg sm:text-xl md:text-[24px] lg:text-[28px] font-bold mb-1 sm:mb-2 text-gray-900 gradient-text">
           ⭐ Sản phẩm nổi bật
         </h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-xs sm:text-sm text-gray-600">
           Những sản phẩm được yêu thích nhất hiện tại
         </p>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3 sm:gap-4 md:gap-6">
         {visibleProducts.map((prod, index) => {
           // ✅ Chuyển store về đúng kiểu
           const productForCard: ProductForCard = {
@@ -81,10 +81,10 @@ const FeaturedProducts: React.FC = () => {
         })}
       </div>
 
-      <div className="text-center mt-8">
+      <div className="text-center mt-6 sm:mt-8">
         <Link
           to="/products"
-          className="inline-block font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all duration-300 transform hover:scale-105 text-lg"
+          className="inline-block font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all duration-300 transform hover:scale-105 text-sm sm:text-base md:text-lg"
         >
           Xem thêm sản phẩm →
         </Link>
