@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { ShoppingCart, Loader2, ShoppingBag } from "lucide-react";
 import CartStoreGroup from "../../components/Cart/CartStoreGroup/CartStoreGroup";
 import OrderSummary from "../../components/Cart/OrderSummary/OrderSummary";
 import { useNavigate } from "react-router-dom";
@@ -111,37 +112,43 @@ export default function CartPage() {
     return (
       <div className="w-full py-16 flex items-center justify-center animate-fade-in">
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-pulse">🛒</div>
-          <p className="text-gray-600 text-lg font-medium">Đang tải giỏ hàng...</p>
+          <div className="flex justify-center mb-4">
+            <Loader2 className="w-16 h-16 sm:w-20 sm:h-20 text-blue-600 animate-spin" />
+          </div>
+          <p className="text-gray-600 text-base sm:text-lg font-medium">Đang tải giỏ hàng...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full py-8 md:py-12">
-      <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-          <span>🛒</span> Giỏ hàng của tôi
+    <div className="w-full py-6 sm:py-8 md:py-12 px-4 sm:px-6">
+      <div className="mb-6 sm:mb-8 animate-fade-in-down">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
+          <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
+          <span>Giỏ hàng của tôi</span>
         </h1>
-        <p className="text-gray-600 text-lg">
+        <p className="text-gray-600 text-sm sm:text-base md:text-lg">
           {cart?.items.length || 0} sản phẩm trong giỏ hàng
         </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Left: Cart Items */}
-        <div className="flex-1 space-y-6 animate-fade-in-up delay-200">
+        <div className="flex-1 space-y-4 sm:space-y-6 animate-fade-in-up delay-200">
           {!cart || cart.items.length === 0 ? (
-            <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 text-center animate-fade-in">
-              <div className="text-6xl mb-4">🛒</div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Giỏ hàng trống</h2>
-              <p className="text-gray-500 mb-6">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
+            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border-2 border-gray-200 p-8 sm:p-12 text-center animate-fade-in">
+              <div className="flex justify-center mb-4 sm:mb-6">
+                <ShoppingCart className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-gray-300" />
+              </div>
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-3">Giỏ hàng trống</h2>
+              <p className="text-gray-500 text-sm sm:text-base mb-6 sm:mb-8">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
               <button
                 onClick={() => navigate("/products")}
-                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold text-sm sm:text-base hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 touch-manipulation flex items-center gap-2 mx-auto"
               >
-                🛍️ Mua sắm ngay
+                <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>Mua sắm ngay</span>
               </button>
             </div>
           ) : (

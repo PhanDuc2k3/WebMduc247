@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { StoreType } from "../../../types/store";
-import { Star, Heart } from "lucide-react";
+import { Star, Heart, MessageCircle, Loader2, Store, CheckCircle, Package, Users, Calendar } from "lucide-react";
 import favoriteApi from "../../../api/favoriteApi";
 import axiosClient from "../../../api/axiosClient";
 import { toast } from "react-toastify";
@@ -198,11 +198,13 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                     {store.name}
                   </h2>
-                  <span className="text-[10px] md:text-xs bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm">
-                    🏪 Mall
+                  <span className="text-[10px] md:text-xs bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm flex items-center gap-1">
+                    <Store className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                    <span>Mall</span>
                   </span>
-                  <span className="text-[10px] md:text-xs bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm">
-                    ✓ Chính hãng
+                  <span className="text-[10px] md:text-xs bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm flex items-center gap-1">
+                    <CheckCircle className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                    <span>Chính hãng</span>
                   </span>
                 </div>
                 <p className="text-sm md:text-base text-gray-600 mb-1.5 md:mb-2 line-clamp-2">{store.description}</p>
@@ -214,14 +216,24 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
               <button
                 onClick={handleChat}
                 disabled={isLoadingChat}
-                className="px-4 py-2 md:px-6 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-xs md:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none touch-manipulation flex items-center gap-1.5 sm:gap-2"
               >
-                {isLoadingChat ? "⏳ Đang tải..." : "💬 Chat ngay"}
+                {isLoadingChat ? (
+                  <>
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                    <span>Đang tải...</span>
+                  </>
+                ) : (
+                  <>
+                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span>Chat ngay</span>
+                  </>
+                )}
               </button>
               <button
                 onClick={handleFavorite}
                 disabled={isLoadingFavorite}
-                className={`px-4 py-2 md:px-6 md:py-3 border-2 rounded-lg md:rounded-xl font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 text-xs md:text-sm lg:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-1.5 md:gap-2 ${
+                className={`px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 border-2 rounded-lg md:rounded-xl font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-1.5 sm:gap-2 touch-manipulation ${
                   isFavorite
                     ? "bg-gradient-to-r from-red-50 to-pink-50 border-red-400 text-red-600 hover:border-red-500"
                     : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-600"
@@ -229,9 +241,10 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
               >
                 <Heart
                   size={16}
-                  className={isFavorite ? "fill-red-600 text-red-600" : ""}
+                  className={`flex-shrink-0 ${isFavorite ? "fill-red-600 text-red-600" : ""}`}
                 />
-                {isFavorite ? "Đã yêu thích" : "Yêu thích"}
+                <span className="hidden sm:inline">{isFavorite ? "Đã yêu thích" : "Yêu thích"}</span>
+                <span className="sm:hidden">{isFavorite ? "Đã thích" : "Thích"}</span>
               </button>
             </div>
           </div>
@@ -244,19 +257,25 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
                 <Star className="w-4 h-4 md:w-5 md:h-5 text-yellow-500 fill-yellow-500" />
                 <span className="text-lg md:text-xl font-bold text-gray-900">{store.rating?.toFixed(1) || "0.0"}</span>
               </div>
-              <p className="text-gray-600 text-[10px] md:text-xs font-semibold">⭐ Đánh giá</p>
+              <p className="text-gray-600 text-[10px] md:text-xs font-semibold">Đánh giá</p>
             </div>
 
             {/* Products */}
             <div className="flex flex-col items-center gap-1 md:gap-2 p-2 md:p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg md:rounded-xl border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 transform hover:scale-105">
               <span className="text-xl md:text-2xl font-bold text-blue-600">{store.products || 0}</span>
-              <p className="text-gray-600 text-[10px] md:text-xs font-semibold">📦 Sản phẩm</p>
+              <p className="text-gray-600 text-[10px] md:text-xs font-semibold flex items-center gap-1">
+                <Package className="w-3 h-3 text-blue-500" />
+                <span>Sản phẩm</span>
+              </p>
             </div>
 
             {/* Reviews count */}
             <div className="flex flex-col items-center gap-1 md:gap-2 p-2 md:p-4 bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg md:rounded-xl border-2 border-purple-200 hover:border-purple-400 transition-all duration-300 transform hover:scale-105">
               <span className="text-xl md:text-2xl font-bold text-purple-600">{store.reviewsCount || 0}</span>
-              <p className="text-gray-600 text-[10px] md:text-xs font-semibold">👥 Người đánh giá</p>
+              <p className="text-gray-600 text-[10px] md:text-xs font-semibold flex items-center gap-1">
+                <Users className="w-3 h-3 text-purple-500" />
+                <span>Người đánh giá</span>
+              </p>
             </div>
 
             {/* Join date */}
@@ -264,7 +283,10 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
               <span className="text-sm md:text-lg font-bold text-green-600">
                 {store.joinDate ? new Date(store.joinDate).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" }) : "—"}
               </span>
-              <p className="text-gray-600 text-[10px] md:text-xs font-semibold">📅 Ngày tạo</p>
+              <p className="text-gray-600 text-[10px] md:text-xs font-semibold flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-green-500" />
+                <span>Ngày tạo</span>
+              </p>
             </div>
           </div>
         </div>

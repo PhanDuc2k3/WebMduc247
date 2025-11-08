@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Store, AlertCircle, Download } from "lucide-react";
 import StoreFilters from "../../components/StoreList/StoreFilters";
 import StoreGrid from "../../components/StoreList/StoreGrid";
 import StoreLoading from "../../components/StoreList/StoreLoading";
@@ -141,8 +142,9 @@ const StoreList: React.FC = () => {
     <div className="w-full p-3 md:p-4 lg:p-6 xl:p-8">
       {/* Header */}
       <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-gray-900 gradient-text">
-          🏬 Danh sách cửa hàng
+        <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
+          <Store className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
+          <span>Danh sách cửa hàng</span>
         </h1>
         <p className="text-gray-600 text-sm sm:text-base md:text-lg">
           Khám phá các cửa hàng uy tín trên nền tảng
@@ -169,7 +171,9 @@ const StoreList: React.FC = () => {
             <StoreGrid stores={filteredStores} onlineStores={onlineStores} />
           ) : (
             <div className="text-center py-8 md:py-12 lg:py-16 animate-fade-in">
-              <div className="text-4xl md:text-5xl lg:text-6xl mb-3 md:mb-4">🏪</div>
+              <div className="flex justify-center mb-3 md:mb-4">
+                <Store className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-gray-300" />
+              </div>
               <p className="text-gray-500 text-base md:text-lg font-medium mb-2">
                 Không tìm thấy cửa hàng nào
               </p>
@@ -182,8 +186,9 @@ const StoreList: React.FC = () => {
 
         {filteredStores.length > 0 && (
           <div className="mt-6 md:mt-8 text-center animate-fade-in-up delay-400">
-            <button className="px-6 py-2.5 md:px-8 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold text-sm md:text-base hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
-              📥 Tải thêm cửa hàng
+            <button className="px-4 sm:px-6 py-2.5 md:px-8 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold text-sm md:text-base hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 touch-manipulation flex items-center gap-2 mx-auto">
+              <Download className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Tải thêm cửa hàng</span>
             </button>
           </div>
         )}

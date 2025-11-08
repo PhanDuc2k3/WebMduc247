@@ -1,4 +1,5 @@
 import React from "react";
+import { CheckCircle2, Circle } from "lucide-react";
 import CartItem from "../CartItem/CartItem";
 
 const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, onRemove }: any) => {
@@ -50,14 +51,25 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
         
         <button
           onClick={handleToggleAll}
-          className="px-4 py-2 rounded-lg border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-sm font-semibold text-gray-700 hover:text-blue-600 transition-all duration-300 transform hover:scale-105"
+          className="px-3 sm:px-4 py-2 rounded-lg md:rounded-xl border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-xs sm:text-sm font-semibold text-gray-700 hover:text-blue-600 transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex items-center gap-1.5 sm:gap-2"
         >
-          {allSelected ? "✓ Bỏ chọn tất cả" : "Chọn tất cả"}
+          {allSelected ? (
+            <>
+              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+              <span className="hidden sm:inline">Bỏ chọn tất cả</span>
+              <span className="sm:hidden">Bỏ chọn</span>
+            </>
+          ) : (
+            <>
+              <Circle className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span>Chọn tất cả</span>
+            </>
+          )}
         </button>
       </div>
 
       {/* Sản phẩm */}
-      <div className="divide-y divide-gray-100">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
         {items.map((item: any, index: number) => (
           <div
             key={item._id}

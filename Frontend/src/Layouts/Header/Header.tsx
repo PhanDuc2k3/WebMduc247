@@ -23,7 +23,6 @@ import DropdownUser from "./DropdownUser";
 import { HeaderIcons } from "./HeaderIcons";
 import { useCart } from "../../context/CartContext";
 import { useChat } from "../../context/chatContext";
-import NotificationButton from "../../components/Notification/NotificationButton";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -303,7 +302,6 @@ const Header: React.FC = () => {
 
           <div className="md:hidden flex items-center gap-2">
             <HeaderIcons cartCount={cartCount} userId={user._id} />
-            <NotificationButton userId={user._id} />
             <div className="relative">
               {user._id ? (
                 <>

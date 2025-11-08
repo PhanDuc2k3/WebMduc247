@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import FavoriteButton from "../../Favorite/FavoriteButton";
 
 interface Product {
@@ -26,11 +26,35 @@ const getImageUrl = (img?: string) => {
 };
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const navigate = useNavigate();
+
   useEffect(() => {
   }, [product.images]);
 
+  // Handle click on card - navigate to product detail (mobile only)
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Check if click is on FavoriteButton or its children - don't navigate
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-favorite-button]')) {
+      return;
+    }
+    // Check if click is on the "Xem" button - it will handle navigation itself
+    if (target.closest('a[href*="/products/"]')) {
+      return;
+    }
+    // Only navigate on mobile devices (screen width < 640px or touch device)
+    // On desktop, users should use the "Xem" button that appears on hover
+    const isMobile = window.innerWidth < 640 || 'ontouchstart' in window;
+    if (isMobile) {
+      navigate(`/products/${product._id}`);
+    }
+  };
+
   return (
-    <div className="group bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl shadow-md p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl hover:border-blue-400 w-full flex flex-col animate-scale-in">
+    <div 
+      onClick={handleCardClick}
+      className="group bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl shadow-md p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl hover:border-blue-400 w-full flex flex-col animate-scale-in cursor-pointer sm:cursor-default active:scale-[0.98] sm:active:scale-100 touch-manipulation"
+    >
       <div className="relative overflow-hidden rounded-md sm:rounded-lg pb-1 sm:pb-2">
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
         <img
@@ -51,18 +75,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </>
         )}
 
-        <div className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-3 md:right-3 z-20">
+        <div 
+          className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-3 md:right-3 z-30"
+          onClick={(e) => e.stopPropagation()}
+          data-favorite-button
+        >
           <div className="scale-75 sm:scale-90 md:scale-100">
             <FavoriteButton productId={product._id} />
           </div>
         </div>
 
-        <Link
-          to={`/products/${product._id}`}
+        <a
+          href={`/products/${product._id}`}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate(`/products/${product._id}`);
+          }}
           className="absolute bottom-1 sm:bottom-1.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-[10px] sm:text-xs md:text-sm font-bold px-2 sm:px-3 md:px-6 py-0.5 sm:py-1 md:py-2 rounded-full opacity-0 transform translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 hover:from-orange-600 hover:to-orange-700 shadow-xl z-20 hidden sm:block"
         >
           Xem
-        </Link>
+        </a>
       </div>
 
       <div className="pt-0.5 sm:pt-1 text-[10px] sm:text-xs font-bold text-gray-800 overflow-hidden truncate group-hover:text-blue-600 transition-colors duration-300">
