@@ -9,12 +9,12 @@ import ManageStore from "../../components/MyStore/ManageStore/ManageStore"; // i
 import axiosClient from "../../api/axiosClient";
 
 const tabs = [
-  { key: "manageStore", label: "Quản lý cửa hàng", icon: "🏪" },
-  { key: "overview", label: "Tổng quan", icon: "📊" },
-  { key: "products", label: "Sản phẩm", icon: "📦" },
-  { key: "orders", label: "Đơn hàng", icon: "🛒" },
-  { key: "stats", label: "Thống kê", icon: "📈" },
-  { key: "voucher", label: "Voucher", icon: "🎁" },
+  { key: "manageStore", label: "Quản lý cửa hàng", icon: "" },
+  { key: "overview", label: "Tổng quan", icon: "" },
+  { key: "products", label: "Sản phẩm", icon: "" },
+  { key: "orders", label: "Đơn hàng", icon: "" },
+  { key: "stats", label: "Thống kê", icon: "" },
+  { key: "voucher", label: "Voucher", icon: "" },
 ];
 
 const MyStore: React.FC = () => {
@@ -95,31 +95,40 @@ const MyStore: React.FC = () => {
 
   if (role === "seller" && hasStore) {
     return (
-      <div className="w-full py-8 md:py-12">
-        <div className="mb-8 animate-fade-in-down">
-          <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-            <span>🏬</span> Quản lý cửa hàng
+      <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6">
+        <div className="mb-6 md:mb-8 animate-fade-in-down">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-gray-900 gradient-text">
+            Quản lý cửa hàng
           </h1>
-          <p className="text-gray-600 text-lg">Dashboard người bán - Quản lý cửa hàng và sản phẩm</p>
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg">Dashboard người bán - Quản lý cửa hàng và sản phẩm</p>
         </div>
 
-        <div className="mb-6 animate-fade-in-up delay-200">
-          <div className="flex flex-wrap gap-3">
-            {tabs.map((tab, index) => (
-              <button
-                key={tab.key}
-                className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 flex items-center gap-2 ${
-                  activeTab === tab.key
-                    ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105"
-                    : "bg-white text-gray-600 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
-                } animate-fade-in-up`}
-                style={{ animationDelay: `${index * 0.1}s` }}
-                onClick={() => setActiveTab(tab.key)}
-              >
-                <span className="text-xl">{tab.icon}</span>
-                <span>{tab.label}</span>
-              </button>
-            ))}
+        <div className="mb-4 sm:mb-6 animate-fade-in-up delay-200">
+          {/* Mobile: Horizontal scroll, Desktop: Wrap */}
+          <div className="bg-gray-100 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl shadow-inner border border-gray-200 overflow-x-auto no-scrollbar md:overflow-x-visible scroll-smooth -mx-4 sm:mx-0 px-4 sm:px-0">
+            <div className="flex md:flex-wrap gap-2 sm:gap-2.5 min-w-max md:min-w-0 pb-1 md:pb-0">
+              {tabs.map((tab, index) => (
+                <button
+                  key={tab.key}
+                  className={`px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 rounded-lg sm:rounded-xl font-semibold transition-all duration-300 flex items-center justify-center relative flex-shrink-0 whitespace-nowrap touch-manipulation ${
+                    activeTab === tab.key
+                      ? tab.key === "manageStore"
+                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md scale-[1.02] min-w-[140px] sm:min-w-[160px] md:min-w-[190px] font-bold"
+                        : "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md scale-[1.02]"
+                      : tab.key === "manageStore"
+                      ? "bg-white text-gray-800 hover:bg-gray-50 active:bg-gray-100 hover:text-blue-700 min-w-[140px] sm:min-w-[160px] md:min-w-[190px] border border-gray-200"
+                      : "bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:text-gray-900 border border-gray-200"
+                  } animate-fade-in-up`}
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                  onClick={() => setActiveTab(tab.key)}
+                >
+                  {tab.icon && <span className="text-base sm:text-lg md:text-xl mr-1 sm:mr-1.5 md:mr-2 flex-shrink-0">{tab.icon}</span>}
+                  <span className={`text-xs sm:text-sm md:text-base ${tab.key === "manageStore" && activeTab === tab.key ? "tracking-wide" : ""}`}>
+                    {tab.label}
+                  </span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

@@ -48,8 +48,24 @@ const ManageStore: React.FC = () => {
   useEffect(() => { fetchStore(); }, []);
   useEffect(() => { fetchProducts(); }, [store]);
 
-  if (loading) return <div>Đang tải...</div>;
-  if (!store) return <div>Chưa có cửa hàng.</div>;
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+        <p className="text-gray-600 text-lg font-medium">Đang tải thông tin cửa hàng...</p>
+      </div>
+    );
+  }
+  
+  if (!store) {
+    return (
+      <div className="text-center py-20 animate-fade-in">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 max-w-md mx-auto">
+          <p className="text-gray-600 text-lg font-medium">Chưa có cửa hàng.</p>
+        </div>
+      </div>
+    );
+  }
 
   // ========================
   // Update store
@@ -166,7 +182,7 @@ const handleEditCategory = async (id: string, name: string) => {
   // JSX
   // ========================
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       <StoreInfo
         store={store}
         setStore={setStore}
@@ -200,7 +216,7 @@ const handleEditCategory = async (id: string, name: string) => {
           handleRemoveProductFromCategory={handleRemoveProductFromCategory}
           handleAddProductsToCategory={handleAddProductsToCategory}
           setSelectedCategory={setSelectedCategory}
-          handleToggleProduct={handleToggleProduct} // thêm để CategoryProducts dùng checkbox
+          handleToggleProduct={handleToggleProduct}
         />
       )}
     </div>

@@ -12,6 +12,18 @@
     scrollbar-width: none;
 }
 
+/* Smooth scrolling cho mobile */
+.no-scrollbar {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* Touch manipulation cho mobile */
+.touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
 /* ===== CUSTOM ANIMATIONS ===== */
 
 /* Fade In Animations */

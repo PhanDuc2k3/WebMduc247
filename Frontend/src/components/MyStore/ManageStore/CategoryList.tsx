@@ -41,55 +41,82 @@ const CategoryList: React.FC<Props> = ({
   };
 
   return (
-    <div className="bg-white p-4 rounded shadow">
-      <h2 className="font-bold mb-2">Danh mục sản phẩm</h2>
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 animate-fade-in-up delay-100">
+      <div className="mb-4 sm:mb-6">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Danh mục sản phẩm</h2>
+        <p className="text-gray-600 text-xs sm:text-sm">Quản lý các danh mục sản phẩm của cửa hàng</p>
+      </div>
 
-      <div className="flex gap-2 mb-2">
+      {/* Add Category Form */}
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg sm:rounded-xl border border-gray-200">
         <input
           type="text"
-          className="border p-2 flex-1"
-          placeholder="Tên danh mục mới"
+          className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 font-medium text-gray-900"
+          placeholder="Nhập tên danh mục mới"
           value={newCategoryName}
           onChange={(e) => setNewCategoryName(e.target.value)}
+          onKeyPress={(e) => e.key === 'Enter' && handleAddCategory()}
         />
         <button
-          className="px-4 py-2 bg-green-500 text-white rounded"
+          className="px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 transition-all duration-300 whitespace-nowrap touch-manipulation"
           onClick={handleAddCategory}
         >
-          Thêm
+          Thêm danh mục
         </button>
       </div>
 
-      <ul>
-        {categories.map((cat) => (
-          <li key={cat._id} className="flex items-center gap-2 mb-1">
-            <input
-              type="text"
-              className="border p-1 flex-1"
-              value={editingNames[cat._id] ?? cat.name}
-              onChange={(e) => handleChange(cat._id, e.target.value)}
-            />
-            <button
-              className="px-2 py-1 bg-blue-500 text-white rounded"
-              onClick={() => handleSave(cat._id)}
+      {/* Categories List */}
+      {categories.length === 0 ? (
+        <div className="text-center py-8 sm:py-12 bg-gray-50 rounded-lg sm:rounded-xl border-2 border-dashed border-gray-300">
+          <p className="text-gray-500 text-base sm:text-lg font-medium">Chưa có danh mục nào</p>
+          <p className="text-gray-400 text-xs sm:text-sm mt-1">Thêm danh mục mới để bắt đầu</p>
+        </div>
+      ) : (
+        <div className="space-y-2 sm:space-y-3">
+          {categories.map((cat, index) => (
+            <div
+              key={cat._id}
+              className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg sm:rounded-xl border-2 border-gray-200 hover:border-blue-400 hover:shadow-md transition-all duration-300 animate-fade-in-up"
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
-              Lưu
-            </button>
-            <button
-              className="px-2 py-1 bg-red-500 text-white rounded"
-              onClick={() => handleDeleteCategory(cat._id)}
-            >
-              Xóa
-            </button>
-            <button
-              className="px-2 py-1 bg-gray-200 text-black rounded"
-              onClick={() => setSelectedCategory(cat._id)}
-            >
-              Quản lý sản phẩm
-            </button>
-          </li>
-        ))}
-      </ul>
+              <input
+                type="text"
+                className="flex-1 w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 font-medium text-gray-900 bg-white"
+                value={editingNames[cat._id] ?? cat.name}
+                onChange={(e) => handleChange(cat._id, e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSave(cat._id)}
+              />
+              
+              <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+                {editingNames[cat._id] !== undefined && editingNames[cat._id] !== cat.name && (
+                  <button
+                    className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 active:scale-95 sm:hover:scale-105 shadow-md transition-all duration-300 whitespace-nowrap touch-manipulation"
+                    onClick={() => handleSave(cat._id)}
+                  >
+                    Lưu
+                  </button>
+                )}
+                <button
+                  className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold active:scale-95 sm:hover:scale-105 hover:shadow-lg transition-all duration-300 whitespace-nowrap touch-manipulation"
+                  onClick={() => setSelectedCategory(cat._id)}
+                >
+                  Quản lý sản phẩm
+                </button>
+                <button
+                  className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 active:scale-95 sm:hover:scale-105 shadow-md transition-all duration-300 whitespace-nowrap touch-manipulation"
+                  onClick={() => {
+                    if (window.confirm(`Bạn có chắc muốn xóa danh mục "${cat.name}"?`)) {
+                      handleDeleteCategory(cat._id);
+                    }
+                  }}
+                >
+                  Xóa
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

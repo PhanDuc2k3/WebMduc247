@@ -1,6 +1,7 @@
 const Order = require("../models/Order");
 const Product = require("../models/Product");
 const ViewLog = require("../models/ViewLog");
+const Review = require("../models/Review");
 const mongoose = require("mongoose");
 
 exports.getRevenueStats = async (req, res) => {
@@ -145,5 +146,73 @@ exports.getTopProducts = async (req, res) => {
   } catch (err) {
     console.error("Top products error:", err);
     res.status(500).json({ message: "Lỗi khi lấy top sản phẩm" });
+  }
+};
+
+// Lấy phân phối đánh giá của store
+exports.getRatingDistribution = async (req, res) => {
+  try {
+    const { storeId } = req.query;
+
+    if (!storeId) {
+      return res.status(400).json({ message: "storeId là bắt buộc" });
+    }
+
+    // Lấy tất cả product IDs của store
+    const productIds = await Product.find({ store: storeId }).distinct("_id");
+
+    if (productIds.length === 0) {
+      return res.json({
+        totalReviews: 0,
+        averageRating: 0,
+        distribution: [
+          { stars: 5, count: 0, percent: 0 },
+          { stars: 4, count: 0, percent: 0 },
+          { stars: 3, count: 0, percent: 0 },
+          { stars: 2, count: 0, percent: 0 },
+          { stars: 1, count: 0, percent: 0 },
+        ],
+      });
+    }
+
+    // Lấy tất cả reviews của các products trong store
+    const reviews = await Review.find({ 
+      productId: { $in: productIds } 
+    }).select("rating");
+
+    // Tính toán phân phối điểm đánh giá
+    const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let totalRating = 0;
+
+    reviews.forEach((review) => {
+      const rating = Number(review.rating) || 0;
+      if (rating >= 1 && rating <= 5) {
+        ratingCounts[rating]++;
+        totalRating += rating;
+      }
+    });
+
+    const totalReviews = reviews.length;
+    const averageRating = totalReviews > 0 
+      ? Number((totalRating / totalReviews).toFixed(1))
+      : 0;
+
+    // Tính phần trăm cho mỗi mức điểm
+    const distribution = [5, 4, 3, 2, 1].map((stars) => {
+      const count = ratingCounts[stars];
+      const percent = totalReviews > 0 
+        ? Number(((count / totalReviews) * 100).toFixed(1))
+        : 0;
+      return { stars, count, percent };
+    });
+
+    res.json({
+      totalReviews,
+      averageRating,
+      distribution,
+    });
+  } catch (err) {
+    console.error("Rating distribution error:", err);
+    res.status(500).json({ message: "Lỗi khi lấy phân phối đánh giá" });
   }
 };

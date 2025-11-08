@@ -13,6 +13,10 @@ const statisticApi = {
   // Lấy thống kê lượt xem sản phẩm
   getViewsStats: (params?: Record<string, any>) =>
     axiosClient.get("/api/statistics/views", { params }),
+
+  // Lấy phân phối đánh giá của store
+  getRatingDistribution: (params?: Record<string, any>) =>
+    axiosClient.get("/api/statistics/rating-distribution", { params }),
 };
 
 export default statisticApi;
