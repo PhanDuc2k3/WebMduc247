@@ -73,6 +73,10 @@ requestSeller: (formData: FormData) => {
   // Đổi mật khẩu
   changePassword: (data: { oldPassword: string; newPassword: string }) =>
     axiosClient.post("/api/users/change-password", data),
+
+  // Cập nhật email notifications
+  updateEmailNotifications: (data: { emailNotifications: boolean }) =>
+    axiosClient.put("/api/users/email-notifications", data),
 };
 
 export default userApi;

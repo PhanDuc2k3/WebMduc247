@@ -40,6 +40,7 @@ interface User {
   phone?: string;
   role?: string;
   avatarUrl?: string;
+  emailNotifications?: boolean;
 }
 
 const Profile: React.FC = () => {
@@ -147,7 +148,6 @@ const Profile: React.FC = () => {
         <ProfileInfo 
           user={user} 
           onEdit={() => setIsEditing(true)}
-          onChangePassword={() => setShowChangePassword(true)}
         />
       </div>
 
@@ -186,7 +186,21 @@ const Profile: React.FC = () => {
         {activeTab === "favorites" && <ProfileFavorites />}
 
         {/* Cài đặt */}
-        {activeTab === "settings" && <ProfileSettings />}
+        {activeTab === "settings" && (
+          <ProfileSettings 
+            onChangePassword={() => setShowChangePassword(true)}
+            user={user}
+            onUserUpdate={async () => {
+              // Refresh user data after 2FA changes
+              try {
+                const res = await userApi.getProfile();
+                setUser(res.data.user);
+              } catch (error) {
+                console.error("Error refreshing user data:", error);
+              }
+            }}
+          />
+        )}
       </div>
 
       {/* Modal đánh giá sản phẩm */}

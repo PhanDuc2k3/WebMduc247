@@ -16,6 +16,9 @@ const WalletPage: React.FC = () => {
   const [accountNumber, setAccountNumber] = useState<string>('');
   const [showWithdraw, setShowWithdraw] = useState(false);
   const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [emailCode, setEmailCode] = useState<string>('');
+  const [showEmailCodeInput, setShowEmailCodeInput] = useState(false);
+  const [sendingCode, setSendingCode] = useState(false);
 
   // Danh sách ngân hàng Việt Nam
   const vietnamBanks = [
@@ -149,7 +152,7 @@ const WalletPage: React.FC = () => {
     }
   };
 
-  const handleWithdraw = async () => {
+  const handleSendWithdrawalCode = async () => {
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
       alert('Vui lòng nhập số tiền hợp lệ');
@@ -176,18 +179,51 @@ const WalletPage: React.FC = () => {
       return;
     }
 
+    setSendingCode(true);
+    try {
+      await walletApi.sendWithdrawalCode({
+        amount: amount,
+        bankName: bankName,
+        accountNumber: accountNumber.trim(),
+      });
+
+      setShowEmailCodeInput(true);
+      alert('Đã gửi mã xác thực đến email của bạn. Vui lòng kiểm tra email và nhập mã.');
+    } catch (err: any) {
+      console.error('Lỗi gửi mã:', err);
+      alert(err.response?.data?.message || 'Không thể gửi mã xác thực');
+    } finally {
+      setSendingCode(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    const amount = parseFloat(withdrawAmount);
+    if (!amount || amount <= 0) {
+      alert('Vui lòng nhập số tiền hợp lệ');
+      return;
+    }
+
+    if (!emailCode || emailCode.length !== 6) {
+      alert('Vui lòng nhập mã xác thực 6 chữ số từ email');
+      return;
+    }
+
     setWithdrawLoading(true);
     try {
       const res = await walletApi.withdraw({
         amount: amount,
         bankName: bankName,
         accountNumber: accountNumber.trim(),
+        emailCode: emailCode,
       });
 
       setBalance(res.data.wallet.balance);
       setWithdrawAmount('');
       setBankName('');
       setAccountNumber('');
+      setEmailCode('');
+      setShowEmailCodeInput(false);
       setShowWithdraw(false);
       alert('Yêu cầu rút tiền đã được gửi, vui lòng chờ xử lý!');
       
@@ -243,6 +279,11 @@ const WalletPage: React.FC = () => {
                 onClick={() => {
                   setShowWithdraw(!showWithdraw);
                   setShowDeposit(false);
+                  if (!showWithdraw) {
+                    // Reset form when opening
+                    setEmailCode('');
+                    setShowEmailCodeInput(false);
+                  }
                 }}
                 className="flex-1 sm:flex-none bg-white/20 backdrop-blur-sm text-white border-2 border-white/30 px-4 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-white/30 transition-all flex items-center justify-center gap-1.5 md:gap-2"
               >
@@ -333,7 +374,8 @@ const WalletPage: React.FC = () => {
                 <select
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base bg-white"
+                  disabled={showEmailCodeInput}
+                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">-- Chọn ngân hàng --</option>
                   {vietnamBanks.map((bank) => (
@@ -353,7 +395,8 @@ const WalletPage: React.FC = () => {
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
                   placeholder="Nhập số tài khoản ngân hàng"
-                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base"
+                  disabled={showEmailCodeInput}
+                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -369,32 +412,88 @@ const WalletPage: React.FC = () => {
                   min="10000"
                   max={balance}
                   step="1000"
-                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base"
+                  disabled={showEmailCodeInput}
+                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Số dư khả dụng: <span className="font-bold text-purple-600">{balance.toLocaleString('vi-VN')}₫</span>
                 </p>
               </div>
 
+              {showEmailCodeInput && (
+                <div>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">
+                    Mã xác thực từ email <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={emailCode}
+                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="Nhập mã 6 chữ số từ email"
+                    maxLength={6}
+                    className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base text-center text-2xl font-mono tracking-widest"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Mã xác thực đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.
+                  </p>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-                <button
-                  onClick={handleWithdraw}
-                  disabled={withdrawLoading}
-                  className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {withdrawLoading ? 'Đang xử lý...' : 'Xác nhận rút tiền'}
-                </button>
-                <button
-                  onClick={() => {
-                    setShowWithdraw(false);
-                    setWithdrawAmount('');
-                    setBankName('');
-                    setAccountNumber('');
-                  }}
-                  className="px-4 py-2.5 md:px-6 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl font-semibold text-xs sm:text-sm md:text-base text-gray-700 hover:bg-gray-50 transition-all"
-                >
-                  Hủy
-                </button>
+                {!showEmailCodeInput ? (
+                  <>
+                    <button
+                      onClick={handleSendWithdrawalCode}
+                      disabled={sendingCode}
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {sendingCode ? 'Đang gửi mã...' : 'Gửi mã xác thực'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowWithdraw(false);
+                        setWithdrawAmount('');
+                        setBankName('');
+                        setAccountNumber('');
+                        setEmailCode('');
+                        setShowEmailCodeInput(false);
+                      }}
+                      className="px-4 py-2.5 md:px-6 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl font-semibold text-xs sm:text-sm md:text-base text-gray-700 hover:bg-gray-50 transition-all"
+                    >
+                      Hủy
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleWithdraw}
+                      disabled={withdrawLoading || emailCode.length !== 6}
+                      className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {withdrawLoading ? 'Đang xử lý...' : 'Xác nhận rút tiền'}
+                    </button>
+                    <button
+                      onClick={handleSendWithdrawalCode}
+                      disabled={sendingCode}
+                      className="px-4 py-2.5 md:px-6 md:py-3 border-2 border-purple-300 text-purple-700 rounded-lg md:rounded-xl font-semibold text-xs sm:text-sm md:text-base hover:bg-purple-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {sendingCode ? 'Đang gửi...' : 'Gửi lại mã'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowWithdraw(false);
+                        setWithdrawAmount('');
+                        setBankName('');
+                        setAccountNumber('');
+                        setEmailCode('');
+                        setShowEmailCodeInput(false);
+                      }}
+                      className="px-4 py-2.5 md:px-6 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl font-semibold text-xs sm:text-sm md:text-base text-gray-700 hover:bg-gray-50 transition-all"
+                    >
+                      Hủy
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>

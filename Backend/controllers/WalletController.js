@@ -100,8 +100,8 @@ exports.deposit = async (req, res) => {
   }
 };
 
-// Rút tiền từ ví
-exports.withdraw = async (req, res) => {
+// Gửi mã xác thực email cho rút tiền
+exports.sendWithdrawalCode = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { amount, bankName, accountNumber } = req.body;
@@ -112,6 +112,88 @@ exports.withdraw = async (req, res) => {
 
     if (!bankName || !accountNumber) {
       return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin ngân hàng' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    const wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+      return res.status(404).json({ message: 'Ví không tồn tại' });
+    }
+
+    if (wallet.balance < amount) {
+      return res.status(400).json({ message: 'Số dư không đủ' });
+    }
+
+    // Tạo mã xác thực 6 chữ số
+    const withdrawalCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const withdrawalCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+
+    // Lưu mã vào user
+    user.withdrawalCode = withdrawalCode;
+    user.withdrawalCodeExpires = withdrawalCodeExpires;
+    await user.save();
+
+    // Gửi email
+    const { sendWithdrawalEmail } = require('../utils/emailService');
+    await sendWithdrawalEmail(
+      user.email,
+      withdrawalCode,
+      user.fullName,
+      amount,
+      bankName,
+      accountNumber
+    );
+
+    res.status(200).json({
+      message: 'Đã gửi mã xác thực đến email của bạn. Vui lòng kiểm tra email và nhập mã để hoàn tất rút tiền.'
+    });
+  } catch (err) {
+    console.error('Lỗi sendWithdrawalCode:', err);
+    res.status(500).json({ message: 'Lỗi server', error: err.message });
+  }
+};
+
+// Rút tiền từ ví
+exports.withdraw = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { amount, bankName, accountNumber, emailCode } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: 'Số tiền không hợp lệ' });
+    }
+
+    if (!bankName || !accountNumber) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin ngân hàng' });
+    }
+
+    if (!emailCode) {
+      return res.status(400).json({ 
+        message: 'Vui lòng nhập mã xác thực email' 
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    // Verify email code
+    if (!user.withdrawalCode || user.withdrawalCode !== emailCode) {
+      return res.status(400).json({ 
+        message: 'Mã xác thực email không đúng' 
+      });
+    }
+
+    // Kiểm tra mã còn hiệu lực không
+    if (!user.withdrawalCodeExpires || new Date() > user.withdrawalCodeExpires) {
+      return res.status(400).json({ 
+        message: 'Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới' 
+      });
     }
 
     const wallet = await Wallet.findOne({ userId });
@@ -136,6 +218,11 @@ exports.withdraw = async (req, res) => {
     wallet.transactions.push(transaction);
     wallet.balance -= parseFloat(amount);
     await wallet.save();
+
+    // Xóa mã xác thực sau khi sử dụng
+    user.withdrawalCode = null;
+    user.withdrawalCodeExpires = null;
+    await user.save();
 
     res.json({
       message: 'Yêu cầu rút tiền đã được gửi, vui lòng chờ xử lý',

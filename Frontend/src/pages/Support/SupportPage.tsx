@@ -90,7 +90,7 @@ import { Phone, Mail, MessageSquare, MapPin, ShoppingCart, Eye, CreditCard, Gift
         },
         {
           q: "Làm sao để bảo vệ tài khoản của tôi?",
-          a: "Sử dụng mật khẩu mạnh (ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt), không chia sẻ mật khẩu với người khác, bật xác thực 2 lớp (2FA), cập nhật thông tin bảo mật thường xuyên."
+          a: "Sử dụng mật khẩu mạnh (ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt), không chia sẻ mật khẩu với người khác, cập nhật thông tin bảo mật thường xuyên."
         },
         {
           q: "Thông tin cá nhân của tôi có được bảo mật không?",

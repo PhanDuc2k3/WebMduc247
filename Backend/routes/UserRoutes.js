@@ -16,7 +16,8 @@ const {
   forgotPassword,
   verifyResetCode,
   resetPassword,
-  changePassword
+  changePassword,
+  updateEmailNotifications
 } = require('../controllers/UserController');
 
 const authMiddleware = require('../middlewares/authMiddleware');
@@ -38,6 +39,7 @@ router.post('/reset-password', resetPassword);
 router.get('/profile', authMiddleware, getProfile);
 router.put('/profile', authMiddleware, upload.single('avatar'), updateProfile);
 router.post('/change-password', authMiddleware, changePassword);
+router.put('/email-notifications', authMiddleware, updateEmailNotifications);
 
 // Người dùng gửi yêu cầu mở cửa hàng (seller request)
 router.post(

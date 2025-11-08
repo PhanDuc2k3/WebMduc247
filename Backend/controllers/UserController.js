@@ -648,3 +648,33 @@ exports.changePassword = async (req, res) => {
   }
 };
 
+// ==========================
+// CẬP NHẬT EMAIL NOTIFICATIONS
+// ==========================
+exports.updateEmailNotifications = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { emailNotifications } = req.body;
+
+    if (typeof emailNotifications !== 'boolean') {
+      return res.status(400).json({ message: 'emailNotifications phải là boolean' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    user.emailNotifications = emailNotifications;
+    await user.save();
+
+    res.status(200).json({ 
+      message: emailNotifications ? 'Đã bật thông báo email' : 'Đã tắt thông báo email',
+      emailNotifications: user.emailNotifications
+    });
+  } catch (error) {
+    console.error('Update email notifications error:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+  }
+};
+

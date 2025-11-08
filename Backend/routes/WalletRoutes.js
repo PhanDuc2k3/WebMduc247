@@ -5,6 +5,7 @@ const {
   getWallet,
   getTransactions,
   deposit,
+  sendWithdrawalCode,
   withdraw,
   payWithWallet
 } = require('../controllers/WalletController');
@@ -18,6 +19,8 @@ router.get('/transactions', auth, getTransactions);
 // Nạp tiền
 router.post('/deposit', auth, deposit);
 
+// Gửi mã xác thực email cho rút tiền
+router.post('/withdraw/send-code', auth, sendWithdrawalCode);
 // Rút tiền
 router.post('/withdraw', auth, withdraw);
 

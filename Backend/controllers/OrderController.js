@@ -348,11 +348,15 @@ exports.createOrder = async (req, res) => {
     }
 
     // Gửi email xác nhận đơn hàng (không block nếu email service không khả dụng)
-    const emailSent = await sendOrderConfirmationEmail(order, user);
-    if (!emailSent) {
-      console.warn(`⚠️ Không thể gửi email xác nhận đơn hàng cho order ${order.orderCode}`);
-      // Không throw error để không ảnh hưởng đến việc tạo order
-      // Order đã được tạo thành công, chỉ là không gửi được email
+    // Lấy user với emailNotifications để kiểm tra preference
+    const userWithPreferences = await User.findById(userId).select("email fullName emailNotifications");
+    if (userWithPreferences) {
+      const emailSent = await sendOrderConfirmationEmail(order, userWithPreferences);
+      if (!emailSent) {
+        console.warn(`⚠️ Không thể gửi email xác nhận đơn hàng cho order ${order.orderCode}`);
+        // Không throw error để không ảnh hưởng đến việc tạo order
+        // Order đã được tạo thành công, chỉ là không gửi được email
+      }
     }
 
     // Lấy cart để trả về (nếu có)
@@ -485,11 +489,21 @@ exports.updateOrderStatus = async (req, res) => {
         }
 
         if (user && user.email) {
-          // Gửi email (không block nếu email service không khả dụng)
-          const emailSent = await sendOrderDeliveredEmail(order, user);
-          if (!emailSent) {
-            console.warn(`⚠️ Không thể gửi email thông báo đơn hàng đã giao cho order ${order.orderCode}`);
-            // Không throw error để không ảnh hưởng đến việc cập nhật order
+          // Lấy user với emailNotifications để kiểm tra preference
+          let userWithPreferences = user;
+          if (order.userId && typeof order.userId === 'object' && order.userId._id) {
+            userWithPreferences = await User.findById(order.userId._id).select("email fullName emailNotifications");
+          } else if (order.userId) {
+            userWithPreferences = await User.findById(order.userId).select("email fullName emailNotifications");
+          }
+          
+          if (userWithPreferences && userWithPreferences.email) {
+            // Gửi email (không block nếu email service không khả dụng)
+            const emailSent = await sendOrderDeliveredEmail(order, userWithPreferences);
+            if (!emailSent) {
+              console.warn(`⚠️ Không thể gửi email thông báo đơn hàng đã giao cho order ${order.orderCode}`);
+              // Không throw error để không ảnh hưởng đến việc cập nhật order
+            }
           }
         } else {
           console.warn(`⚠️ Không tìm thấy thông tin user để gửi email cho order ${order.orderCode}`);

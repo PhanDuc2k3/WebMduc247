@@ -377,7 +377,7 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
             <div className="absolute inset-0 bg-purple-200/30 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <Bell size={18} className="sm:w-5 sm:h-5 relative z-10 group-hover:scale-110 transition-transform duration-300" />
             {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 bg-gradient-to-r from-red-500 via-pink-500 to-red-600 text-white text-[10px] sm:text-xs font-extrabold w-4.5 h-4.5 sm:w-5 sm:h-5 flex items-center justify-center rounded-full shadow-lg animate-pulse border-2 border-white">
+              <span className="absolute -top-1.5 -right-1.5 bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs w-4 h-4 flex items-center justify-center rounded-full font-black animate-pulse">
                 {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}

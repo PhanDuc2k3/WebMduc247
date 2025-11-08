@@ -91,6 +91,22 @@ const userSchema = new mongoose.Schema({
   resetCodeExpires: {
     type: Date,
     default: null
+  },
+
+  // Email notifications preference
+  emailNotifications: {
+    type: Boolean,
+    default: true
+  },
+
+  // Withdrawal email verification
+  withdrawalCode: {
+    type: String,
+    default: null
+  },
+  withdrawalCodeExpires: {
+    type: Date,
+    default: null
   }
 
 }, { timestamps: true });
