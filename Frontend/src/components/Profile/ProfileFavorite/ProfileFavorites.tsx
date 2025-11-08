@@ -83,7 +83,7 @@ const ProfileFavorites: React.FC = () => {
       {activeTab === "products" && (
         <div>
           {products.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 sm:gap-3 md:gap-4 lg:gap-6">
               {products.map((product) => {
                 // Convert ProductType to ProductCard format
                 const productForCard = {
@@ -133,6 +133,9 @@ const ProfileFavorites: React.FC = () => {
                   ? store.owner._id
                   : undefined;
                 
+                // Đảm bảo createdAt được truyền đúng - xử lý nhiều format
+                const createdAtValue = store.createdAt || store.joinDate;
+                
                 return (
                   <StoreCard
                     key={store._id}
@@ -142,7 +145,7 @@ const ProfileFavorites: React.FC = () => {
                     description={store.description}
                     logoUrl={store.logoUrl}
                     bannerUrl={store.bannerUrl}
-                    createdAt={store.createdAt}
+                    createdAt={createdAtValue}
                     isActive={store.isActive}
                     customCategory={store.customCategory}
                     isOnline={false}

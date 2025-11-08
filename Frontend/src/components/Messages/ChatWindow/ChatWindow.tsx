@@ -186,9 +186,9 @@ useEffect(() => {
   };
 
   return (
-    <div className="flex flex-col border-0 md:border-2 border-gray-200 rounded-none md:rounded-r-2xl h-[calc(100vh-110px)] overflow-hidden w-full">
+    <div className="flex flex-col h-full overflow-hidden w-full bg-white">
       {/* Header */}
-      <div className="flex-none p-3 md:p-6 border-b-2 border-gray-200 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center gap-2 md:gap-3 shadow-lg">
+      <div className="flex-none p-3 md:p-4 lg:p-5 border-b-2 border-gray-200 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center gap-2 md:gap-3 shadow-md flex-shrink-0">
         {/* Back button - only on mobile */}
         {onBack && (
           <button
@@ -214,7 +214,7 @@ useEffect(() => {
       {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto p-3 md:p-6 space-y-3 md:space-y-4 bg-gradient-to-br from-gray-50 to-blue-50"
+        className="flex-1 overflow-y-auto p-4 md:p-5 lg:p-6 space-y-3 md:space-y-4 bg-gradient-to-br from-gray-50 to-blue-50 custom-scrollbar min-h-0"
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-gray-400">
@@ -233,7 +233,7 @@ useEffect(() => {
               key={msg._id}
               className={`flex ${isMine ? "justify-end" : "justify-start"} ${msg.tempId ? "opacity-60" : ""}`}
             >
-              <div className="space-y-1 md:space-y-2 max-w-[85%] md:max-w-md">
+              <div className="space-y-1 md:space-y-2 max-w-[85%] md:max-w-[60%] lg:max-w-[55%] xl:max-w-[50%]">
                 <div
                   className={`text-[10px] md:text-xs font-semibold px-2 ${
                     isMine ? "text-right text-gray-600" : "text-left text-gray-600"
@@ -249,7 +249,7 @@ useEffect(() => {
                   <OrderMessageCard message={msg.text || ""} isMine={isMine} />
                 ) : (
                   <div
-                    className={`p-3 md:p-4 rounded-xl md:rounded-2xl w-fit max-w-full break-words shadow-md md:shadow-lg animate-fade-in-up ${
+                    className={`p-3 md:p-4 lg:p-4 rounded-xl md:rounded-2xl w-fit max-w-full break-words shadow-md md:shadow-lg animate-fade-in-up ${
                       isMine 
                         ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-tr-none" 
                         : "bg-white text-gray-900 rounded-tl-none border-2 border-gray-200"
@@ -280,7 +280,7 @@ useEffect(() => {
 
       {/* Input */}
       <div
-        className={`flex-none p-2 md:p-4 border-t-2 border-gray-200 flex flex-col gap-2 md:gap-3 bg-white ${
+        className={`flex-none p-3 md:p-4 lg:p-5 border-t-2 border-gray-200 flex flex-col gap-2 md:gap-3 bg-white shadow-lg flex-shrink-0 ${
           disabled ? "opacity-50 pointer-events-none" : ""
         }`}
       >

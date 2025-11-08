@@ -302,6 +302,7 @@ const Header: React.FC = () => {
           </div>
 
           <div className="md:hidden flex items-center gap-2">
+            <HeaderIcons cartCount={cartCount} userId={user._id} />
             <NotificationButton userId={user._id} />
             <div className="relative">
               {user._id ? (

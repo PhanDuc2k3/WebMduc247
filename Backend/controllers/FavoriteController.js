@@ -203,8 +203,15 @@ exports.getMyFavorites = async (req, res) => {
 
     // Lấy tất cả favorites của user với thông tin đầy đủ
     const favorites = await Favorite.find({ user: userId })
-      .populate('product', 'name price salePrice brand category images rating reviewsCount soldCount')
-      .populate('store', 'name description logoUrl bannerUrl rating category')
+      .populate('product', 'name price salePrice brand category images rating reviewsCount soldCount location store createdAt')
+      .populate({
+        path: 'store',
+        select: 'name description logoUrl bannerUrl rating category customCategory isActive createdAt owner',
+        populate: {
+          path: 'owner',
+          select: '_id'
+        }
+      })
       .populate('user', 'fullName avatarUrl')
       .sort({ createdAt: -1 });
 

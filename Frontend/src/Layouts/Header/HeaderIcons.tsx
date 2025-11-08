@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Heart, Gift, ShoppingCart, MessageCircle } from "lucide-react";
 import { useChat } from "../../context/chatContext";
 import WalletIcon from "../../components/Wallet/WalletIcon";
 import NotificationButton from "../../components/Notification/NotificationButton";
+import FavoriteDropdown from "../../components/Favorite/FavoriteDropdown";
 
 interface Props {
   cartCount: number;
@@ -12,6 +13,7 @@ interface Props {
 
 export const HeaderIcons: React.FC<Props> = ({ cartCount, userId }) => {
   const { unreadMessages } = useChat();
+  const [showFavoriteDropdown, setShowFavoriteDropdown] = useState(false);
   
   // Calculate total unread messages
   const totalUnread = Object.values(unreadMessages).reduce((sum, count) => sum + count, 0);
@@ -19,10 +21,20 @@ export const HeaderIcons: React.FC<Props> = ({ cartCount, userId }) => {
   return (
     <>
       <WalletIcon />
-      <Link to="/Whitelist" className="hidden md:flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group">
-        <Heart size={18} className="group-hover:scale-125 transition-transform" /> 
-        <span className="hidden xl:inline text-sm font-bold">Yêu thích</span>
-      </Link>
+      {/* Favorite Dropdown - All devices */}
+      <div className="relative">
+        <button
+          onClick={() => setShowFavoriteDropdown(!showFavoriteDropdown)}
+          className="flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group"
+        >
+          <Heart size={18} className="group-hover:scale-125 transition-transform" /> 
+          <span className="hidden xl:inline text-sm font-bold">Yêu thích</span>
+        </button>
+        <FavoriteDropdown 
+          isOpen={showFavoriteDropdown} 
+          onClose={() => setShowFavoriteDropdown(false)} 
+        />
+      </div>
       <Link to="/voucher" className="hidden md:flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group">
         <Gift size={18} className="group-hover:scale-125 transition-transform" /> 
         <span className="hidden xl:inline text-sm font-bold">Voucher</span>

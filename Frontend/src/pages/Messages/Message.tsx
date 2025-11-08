@@ -107,52 +107,54 @@ export default function ChatInterface() {
   const showChatOnMobile = !!selectedChat || !!conversationId;
 
   return (
-    <div className="flex relative" style={{ height: "calc(100vh - 110px)" }}>
-      {/* Chat List - Hidden on mobile when chat is selected */}
-      <div className={`${showChatOnMobile ? "hidden md:block" : "block"} ${showListOnMobile ? "w-full md:w-1/3" : "w-1/3"}`}>
-        <ChatList
-          currentUserId={currentUserId}
-          selectedChat={selectedChat}
-          onSelectChat={(chat) => {
-            setSelectedChat(chat as Chat);
-            // On mobile, navigate to chat view
-            if (window.innerWidth < 768) {
-              navigate(`/messages/${chat.conversationId}`);
-            }
-          }}
-          disabled={!currentUserId}
-        />
-      </div>
-
-      {/* Chat Window - Hidden on mobile when no chat selected */}
-      <div className={`${showListOnMobile ? "hidden md:flex" : "flex"} flex-1 w-full`}>
-        {selectedChat ? (
-          <ChatWindow
-            conversationId={selectedChat.conversationId}
+    <div className="w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] lg:w-[calc(100%+6rem)] xl:w-[calc(100%+10%)] -mx-4 sm:-mx-6 lg:-mx-12 xl:-mx-[5%] 2xl:mx-auto 2xl:w-full 2xl:max-w-[1920px]">
+      <div className="flex relative h-[calc(100vh-80px)] md:h-[calc(100vh-90px)]">
+        {/* Chat List - Hidden on mobile when chat is selected */}
+        <div className={`${showChatOnMobile ? "hidden md:block" : "block"} ${showListOnMobile ? "w-full md:w-[380px] lg:w-[420px]" : "w-full md:w-[380px] lg:w-[420px]"} flex-shrink-0`}>
+          <ChatList
             currentUserId={currentUserId}
-            chatUser={{
-              _id: selectedChat.userId,
-              name: selectedChat.name,
-              avatar: selectedChat.avatarUrl,
+            selectedChat={selectedChat}
+            onSelectChat={(chat) => {
+              setSelectedChat(chat as Chat);
+              // On mobile, navigate to chat view
+              if (window.innerWidth < 768) {
+                navigate(`/messages/${chat.conversationId}`);
+              }
             }}
-            onBack={handleBackToList}
+            disabled={!currentUserId}
           />
-        ) : conversationId ? (
-          // Show loading or placeholder when conversationId exists but selectedChat is not loaded yet
-          <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in">
-            <div className="text-4xl md:text-8xl mb-4 md:mb-6 animate-pulse">💬</div>
-            <p className="text-base md:text-2xl font-bold text-gray-700 mb-2">Đang tải...</p>
-          </div>
-        ) : (
-          <div className="hidden md:flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in">
-            <div className="text-8xl mb-6 animate-bounce">💬</div>
-            <p className="text-2xl font-bold text-gray-700 mb-2">Chào mừng đến với Tin nhắn</p>
-            <p className="text-lg text-gray-500 flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              <span>Chọn một cuộc trò chuyện để bắt đầu</span>
-            </p>
-          </div>
-        )}
+        </div>
+
+        {/* Chat Window - Hidden on mobile when no chat selected */}
+        <div className={`${showListOnMobile ? "hidden md:flex" : "flex"} flex-1 min-w-0`}>
+          {selectedChat ? (
+            <ChatWindow
+              conversationId={selectedChat.conversationId}
+              currentUserId={currentUserId}
+              chatUser={{
+                _id: selectedChat.userId,
+                name: selectedChat.name,
+                avatar: selectedChat.avatarUrl,
+              }}
+              onBack={handleBackToList}
+            />
+          ) : conversationId ? (
+            // Show loading or placeholder when conversationId exists but selectedChat is not loaded yet
+            <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in">
+              <div className="text-4xl md:text-8xl mb-4 md:mb-6 animate-pulse">💬</div>
+              <p className="text-base md:text-2xl font-bold text-gray-700 mb-2">Đang tải...</p>
+            </div>
+          ) : (
+            <div className="hidden md:flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in">
+              <div className="text-8xl mb-6 animate-bounce">💬</div>
+              <p className="text-2xl font-bold text-gray-700 mb-2">Chào mừng đến với Tin nhắn</p>
+              <p className="text-lg text-gray-500 flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                <span>Chọn một cuộc trò chuyện để bắt đầu</span>
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

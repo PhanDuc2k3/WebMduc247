@@ -172,9 +172,9 @@ const mappedChats: Chat[] = (res.data as any[])
 
   // 🧩 UI
   return (
-    <div className="w-full md:w-1/3 bg-white border-r-0 md:border-r-2 border-gray-200 overflow-hidden flex flex-col">
+    <div className="w-full h-full bg-white border-r-0 md:border-r-2 border-gray-200 overflow-hidden flex flex-col shadow-lg md:shadow-xl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 md:p-6 border-b-2 border-gray-200">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 md:p-5 lg:p-6 border-b-2 border-gray-200 flex-shrink-0">
         <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2 md:gap-3">
           <span>💬</span> Tin nhắn
         </h2>
@@ -182,7 +182,7 @@ const mappedChats: Chat[] = (res.data as any[])
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         {loading ? (
           <div className="p-6 md:p-8 text-center animate-fade-in">
             <div className="text-3xl md:text-4xl mb-3 md:mb-4 animate-pulse">💬</div>
@@ -199,10 +199,10 @@ const mappedChats: Chat[] = (res.data as any[])
             <div
               key={chat.conversationId}
               onClick={() => !disabled && handleSelectChat(chat)}
-              className={`flex items-center gap-3 md:gap-4 p-4 md:p-5 cursor-pointer transition-all duration-300 animate-fade-in-up border-b border-gray-100 ${
+              className={`flex items-center gap-3 md:gap-4 p-4 md:p-4 lg:p-5 cursor-pointer transition-all duration-300 animate-fade-in-up border-b border-gray-100 ${
                 selectedChat?.conversationId === chat.conversationId
-                  ? "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500 shadow-lg"
-                  : "hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50"
+                  ? "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500 shadow-md"
+                  : "hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 active:bg-blue-50"
               } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
               style={{ animationDelay: `${index * 0.05}s` }}
             >
