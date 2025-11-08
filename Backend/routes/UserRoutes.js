@@ -12,7 +12,11 @@ const {
   handleSellerRequest,
   logout,
   verifyEmail,
-  resendVerificationCode
+  resendVerificationCode,
+  forgotPassword,
+  verifyResetCode,
+  resetPassword,
+  changePassword
 } = require('../controllers/UserController');
 
 const authMiddleware = require('../middlewares/authMiddleware');
@@ -26,9 +30,14 @@ router.post('/login', login);
 router.post('/logout', authMiddleware,logout);
 router.post('/verify-email', verifyEmail);
 router.post('/resend-verification', resendVerificationCode);
+// Forgot password
+router.post('/forgot-password', forgotPassword);
+router.post('/verify-reset-code', verifyResetCode);
+router.post('/reset-password', resetPassword);
 // Profile (người dùng tự sửa thông tin)
 router.get('/profile', authMiddleware, getProfile);
 router.put('/profile', authMiddleware, upload.single('avatar'), updateProfile);
+router.post('/change-password', authMiddleware, changePassword);
 
 // Người dùng gửi yêu cầu mở cửa hàng (seller request)
 router.post(

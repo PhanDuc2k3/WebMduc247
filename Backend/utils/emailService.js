@@ -913,8 +913,143 @@ const sendOrderDeliveredEmail = async (order, user, retries = 2) => {
   return false;
 };
 
+// Gửi email reset password
+const sendResetPasswordEmail = async (email, resetCode, fullName, retries = 2) => {
+  // Kiểm tra nếu không có cấu hình email
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ RESEND_API_KEY chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  if (!FROM_EMAIL) {
+    console.warn('⚠️ RESEND_FROM_EMAIL chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 20px;
+        }
+        .container {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          padding: 30px;
+          border-radius: 10px;
+          color: white;
+        }
+        .content {
+          background: white;
+          padding: 30px;
+          border-radius: 10px;
+          margin-top: 20px;
+          color: #333;
+        }
+        .code-box {
+          background: #f4f4f4;
+          border: 2px dashed #667eea;
+          padding: 20px;
+          text-align: center;
+          margin: 20px 0;
+          border-radius: 8px;
+        }
+        .reset-code {
+          font-size: 32px;
+          font-weight: bold;
+          color: #667eea;
+          letter-spacing: 5px;
+        }
+        .footer {
+          text-align: center;
+          margin-top: 30px;
+          color: #666;
+          font-size: 12px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1 style="margin: 0; text-align: center;">🛒 ShopMDuc247</h1>
+      </div>
+      <div class="content">
+        <h2>Xin chào ${fullName}!</h2>
+        <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản tại <strong>ShopMDuc247</strong>.</p>
+        <p>Vui lòng sử dụng mã xác thực sau để đặt lại mật khẩu:</p>
+        
+        <div class="code-box">
+          <div class="reset-code">${resetCode}</div>
+        </div>
+        
+        <p><strong>Lưu ý:</strong></p>
+        <ul>
+          <li>Mã xác thực có hiệu lực trong <strong>15 phút</strong></li>
+          <li>Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này</li>
+          <li>Không chia sẻ mã này với bất kỳ ai</li>
+        </ul>
+        
+        <p>Nếu mã không hoạt động, bạn có thể yêu cầu gửi lại mã mới.</p>
+        
+        <div class="footer">
+          <p>Trân trọng,<br>Đội ngũ ShopMDuc247</p>
+          <p>Email này được gửi tự động, vui lòng không trả lời.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const { data, error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: email,
+        subject: 'Đặt lại mật khẩu ShopMDuc247',
+        html: htmlContent,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Resend API error');
+      }
+
+      console.log(`✅ Reset password email sent successfully to ${email} from ${FROM_EMAIL} (ID: ${data?.id})`);
+      return true;
+    } catch (error) {
+      const isLastAttempt = attempt === retries;
+      const errorMessage = error.message || error.toString();
+      
+      // Kiểm tra lỗi domain chưa verify
+      if (errorMessage.includes('domain') && (errorMessage.includes('not verified') || errorMessage.includes('unverified'))) {
+        console.error(`❌ Domain chưa được verify trên Resend. Vui lòng verify domain tại resend.com/domains`);
+        console.error(`❌ Sau khi verify, cập nhật RESEND_FROM_EMAIL trong .env với email từ domain đã verify`);
+        return false; // Không retry nếu domain chưa verify
+      }
+      
+      console.error(`❌ Email send attempt ${attempt + 1}/${retries + 1} failed:`, errorMessage);
+      
+      if (isLastAttempt) {
+        console.error('❌ All email send attempts failed. Email service may be unavailable.');
+        return false;
+      }
+      
+      // Đợi một chút trước khi retry
+      await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
+    }
+  }
+  
+  return false;
+};
+
 module.exports = {
   sendVerificationEmail,
   sendOrderConfirmationEmail,
   sendOrderDeliveredEmail,
+  sendResetPasswordEmail,
 };

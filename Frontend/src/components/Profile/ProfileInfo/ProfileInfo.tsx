@@ -1,12 +1,13 @@
 import React from "react";
-import { User, Store, Crown, Mail, Phone, Calendar, Edit, LogOut } from "lucide-react";
+import { User, Store, Crown, Mail, Phone, Calendar, Edit, LogOut, Lock } from "lucide-react";
 
 interface ProfileInfoProps {
   user: any; // nhận user từ cha
   onEdit?: () => void;
+  onChangePassword?: () => void;
 }
 
-const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
+const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit, onChangePassword }) => {
   if (!user) return <div>Đang tải...</div>;
 
   const handleLogout = () => {
@@ -74,6 +75,12 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
               className="px-4 py-2 md:px-6 md:py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl hover:from-blue-600 hover:to-purple-600 text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
             >
               <Edit size={14} /> Chỉnh sửa
+            </button>
+            <button
+              onClick={onChangePassword}
+              className="px-4 py-2 md:px-6 md:py-2.5 border-2 border-gray-300 text-gray-700 rounded-lg md:rounded-xl hover:bg-blue-50 hover:border-blue-400 hover:text-blue-600 text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+            >
+              <Lock size={14} /> Đổi mật khẩu
             </button>
             <button
               onClick={handleLogout}

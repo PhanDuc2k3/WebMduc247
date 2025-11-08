@@ -2,7 +2,7 @@ const User = require('../models/Users');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Store = require('../models/Store');
-const { sendVerificationEmail } = require('../utils/emailService');
+const { sendVerificationEmail, sendResetPasswordEmail } = require('../utils/emailService');
 
 // ==========================
 // ĐĂNG KÝ
@@ -462,6 +462,188 @@ exports.resendVerificationCode = async (req, res) => {
     }
   } catch (error) {
     console.error('Resend verification code error:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+  }
+};
+
+// ==========================
+// QUÊN MẬT KHẨU - GỬI MÃ
+// ==========================
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Vui lòng nhập email' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Không tiết lộ email có tồn tại hay không vì lý do bảo mật
+      return res.status(200).json({ 
+        message: 'Nếu email tồn tại, mã đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email.',
+      });
+    }
+
+    // Tạo mã reset 6 chữ số
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const resetCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+
+    user.resetCode = resetCode;
+    user.resetCodeExpires = resetCodeExpires;
+    await user.save();
+
+    // Gửi email reset password
+    const emailSent = await sendResetPasswordEmail(email, resetCode, user.fullName);
+    if (emailSent) {
+      res.status(200).json({ 
+        message: 'Mã đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email.',
+        email: email
+      });
+    } else {
+      // Email không gửi được nhưng vẫn trả về success với thông báo
+      console.warn(`⚠️ Không thể gửi email reset password cho ${email}`);
+      res.status(200).json({ 
+        message: 'Mã đặt lại mật khẩu đã được tạo. Tuy nhiên, email không thể gửi được. Vui lòng thử lại sau.',
+        email: email,
+        emailNotSent: true
+      });
+    }
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+  }
+};
+
+// ==========================
+// XÁC THỰC MÃ RESET
+// ==========================
+exports.verifyResetCode = async (req, res) => {
+  try {
+    const { email, resetCode } = req.body;
+
+    if (!email || !resetCode) {
+      return res.status(400).json({ message: 'Vui lòng nhập email và mã xác thực' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy tài khoản với email này' });
+    }
+
+    // Kiểm tra mã reset
+    if (user.resetCode !== resetCode) {
+      return res.status(400).json({ message: 'Mã xác thực không đúng' });
+    }
+
+    // Kiểm tra mã còn hiệu lực không
+    if (!user.resetCodeExpires || new Date() > user.resetCodeExpires) {
+      return res.status(400).json({ message: 'Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới' });
+    }
+
+    res.status(200).json({ 
+      message: 'Mã xác thực hợp lệ. Bạn có thể đặt lại mật khẩu.',
+      email: email
+    });
+  } catch (error) {
+    console.error('Verify reset code error:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+  }
+};
+
+// ==========================
+// ĐẶT LẠI MẬT KHẨU
+// ==========================
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, resetCode, newPassword } = req.body;
+
+    if (!email || !resetCode || !newPassword) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Mật khẩu phải có ít nhất 6 ký tự' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy tài khoản với email này' });
+    }
+
+    // Kiểm tra mã reset
+    if (user.resetCode !== resetCode) {
+      return res.status(400).json({ message: 'Mã xác thực không đúng' });
+    }
+
+    // Kiểm tra mã còn hiệu lực không
+    if (!user.resetCodeExpires || new Date() > user.resetCodeExpires) {
+      return res.status(400).json({ message: 'Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới' });
+    }
+
+    // Hash mật khẩu mới
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Cập nhật mật khẩu và xóa mã reset
+    user.password = hashedPassword;
+    user.resetCode = null;
+    user.resetCodeExpires = null;
+    await user.save();
+
+    res.status(200).json({ 
+      message: 'Đặt lại mật khẩu thành công! Bạn có thể đăng nhập ngay bây giờ.'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+  }
+};
+
+// ==========================
+// ĐỔI MẬT KHẨU
+// ==========================
+exports.changePassword = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { oldPassword, newPassword } = req.body;
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: 'Vui lòng nhập đầy đủ thông tin' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Mật khẩu mới phải có ít nhất 6 ký tự' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy người dùng' });
+    }
+
+    // Kiểm tra mật khẩu cũ
+    const isOldPasswordValid = await bcrypt.compare(oldPassword, user.password);
+    if (!isOldPasswordValid) {
+      return res.status(400).json({ message: 'Mật khẩu cũ không đúng' });
+    }
+
+    // Kiểm tra mật khẩu mới không trùng với mật khẩu cũ
+    const isSamePassword = await bcrypt.compare(newPassword, user.password);
+    if (isSamePassword) {
+      return res.status(400).json({ message: 'Mật khẩu mới phải khác mật khẩu cũ' });
+    }
+
+    // Hash mật khẩu mới
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    
+    // Cập nhật mật khẩu
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({ 
+      message: 'Đổi mật khẩu thành công!'
+    });
+  } catch (error) {
+    console.error('Change password error:', error);
     res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
   }
 };

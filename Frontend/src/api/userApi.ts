@@ -57,6 +57,22 @@ requestSeller: (formData: FormData) => {
   // Gửi lại mã xác thực
   resendVerificationCode: (data: { email: string }) =>
     axiosClient.post("/api/users/resend-verification", data),
+
+  // Quên mật khẩu - gửi mã
+  forgotPassword: (data: { email: string }) =>
+    axiosClient.post("/api/users/forgot-password", data),
+
+  // Xác thực mã reset
+  verifyResetCode: (data: { email: string; resetCode: string }) =>
+    axiosClient.post("/api/users/verify-reset-code", data),
+
+  // Đặt lại mật khẩu
+  resetPassword: (data: { email: string; resetCode: string; newPassword: string }) =>
+    axiosClient.post("/api/users/reset-password", data),
+
+  // Đổi mật khẩu
+  changePassword: (data: { oldPassword: string; newPassword: string }) =>
+    axiosClient.post("/api/users/change-password", data),
 };
 
 export default userApi;

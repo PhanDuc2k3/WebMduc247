@@ -24,6 +24,7 @@ import PromotionDetail from "./pages/Promotion/PromotionDetail"
 import SupportPage from "./pages/Support/SupportPage"
 import Whitelist from "./pages/Whitelist/Whitelist"
 import WalletPage from "./pages/Wallet/Wallet"
+import Notifications from "./pages/Notifications/Notifications"
 
 const AppRouter = () => (
   <Routes>
@@ -53,6 +54,7 @@ const AppRouter = () => (
       <Route path="/support" element={<SupportPage/>}/>
       <Route path="/whitelist" element={<Whitelist />} />
       <Route path="/wallet" element={<WalletPage />} />
+      <Route path="/notifications" element={<Notifications />} />
     </Route>
 
     <Route path="/s" element={<Navigate to="/login" />} />
