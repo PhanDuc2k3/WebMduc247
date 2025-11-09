@@ -3,9 +3,9 @@ import { Link } from "react-router-dom";
 
 const Banner: React.FC = () => {
   return (
-    <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-8 mt-4 sm:mt-6 lg:mt-8 animate-fade-in-up">
+    <div className="flex flex-col lg:flex-row gap-3 sm:gap-4 lg:gap-8 mt-4 sm:mt-6 lg:mt-8">
       {/* Banner chính */}
-      <div className="lg:flex-[2] relative rounded-xl sm:rounded-2xl overflow-hidden w-full group flex h-[200px] sm:h-[250px] md:h-[300px] lg:max-h-[380px] shadow-xl hover:shadow-2xl transition-all duration-500">
+      <div className="lg:flex-[2] relative rounded-xl sm:rounded-2xl overflow-hidden w-full flex h-[200px] sm:h-[250px] md:h-[300px] lg:h-[380px] shadow-xl hover:shadow-2xl transition-all duration-500 group">
         <div className="absolute inset-0 bg-gradient-to-br from-purple-600/20 via-blue-600/20 to-pink-600/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
         <img
           src="https://res.cloudinary.com/dlbgb4whu/image/upload/v1760882192/messages/bmdxizhkdtje6sxqprmi.png"
@@ -13,7 +13,6 @@ const Banner: React.FC = () => {
           className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
           loading="lazy"
         />
-
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-5 md:p-6 lg:p-8 text-white transition-all duration-500 group-hover:from-black/70 group-hover:via-black/40 z-20">
           <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 opacity-90 group-hover:opacity-100 transition-all duration-500 group-hover:mb-4">
@@ -33,9 +32,9 @@ const Banner: React.FC = () => {
       </div>
 
       {/* Banner phụ */}
-      <div className="lg:flex-1 flex flex-col sm:flex-row lg:flex-col gap-3 sm:gap-4 lg:gap-6">
+      <div className="lg:flex-1 flex flex-col gap-3 sm:gap-4 lg:gap-6 h-[380px]">
         {/* Flash Sale */}
-        <div className="flex-1 relative rounded-xl sm:rounded-2xl overflow-hidden w-full group h-[140px] sm:h-[160px] md:h-[180px] lg:max-h-[180px] shadow-lg hover:shadow-xl transition-all duration-500 animate-fade-in-right delay-200">
+        <div className="flex-1 relative rounded-xl sm:rounded-2xl overflow-hidden w-full shadow-lg hover:shadow-xl transition-all duration-500 group">
           <div className="absolute inset-0 bg-gradient-to-br from-orange-500/30 to-red-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
           <img
             src="https://res.cloudinary.com/dlbgb4whu/image/upload/v1760883412/Blue_and_White_Modern_9.9_Flash_Sale_Promotion_Banner_Horizontal_rsbgqw.png"
@@ -62,7 +61,7 @@ const Banner: React.FC = () => {
         </div>
 
         {/* Miễn phí ship */}
-        <div className="flex-1 relative rounded-xl sm:rounded-2xl overflow-hidden w-full group h-[140px] sm:h-[160px] md:h-[180px] lg:max-h-[180px] shadow-lg hover:shadow-xl transition-all duration-500 animate-fade-in-right delay-300">
+        <div className="flex-1 relative rounded-xl sm:rounded-2xl overflow-hidden w-full shadow-lg hover:shadow-xl transition-all duration-500 group">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-400/30 to-cyan-400/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
           <img
             src="https://res.cloudinary.com/dlbgb4whu/image/upload/v1760883412/Blue_and_White_Modern_9.9_Flash_Sale_Promotion_Banner_Horizontal_rsbgqw.png"
