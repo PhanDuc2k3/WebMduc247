@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { XCircle } from "lucide-react";
 import voucherApi, { type VoucherType } from "../../api/voucherApi";
+import { toast } from "react-toastify";
 
 export type Voucher = VoucherType & {
   title: string;
@@ -50,7 +52,7 @@ export default function VoucherPage() {
         condition: (v as any).condition || "",
         usagePercent:
           v.usedCount && v.usageLimit ? Math.round((v.usedCount / v.usageLimit) * 100) : undefined,
-        used: Boolean(v.usedCount), // chuyển 0 -> false
+        used: Boolean((v as any).used), // Sử dụng field 'used' từ API (đã được kiểm tra user hiện tại)
         categories: (v as any).categories || [],
         global: (v as any).global || false,
         storeCategory: (v as any).storeCategory || "",
@@ -60,7 +62,12 @@ export default function VoucherPage() {
       setVouchers(mapped);
     } catch (err) {
       console.error("Lỗi khi fetch vouchers:", err);
-      alert("Lỗi khi lấy voucher");
+      toast.error(
+        <div className="flex items-center gap-2">
+          <XCircle className="text-red-500" size={18} />
+          <span>Lỗi khi lấy voucher</span>
+        </div>
+      );
     } finally {
       setLoading(false);
     }

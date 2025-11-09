@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { ShoppingCart, Loader2, ShoppingBag } from "lucide-react";
+import { ShoppingCart, Loader2, ShoppingBag, AlertTriangle } from "lucide-react";
 import CartStoreGroup from "../../components/Cart/CartStoreGroup/CartStoreGroup";
 import OrderSummary from "../../components/Cart/OrderSummary/OrderSummary";
 import { useNavigate } from "react-router-dom";
 import cartApi from "../../api/cartApi"; // ✅ dùng axiosClient
+import { toast } from "react-toastify";
 
 interface CartItem {
   _id: string;
@@ -97,7 +98,12 @@ export default function CartPage() {
   // Checkout
   const handleCheckout = () => {
     if (selectedItems.length === 0) {
-      alert("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán");
+      toast.warning(
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-yellow-500" size={18} />
+          <span>Vui lòng chọn ít nhất 1 sản phẩm để thanh toán</span>
+        </div>
+      );
       return;
     }
     // Lưu toàn bộ sản phẩm được chọn thay vì chỉ ID

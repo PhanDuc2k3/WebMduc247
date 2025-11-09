@@ -174,8 +174,8 @@ const mappedChats: Chat[] = (res.data as any[])
   return (
     <div className="w-full h-full bg-white border-r-0 md:border-r-2 border-gray-200 overflow-hidden flex flex-col shadow-lg md:shadow-xl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 md:p-5 lg:p-6 border-b-2 border-gray-200 flex-shrink-0">
-        <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2 md:gap-3">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-3 sm:p-4 md:p-5 lg:p-6 border-b-2 border-gray-200 flex-shrink-0">
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 md:gap-3">
           <span>💬</span> Tin nhắn
         </h2>
         <p className="text-white/90 text-xs md:text-sm mt-1">{chats.length} cuộc trò chuyện</p>
@@ -184,14 +184,14 @@ const mappedChats: Chat[] = (res.data as any[])
       {/* Body */}
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {loading ? (
-          <div className="p-6 md:p-8 text-center animate-fade-in">
+          <div className="p-4 sm:p-6 md:p-8 text-center animate-fade-in">
             <div className="text-3xl md:text-4xl mb-3 md:mb-4 animate-pulse">💬</div>
-            <p className="text-gray-600 text-base md:text-lg font-medium">Đang tải...</p>
+            <p className="text-gray-600 text-sm sm:text-base md:text-lg font-medium">Đang tải...</p>
           </div>
         ) : chats.length === 0 ? (
-          <div className="p-6 md:p-8 text-center animate-fade-in">
-            <div className="text-5xl md:text-6xl mb-3 md:mb-4">💬</div>
-            <p className="text-gray-500 text-base md:text-lg font-medium mb-2">Chưa có cuộc trò chuyện</p>
+          <div className="p-4 sm:p-6 md:p-8 text-center animate-fade-in">
+            <div className="text-4xl sm:text-5xl md:text-6xl mb-3 md:mb-4">💬</div>
+            <p className="text-gray-500 text-sm sm:text-base md:text-lg font-medium mb-2">Chưa có cuộc trò chuyện</p>
             <p className="text-gray-400 text-xs md:text-sm">Bắt đầu cuộc trò chuyện mới</p>
           </div>
         ) : (
@@ -199,7 +199,7 @@ const mappedChats: Chat[] = (res.data as any[])
             <div
               key={chat.conversationId}
               onClick={() => !disabled && handleSelectChat(chat)}
-              className={`flex items-center gap-3 md:gap-4 p-4 md:p-4 lg:p-5 cursor-pointer transition-all duration-300 animate-fade-in-up border-b border-gray-100 ${
+              className={`flex items-center gap-2 sm:gap-3 md:gap-4 p-3 sm:p-4 md:p-4 lg:p-5 cursor-pointer transition-all duration-300 animate-fade-in-up border-b border-gray-100 ${
                 selectedChat?.conversationId === chat.conversationId
                   ? "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500 shadow-md"
                   : "hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 active:bg-blue-50"
@@ -211,14 +211,14 @@ const mappedChats: Chat[] = (res.data as any[])
                 <img
                   src={chat.avatarUrl || "/default-avatar.png"}
                   alt={chat.name}
-                  className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border-2 md:border-3 border-white shadow-md md:shadow-lg"
+                  className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover border-2 md:border-3 border-white shadow-md md:shadow-lg"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = "/default-avatar.png";
                   }}
                 />
                 {/* Online status indicator */}
                 <span
-                  className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 md:w-4 md:h-4 border-2 border-white rounded-full shadow-md md:shadow-lg ${
+                  className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 border-2 border-white rounded-full shadow-md md:shadow-lg ${
                     chat.online ? "bg-green-500" : "bg-gray-400"
                   }`}
                 ></span>
@@ -227,17 +227,17 @@ const mappedChats: Chat[] = (res.data as any[])
               {/* Name and Last Message */}
               <div className="flex-1 min-w-0 relative">
                 <div className="flex items-center justify-between gap-2 mb-1">
-                  <div className="font-bold text-base md:text-lg text-gray-900 truncate flex-1">
+                  <div className="font-bold text-sm sm:text-base md:text-lg text-gray-900 truncate flex-1">
                     {chat.name || "Người dùng ẩn danh"}
                   </div>
                   {/* Last message time */}
                   {chat.lastMessageTime && (
-                    <span className="text-[10px] md:text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                    <span className="text-[9px] sm:text-[10px] md:text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
                       {formatMessageTime(chat.lastMessageTime)}
                     </span>
                   )}
                 </div>
-                <div className="text-xs md:text-sm text-gray-600 truncate flex items-center gap-2">
+                <div className="text-xs sm:text-xs md:text-sm text-gray-600 truncate flex items-center gap-2">
                   <span className="truncate flex-1">
                     {chat.lastMessage || "Chưa có tin nhắn"}
                   </span>
@@ -245,7 +245,7 @@ const mappedChats: Chat[] = (res.data as any[])
 
                 {/* Unread badge */}
                 {unreadMessages[chat.conversationId] > 0 && (
-                  <span className="absolute top-0 right-0 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-2 py-0.5 md:px-3 md:py-1 text-[10px] md:text-xs font-bold shadow-md md:shadow-lg animate-pulse">
+                  <span className="absolute top-0 right-0 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-1.5 sm:px-2 py-0.5 md:px-3 md:py-1 text-[9px] sm:text-[10px] md:text-xs font-bold shadow-md md:shadow-lg animate-pulse">
                     {unreadMessages[chat.conversationId]}
                   </span>
                 )}

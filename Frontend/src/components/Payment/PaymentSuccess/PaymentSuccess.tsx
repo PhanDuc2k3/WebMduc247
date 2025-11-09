@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { XCircle } from 'lucide-react';
 import orderApi from '../../../api/orderApi';
 import paymentApi from '../../../api/paymentApi';
 import walletApi from '../../../api/walletApi';
+import { toast } from 'react-toastify';
 
 const PaymentSuccess: React.FC = () => {
   const [status, setStatus] = useState<'pending' | 'success' | 'fail'>('pending');
@@ -153,7 +155,12 @@ const PaymentSuccess: React.FC = () => {
         } catch (err: any) {
           console.error("Mark paid failed:", err);
           const errorMessage = err.response?.data?.message || err.message || "Không thể đánh dấu đã thanh toán";
-          alert(errorMessage);
+          toast.error(
+            <div className="flex items-center gap-2">
+              <XCircle className="text-red-500" size={18} />
+              <span>{errorMessage}</span>
+            </div>
+          );
           setStatus("fail");
         }
       };

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Package } from "lucide-react";
+import { Package, CheckCircle, XCircle } from "lucide-react";
 import orderApi from "../../../api/orderApi";
+import { toast } from "react-toastify";
 
 interface BuyerConfirmDeliveryProps {
   orderId: string;
@@ -18,33 +19,43 @@ const BuyerConfirmDelivery: React.FC<BuyerConfirmDeliveryProps> = ({ orderId, on
     setLoading(true);
     try {
       const response = await orderApi.confirmDelivery(orderId);
-      alert("Xác nhận nhận hàng thành công!");
+      toast.success(
+        <div className="flex items-center gap-2">
+          <CheckCircle className="text-green-500" size={18} />
+          <span>Xác nhận nhận hàng thành công!</span>
+        </div>
+      );
       onConfirm();
     } catch (err: any) {
       console.error("Lỗi xác nhận nhận hàng:", err);
       const errorMessage = err.response?.data?.message 
         || err.message 
         || "Lỗi khi xác nhận nhận hàng!";
-      alert(`Lỗi: ${errorMessage}`);
+      toast.error(
+        <div className="flex items-center gap-2">
+          <XCircle className="text-red-500" size={18} />
+          <span>Lỗi: {errorMessage}</span>
+        </div>
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 border-b-2 border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <Package size={24} className="text-green-600" />
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6 border-b-2 border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+          <Package size={20} className="sm:w-6 sm:h-6 text-green-600" />
           Xác nhận nhận hàng
         </h2>
-        <p className="text-gray-600 text-sm mt-1">Đơn hàng đã được giao, vui lòng xác nhận bạn đã nhận được hàng</p>
+        <p className="text-gray-600 text-xs sm:text-sm mt-1">Đơn hàng đã được giao, vui lòng xác nhận bạn đã nhận được hàng</p>
       </div>
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <button
           onClick={handleConfirm}
           disabled={loading}
-          className={`w-full px-6 py-3 text-white text-base font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
+          className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
             loading
               ? "bg-gray-400 cursor-not-allowed"
               : "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
@@ -52,12 +63,12 @@ const BuyerConfirmDelivery: React.FC<BuyerConfirmDeliveryProps> = ({ orderId, on
         >
           {loading ? (
             <>
-              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              <span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               <span>Đang xác nhận...</span>
             </>
           ) : (
             <>
-              <Package size={20} />
+              <Package size={18} className="sm:w-5 sm:h-5" />
               <span>Đã nhận hàng</span>
             </>
           )}

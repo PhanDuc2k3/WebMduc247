@@ -107,8 +107,8 @@ export default function ChatInterface() {
   const showChatOnMobile = !!selectedChat || !!conversationId;
 
   return (
-    <div className="w-[calc(100%+2rem)] sm:w-[calc(100%+3rem)] lg:w-[calc(100%+6rem)] xl:w-[calc(100%+10%)] -mx-4 sm:-mx-6 lg:-mx-12 xl:-mx-[5%] 2xl:mx-auto 2xl:w-full 2xl:max-w-[1920px]">
-      <div className="flex relative h-[calc(100vh-80px)] md:h-[calc(100vh-90px)]">
+    <div className="w-full px-0 sm:px-4 lg:px-6 xl:px-8 2xl:mx-auto 2xl:w-full 2xl:max-w-[1920px]">
+      <div className="flex relative h-[calc(100vh-80px)] sm:h-[calc(100vh-85px)] md:h-[calc(100vh-90px)]">
         {/* Chat List - Hidden on mobile when chat is selected */}
         <div className={`${showChatOnMobile ? "hidden md:block" : "block"} ${showListOnMobile ? "w-full md:w-[380px] lg:w-[420px]" : "w-full md:w-[380px] lg:w-[420px]"} flex-shrink-0`}>
           <ChatList
@@ -140,9 +140,9 @@ export default function ChatInterface() {
             />
           ) : conversationId ? (
             // Show loading or placeholder when conversationId exists but selectedChat is not loaded yet
-            <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in">
-              <div className="text-4xl md:text-8xl mb-4 md:mb-6 animate-pulse">💬</div>
-              <p className="text-base md:text-2xl font-bold text-gray-700 mb-2">Đang tải...</p>
+            <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in px-4">
+              <div className="text-4xl md:text-8xl mb-3 sm:mb-4 md:mb-6 animate-pulse">💬</div>
+              <p className="text-base sm:text-lg md:text-2xl font-bold text-gray-700 mb-2">Đang tải...</p>
             </div>
           ) : (
             <div className="hidden md:flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in">

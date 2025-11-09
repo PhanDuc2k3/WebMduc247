@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { XCircle } from 'lucide-react';
 import orderApi from '../../api/orderApi';
 import paymentApi from '../../api/paymentApi';
 import walletApi from '../../api/walletApi';
+import { toast } from 'react-toastify';
 
 interface VietQRData {
   qrCodeUrl: string;
@@ -118,7 +120,12 @@ const PaymentQR: React.FC = () => {
       }, 1500);
     } catch (err: any) {
       console.error('Mark paid failed:', err);
-      alert(err.response?.data?.message || 'Không thể đánh dấu đã thanh toán');
+      toast.error(
+        <div className="flex items-center gap-2">
+          <XCircle className="text-red-500" size={18} />
+          <span>{err.response?.data?.message || 'Không thể đánh dấu đã thanh toán'}</span>
+        </div>
+      );
       setPaymentStatus('pending');
     }
   };

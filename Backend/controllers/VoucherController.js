@@ -3,10 +3,28 @@ const Cart = require("../models/Cart");
 const User = require("../models/Users");
 const Store = require("../models/Store");
 const mongoose = require("mongoose");
+const jwt = require('jsonwebtoken');
 const { createBulkNotifications } = require("../controllers/NotificationController");
 
 exports.getAvailableVouchers = async (req, res) => {
   try {
+    // Lấy userId từ request (nếu có) - có thể từ req.user hoặc từ token
+    let userId = req.user?.userId;
+    
+    // Nếu không có từ req.user, thử lấy từ token trong header
+    if (!userId) {
+      const token = req.header('Authorization')?.replace('Bearer ', '');
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          userId = decoded.userId;
+        } catch (err) {
+          // Token không hợp lệ hoặc hết hạn, bỏ qua
+          userId = null;
+        }
+      }
+    }
+    
     const now = new Date();
     const vouchers = await Voucher.find({
       isActive: true,
@@ -14,19 +32,34 @@ exports.getAvailableVouchers = async (req, res) => {
       endDate: { $gte: now },
     }).populate("store", "name category");
 
-    const cleanVouchers = vouchers.map(v => ({
-      ...v.toObject(),
-      discountValue: Number(v.discountValue),
-      minOrderValue: Number(v.minOrderValue),
-      maxDiscount: v.maxDiscount ? Number(v.maxDiscount) : undefined,
-      storeName: v.store?.name || "Tất cả",
-      storeCategory: v.store?.category || "Tất cả",
-      usagePercent: v.usedCount && v.usageLimit ? Math.round((v.usedCount / v.usageLimit) * 100) : 0,
-      used: v.usersUsed?.length > 0,
-    }));
+    const cleanVouchers = vouchers.map(v => {
+      // Kiểm tra user hiện tại đã dùng voucher chưa
+      let userUsed = false;
+      if (userId && v.usersUsed && v.usersUsed.length > 0) {
+        // Chuyển tất cả về string để so sánh chính xác
+        const userIdString = userId.toString();
+        const usersUsedStrings = v.usersUsed.map(u => {
+          // Xử lý cả ObjectId và string
+          return u && u.toString ? u.toString() : String(u);
+        });
+        userUsed = usersUsedStrings.includes(userIdString);
+      }
+      
+      return {
+        ...v.toObject(),
+        discountValue: Number(v.discountValue),
+        minOrderValue: Number(v.minOrderValue),
+        maxDiscount: v.maxDiscount ? Number(v.maxDiscount) : undefined,
+        storeName: v.store?.name || "Tất cả",
+        storeCategory: v.store?.category || "Tất cả",
+        usagePercent: v.usedCount && v.usageLimit ? Math.round((v.usedCount / v.usageLimit) * 100) : 0,
+        used: userUsed, // Chỉ true nếu user hiện tại đã dùng
+      };
+    });
 
     res.status(200).json(cleanVouchers);
   } catch (error) {
+    console.error("Get available vouchers error:", error);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
@@ -174,6 +207,91 @@ exports.deleteVoucher = async (req, res) => {
     res.status(200).json({ message: "Xóa voucher thành công" });
   } catch (error) {
     res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+// Cleanup duplicate userId trong usersUsed array
+exports.cleanupVoucherUsersUsed = async (req, res) => {
+  try {
+    // Chỉ admin mới được chạy cleanup
+    const userRole = req.user?.role;
+    if (userRole !== "admin") {
+      return res.status(403).json({ message: "Chỉ admin mới được chạy cleanup" });
+    }
+
+    console.log("🧹 Bắt đầu cleanup duplicate userId trong usersUsed array...");
+
+    // Lấy tất cả voucher có usersUsed
+    const vouchers = await Voucher.find({ usersUsed: { $exists: true, $ne: [] } });
+    console.log(`📊 Tìm thấy ${vouchers.length} voucher có usersUsed`);
+
+    let totalCleaned = 0;
+    let totalRemoved = 0;
+    const cleanedVouchers = [];
+
+    for (const voucher of vouchers) {
+      const originalLength = voucher.usersUsed ? voucher.usersUsed.length : 0;
+      
+      if (!voucher.usersUsed || voucher.usersUsed.length === 0) {
+        continue;
+      }
+
+      // Loại bỏ duplicate bằng cách chuyển về string và dùng Set
+      const uniqueUserIds = [];
+      const seen = new Set();
+
+      for (const userId of voucher.usersUsed) {
+        const userIdString = userId.toString();
+        if (!seen.has(userIdString)) {
+          seen.add(userIdString);
+          // Giữ lại ObjectId nếu có thể
+          if (mongoose.Types.ObjectId.isValid(userIdString)) {
+            uniqueUserIds.push(new mongoose.Types.ObjectId(userIdString));
+          } else {
+            uniqueUserIds.push(userIdString);
+          }
+        }
+      }
+
+      const newLength = uniqueUserIds.length;
+      const removed = originalLength - newLength;
+
+      if (removed > 0) {
+        // Cập nhật usersUsed với unique values
+        voucher.usersUsed = uniqueUserIds;
+        
+        // Cập nhật usedCount để phản ánh số lượng unique users
+        // Nếu usedCount lớn hơn số unique users, cập nhật lại
+        if (voucher.usedCount > newLength) {
+          voucher.usedCount = newLength;
+        }
+        
+        await voucher.save();
+        
+        cleanedVouchers.push({
+          code: voucher.code,
+          originalLength,
+          newLength,
+          removed,
+          usedCount: voucher.usedCount
+        });
+        
+        totalCleaned++;
+        totalRemoved += removed;
+      }
+    }
+
+    console.log(`✅ Hoàn tất cleanup! Đã cleanup ${totalCleaned} voucher, xóa ${totalRemoved} duplicate entries`);
+
+    res.status(200).json({
+      message: "Cleanup thành công",
+      totalCleaned,
+      totalRemoved,
+      cleanedVouchers
+    });
+  } catch (error) {
+    console.error("❌ Lỗi cleanup:", error);
+    res.status(500).json({ message: "Lỗi server", error: error.message });
   }
 };
 

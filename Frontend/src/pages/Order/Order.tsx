@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Star } from "lucide-react";
+import { Star, Package, FileText, X } from "lucide-react";
 import OrderStatus from "../../components/Order/OrderStatus/OrderStatus";
 import OrderProduct from "../../components/Order/OrderProduct/OrderProduct";
 import PaymentInfo from "../../components/Order/PaymentInfo/PaymentInfo";
@@ -182,10 +182,10 @@ export default function OrderPage() {
 
   if (loading) {
     return (
-      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
+      <div className="w-full py-12 sm:py-16 flex items-center justify-center animate-fade-in px-4">
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-pulse">📦</div>
-          <p className="text-gray-600 text-lg font-medium">Đang tải thông tin đơn hàng...</p>
+          <Package className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-3 sm:mb-4 animate-pulse text-gray-400" />
+          <p className="text-gray-600 text-base sm:text-lg font-medium">Đang tải thông tin đơn hàng...</p>
         </div>
       </div>
     );
@@ -193,10 +193,10 @@ export default function OrderPage() {
   
   if (!order) {
     return (
-      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
-        <div className="text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
-          <div className="text-6xl mb-4">❌</div>
-          <p className="text-red-500 text-lg font-medium">Không lấy được thông tin đơn hàng</p>
+      <div className="w-full py-12 sm:py-16 flex items-center justify-center animate-fade-in px-4">
+        <div className="text-center bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200 p-8 sm:p-12 max-w-md w-full">
+          <X className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-3 sm:mb-4 text-red-500" />
+          <p className="text-red-500 text-base sm:text-lg font-medium">Không lấy được thông tin đơn hàng</p>
         </div>
       </div>
     );
@@ -254,26 +254,28 @@ export default function OrderPage() {
       };
 
   return (
-    <div className="w-full py-8 md:py-12">
-      <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-          <span>📦</span> Chi tiết đơn hàng
+    <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6">
+      <div className="mb-4 sm:mb-6 md:mb-8 animate-fade-in-down">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
+          <Package className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
+          Chi tiết đơn hàng
         </h1>
-        <p className="text-gray-600 text-lg flex items-center gap-2">
-          <span>📋</span> Mã đơn hàng: <span className="font-bold text-blue-600">{order.orderCode}</span>
+        <p className="text-gray-600 text-base sm:text-lg flex items-center gap-2">
+          <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
+          Mã đơn hàng: <span className="font-bold text-blue-600 break-all">{order.orderCode}</span>
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[68%_32%] gap-6 animate-fade-in-up">
+      <div className="grid grid-cols-1 lg:grid-cols-[68%_32%] gap-4 sm:gap-6 animate-fade-in-up">
         {/* Cột trái */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <OrderStatus statusHistory={order.statusHistory} />
           <OrderProduct items={order.items} />
           <PaymentInfo order={order} />
         </div>
 
         {/* Cột phải */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <CustomerInfo customer={displayedUser} />
           <ShippingInfo
             shippingAddress={order.shippingAddress}
@@ -309,15 +311,15 @@ export default function OrderPage() {
             }} />
           )}
           {!isOwnerSeller && currentStatus === "received" && (
-            <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 border-b-2 border-gray-200">
-                <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                  <Star size={24} className="text-purple-600" />
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 sm:p-6 border-b-2 border-gray-200">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                  <Star size={20} className="sm:w-6 sm:h-6 text-purple-600" />
                   Đánh giá sản phẩm
                 </h2>
-                <p className="text-gray-600 text-sm mt-1">Bạn đã nhận được hàng. Hãy chia sẻ đánh giá của bạn!</p>
+                <p className="text-gray-600 text-xs sm:text-sm mt-1">Bạn đã nhận được hàng. Hãy chia sẻ đánh giá của bạn!</p>
               </div>
-              <div className="p-6 space-y-3">
+              <div className="p-4 sm:p-6 space-y-2 sm:space-y-3">
                 {order.items.map((item, idx) => {
                   // Get productId from item - could be string or object with _id
                   let actualProductId = '';
@@ -340,10 +342,10 @@ export default function OrderPage() {
                         setReviewProductId(actualProductId);
                         setReviewOrderId(order._id);
                       }}
-                      className="w-full px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-base font-bold rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+                      className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
                     >
-                      <Star size={20} />
-                      <span>Đánh giá {item.name}</span>
+                      <Star size={18} className="sm:w-5 sm:h-5" />
+                      <span className="break-words">Đánh giá {item.name}</span>
                     </button>
                   );
                 })}
@@ -355,7 +357,7 @@ export default function OrderPage() {
       
       {/* Modal đánh giá sản phẩm */}
       {reviewProductId && reviewOrderId && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-0 sm:p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
           <ProductReview
             productId={reviewProductId}
             orderId={reviewOrderId}

@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { AlertTriangle } from "lucide-react";
+import { toast } from "react-toastify";
 
 interface PriceFilterProps {
   selectedPrice: string;
@@ -47,15 +49,30 @@ const PriceFilter: React.FC<PriceFilterProps> = ({
 
   const handleApplyRange = () => {
     if (minPrice === "" || maxPrice === "") {
-      alert("Vui lòng nhập đầy đủ giá tối thiểu và tối đa!");
+      toast.warning(
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-yellow-500" size={18} />
+          <span>Vui lòng nhập đầy đủ giá tối thiểu và tối đa!</span>
+        </div>
+      );
       return;
     }
     if (Number(minPrice) < 0 || Number(maxPrice) < 0) {
-      alert("Giá không được âm!");
+      toast.warning(
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-yellow-500" size={18} />
+          <span>Giá không được âm!</span>
+        </div>
+      );
       return;
     }
     if (Number(minPrice) >= Number(maxPrice)) {
-      alert("Giá tối thiểu phải nhỏ hơn giá tối đa!");
+      toast.warning(
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-yellow-500" size={18} />
+          <span>Giá tối thiểu phải nhỏ hơn giá tối đa!</span>
+        </div>
+      );
       return;
     }
     setSelectedPrice(`${minPrice}-${maxPrice}`);

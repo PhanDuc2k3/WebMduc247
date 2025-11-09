@@ -53,13 +53,13 @@ const WalletIcon: React.FC = () => {
   return (
     <Link 
       to="/wallet" 
-      className="hidden md:flex items-center gap-1.5 hover:text-purple-600 transition-all duration-300 group relative"
+      className="flex items-center gap-1 hover:text-purple-600 transition-all duration-300 group relative"
       title={`Ví: ${balance.toLocaleString('vi-VN')}₫`}
     >
       <div className="relative">
-        <Wallet size={18} className="group-hover:scale-125 transition-transform" />
+        <Wallet size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] group-hover:scale-125 transition-transform" />
       </div>
-      <span className="hidden xl:inline text-sm font-bold">
+      <span className="hidden xl:inline text-xs sm:text-sm font-bold">
         Ví: {balance.toLocaleString('vi-VN')}₫
       </span>
     </Link>

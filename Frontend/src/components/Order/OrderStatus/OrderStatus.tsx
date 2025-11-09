@@ -91,21 +91,21 @@ export default function OrderStatus({ statusHistory }: OrderStatusProps) {
   }, [statusHistory, currentStatus]);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 sm:p-6 border-b-2 border-gray-200">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
             Trạng thái đơn hàng
           </h2>
-          <span className="px-4 py-2 text-sm font-bold rounded-full bg-gradient-to-r from-orange-100 to-yellow-100 border-2 border-orange-300 text-orange-700">
+          <span className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-full bg-gradient-to-r from-orange-100 to-yellow-100 border-2 border-orange-300 text-orange-700 w-fit">
             {steps.find((s) => !s.done)?.title || "Hoàn tất"}
           </span>
         </div>
       </div>
-      <div className="p-6 space-y-6">
-        <div className="w-full bg-gray-200 h-3 rounded-full overflow-hidden">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="w-full bg-gray-200 h-2.5 sm:h-3 rounded-full overflow-hidden">
           <div
-            className={`h-3 rounded-full transition-all duration-1000 ${
+            className={`h-2.5 sm:h-3 rounded-full transition-all duration-1000 ${
               currentStatus === "cancelled" 
                 ? "bg-gradient-to-r from-red-500 to-red-600" 
                 : "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"
@@ -114,19 +114,19 @@ export default function OrderStatus({ statusHistory }: OrderStatusProps) {
           ></div>
         </div>
         <div className="flex justify-between items-center">
-          <p className="text-sm font-semibold text-gray-600">Tiến trình đơn hàng</p>
-          <p className={`text-lg font-bold ${
+          <p className="text-xs sm:text-sm font-semibold text-gray-600">Tiến trình đơn hàng</p>
+          <p className={`text-base sm:text-lg font-bold ${
             currentStatus === "cancelled" ? "text-red-600" : "text-blue-600"
           }`}>
             {progress}%
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {steps.map((step, idx) => (
             <div 
               key={idx} 
-              className="flex items-start justify-between p-4 rounded-2xl border-2 transition-all duration-300 animate-fade-in-up hover:shadow-lg"
+              className="flex items-start justify-between p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 transition-all duration-300 animate-fade-in-up hover:shadow-lg gap-2 sm:gap-0"
               style={{ 
                 animationDelay: `${idx * 0.1}s`,
                 borderColor: step.done 
@@ -137,34 +137,35 @@ export default function OrderStatus({ statusHistory }: OrderStatusProps) {
                   : 'transparent'
               }}
             >
-              <div className="flex items-start space-x-3">
+              <div className="flex items-start space-x-2 sm:space-x-3 flex-1 min-w-0">
                 {step.done ? (
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mt-0.5 ${
+                  <div className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center mt-0.5 flex-shrink-0 ${
                     step.title === "Hủy đơn" ? "bg-red-500" : "bg-green-500"
                   }`}>
-                    <CheckCircle className="w-5 h-5 text-white" />
+                    <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center mt-0.5">
-                    <Circle className="w-5 h-5 text-white" />
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex items-center justify-center mt-0.5 flex-shrink-0">
+                    <Circle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
                 )}
-                <div>
-                  <p className={`text-base font-bold ${step.done ? "text-gray-900" : "text-gray-500"}`}>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm sm:text-base font-bold ${step.done ? "text-gray-900" : "text-gray-500"} break-words`}>
                     {step.title}
                   </p>
-                  <p className={`text-sm mt-1 ${step.done ? "text-gray-600" : "text-gray-400"}`}>
+                  <p className={`text-xs sm:text-sm mt-1 ${step.done ? "text-gray-600" : "text-gray-400"} break-words`}>
                     {step.description}
                   </p>
                 </div>
               </div>
               {step.time && (
-                <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                <span className={`text-xs font-semibold px-2 sm:px-3 py-1 rounded-full flex-shrink-0 ${
                   step.done 
                     ? (step.title === "Hủy đơn" ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")
                     : "bg-gray-100 text-gray-500"
                 }`}>
-                  {step.time}
+                  <span className="hidden sm:inline">{step.time}</span>
+                  <span className="sm:hidden">{new Date(step.time).toLocaleDateString("vi-VN")}</span>
                 </span>
               )}
             </div>

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./Layouts/Layout";
 import AdminLayout from "./Layouts/AdminLayout/AdminLayout";
+import AdminRoute from "./components/Admin/AdminRoute";
 import Login from "./pages/Login/Login";
 import Register from "./pages/Register/Register";
 import VerifyEmail from "./pages/VerifyEmail/VerifyEmail";
@@ -59,7 +60,14 @@ const AppRouter = () => (
 
     <Route path="/s" element={<Navigate to="/login" />} />
     <Route element={<AdminLayout />}>
-      <Route path="/admin" element={<AdminDashboard />} />
+      <Route 
+        path="/admin" 
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        } 
+      />
     </Route>
   </Routes>
 );

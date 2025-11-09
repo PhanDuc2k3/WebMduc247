@@ -1,9 +1,10 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Calendar, Circle, Store, MessageCircle } from "lucide-react";
+import { AlertCircle, Calendar, Circle, Store, MessageCircle, AlertTriangle, XCircle } from "lucide-react";
 import axiosClient from "../../../api/axiosClient";
 import type { StoreType } from "../../../types/store";
 import FavoriteButton from "../../Favorite/FavoriteButton";
+import { toast } from "react-toastify";
 
 interface StoreCardProps extends Partial<StoreType> {
   storeId: string;
@@ -31,7 +32,12 @@ const StoreCard: React.FC<StoreCardProps> = ({
     try {
       const stored = localStorage.getItem("user");
       if (!stored) {
-        alert("⚠️ Vui lòng đăng nhập để chat với cửa hàng");
+        toast.warning(
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="text-yellow-500" size={18} />
+            <span>Vui lòng đăng nhập để chat với cửa hàng</span>
+          </div>
+        );
         return;
       }
 
@@ -40,7 +46,12 @@ const StoreCard: React.FC<StoreCardProps> = ({
       const receiverId = ownerId;
 
       if (!senderId || !receiverId) {
-        alert("Không tìm thấy ID người dùng hoặc chủ cửa hàng");
+        toast.error(
+          <div className="flex items-center gap-2">
+            <XCircle className="text-red-500" size={18} />
+            <span>Không tìm thấy ID người dùng hoặc chủ cửa hàng</span>
+          </div>
+        );
         return;
       }
 
@@ -73,7 +84,12 @@ const StoreCard: React.FC<StoreCardProps> = ({
       });
     } catch (err) {
       console.error("Lỗi khi mở chat:", err);
-      alert("Không thể mở cuộc trò chuyện. Vui lòng thử lại.");
+      toast.error(
+        <div className="flex items-center gap-2">
+          <XCircle className="text-red-500" size={18} />
+          <span>Không thể mở cuộc trò chuyện. Vui lòng thử lại.</span>
+        </div>
+      );
     }
   };
 

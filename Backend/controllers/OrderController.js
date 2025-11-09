@@ -172,6 +172,19 @@ exports.createOrder = async (req, res) => {
         return res.status(400).json({ message: "Voucher giảm giá sản phẩm chưa bắt đầu hoặc đã hết hạn" });
       if (subtotalFiltered < productVoucher.minOrderValue)
         return res.status(400).json({ message: `Đơn hàng tối thiểu ${productVoucher.minOrderValue}₫ để sử dụng voucher này` });
+      
+      // Kiểm tra user đã dùng voucher chưa
+      const userUsed = productVoucher.usersUsed && productVoucher.usersUsed.length > 0
+        ? productVoucher.usersUsed.map(u => u.toString()).includes(userId.toString())
+        : false;
+      if (userUsed) {
+        return res.status(400).json({ message: "Bạn chỉ được sử dụng voucher này 1 lần" });
+      }
+      
+      // Kiểm tra usage limit
+      if (productVoucher.usedCount >= Number(productVoucher.usageLimit || 100)) {
+        return res.status(400).json({ message: "Voucher đã được sử dụng hết" });
+      }
 
       // Tính discount cho product voucher
       let calculatedDiscount = 0;
@@ -185,9 +198,14 @@ exports.createOrder = async (req, res) => {
       }
       discount = Math.min(calculatedDiscount, subtotalFiltered);
 
+      // Cập nhật voucher - đảm bảo không push duplicate userId
       productVoucher.usedCount = (productVoucher.usedCount || 0) + 1;
       productVoucher.usersUsed = productVoucher.usersUsed || [];
-      productVoucher.usersUsed.push(userId);
+      // Chỉ push nếu userId chưa có trong array
+      const userIdString = userId.toString();
+      if (!productVoucher.usersUsed.map(u => u.toString()).includes(userIdString)) {
+        productVoucher.usersUsed.push(userId);
+      }
       await productVoucher.save();
     }
 
@@ -199,6 +217,19 @@ exports.createOrder = async (req, res) => {
         return res.status(400).json({ message: "Voucher miễn phí ship chưa bắt đầu hoặc đã hết hạn" });
       if (subtotalFiltered < freeshipVoucher.minOrderValue)
         return res.status(400).json({ message: `Đơn hàng tối thiểu ${freeshipVoucher.minOrderValue}₫ để sử dụng voucher này` });
+      
+      // Kiểm tra user đã dùng voucher chưa
+      const userUsed = freeshipVoucher.usersUsed && freeshipVoucher.usersUsed.length > 0
+        ? freeshipVoucher.usersUsed.map(u => u.toString()).includes(userId.toString())
+        : false;
+      if (userUsed) {
+        return res.status(400).json({ message: "Bạn chỉ được sử dụng voucher này 1 lần" });
+      }
+      
+      // Kiểm tra usage limit
+      if (freeshipVoucher.usedCount >= Number(freeshipVoucher.usageLimit || 100)) {
+        return res.status(400).json({ message: "Voucher đã được sử dụng hết" });
+      }
 
       // Tính discount cho freeship voucher
       let calculatedShippingDiscount = 0;
@@ -212,9 +243,14 @@ exports.createOrder = async (req, res) => {
       }
       shippingDiscount = Math.min(calculatedShippingDiscount, shippingFee);
 
+      // Cập nhật voucher - đảm bảo không push duplicate userId
       freeshipVoucher.usedCount = (freeshipVoucher.usedCount || 0) + 1;
       freeshipVoucher.usersUsed = freeshipVoucher.usersUsed || [];
-      freeshipVoucher.usersUsed.push(userId);
+      // Chỉ push nếu userId chưa có trong array
+      const userIdString = userId.toString();
+      if (!freeshipVoucher.usersUsed.map(u => u.toString()).includes(userIdString)) {
+        freeshipVoucher.usersUsed.push(userId);
+      }
       await freeshipVoucher.save();
     }
 

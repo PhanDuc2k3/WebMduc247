@@ -217,10 +217,10 @@ useEffect(() => {
         className="flex-1 overflow-y-auto p-4 md:p-5 lg:p-6 space-y-3 md:space-y-4 bg-gradient-to-br from-gray-50 to-blue-50 custom-scrollbar min-h-0"
       >
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
+          <div className="flex flex-col items-center justify-center h-full text-gray-400 px-4">
             <div className="text-4xl md:text-6xl mb-3 md:mb-4">💬</div>
-            <p className="text-base md:text-lg font-medium">Chưa có tin nhắn nào.</p>
-            <p className="text-xs md:text-sm mt-2">Bắt đầu trò chuyện ngay bây giờ!</p>
+            <p className="text-sm sm:text-base md:text-lg font-medium text-center">Chưa có tin nhắn nào.</p>
+            <p className="text-xs sm:text-sm md:text-sm mt-2 text-center">Bắt đầu trò chuyện ngay bây giờ!</p>
           </div>
         )}
 
@@ -322,9 +322,9 @@ useEffect(() => {
           <input
             type="text"
             placeholder={
-              disabled ? "Bạn cần đăng nhập để chat..." : "💬 Nhập tin nhắn..."
+              disabled ? "Bạn cần đăng nhập để chat..." : "Nhập tin nhắn..."
             }
-            className="flex-1 p-2.5 md:p-4 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-sm md:text-base"
+            className="flex-1 p-2.5 md:p-4 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-xs sm:text-sm md:text-base"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -332,7 +332,7 @@ useEffect(() => {
           />
           <button
             onClick={handleSend}
-            className={`w-20 h-10 md:w-28 md:h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg md:rounded-xl hover:from-blue-600 hover:to-purple-700 flex items-center justify-center gap-1 md:gap-2 font-bold text-xs md:text-sm transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-105 flex-shrink-0 ${
+            className={`w-16 sm:w-20 md:w-28 h-10 md:h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg md:rounded-xl hover:from-blue-600 hover:to-purple-700 flex items-center justify-center gap-1 md:gap-2 font-bold text-xs md:text-sm transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-105 flex-shrink-0 ${
               (disabled || isSending) && "opacity-50 cursor-not-allowed"
             }`}
             disabled={disabled || isSending}
@@ -359,12 +359,12 @@ useEffect(() => {
                     d="M4 12a8 8 0 018-8v8H4z"
                   ></path>
                 </svg>
-                <span className="hidden md:inline text-sm">Gửi...</span>
+                <span className="hidden sm:inline text-xs md:text-sm">Gửi...</span>
               </>
             ) : (
               <>
                 <span className="text-xs md:text-base">🚀</span>
-                <span className="hidden md:inline">Gửi</span>
+                <span className="hidden sm:inline">Gửi</span>
               </>
             )}
           </button>

@@ -20,18 +20,18 @@ const Payment: React.FC<PaymentProps> = ({ onChange }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
+      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 sm:p-6 border-b-2 border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
           Phương thức thanh toán
         </h2>
-        <p className="text-gray-600 text-sm mt-1">Chọn cách thanh toán</p>
+        <p className="text-gray-600 text-xs sm:text-sm mt-1">Chọn cách thanh toán</p>
       </div>
-      <div className="p-6 space-y-4">
+      <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
         {methods.map((method) => (
           <label
             key={method.id}
-            className={`flex items-center p-5 border-2 rounded-2xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
+            className={`flex items-center p-4 sm:p-5 border-2 rounded-xl sm:rounded-2xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
               selectedMethod === method.id
                 ? method.id === "cod" 
                   ? "border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg" 
@@ -49,9 +49,9 @@ const Payment: React.FC<PaymentProps> = ({ onChange }) => {
               name="payment"
               checked={selectedMethod === method.id}
               onChange={() => handleSelect(method.id)}
-              className="mr-4 w-5 h-5 cursor-pointer"
+              className="mr-3 sm:mr-4 w-4 h-4 sm:w-5 sm:h-5 cursor-pointer flex-shrink-0"
             />
-            <span className="font-bold text-lg text-gray-900">
+            <span className="font-bold text-sm sm:text-base lg:text-lg text-gray-900 break-words">
               {method.label}
             </span>
           </label>

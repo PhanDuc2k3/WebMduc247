@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Truck, MapPin, Phone, User, Building2, FileText, Clock, Share2, Loader2, Check, Package, ShoppingBag, BarChart, AlertTriangle, XCircle } from "lucide-react";
 import messageApi from "../../../api/messageApi";
 import axiosClient from "../../../api/axiosClient";
+import { toast } from "react-toastify";
 
 interface OrderItem {
   name: string;
@@ -87,32 +89,37 @@ export default function ShippingInfo({
       cancelled: "Đã hủy",
     };
 
-    let message = `📦 Thông tin đơn hàng #${order.orderCode}\n\n`;
-    message += `🛍️ Sản phẩm:\n`;
+    let message = `Thông tin đơn hàng #${order.orderCode}\n\n`;
+    message += `Sản phẩm:\n`;
     order.items.forEach((item, index) => {
       message += `${index + 1}. ${item.name} x${item.quantity} - ${item.subtotal.toLocaleString("vi-VN")}₫\n`;
     });
-    message += `\n💰 Chi tiết thanh toán:\n`;
+    message += `\nChi tiết thanh toán:\n`;
     message += `- Tạm tính: ${order.subtotal.toLocaleString("vi-VN")}₫\n`;
     message += `- Phí vận chuyển: ${order.shippingFee.toLocaleString("vi-VN")}₫\n`;
     if (order.discount > 0) {
       message += `- Giảm giá: -${order.discount.toLocaleString("vi-VN")}₫\n`;
     }
     message += `- Tổng tiền: ${order.total.toLocaleString("vi-VN")}₫\n`;
-    message += `\n💳 Phương thức thanh toán: ${order.paymentInfo.method}\n`;
-    message += `📊 Trạng thái: ${statusMap[currentStatus.status] || currentStatus.status}\n`;
-    message += `\n📍 Địa chỉ giao hàng:\n`;
+    message += `\nPhương thức thanh toán: ${order.paymentInfo.method}\n`;
+    message += `Trạng thái: ${statusMap[currentStatus.status] || currentStatus.status}\n`;
+    message += `\nĐịa chỉ giao hàng:\n`;
     message += `${shippingAddress.fullName}\n`;
     message += `${shippingAddress.phone}\n`;
     message += `${shippingAddress.address}`;
-    message += `\n\n🔗 Xem chi tiết đơn hàng: ${window.location.origin}/order/${order._id}`;
+    message += `\n\nXem chi tiết đơn hàng: ${window.location.origin}/order/${order._id}`;
 
     return message;
   };
 
   const handleShareOrder = async () => {
     if (!ownerId || !order) {
-      alert("Không tìm thấy thông tin chủ cửa hàng hoặc đơn hàng");
+      toast.warning(
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-yellow-500" size={18} />
+          <span>Không tìm thấy thông tin chủ cửa hàng hoặc đơn hàng</span>
+        </div>
+      );
       return;
     }
 
@@ -120,7 +127,12 @@ export default function ShippingInfo({
       // Lấy user hiện tại
       const storedUser = localStorage.getItem("user");
       if (!storedUser) {
-        alert("Vui lòng đăng nhập để chia sẻ đơn hàng");
+        toast.warning(
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="text-yellow-500" size={18} />
+            <span>Vui lòng đăng nhập để chia sẻ đơn hàng</span>
+          </div>
+        );
         return;
       }
 
@@ -128,7 +140,12 @@ export default function ShippingInfo({
       const senderId = currentUser._id || currentUser.id;
 
       if (!senderId) {
-        alert("Không tìm thấy ID người dùng");
+        toast.error(
+          <div className="flex items-center gap-2">
+            <XCircle className="text-red-500" size={18} />
+            <span>Không tìm thấy ID người dùng</span>
+          </div>
+        );
         return;
       }
 
@@ -174,7 +191,12 @@ export default function ShippingInfo({
       });
     } catch (error: any) {
       console.error("Lỗi khi chia sẻ đơn hàng:", error);
-      alert(error.response?.data?.message || "Lỗi khi chia sẻ đơn hàng. Vui lòng thử lại!");
+      toast.error(
+        <div className="flex items-center gap-2">
+          <XCircle className="text-red-500" size={18} />
+          <span>{error.response?.data?.message || "Lỗi khi chia sẻ đơn hàng. Vui lòng thử lại!"}</span>
+        </div>
+      );
     } finally {
       setIsSharing(false);
     }
@@ -182,45 +204,56 @@ export default function ShippingInfo({
 
   return (
     <>
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-        <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-6 border-b-2 border-gray-200">
-          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <span>🚚</span> Thông tin vận chuyển
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+        <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 sm:p-6 border-b-2 border-gray-200">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+            <Truck className="w-5 h-5 sm:w-6 sm:h-6" />
+            Thông tin vận chuyển
           </h2>
-          <p className="text-gray-600 text-sm mt-1">Chi tiết địa chỉ và vận đơn</p>
+          <p className="text-gray-600 text-xs sm:text-sm mt-1">Chi tiết địa chỉ và vận đơn</p>
         </div>
-        <div className="p-6 space-y-4">
-          <div className="p-4 bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl">
-            <p className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-              <span>📍</span> Địa chỉ giao hàng
+        <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
+          <div className="p-3 sm:p-4 bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-lg sm:rounded-xl">
+            <p className="font-bold text-gray-900 mb-2 flex items-center gap-2 text-sm sm:text-base">
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+              Địa chỉ giao hàng
             </p>
-            <p className="text-gray-700 mb-2">{shippingAddress.address}</p>
-            <p className="text-gray-700">📞 {shippingAddress.phone}</p>
-            <p className="text-gray-700">👤 {shippingAddress.fullName}</p>
+            <p className="text-gray-700 mb-2 text-xs sm:text-sm break-words">{shippingAddress.address}</p>
+            <p className="text-gray-700 text-xs sm:text-sm break-words flex items-center gap-1">
+              <Phone className="w-3 h-3 flex-shrink-0" />
+              {shippingAddress.phone}
+            </p>
+            <p className="text-gray-700 text-xs sm:text-sm break-words flex items-center gap-1">
+              <User className="w-3 h-3 flex-shrink-0" />
+              {shippingAddress.fullName}
+            </p>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-              <span className="font-semibold flex items-center gap-2">
-                <span>🏢</span> Đơn vị vận chuyển
+          <div className="space-y-2 sm:space-y-3">
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg sm:rounded-xl gap-2">
+              <span className="font-semibold flex items-center gap-2 text-xs sm:text-sm">
+                <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                Đơn vị vận chuyển
               </span>
-              <span className="font-bold text-gray-900">{shippingInfo.method}</span>
+              <span className="font-bold text-gray-900 text-xs sm:text-sm break-words">{shippingInfo.method}</span>
             </div>
 
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-xl">
-              <span className="font-semibold flex items-center gap-2">
-                <span>📋</span> Mã vận đơn
+            <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg sm:rounded-xl gap-2">
+              <span className="font-semibold flex items-center gap-2 text-xs sm:text-sm">
+                <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                Mã vận đơn
               </span>
-              <span className="font-bold text-blue-600">
+              <span className="font-bold text-blue-600 text-xs sm:text-sm break-all">
                 {shippingInfo.trackingNumber || orderCode}
               </span>
             </div>
 
-            <div className="flex justify-between items-center p-3 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl">
-              <span className="font-semibold flex items-center gap-2">
-                <span>⏰</span> Dự kiến giao
+            <div className="flex justify-between items-center p-3 bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-lg sm:rounded-xl gap-2">
+              <span className="font-semibold flex items-center gap-2 text-xs sm:text-sm">
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                Dự kiến giao
               </span>
-              <span className="font-bold text-orange-700">
+              <span className="font-bold text-orange-700 text-xs sm:text-sm break-words">
                 {deliveryDate.toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" })}
               </span>
             </div>
@@ -229,11 +262,10 @@ export default function ShippingInfo({
           {ownerId && order && (
             <button
               onClick={() => setShowConfirmModal(true)}
-              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 mt-4"
+              className="w-full py-2.5 sm:py-3 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-lg sm:rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 mt-3 sm:mt-4 text-xs sm:text-sm flex items-center justify-center gap-2"
             >
-              <span className="flex items-center justify-center gap-2">
-                <span>📤</span> Chia sẻ đơn hàng
-              </span>
+              <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+              Chia sẻ đơn hàng
             </button>
           )}
         </div>
@@ -242,42 +274,45 @@ export default function ShippingInfo({
       {/* Modal xác nhận chia sẻ */}
       {showConfirmModal && (
         <div
-          className="fixed inset-0 flex items-center justify-center z-50 p-4"
+          className="fixed inset-0 flex items-center justify-center z-50 p-0 sm:p-4"
           style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
           onClick={() => !isSharing && setShowConfirmModal(false)}
         >
           <div
-            className="bg-white rounded-2xl shadow-xl border-2 border-gray-200 p-6 max-w-md w-full"
+            className="bg-white rounded-none sm:rounded-2xl shadow-xl border-2 border-gray-200 p-4 sm:p-6 max-w-md w-full h-full sm:h-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-              <span>📤</span> Chia sẻ đơn hàng
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
+              <Share2 className="w-5 h-5 sm:w-6 sm:h-6" />
+              Chia sẻ đơn hàng
             </h3>
-            <p className="text-gray-700 mb-6">
+            <p className="text-gray-700 mb-4 sm:mb-6 text-sm sm:text-base">
               Bạn muốn chia sẻ đơn hàng này cho chủ cửa hàng{" "}
               <span className="font-bold">{storeName || "cửa hàng"}</span>? Thông tin đơn hàng sẽ
               được gửi qua tin nhắn.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => setShowConfirmModal(false)}
                 disabled={isSharing}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-xl hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-2.5 sm:py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg sm:rounded-xl hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
               >
                 Hủy
               </button>
               <button
                 onClick={handleShareOrder}
                 disabled={isSharing}
-                className="flex-1 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-lg sm:rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
               >
                 {isSharing ? (
                   <>
-                    <span className="animate-spin">⏳</span> Đang chia sẻ...
+                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                    Đang chia sẻ...
                   </>
                 ) : (
                   <>
-                    <span>✓</span> Đồng ý
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5" />
+                    Đồng ý
                   </>
                 )}
               </button>

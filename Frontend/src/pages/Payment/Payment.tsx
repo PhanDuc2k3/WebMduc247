@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { CreditCard } from "lucide-react";
 import Address from "../../components/Payment/Adress/Address";
 import Product from "../../components/Payment/Product/Product";
 import Delivery from "../../components/Payment/Delivery/Delivery";
@@ -164,17 +165,18 @@ const CheckoutPage: React.FC = () => {
   }, [shippingFee, selectedFreeshipVoucher]);
 
   return (
-    <div className="w-full py-8 md:py-12">
-      <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-          <span>💳</span> Thanh toán
+    <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6">
+      <div className="mb-4 sm:mb-6 md:mb-8 animate-fade-in-down">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
+          <CreditCard className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
+          Thanh toán
         </h1>
-        <p className="text-gray-600 text-lg">Hoàn tất đơn hàng của bạn</p>
+        <p className="text-gray-600 text-base sm:text-lg">Hoàn tất đơn hàng của bạn</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 animate-fade-in-up">
+      <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 animate-fade-in-up">
         {/* Cột trái */}
-        <div className="flex-1 space-y-6">
+        <div className="flex-1 space-y-4 sm:space-y-6">
           <div className="animate-fade-in-up delay-200">
             <Address onSelect={setSelectedAddressId} />
           </div>
@@ -187,7 +189,7 @@ const CheckoutPage: React.FC = () => {
         </div>
 
         {/* Cột phải - Sticky */}
-        <div className="w-full lg:w-1/3 space-y-6">
+        <div className="w-full lg:w-1/3 space-y-4 sm:space-y-6">
           <div className="animate-fade-in-up delay-500">
             <VoucherBox 
               subtotal={cartSubtotal} 

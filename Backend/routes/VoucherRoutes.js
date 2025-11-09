@@ -10,9 +10,10 @@ const {
   toggleVoucherStatus,
   previewVoucher,
   applyVoucher,
+  cleanupVoucherUsersUsed,
 } = require("../controllers/VoucherController");
 
-// const auth = require("../middlewares/authMiddleware");
+const auth = require("../middlewares/authMiddleware");
 
 // Tạm thời bỏ auth để ai cũng có thể truy cập
 router.get("/", getAvailableVouchers);
@@ -25,5 +26,6 @@ router.post("/", createVoucher);
 router.put("/:id", updateVoucher);
 router.put("/:id/toggle-status", toggleVoucherStatus); // Endpoint để bật/tắt khóa voucher
 router.delete("/:id", deleteVoucher);
+router.post("/cleanup", auth, cleanupVoucherUsersUsed); // Endpoint để cleanup duplicate userId trong usersUsed (cần auth)
 
 module.exports = router;

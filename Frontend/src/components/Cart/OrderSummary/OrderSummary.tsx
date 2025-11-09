@@ -1,6 +1,8 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
 import { useCart } from "../../../context/CartContext";
+import { toast } from "react-toastify";
 
 interface OrderSummaryProps {
   selectedItems: string[]; // ✅ danh sách id sản phẩm được chọn
@@ -34,7 +36,12 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems }) => {
   // ✅ Thanh toán
   const handleCheckout = () => {
     if (!selectedProducts || selectedProducts.length === 0) {
-      alert("Vui lòng chọn ít nhất một sản phẩm để thanh toán!");
+      toast.warning(
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="text-yellow-500" size={18} />
+          <span>Vui lòng chọn ít nhất một sản phẩm để thanh toán!</span>
+        </div>
+      );
       return;
     }
 

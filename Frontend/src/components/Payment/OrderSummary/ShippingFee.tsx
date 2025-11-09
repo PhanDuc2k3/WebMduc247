@@ -9,9 +9,9 @@ const ShippingFee: React.FC<ShippingFeeProps> = ({ shippingFee, shippingDiscount
   const finalShippingFee = Math.max(0, shippingFee - shippingDiscount);
   
   return (
-    <div className="flex justify-between items-center bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-3">
-      <div className="flex flex-col">
-        <span className="font-semibold text-blue-700 flex items-center gap-2">
+    <div className="flex justify-between items-center bg-blue-50 border-2 border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4 mb-3 gap-2">
+      <div className="flex flex-col min-w-0">
+        <span className="font-semibold text-blue-700 flex items-center gap-2 text-xs sm:text-sm">
           Phí vận chuyển
         </span>
         {shippingDiscount > 0 && (
@@ -20,13 +20,13 @@ const ShippingFee: React.FC<ShippingFeeProps> = ({ shippingFee, shippingDiscount
           </span>
         )}
       </div>
-      <div className="flex flex-col items-end">
+      <div className="flex flex-col items-end flex-shrink-0">
         {shippingDiscount > 0 && (
-          <span className="text-sm text-gray-400 line-through">
+          <span className="text-xs sm:text-sm text-gray-400 line-through">
             {shippingFee.toLocaleString("vi-VN")}₫
           </span>
         )}
-        <span className="text-blue-600 font-bold text-lg">
+        <span className="text-blue-600 font-bold text-base sm:text-lg break-words">
           {finalShippingFee.toLocaleString("vi-VN")}₫
         </span>
       </div>

@@ -178,59 +178,40 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
 
     if (!variation || !option) return;
 
-    const payload = {
-      productId: product._id,
-      quantity,
-      variationId: variation._id,
-      optionId: option._id,
-    };
-
     try {
       setLoading(true);
 
-      // Thêm vào cart
-      const res = await axiosClient.post("/api/cart/add", payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      // Tính giá và subtotal
+      const basePrice = product.salePrice ?? product.price;
+      const additionalPrice = option.additionalPrice || 0;
+      const unitPrice = basePrice + additionalPrice;
+      const subtotal = unitPrice * quantity;
 
-      fetchCart();
+      // Tạo checkout item trực tiếp (không thêm vào cart)
+      const checkoutItem = {
+        _id: `temp-${Date.now()}`, // ID tạm thời
+        productId: product._id,
+        storeId: product.store?._id || product.storeId || null,
+        name: product.name,
+        imageUrl: product.images?.[0] || "",
+        price: product.price,
+        salePrice: product.salePrice,
+        quantity: quantity,
+        variation: {
+          color: selectedColor,
+          size: selectedStorage,
+          additionalPrice: additionalPrice,
+          variationId: variation._id,
+          optionId: option._id,
+        },
+        subtotal: subtotal,
+      };
 
-      // Lấy cart item vừa thêm để chuyển đến checkout
-      const cartData = res.data;
-      // Tìm item dựa trên productId và variation (để chắc chắn là item vừa thêm)
-      const newItem = cartData.items?.find((item: any) => {
-        const itemProductId = typeof item.productId === 'object' ? item.productId._id : item.productId;
-        const itemVariationId = item.variation?.variationId || item.variationId;
-        const itemOptionId = item.variation?.optionId || item.optionId;
-        
-        return (
-          itemProductId?.toString() === product._id.toString() &&
-          itemVariationId?.toString() === variation._id.toString() &&
-          itemOptionId?.toString() === option._id.toString()
-        );
-      });
-
-      if (newItem) {
-        // Lưu item vào localStorage để checkout
-        localStorage.setItem("checkoutItems", JSON.stringify([newItem]));
-        // Chuyển đến checkout
-        navigate("/checkout");
-      } else {
-        // Fallback: nếu không tìm thấy item chính xác, lấy item cuối cùng có cùng productId
-        const matchingItems = cartData.items?.filter((item: any) => {
-          const itemProductId = typeof item.productId === 'object' ? item.productId._id : item.productId;
-          return itemProductId?.toString() === product._id.toString();
-        });
-        
-        if (matchingItems && matchingItems.length > 0) {
-          // Lấy item cuối cùng (item vừa thêm thường ở cuối)
-          const fallbackItem = matchingItems[matchingItems.length - 1];
-          localStorage.setItem("checkoutItems", JSON.stringify([fallbackItem]));
-          navigate("/checkout");
-        } else {
-          toast.error("Không thể lấy thông tin sản phẩm vừa thêm!");
-        }
-      }
+      // Lưu vào localStorage để checkout
+      localStorage.setItem("checkoutItems", JSON.stringify([checkoutItem]));
+      
+      // Chuyển đến checkout
+      navigate("/checkout");
     } catch (err: any) {
       console.error("Lỗi mua ngay:", err);
       toast.error(

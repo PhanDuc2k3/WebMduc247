@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertTriangle, XCircle, CheckCircle, Wallet } from "lucide-react";
 import Subtotal from "./Subtotal";
 import CartDiscount from "./CartDiscount";
 import ShippingFee from "./ShippingFee";
@@ -12,6 +13,7 @@ import orderApi from "../../../api/orderApi";
 import type { CreateOrderData } from "../../../api/orderApi";
 import paymentApi from "../../../api/paymentApi";
 import walletApi from "../../../api/walletApi";
+import { toast } from "react-toastify";
 
 interface OrderSummaryProps {
   shippingFee: number;
@@ -140,11 +142,25 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const total = Math.max(0, selectedCartSubtotal - discount + shippingFee - (shippingDiscount || 0));
 
 const handleCheckout = async () => {
-  if (!selectedAddress) return alert("Vui lòng chọn địa chỉ giao hàng!");
+  if (!selectedAddress) {
+    toast.warning(
+      <div className="flex items-center gap-2">
+        <AlertTriangle className="text-yellow-500" size={18} />
+        <span>Vui lòng chọn địa chỉ giao hàng!</span>
+      </div>
+    );
+    return;
+  }
 
   const selectedItemsSaved = localStorage.getItem("checkoutItems");
   if (!selectedItemsSaved) {
-    return alert("Không có sản phẩm nào để thanh toán");
+    toast.error(
+      <div className="flex items-center gap-2">
+        <XCircle className="text-red-500" size={18} />
+        <span>Không có sản phẩm nào để thanh toán</span>
+      </div>
+    );
+    return;
   }
 
   try {
@@ -157,7 +173,13 @@ const handleCheckout = async () => {
         // Format cũ: mảng ID, cần lấy từ cart
         const selectedItemIds: string[] = parsed;
         if (!cart?.items) {
-          return alert("Không lấy được dữ liệu giỏ hàng");
+          toast.error(
+            <div className="flex items-center gap-2">
+              <XCircle className="text-red-500" size={18} />
+              <span>Không lấy được dữ liệu giỏ hàng</span>
+            </div>
+          );
+          return;
         }
 
         itemsForOrder = cart.items
@@ -179,7 +201,13 @@ const handleCheckout = async () => {
     }
 
     if (!itemsForOrder.length) {
-      return alert("Không có sản phẩm nào để thanh toán");
+      toast.error(
+        <div className="flex items-center gap-2">
+          <XCircle className="text-red-500" size={18} />
+          <span>Không có sản phẩm nào để thanh toán</span>
+        </div>
+      );
+      return;
     }
 
     const shippingAddressString = `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`;
@@ -207,17 +235,48 @@ const orderPayload: CreateOrderData = {
     console.log("=== Shipping Address ===");
     console.log(selectedAddress);
 
+    // Kiểm tra số dư ví TRƯỚC KHI tạo đơn hàng (nếu thanh toán bằng ví)
+    if (paymentMethod === "wallet") {
+      try {
+        const walletRes = await walletApi.getWallet();
+        const walletBalance = walletRes.data.wallet.balance;
+        const estimatedTotal = total; // Sử dụng total đã tính
+        
+        if (walletBalance < estimatedTotal) {
+          toast.warning(
+            <div className="flex items-center gap-2">
+              <Wallet className="text-yellow-500" size={18} />
+              <span>Số dư ví không đủ! Số dư hiện tại: {walletBalance.toLocaleString('vi-VN')}₫. Vui lòng nạp thêm tiền vào ví.</span>
+            </div>
+          );
+          navigate('/wallet');
+          return; // Dừng lại, không tạo đơn hàng
+        }
+      } catch (err: any) {
+        console.error("=== Lỗi kiểm tra số dư ví ===", err);
+        const errorMessage = err.response?.data?.message || err.message || "Không thể kiểm tra số dư ví";
+        toast.error(
+          <div className="flex items-center gap-2">
+            <XCircle className="text-red-500" size={18} />
+            <span>{errorMessage}</span>
+          </div>
+        );
+        return; // Dừng lại, không tạo đơn hàng
+      }
+    }
+
+    // Tạo đơn hàng
     const orderRes = await orderApi.createOrder(orderPayload);
     const orderData = orderRes.data;
 
     console.log("=== Response từ API createOrder ===");
     console.log(orderData);
 
-    // Lưu order info vào localStorage
+    // Lưu order info vào localStorage (chỉ lưu khi đơn hàng được tạo thành công)
     localStorage.setItem("lastOrderId", orderData.order._id);
     localStorage.setItem("lastOrderCode", orderData.order.orderCode);
-    localStorage.removeItem("checkoutItems");
 
+    // Xử lý thanh toán theo phương thức
     if (paymentMethod === "momo") {
       try {
         const payRes = await paymentApi.createMoMoPayment({
@@ -233,14 +292,23 @@ const orderPayload: CreateOrderData = {
           throw new Error(payData.message || "Không lấy được payUrl từ MoMo");
         }
         
+        // Chỉ xóa checkoutItems khi thanh toán được tạo thành công
+        localStorage.removeItem("checkoutItems");
+        
         // Chuyển hướng đến trang thanh toán MoMo
         window.location.href = payData.payUrl;
         return;
       } catch (err: any) {
         console.error("=== Lỗi tạo thanh toán MoMo ===", err);
         const errorMessage = err.response?.data?.message || err.message || "Không thể tạo thanh toán MoMo";
-        alert(errorMessage);
-        throw new Error(errorMessage);
+        toast.error(
+          <div className="flex items-center gap-2">
+            <XCircle className="text-red-500" size={18} />
+            <span>{errorMessage}</span>
+          </div>
+        );
+        // Không xóa checkoutItems, giữ lại để người dùng có thể thử lại
+        return; // Dừng lại, không điều hướng
       }
     }
 
@@ -259,6 +327,9 @@ const orderPayload: CreateOrderData = {
           throw new Error("Không lấy được QR code từ VietQR");
         }
         
+        // Chỉ xóa checkoutItems khi QR code được tạo thành công
+        localStorage.removeItem("checkoutItems");
+        
         // Lưu thông tin QR code vào localStorage để hiển thị ở trang thanh toán
         localStorage.setItem("vietqrData", JSON.stringify({
           qrCodeUrl: payData.qrCodeUrl,
@@ -275,93 +346,115 @@ const orderPayload: CreateOrderData = {
       } catch (err: any) {
         console.error("=== Lỗi tạo thanh toán VietQR ===", err);
         const errorMessage = err.response?.data?.message || err.message || "Không thể tạo thanh toán VietQR";
-                  alert(errorMessage);
-          throw new Error(errorMessage);
-        }
+        toast.error(
+          <div className="flex items-center gap-2">
+            <XCircle className="text-red-500" size={18} />
+            <span>{errorMessage}</span>
+          </div>
+        );
+        // Không xóa checkoutItems, giữ lại để người dùng có thể thử lại
+        return; // Dừng lại, không điều hướng
       }
+    }
 
-      if (paymentMethod === "wallet") {
-        try {
-          const totalAmount = orderData.order.total;
-          
-          // Kiểm tra số dư ví trước
-          const walletRes = await walletApi.getWallet();
-          const walletBalance = walletRes.data.wallet.balance;
-          
-          if (walletBalance < totalAmount) {
-            alert(`Số dư ví không đủ! Số dư hiện tại: ${walletBalance.toLocaleString('vi-VN')}₫. Vui lòng nạp thêm tiền vào ví.`);
-            navigate('/wallet');
-            return;
-          }
-          
-          // Thanh toán bằng ví
-          const payRes = await walletApi.payWithWallet({
-            orderCode: orderData.order.orderCode,
-            amount: totalAmount,
-          });
-          
-          console.log("=== Response Wallet Payment ===", payRes.data);
-          
-          alert("Thanh toán thành công!");
-          navigate(`/order/${orderData.order._id}`);
-          return;
-        } catch (err: any) {
-          console.error("=== Lỗi thanh toán bằng ví ===", err);
-          const errorMessage = err.response?.data?.message || err.message || "Không thể thanh toán bằng ví";
-          alert(errorMessage);
-          throw new Error(errorMessage);
-        }
+    if (paymentMethod === "wallet") {
+      try {
+        const totalAmount = orderData.order.total;
+        
+        // Thanh toán bằng ví (đã kiểm tra số dư ở trên)
+        const payRes = await walletApi.payWithWallet({
+          orderCode: orderData.order.orderCode,
+          amount: totalAmount,
+        });
+        
+        console.log("=== Response Wallet Payment ===", payRes.data);
+        
+        // Chỉ xóa checkoutItems khi thanh toán thành công
+        localStorage.removeItem("checkoutItems");
+        
+        toast.success(
+          <div className="flex items-center gap-2">
+            <CheckCircle className="text-green-500" size={18} />
+            <span>Thanh toán thành công!</span>
+          </div>
+        );
+        navigate(`/order/${orderData.order._id}`);
+        return;
+      } catch (err: any) {
+        console.error("=== Lỗi thanh toán bằng ví ===", err);
+        const errorMessage = err.response?.data?.message || err.message || "Không thể thanh toán bằng ví";
+        toast.error(
+          <div className="flex items-center gap-2">
+            <XCircle className="text-red-500" size={18} />
+            <span>{errorMessage}</span>
+          </div>
+        );
+        // Không xóa checkoutItems, giữ lại để người dùng có thể thử lại
+        return; // Dừng lại, không điều hướng
       }
+    }
 
-      // COD - không cần thanh toán ngay
-      alert("Tạo đơn hàng thành công!");
-      navigate(`/order/${orderData.order._id}`);
+    // COD - không cần thanh toán ngay, xóa checkoutItems ngay
+    localStorage.removeItem("checkoutItems");
+    
+    toast.success(
+      <div className="flex items-center gap-2">
+        <CheckCircle className="text-green-500" size={18} />
+        <span>Tạo đơn hàng thành công!</span>
+      </div>
+    );
+    navigate(`/order/${orderData.order._id}`);
   } catch (err) {
     console.error("=== Lỗi handleCheckout ===", err);
-    alert(err instanceof Error ? err.message : "Có lỗi xảy ra khi thanh toán");
+    toast.error(
+      <div className="flex items-center gap-2">
+        <XCircle className="text-red-500" size={18} />
+        <span>{err instanceof Error ? err.message : "Có lỗi xảy ra khi thanh toán"}</span>
+      </div>
+    );
   }
 };
 
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 text-center animate-fade-in">
-        <p className="text-gray-600 text-lg font-medium">Đang tải tóm tắt đơn hàng...</p>
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 p-4 sm:p-6 text-center animate-fade-in">
+        <p className="text-gray-600 text-base sm:text-lg font-medium">Đang tải tóm tắt đơn hàng...</p>
       </div>
     );
   }
   
   if (!cart) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 p-6 text-center animate-fade-in">
-        <p className="text-red-500 text-lg font-medium">Không lấy được dữ liệu giỏ hàng</p>
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 p-4 sm:p-6 text-center animate-fade-in">
+        <p className="text-red-500 text-base sm:text-lg font-medium">Không lấy được dữ liệu giỏ hàng</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-2xl border-2 border-gray-200 overflow-hidden sticky top-6">
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-6 border-b-2 border-gray-200">
-        <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl border-2 border-gray-200 overflow-hidden lg:sticky lg:top-6">
+      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 sm:p-6 border-b-2 border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
           Tóm tắt đơn hàng
         </h2>
-        <p className="text-white/90 text-sm mt-1">Kiểm tra thông tin trước khi thanh toán</p>
+        <p className="text-white/90 text-xs sm:text-sm mt-1">Kiểm tra thông tin trước khi thanh toán</p>
       </div>
-      <div className="p-6 space-y-4 bg-gradient-to-br from-white to-gray-50">
+      <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 bg-gradient-to-br from-white to-gray-50">
         <Subtotal subtotal={selectedCartSubtotal} />
         {discount > 0 && <CartDiscount voucherDiscount={discount} />}
         <ShippingFee shippingFee={shippingFee} shippingDiscount={shippingDiscount || 0} />
-        <div className="border-t-2 border-gray-300 pt-4 mt-4">
+        <div className="border-t-2 border-gray-300 pt-3 sm:pt-4 mt-3 sm:mt-4">
           <TotalAmount total={total} />
         </div>
         <button
           onClick={handleCheckout}
-          className="w-full mt-6 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-bold text-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-2"
+          className="w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg sm:rounded-xl font-bold text-base sm:text-lg lg:text-xl hover:from-green-600 hover:to-emerald-700 transition-all duration-300 shadow-lg hover:shadow-2xl transform hover:scale-105 flex items-center justify-center gap-2"
         >
           <span>Thanh toán ngay</span>
         </button>
-        <div className="p-4 bg-yellow-50 border-2 border-yellow-200 rounded-xl mt-4">
-          <p className="text-yellow-800 text-sm font-semibold flex items-center gap-2">
+        <div className="p-3 sm:p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg sm:rounded-xl mt-3 sm:mt-4">
+          <p className="text-yellow-800 text-xs sm:text-sm font-semibold flex items-center gap-2">
             Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi xác nhận
           </p>
         </div>
