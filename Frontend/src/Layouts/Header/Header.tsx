@@ -107,13 +107,7 @@ const Header: React.FC = () => {
       <div className="flex items-center justify-between px-2 sm:px-4 md:px-8 py-2 sm:py-3 bg-white gap-1 sm:gap-2">
         {/* Logo */}
         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="md:hidden p-1.5 sm:p-2 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg hover:from-gray-200 hover:to-gray-300 transition-all duration-300 transform hover:scale-110 shadow-md"
-            aria-label="Mở menu"
-          >
-            <ChevronRight size={16} className="sm:w-5 sm:h-5 text-gray-700" />
-          </button>
+
           <Link to="/" className="relative group animate-fade-in-left flex-shrink-0">
             <div className="flex items-center gap-1 sm:gap-2">
               <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-xl group-hover:shadow-purple-500/50 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
@@ -348,6 +342,7 @@ const Header: React.FC = () => {
                       lastSeen={lastSeen}
                       handleLogout={handleLogout}
                       setShowDropdown={setShowDropdown}
+                      userRole={user.role}
                     />
                   )}
                 </>
@@ -394,6 +389,7 @@ const Header: React.FC = () => {
                       lastSeen={lastSeen}
                       handleLogout={handleLogout}
                       setShowDropdown={setShowDropdown}
+                      userRole={user.role}
                     />
                   )}
                 </>
@@ -431,55 +427,7 @@ const Header: React.FC = () => {
       </nav>
 
       {/* Mobile sidebar */}
-      <div
-        className={`fixed inset-0 z-[9998] md:hidden transition-all duration-300 ${
-          isSidebarOpen ? "visible opacity-100" : "invisible opacity-0 pointer-events-none"
-        }`}
-      >
-        <div
-          className={`fixed inset-0 bg-black/40 transition-opacity duration-300 ${
-            isSidebarOpen ? "opacity-100" : "opacity-0"
-          }`}
-          onClick={() => setIsSidebarOpen(false)}
-        ></div>
-        <div
-          className={`fixed top-0 left-0 h-screen w-full bg-white shadow-2xl border-r border-gray-200 transform transition-transform duration-300 ${
-            isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <div className="flex flex-col h-full bg-white">
-            <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 bg-white">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold">
-                  MĐ
-                </div>
-                <span className="font-bold text-lg text-gray-800">Danh mục</span>
-              </div>
-              <button
-                onClick={() => setIsSidebarOpen(false)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                aria-label="Đóng menu"
-              >
-                <X size={18} className="text-gray-600" />
-              </button>
-            </div>
-            <nav className="flex flex-col py-4 px-2 overflow-y-auto flex-1 bg-white">
-              {navLinks.map(({ to, label, icon: Icon }, index) => (
-                <Link
-                  key={`${label}-sidebar-${index}`}
-                  to={to}
-                  className="flex items-center gap-3 px-4 py-3 mx-2 my-1 text-base font-semibold text-gray-700 bg-white rounded-lg border border-gray-100 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:border-purple-200 hover:shadow-sm transition-all"
-                >
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center text-purple-600 flex-shrink-0">
-                    <Icon size={20} />
-                  </div>
-                  <span>{label}</span>
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </div>
-      </div>
+
     </header>
   );
 };

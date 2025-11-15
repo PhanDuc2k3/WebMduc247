@@ -45,6 +45,7 @@ const Login: React.FC = () => {
             _id: userId, // 🔹 luôn có id ở đây
             fullName: data.user.fullName,
             avatarUrl: data.user.avatarUrl || "",
+            role: data.user.role || undefined, // ✅ lưu role để AdminRoute có thể kiểm tra
             online: true,
             lastSeen: new Date().toISOString(),
           };

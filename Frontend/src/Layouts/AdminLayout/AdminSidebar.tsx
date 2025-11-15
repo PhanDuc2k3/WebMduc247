@@ -1,8 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { 
+  LayoutDashboard, 
+  Users, 
+  Store, 
+  ShoppingBag, 
+  Ticket, 
+  Megaphone, 
+  Image as ImageIcon,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
+import userApi from '../../api/userApi';
 
 interface MenuItem {
   label: string;
-  icon?: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
   key: string;
   badge?: number;
 }
@@ -14,16 +27,34 @@ interface AdminSidebarProps {
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        const res = await userApi.getAllSellerRequests();
+        const requests = res.data?.requests || [];
+        const pending = requests.filter((r: any) => r.sellerRequest?.status === 'pending');
+        setPendingCount(pending.length);
+      } catch (error) {
+        console.error('Error fetching pending requests:', error);
+      }
+    };
+    fetchPendingCount();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchPendingCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const menuItems: MenuItem[] = [
-    { label: 'Dashboard', key: 'dashboard' },
-    { label: 'Người dùng', key: 'users' },
-    { label: 'Duyệt đơn bán', key: 'sellerRequest', badge: 3 },
-    { label: 'Banner', key: 'banner' },
-    { label: 'Cửa hàng', key: 'stores' },
-    { label: 'Đơn hàng', key: 'orders' },
-    { label: 'Voucher', key: 'vouchers' },
-    { label: 'Tin tức Khuyến mãi', key: 'promotions' },
+    { label: 'Dashboard', key: 'dashboard', icon: LayoutDashboard },
+    { label: 'Người dùng', key: 'users', icon: Users },
+    { label: 'Duyệt đơn bán', key: 'sellerRequest', icon: CheckCircle2, badge: pendingCount },
+    { label: 'Banner', key: 'banner', icon: ImageIcon },
+    { label: 'Cửa hàng', key: 'stores', icon: Store },
+    { label: 'Đơn hàng', key: 'orders', icon: ShoppingBag },
+    { label: 'Voucher', key: 'vouchers', icon: Ticket },
+    { label: 'Tin tức Khuyến mãi', key: 'promotions', icon: Megaphone },
   ];
 
   return (
@@ -50,46 +81,54 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange })
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="w-8 h-8 flex items-center justify-center bg-purple-800 hover:bg-purple-700 rounded-lg transition-all duration-300"
           >
-            <span className="text-white text-sm">{isCollapsed ? '▶' : '◀'}</span>
+            {isCollapsed ? (
+              <ChevronRight className="text-white w-4 h-4" />
+            ) : (
+              <ChevronLeft className="text-white w-4 h-4" />
+            )}
           </button>
         </div>
       </div>
 
       {/* Menu Items */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-        {menuItems.map((item) => (
-          <button
-            key={item.key}
-            onClick={() => onMenuChange(item.key)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${
-              activeMenu === item.key
-                ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg scale-105'
-                : 'hover:bg-purple-800/50 hover:scale-105'
-            }`}
-          >
-            {item.icon && (
-              <span className={`text-2xl transition-transform duration-300 ${activeMenu === item.key ? 'scale-110' : 'group-hover:scale-110'}`}>
-                {item.icon}
-              </span>
-            )}
-            {!isCollapsed && (
-              <>
-                <span className={`font-bold transition-colors ${activeMenu === item.key ? 'text-white' : 'text-purple-200'}`}>
-                  {item.label}
-                </span>
-                {item.badge && (
-                  <span className="ml-auto bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse">
-                    {item.badge}
+        {menuItems.map((item) => {
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.key}
+              onClick={() => onMenuChange(item.key)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${
+                activeMenu === item.key
+                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg scale-105'
+                  : 'hover:bg-purple-800/50 hover:scale-105'
+              }`}
+            >
+              <Icon 
+                size={20} 
+                className={`transition-transform duration-300 ${
+                  activeMenu === item.key ? 'text-white scale-110' : 'text-purple-300 group-hover:text-white group-hover:scale-110'
+                }`} 
+              />
+              {!isCollapsed && (
+                <>
+                  <span className={`font-bold transition-colors flex-1 text-left ${activeMenu === item.key ? 'text-white' : 'text-purple-200'}`}>
+                    {item.label}
                   </span>
-                )}
-              </>
-            )}
-            {/* Active indicator */}
-            {activeMenu === item.key && !isCollapsed && (
-              <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"></div>
-            )}
-          </button>
-        ))}
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <span className="bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse min-w-[24px] text-center">
+                      {item.badge}
+                    </span>
+                  )}
+                </>
+              )}
+              {/* Active indicator */}
+              {activeMenu === item.key && !isCollapsed && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-white rounded-r-full"></div>
+              )}
+            </button>
+          );
+        })}
       </nav>
 
       {/* Footer */}

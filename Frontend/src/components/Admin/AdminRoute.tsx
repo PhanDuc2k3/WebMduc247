@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Loader2, ShieldX } from "lucide-react";
+import axiosClient from "../../api/axiosClient";
 
 interface AdminRouteProps {
   children: React.ReactNode;
@@ -11,19 +12,46 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const checkAdmin = () => {
+    const checkAdmin = async () => {
       try {
+        // ✅ Kiểm tra từ localStorage trước
         const userStr = localStorage.getItem("user");
-        if (!userStr) {
+        const user = userStr ? JSON.parse(userStr) : null;
+        
+        // ✅ Nếu localStorage có role và là admin, cho phép truy cập ngay
+        if (user && user.role === "admin") {
+          setIsAdmin(true);
+          setIsLoading(false);
+          return;
+        }
+
+        // ✅ Nếu localStorage không có role hoặc role không phải admin, lấy từ API
+        const token = localStorage.getItem("token");
+        if (!token) {
           setIsAdmin(false);
           setIsLoading(false);
           return;
         }
 
-        const user = JSON.parse(userStr);
-        if (user.role === "admin") {
-          setIsAdmin(true);
-        } else {
+        try {
+          const res = await axiosClient.get("/api/users/profile", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const profile = res.data.user || res.data;
+          
+          if (profile.role === "admin") {
+            setIsAdmin(true);
+            // ✅ Cập nhật role vào localStorage
+            if (userStr) {
+              const userData = JSON.parse(userStr);
+              userData.role = profile.role;
+              localStorage.setItem("user", JSON.stringify(userData));
+            }
+          } else {
+            setIsAdmin(false);
+          }
+        } catch (apiError) {
+          console.error("Error fetching profile from API:", apiError);
           setIsAdmin(false);
         }
       } catch (error) {

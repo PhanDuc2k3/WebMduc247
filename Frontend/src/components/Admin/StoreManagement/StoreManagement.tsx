@@ -1,6 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import storeApi from '../../../api/storeApi';
-import { Edit, Trash2, Plus, Search, Eye } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, Eye, Store as StoreIcon, Loader2 } from 'lucide-react';
+import Pagination from '../Pagination';
+
+// Đồng nhất CSS cho status badges
+const getStatusBadgeClass = (isActive: boolean) => {
+  return `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
+    isActive
+      ? 'bg-green-100 text-green-700'
+      : 'bg-gray-100 text-gray-700'
+  }`;
+};
 
 interface Store {
   _id: string;
@@ -18,6 +28,8 @@ const StoreManagement: React.FC = () => {
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const [showForm, setShowForm] = useState(false);
   const [editingStore, setEditingStore] = useState<Store | null>(null);
   const [formData, setFormData] = useState<{
@@ -105,16 +117,39 @@ const StoreManagement: React.FC = () => {
     }
   };
 
-  const filteredStores = stores.filter(store =>
-    store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    store.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Sắp xếp và lọc stores
+  const filteredAndSortedStores = useMemo(() => {
+    let filtered = stores.filter(store =>
+      store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      store.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Sắp xếp theo createdAt desc (mới nhất lên trước)
+    filtered.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+    
+    return filtered;
+  }, [stores, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedStores.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedStores = filteredAndSortedStores.slice(startIndex, endIndex);
+
+  // Reset page khi search thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
-        <p className="text-gray-600 text-lg font-medium">⏳ Đang tải cửa hàng...</p>
+        <Loader2 className="w-16 h-16 text-purple-500 animate-spin mb-4" />
+        <p className="text-gray-600 text-lg font-medium">Đang tải cửa hàng...</p>
       </div>
     );
   }
@@ -123,7 +158,8 @@ const StoreManagement: React.FC = () => {
     <div className="p-6 lg:p-8">
       <div className="mb-6 animate-fade-in-down">
         <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <span>🏬</span> Quản lý cửa hàng
+          <StoreIcon size={24} className="text-blue-600" />
+          Quản lý cửa hàng
         </h2>
         <p className="text-gray-600 text-sm">
           Quản lý và chỉnh sửa thông tin các cửa hàng trong hệ thống
@@ -159,20 +195,21 @@ const StoreManagement: React.FC = () => {
       </div>
 
       {/* Stores Table */}
-      {filteredStores.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Cửa hàng</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Chủ sở hữu</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Danh mục</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStores.map((store, index) => (
+      {filteredAndSortedStores.length > 0 ? (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Cửa hàng</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Chủ sở hữu</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Danh mục</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {paginatedStores.map((store, index) => (
                 <tr
                   key={store._id}
                   className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 animate-fade-in-up"
@@ -201,13 +238,7 @@ const StoreManagement: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
-                        store.isActive
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
-                          : 'bg-gradient-to-r from-gray-500 to-gray-600 text-white'
-                      }`}
-                    >
+                    <span className={getStatusBadgeClass(store.isActive ?? true)}>
                       {store.isActive ? 'Hoạt động' : 'Tạm khóa'}
                     </span>
                   </td>
@@ -230,14 +261,26 @@ const StoreManagement: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredAndSortedStores.length}
+            />
+          )}
+        </>
       ) : (
         <div className="text-center py-20 animate-fade-in-up">
-          <div className="text-8xl mb-4 animate-bounce">🏬</div>
-          <p className="text-gray-500 text-lg font-medium">Không tìm thấy cửa hàng nào</p>
+          <StoreIcon size={64} className="mx-auto mb-4 text-gray-400" />
+          <p className="text-gray-500 text-lg font-medium">
+            {searchTerm ? "Không tìm thấy cửa hàng nào" : "Không có cửa hàng nào"}
+          </p>
         </div>
       )}
 
@@ -247,8 +290,9 @@ const StoreManagement: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="p-6 border-b-2 border-gray-200">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold gradient-text">
-                  {editingStore ? '✏️ Sửa cửa hàng' : '➕ Thêm cửa hàng mới'}
+                <h3 className="text-2xl font-bold gradient-text flex items-center gap-2">
+                  <Edit size={24} className="text-purple-600" />
+                  {editingStore ? 'Sửa cửa hàng' : 'Thêm cửa hàng mới'}
                 </h3>
                 <button
                   onClick={() => {
@@ -307,9 +351,10 @@ const StoreManagement: React.FC = () => {
               <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
                 >
-                  {editingStore ? '💾 Lưu thay đổi' : '➕ Tạo cửa hàng'}
+                  <Edit size={18} />
+                  {editingStore ? 'Lưu thay đổi' : 'Tạo cửa hàng'}
                 </button>
                 <button
                   type="button"

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { UserCircle, Store, LogOut, Gift, Wallet, MessageCircle } from "lucide-react";
+import { UserCircle, Store, LogOut, Gift, Wallet, MessageCircle, Settings } from "lucide-react";
 import walletApi from "../../api/walletApi";
 import { useChat } from "../../context/chatContext";
 
@@ -10,9 +10,10 @@ interface Props {
   lastSeen: string | null;
   handleLogout: () => void;
   setShowDropdown: (v: boolean) => void;
+  userRole?: string; // ✅ role để kiểm tra admin
 }
 
-const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, setShowDropdown }) => {
+const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, setShowDropdown, userRole }) => {
   const navigate = useNavigate();
   const { unreadMessages } = useChat();
   const [walletBalance, setWalletBalance] = useState<number>(0);
@@ -104,6 +105,18 @@ const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, setShow
       >
         <Store className="mr-2" size={18} /> Cửa hàng của tôi
       </button>
+      {/* Admin option - chỉ hiển thị khi user là admin */}
+      {userRole === "admin" && (
+        <button
+          onClick={() => {
+            setShowDropdown(false);
+            navigate("/admin");
+          }}
+          className="flex items-center w-full px-3 py-2 rounded-md hover:bg-gray-100 text-blue-600 font-semibold border-t border-gray-200 mt-1"
+        >
+          <Settings className="mr-2" size={18} /> Quản lý website
+        </button>
+      )}
       <button
         onClick={handleLogout}
         className="flex items-center w-full px-3 py-2 rounded-md hover:bg-gray-100 text-red-600"

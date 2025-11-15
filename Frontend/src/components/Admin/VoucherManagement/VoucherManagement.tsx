@@ -1,12 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import voucherApi from '../../../api/voucherApi';
 import type { VoucherType } from '../../../api/voucherApi';
-import { Edit, Trash2, Plus, Search, Gift, Lock, Unlock } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, Gift, Lock, Unlock, Loader2, Ticket } from 'lucide-react';
+import Pagination from '../Pagination';
+
+// Đồng nhất CSS cho status badges
+const getStatusBadgeClass = (isActive: boolean) => {
+  return `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
+    isActive
+      ? 'bg-green-100 text-green-700'
+      : 'bg-gray-100 text-gray-700'
+  }`;
+};
 
 const VoucherManagement: React.FC = () => {
   const [vouchers, setVouchers] = useState<VoucherType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const [showForm, setShowForm] = useState(false);
   const [editingVoucher, setEditingVoucher] = useState<VoucherType | null>(null);
   const [formData, setFormData] = useState<VoucherType>({
@@ -160,15 +172,38 @@ const VoucherManagement: React.FC = () => {
     }
   };
 
-  const filteredVouchers = vouchers.filter(voucher =>
-    voucher.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    voucher.description?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Sắp xếp và lọc vouchers
+  const filteredAndSortedVouchers = useMemo(() => {
+    let filtered = vouchers.filter(voucher =>
+      voucher.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      voucher.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Sắp xếp theo createdAt desc (mới nhất lên trước)
+    filtered.sort((a, b) => {
+      const dateA = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0;
+      const dateB = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+    
+    return filtered;
+  }, [vouchers, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedVouchers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedVouchers = filteredAndSortedVouchers.slice(startIndex, endIndex);
+
+  // Reset page khi search thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
+        <Loader2 className="w-16 h-16 text-purple-500 animate-spin mb-4" />
         <p className="text-gray-600 text-lg font-medium">Đang tải voucher...</p>
       </div>
     );
@@ -228,113 +263,102 @@ const VoucherManagement: React.FC = () => {
       </div>
 
       {/* Vouchers Table */}
-      {filteredVouchers.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã voucher</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mô tả</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Giảm giá</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Đơn tối thiểu</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thời hạn</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredVouchers.map((voucher, index) => (
-                <tr
-                  key={voucher._id}
-                  className={`hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in-up ${
-                    !voucher.isActive ? 'bg-gray-50 opacity-75' : ''
-                  }`}
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center gap-2">
-                      {!voucher.isActive && <Lock size={16} className="text-gray-400" />}
-                      <span className={`font-bold ${!voucher.isActive ? 'text-gray-500' : 'text-gray-900'}`}>
-                        {voucher.code}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className={`text-sm max-w-xs truncate ${!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}`}>
-                      {voucher.description || 'Không có mô tả'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`font-bold ${!voucher.isActive ? 'text-gray-400' : 'text-green-600'}`}>
-                      {voucher.discountType === 'percent'
-                        ? `${voucher.discountValue}%`
-                        : `${voucher.discountValue.toLocaleString('vi-VN')}đ`}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}>
-                      {voucher.minOrderValue ? `${voucher.minOrderValue.toLocaleString('vi-VN')}đ` : 'Không có'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {voucher.startDate && voucher.endDate
-                      ? `${new Date(voucher.startDate).toLocaleDateString('vi-VN')} - ${new Date(voucher.endDate).toLocaleDateString('vi-VN')}`
-                      : 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
-                        voucher.isActive
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
-                          : 'bg-gradient-to-r from-orange-500 to-red-500 text-white'
-                      }`}
+{filteredAndSortedVouchers.length > 0 ? (
+  <>
+    <div className="overflow-x-auto">
+      <table className="w-full">
+        <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+          <tr>
+            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã voucher</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mô tả</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Giảm giá</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Đơn tối thiểu</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thời hạn</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
+            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thao tác</th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {paginatedVouchers.map((voucher, index) => (
+            <tr
+              key={voucher._id}
+              className={`hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in-up ${!voucher.isActive ? 'bg-gray-50 opacity-75' : ''}`}
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="flex items-center gap-2">
+                  {!voucher.isActive && <Lock size={16} className="text-gray-400" />}
+                  <span className={`font-bold ${!voucher.isActive ? 'text-gray-500' : 'text-gray-900'}`}>
+                    {voucher.code}
+                  </span>
+                </div>
+              </td>
+              <td className="px-6 py-4">
+                <div className={`text-sm max-w-xs truncate ${!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}`}>
+                  {voucher.description || 'Không có mô tả'}
+                </div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className={`font-bold ${!voucher.isActive ? 'text-gray-400' : 'text-green-600'}`}>
+                  {voucher.discountType === 'percent' ? `${voucher.discountValue}%` : `${voucher.discountValue.toLocaleString('vi-VN')}đ`}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className={!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}>
+                  {voucher.minOrderValue ? `${voucher.minOrderValue.toLocaleString('vi-VN')}đ` : 'Không có'}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {voucher.startDate && voucher.endDate
+                  ? `${new Date(voucher.startDate).toLocaleDateString('vi-VN')} - ${new Date(voucher.endDate).toLocaleDateString('vi-VN')}`
+                  : 'N/A'}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <span className={getStatusBadgeClass(voucher.isActive ?? true)}>
+                  {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                </span>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEdit(voucher)}
+                    className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
+                  >
+                    <Edit size={16} />
+                    Sửa
+                  </button>
+                  {voucher._id && (
+                    <button
+                      onClick={() => handleToggleStatus(voucher._id)}
+                      className={`${voucher.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1`}
+                      title={voucher.isActive ? 'Khóa voucher' : 'Mở khóa voucher'}
                     >
-                      {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => handleEdit(voucher)}
-                        className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
-                      >
-                        <Edit size={16} />
-                        Sửa
-                      </button>
-                      {voucher._id && (
-                        <button
-                          onClick={() => handleToggleStatus(voucher._id)}
-                          className={`${
-                            voucher.isActive
-                              ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50'
-                              : 'text-green-600 hover:text-green-900 hover:bg-green-50'
-                          } px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1`}
-                          title={voucher.isActive ? 'Khóa voucher' : 'Mở khóa voucher'}
-                        >
-                          {voucher.isActive ? <Lock size={16} /> : <Unlock size={16} />}
-                          {voucher.isActive ? 'Khóa' : 'Mở khóa'}
-                        </button>
-                      )}
-                      <button
-                        onClick={() => voucher._id && handleDelete(voucher._id)}
-                        className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
-                      >
-                        <Trash2 size={16} />
-                        Xóa
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <div className="text-center py-20 animate-fade-in-up">
-          <div className="text-8xl mb-4 animate-bounce">��</div>
-          <p className="text-gray-500 text-lg font-medium">Không tìm thấy voucher nào</p>
-        </div>
-      )}
+                      {voucher.isActive ? <Lock size={16} /> : <Unlock size={16} />}
+                      {voucher.isActive ? 'Khóa' : 'Mở khóa'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => voucher._id && handleDelete(voucher._id)}
+                    className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
+                  >
+                    <Trash2 size={16} />
+                    Xóa
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </>   /* <-- DONG fragment quan trong */
+) : (
+  <div className="text-center py-20 animate-fade-in-up">
+    <div className="text-8xl mb-4 animate-bounce">🎫</div>
+    <p className="text-gray-500 text-lg font-medium">Không tìm thấy voucher nào</p>
+  </div>
+)}
+
 
       {/* Form Modal */}
       {showForm && (
@@ -342,7 +366,8 @@ const VoucherManagement: React.FC = () => {
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
             <div className="p-6 border-b-2 border-gray-200">
               <div className="flex items-center justify-between">
-                                  <h3 className="text-2xl font-bold gradient-text">
+                                  <h3 className="text-2xl font-bold gradient-text flex items-center gap-2">
+                    <Edit size={24} className="text-purple-600" />
                     {editingVoucher ? 'Sửa voucher' : 'Thêm voucher mới'}
                   </h3>
                 <button

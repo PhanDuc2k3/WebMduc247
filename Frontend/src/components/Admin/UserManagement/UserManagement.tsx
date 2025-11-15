@@ -1,11 +1,28 @@
-import React, { useEffect, useState } from "react";
-import userApi from "../../../api/userApi"; 
+import React, { useEffect, useState, useMemo } from "react";
+import userApi from "../../../api/userApi";
+import { Search, Edit, Trash2, Calendar, User as UserIcon, Loader2 } from "lucide-react";
+import Pagination from "../Pagination";
 
-const statusColor: Record<string, string> = {
-  "Hoạt động": "bg-green-100 text-green-700",
-  "Chờ duyệt": "bg-yellow-100 text-yellow-700",
-  "Tạm khóa": "bg-red-100 text-red-700",
+// Đồng nhất CSS cho status badges
+const getStatusBadgeClass = (status: string) => {
+  const statusMap: Record<string, string> = {
+    "Hoạt động": "bg-green-100 text-green-700",
+    "Chờ duyệt": "bg-yellow-100 text-yellow-700",
+    "Tạm khóa": "bg-red-100 text-red-700",
+    "pending": "bg-yellow-100 text-yellow-700",
+    "approved": "bg-green-100 text-green-700",
+    "rejected": "bg-red-100 text-red-700",
+  };
+  return `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
+    statusMap[status] || "bg-gray-100 text-gray-700"
+  }`;
 };
+interface Order {
+  _id: string;
+  orderCode?: string;
+  status?: string;
+  statusHistory?: { status: string; timestamp: string | number }[];
+}
 
 interface User {
   _id: string;
@@ -16,10 +33,23 @@ interface User {
   avatarUrl: string;
   status?: string;
 }
+const getLatestStatus = (order: Order & { statusHistory?: { status: string; timestamp: string | number }[] }) => {
+  if (order.statusHistory && order.statusHistory.length > 0) {
+    // Sắp xếp giảm dần theo timestamp
+    const sorted = [...order.statusHistory].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+    return sorted[0].status.toLowerCase();
+  }
+  return (order.status || 'pending').toLowerCase();
+};
 
 const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -48,37 +78,82 @@ const UserManagement: React.FC = () => {
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20">
-      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500 mb-4"></div>
-      <p className="text-gray-600 text-lg font-medium">⏳ Đang tải danh sách người dùng...</p>
+      <Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-4" />
+      <p className="text-gray-600 text-lg font-medium">Đang tải danh sách người dùng...</p>
     </div>
   );
+
+  // Sắp xếp và lọc users
+  const filteredAndSortedUsers = useMemo(() => {
+    let filtered = users.filter(user =>
+      user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Sắp xếp theo createdAt desc (mới nhất lên trước)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+    
+    return filtered;
+  }, [users, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredAndSortedUsers.slice(startIndex, endIndex);
+
+  // Reset page khi search thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   return (
     <div className="p-6 lg:p-8">
       <div className="mb-6 animate-fade-in-down">
         <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <span>👥</span> Quản lý người dùng
+          <UserIcon size={24} className="text-blue-600" />
+          Quản lý người dùng
         </h2>
         <p className="text-gray-600 text-sm">
           Danh sách và quản lý tài khoản người dùng trong hệ thống
         </p>
       </div>
 
-      {users.length > 0 ? (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Người dùng</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Vai trò</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Ngày tham gia</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Trạng thái</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((user, index) => (
+      {/* Search */}
+      <div className="mb-6 animate-fade-in-up">
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Tìm kiếm người dùng..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+          />
+        </div>
+      </div>
+
+      {filteredAndSortedUsers.length > 0 ? (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Người dùng</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Vai trò</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Ngày tham gia</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Trạng thái</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {paginatedUsers.map((user, index) => (
                 <tr 
                   key={user._id} 
                   className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 animate-fade-in-up"
@@ -114,46 +189,57 @@ const UserManagement: React.FC = () => {
                       }`}
                     >
                       {user.role === "buyer"
-                        ? "👤 Khách hàng"
+                        ? "Khách hàng"
                         : user.role === "seller"
-                        ? "🏬 Người bán"
-                        : "👨‍💼 Admin"}
+                        ? "Người bán"
+                        : "Quản trị viên"}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <div className="flex items-center gap-2">
-                      <span>📅</span>
+                      <Calendar size={14} className="text-gray-400" />
                       {new Date(user.createdAt).toLocaleDateString("vi-VN")}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
-                        statusColor[user.status || "Hoạt động"]
-                      }`}
-                    >
-                      {user.status || "Hoạt động"}
-                    </span>
-                  </td>
+<td className="px-6 py-4 whitespace-nowrap">
+  <span className={getStatusBadgeClass(user.status || 'pending')}>
+    {user.status || 'Chưa có trạng thái'}
+  </span>
+</td>
+
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
-                      <button className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110">
-                        ✏️ Sửa
+                      <button className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1">
+                        <Edit size={16} />
+                        Sửa
                       </button>
-                      <button className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110">
-                        🗑️ Xóa
+                      <button className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1">
+                        <Trash2 size={16} />
+                        Xóa
                       </button>
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredAndSortedUsers.length}
+            />
+          )}
+        </>
       ) : (
         <div className="text-center py-20 animate-fade-in-up">
-          <div className="text-8xl mb-4 animate-bounce">😕</div>
-          <p className="text-gray-500 text-lg font-medium">Không có người dùng nào</p>
+          <UserIcon size={64} className="mx-auto mb-4 text-gray-400" />
+          <p className="text-gray-500 text-lg font-medium">
+            {searchTerm ? "Không tìm thấy người dùng nào" : "Không có người dùng nào"}
+          </p>
         </div>
       )}
     </div>

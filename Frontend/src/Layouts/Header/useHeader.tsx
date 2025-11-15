@@ -8,6 +8,7 @@ interface UserType {
   _id?: string;    // ✅ optional để user mặc định "Khách" không lỗi TS
   fullName: string;
   avatarUrl: string;
+  role?: string;   // ✅ role để kiểm tra admin
 }
 
 interface UserContextType {
@@ -26,7 +27,7 @@ interface Props {
 }
 
 export const UserProvider: React.FC<Props> = ({ children }) => {
-  const [user, setUser] = useState<UserType>({ fullName: "Khách", avatarUrl: "" });
+  const [user, setUser] = useState<UserType>({ fullName: "Khách", avatarUrl: "", role: undefined });
   const [online, setOnline] = useState(false);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -36,7 +37,7 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
   const fetchUser = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      setUser({ fullName: "Khách", avatarUrl: "" });
+      setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
       setOnline(false);
       setLastSeen(null);
       return;
@@ -52,13 +53,26 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
         _id: profile._id,                // ✅ luôn set _id
         fullName: profile.fullName || "Khách",
         avatarUrl: profile.avatarUrl || "",
+        role: profile.role || undefined, // ✅ lấy role từ profile
       });
 
       setOnline(profile.online ?? false);
       setLastSeen(profile.lastSeen ?? null);
+
+      // ✅ Cập nhật role vào localStorage để AdminRoute có thể kiểm tra
+      try {
+        const userStr = localStorage.getItem("user");
+        if (userStr) {
+          const userData = JSON.parse(userStr);
+          userData.role = profile.role || undefined;
+          localStorage.setItem("user", JSON.stringify(userData));
+        }
+      } catch (err) {
+        console.warn("[UserContext] Failed to update localStorage role:", err);
+      }
     } catch (err) {
       console.warn("[UserContext] fetchUser failed", err);
-      setUser({ fullName: "Khách", avatarUrl: "" });
+      setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
       setOnline(false);
       setLastSeen(null);
     }
@@ -102,7 +116,7 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
 
-    setUser({ fullName: "Khách", avatarUrl: "" });
+    setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
     setShowDropdown(false);
     setOnline(false);
     setLastSeen(null);

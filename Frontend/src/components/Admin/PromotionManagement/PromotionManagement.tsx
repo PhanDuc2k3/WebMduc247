@@ -1,12 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import promotionApi from '../../../api/promotionApi';
 import type { PromotionType } from '../../../api/promotionApi';
-import { Edit, Trash2, Plus, Search, Tag, Eye } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, Tag, Eye, Loader2, Megaphone } from 'lucide-react';
+import Pagination from '../Pagination';
+
+// Đồng nhất CSS cho status badges
+const getStatusBadgeClass = (isActive: boolean) => {
+  return `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
+    isActive
+      ? 'bg-green-100 text-green-700'
+      : 'bg-gray-100 text-gray-700'
+  }`;
+};
 
 const PromotionManagement: React.FC = () => {
   const [promotions, setPromotions] = useState<PromotionType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const [showForm, setShowForm] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<PromotionType | null>(null);
   const [formData, setFormData] = useState<Partial<PromotionType>>({
@@ -128,16 +140,39 @@ const PromotionManagement: React.FC = () => {
     }
   };
 
-  const filteredPromotions = promotions.filter(
-    (p) =>
-      p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      p.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Sắp xếp và lọc promotions
+  const filteredAndSortedPromotions = useMemo(() => {
+    let filtered = promotions.filter(
+      (p) =>
+        p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Sắp xếp theo createdAt desc (mới nhất lên trước)
+    filtered.sort((a, b) => {
+      const dateA = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0;
+      const dateB = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+    
+    return filtered;
+  }, [promotions, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedPromotions.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedPromotions = filteredAndSortedPromotions.slice(startIndex, endIndex);
+
+  // Reset page khi search thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mb-4"></div>
+        <Loader2 className="w-16 h-16 text-purple-500 animate-spin mb-4" />
         <p className="text-gray-600 text-lg font-medium">Đang tải tin tức khuyến mãi...</p>
       </div>
     );
@@ -147,7 +182,7 @@ const PromotionManagement: React.FC = () => {
     <div className="p-6 lg:p-8">
       <div className="mb-6 animate-fade-in-down">
         <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <Tag size={24} />
+          <Megaphone size={24} className="text-blue-600" />
           Quản lý Tin tức Khuyến mãi
         </h2>
         <p className="text-gray-600 text-sm">
@@ -375,28 +410,23 @@ const PromotionManagement: React.FC = () => {
       )}
 
       {/* Promotions List */}
-      <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-              <tr>
-                <th className="px-6 py-4 text-left font-bold">Tiêu đề</th>
-                <th className="px-6 py-4 text-left font-bold">Danh mục</th>
-                <th className="px-6 py-4 text-left font-bold">Thời gian</th>
-                <th className="px-6 py-4 text-left font-bold">Lượt xem</th>
-                <th className="px-6 py-4 text-left font-bold">Trạng thái</th>
-                <th className="px-6 py-4 text-center font-bold">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredPromotions.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    Không có tin tức khuyến mãi nào
-                  </td>
-                </tr>
-              ) : (
-                filteredPromotions.map((promo) => (
+      {filteredAndSortedPromotions.length > 0 ? (
+        <>
+          <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Tiêu đề</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Danh mục</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thời gian</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Lượt xem</th>
+                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
+                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedPromotions.map((promo) => (
                   <tr key={promo._id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-bold text-gray-900">{promo.title}</div>
@@ -418,14 +448,8 @@ const PromotionManagement: React.FC = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-bold ${
-                          promo.isActive
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        {promo.isActive ? 'Đang hoạt động' : 'Tạm khóa'}
+                      <span className={getStatusBadgeClass(promo.isActive ?? true)}>
+                        {promo.isActive ? 'Hoạt động' : 'Tạm khóa'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -447,12 +471,29 @@ const PromotionManagement: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredAndSortedPromotions.length}
+            />
+          )}
+        </>
+      ) : (
+        <div className="text-center py-20 animate-fade-in-up">
+          <Megaphone size={64} className="mx-auto mb-4 text-gray-400" />
+          <p className="text-gray-500 text-lg font-medium">
+            {searchTerm ? "Không tìm thấy tin tức khuyến mãi nào" : "Không có tin tức khuyến mãi nào"}
+          </p>
         </div>
-      </div>
+      )}
     </div>
   );
 };
