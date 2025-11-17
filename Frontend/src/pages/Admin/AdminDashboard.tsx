@@ -102,14 +102,14 @@ const AdminDashboard: React.FC = () => {
   ];
 
   return (
-    <div className="w-full">
+    <div className="w-full min-h-screen">
       {/* Welcome Section */}
       {activeMenu === 'dashboard' && (
-        <div className="p-6">
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-8 text-white shadow-2xl animate-fade-in-down">
+        <div className="p-4 md:p-6">
+          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-xl md:rounded-2xl p-6 md:p-8 text-white shadow-xl md:shadow-2xl">
             <div>
-              <h1 className="text-4xl font-bold mb-2">Welcome back, Admin!</h1>
-              <p className="text-blue-100 text-lg">Chào mừng bạn trở lại trang quản trị</p>
+              <h1 className="text-2xl md:text-4xl font-bold mb-2">Welcome back, Admin!</h1>
+              <p className="text-blue-100 text-sm md:text-lg">Chào mừng bạn trở lại trang quản trị</p>
             </div>
           </div>
         </div>
@@ -118,7 +118,7 @@ const AdminDashboard: React.FC = () => {
       {/* Main Content Based on Menu - Full Width */}
       <div className="w-full">
         {activeMenu === 'dashboard' && (
-          <div className="p-6 space-y-6">
+          <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             {loading ? (
               <div className="flex justify-center items-center h-64">
                 <div className="text-gray-500 text-lg">Đang tải dữ liệu...</div>
@@ -126,28 +126,28 @@ const AdminDashboard: React.FC = () => {
             ) : (
               <>
                 {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
                   {statsCards.map((card, index) => {
                     const Icon = card.icon;
                     return (
                       <div
                         key={index}
-                        className="bg-white rounded-xl shadow-lg border-2 border-gray-100 p-6 hover:shadow-xl transition-shadow duration-300"
+                        className="bg-white rounded-lg md:rounded-xl shadow-md md:shadow-lg border border-gray-200 md:border-2 md:border-gray-100 p-4 md:p-6 hover:shadow-xl transition-all duration-300 hover:scale-105"
                       >
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={`${card.color} p-3 rounded-lg`}>
-                            <Icon className="text-white w-6 h-6" />
+                        <div className="flex items-center justify-between mb-3 md:mb-4">
+                          <div className={`${card.color} p-2 md:p-3 rounded-lg`}>
+                            <Icon className="text-white w-5 h-5 md:w-6 md:h-6" />
                           </div>
                         </div>
-                        <h3 className="text-gray-600 text-sm font-semibold mb-2">{card.title}</h3>
-                        <p className="text-3xl font-bold text-gray-800">{card.value.toLocaleString('vi-VN')}</p>
+                        <h3 className="text-gray-600 text-xs md:text-sm font-semibold mb-2">{card.title}</h3>
+                        <p className="text-2xl md:text-3xl font-bold text-gray-800">{card.value.toLocaleString('vi-VN')}</p>
                       </div>
                     );
                   })}
                 </div>
 
                 {/* Charts */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
                   {statsCards.map((card, index) => {
                     const chartData = card.chartData.map((item) => ({
                       date: formatDate(item.date),
@@ -157,24 +157,39 @@ const AdminDashboard: React.FC = () => {
                     return (
                       <div
                         key={index}
-                        className="bg-white rounded-xl shadow-lg border-2 border-gray-100 p-6"
+                        className="bg-white rounded-lg md:rounded-xl shadow-md md:shadow-lg border border-gray-200 md:border-2 md:border-gray-100 p-4 md:p-6"
                       >
-                        <h3 className="text-lg font-bold text-gray-800 mb-4">
+                        <h3 className="text-base md:text-lg font-bold text-gray-800 mb-2 md:mb-4">
                           Biểu đồ {card.title}
                         </h3>
-                        <p className="text-sm text-gray-500 mb-4">30 ngày gần nhất</p>
-                        <ResponsiveContainer width="100%" height={250}>
+                        <p className="text-xs md:text-sm text-gray-500 mb-3 md:mb-4">30 ngày gần nhất</p>
+                        <ResponsiveContainer width="100%" height={200}>
                           <LineChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                            <YAxis tick={{ fontSize: 12 }} />
-                            <Tooltip />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                            <XAxis 
+                              dataKey="date" 
+                              tick={{ fontSize: 10 }} 
+                              stroke="#6b7280"
+                            />
+                            <YAxis 
+                              tick={{ fontSize: 10 }} 
+                              stroke="#6b7280"
+                            />
+                            <Tooltip 
+                              contentStyle={{ 
+                                backgroundColor: '#fff', 
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '8px',
+                                fontSize: '12px'
+                              }} 
+                            />
                             <Line
                               type="monotone"
                               dataKey="count"
                               stroke={card.strokeColor}
                               strokeWidth={2}
                               dot={{ fill: card.strokeColor, r: 3 }}
+                              activeDot={{ r: 5 }}
                             />
                           </LineChart>
                         </ResponsiveContainer>

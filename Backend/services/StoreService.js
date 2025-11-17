@@ -90,6 +90,24 @@ class StoreService {
     return store;
   }
 
+  // Admin: Cập nhật cửa hàng theo ID
+  async updateStoreById(storeId, storeData) {
+    const store = await storeRepository.findById(storeId);
+    if (!store) {
+      throw new Error('Không tìm thấy cửa hàng');
+    }
+
+    const { name, description, category, isActive } = storeData;
+
+    if (name !== undefined) store.name = name;
+    if (description !== undefined) store.description = description;
+    if (category !== undefined) store.category = category;
+    if (isActive !== undefined) store.isActive = isActive;
+
+    await store.save();
+    return store;
+  }
+
   // Kích hoạt store
   async activateStore(userId) {
     const store = await storeRepository.findByOwner(userId);
@@ -172,6 +190,32 @@ class StoreService {
     );
     
     return storesWithRating;
+  }
+
+  // Admin: Lấy tất cả stores (bao gồm cả inactive)
+  async getAllStores() {
+    console.log('📊 [StoreService] getAllStores called');
+    const stores = await storeRepository.findAllStores(true);
+    console.log(`📊 [StoreService] Tổng số stores từ repository: ${stores.length}`);
+    stores.forEach((store, idx) => {
+      console.log(`📊 [StoreService] Store ${idx + 1}: _id=${store._id || store._id?.toString()}, name=${store.name}, isActive=${store.isActive}`);
+    });
+    
+    // Đảm bảo trả về tất cả stores, kể cả khi owner không tồn tại
+    const result = stores.map((store, idx) => {
+      // Store đã được populate và convert sang object trong repository
+      // Chỉ cần đảm bảo format đúng
+      const storeObj = store.toObject ? store.toObject() : store;
+      console.log(`📊 [StoreService] Mapping store ${idx + 1}: _id=${storeObj._id}, name=${storeObj.name}, isActive=${storeObj.isActive}`);
+      return storeObj;
+    });
+    
+    console.log(`📊 [StoreService] Số stores sau khi map: ${result.length}`);
+    result.forEach((store, idx) => {
+      console.log(`📊 [StoreService] Final store ${idx + 1}: _id=${store._id}, name=${store.name}, isActive=${store.isActive}`);
+    });
+    
+    return result;
   }
 
   // Thêm category

@@ -206,135 +206,249 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
   }
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-6 animate-fade-in-down">
-        <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <ShoppingBag size={24} className="text-blue-600" />
-          Quản lý đơn hàng
+    <div className="p-4 md:p-6 lg:p-8">
+      <div className="mb-4 md:mb-6 animate-fade-in-down">
+        <h2 className="text-xl md:text-2xl font-bold mb-1 md:mb-2 gradient-text flex items-center gap-2">
+          <ShoppingBag size={20} className="md:w-6 md:h-6 text-blue-600" />
+          <span className="text-base md:text-2xl">Quản lý đơn hàng</span>
         </h2>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-xs md:text-sm">
           Quản lý và cập nhật trạng thái đơn hàng trong hệ thống
         </p>
       </div>
 
+      {/* Total Orders Count */}
+      <div className="mb-4 md:mb-6 animate-fade-in-up">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số đơn hàng</p>
+              <p className="text-white text-2xl md:text-4xl font-bold">
+                {filteredAndSortedOrders.length.toLocaleString('vi-VN')}
+              </p>
+            </div>
+            <ShoppingBag className="w-12 h-12 md:w-16 md:h-16 text-white opacity-80" />
+          </div>
+        </div>
+      </div>
+
       {/* Search */}
-      <div className="mb-6 animate-fade-in-up">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+      <div className="mb-4 md:mb-6 animate-fade-in-up">
+        <div className="relative w-full sm:max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
           <input
             type="text"
             placeholder="Tìm kiếm đơn hàng, khách hàng..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+            className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
           />
         </div>
       </div>
 
-      {/* Orders Table */}
+      {/* Orders List */}
       {filteredAndSortedOrders.length > 0 ? (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã đơn</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Khách hàng</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Tổng tiền</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Ngày tạo</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedOrders.map((order, index) => (
-                <tr
-                  key={order._id}
-                  className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in-up"
-                  style={{ animationDelay: `${index * 0.05}s` }}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-bold text-gray-900">{order.orderCode || order._id.slice(-8)}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {order.userInfo ? (
-                      <div className="flex items-center gap-3">
-                        <div className="relative flex-shrink-0">
-                          <img
-                            src={order.userInfo.avatarUrl || '/avatar.png'}
-                            alt={order.userInfo.fullName}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 shadow-md"
-                          />
-                          <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="font-bold text-gray-900 flex items-center gap-1">
-                            <User size={14} className="text-gray-400" />
-                            {order.userInfo.fullName}
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-lg md:rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                  <tr>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã đơn</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Khách hàng</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Tổng tiền</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Ngày tạo</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-center text-xs font-bold text-gray-700 uppercase">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedOrders.map((order) => (
+                  <tr
+                    key={order._id}
+                    className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300"
+                  >
+                    <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                      <span className="text-sm md:text-base font-bold text-gray-900">{order.orderCode || order._id.slice(-8)}</span>
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      {order.userInfo ? (
+                        <div className="flex items-center gap-2 md:gap-3">
+                          <div className="relative flex-shrink-0">
+                            <img
+                              src={order.userInfo.avatarUrl || '/avatar.png'}
+                              alt={order.userInfo.fullName}
+                              className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border-2 border-gray-200 shadow-md"
+                            />
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 md:w-3.5 md:h-3.5 bg-green-500 border-2 border-white rounded-full"></div>
                           </div>
-                          <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                            <Mail size={12} className="text-gray-400" />
-                            {order.userInfo.email}
-                          </div>
-                          {order.userInfo.phone && (
-                            <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                              <Phone size={12} className="text-gray-400" />
-                              {order.userInfo.phone}
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs md:text-sm font-bold text-gray-900 flex items-center gap-1">
+                              <User size={12} className="md:w-[14px] md:h-[14px] text-gray-400" />
+                              {order.userInfo.fullName}
                             </div>
-                          )}
+                            <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 md:mt-1">
+                              <Mail size={10} className="md:w-3 md:h-3 text-gray-400" />
+                              {order.userInfo.email}
+                            </div>
+                            {order.userInfo.phone && (
+                              <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5 md:mt-1">
+                                <Phone size={10} className="md:w-3 md:h-3 text-gray-400" />
+                                {order.userInfo.phone}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <div className="font-medium text-gray-900">{order.customer?.fullName || 'N/A'}</div>
-                        <div className="text-xs text-gray-500">{order.customer?.email || ''}</div>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="font-bold text-green-600">
-                      {order.total?.toLocaleString('vi-VN') || 0}đ
-                    </span>
-                  </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                      ) : (
+                        <div>
+                          <div className="text-xs md:text-sm font-medium text-gray-900">{order.customer?.fullName || 'N/A'}</div>
+                          <div className="text-xs text-gray-500">{order.customer?.email || ''}</div>
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                      <span className="text-sm md:text-base font-bold text-green-600">
+                        {order.total?.toLocaleString('vi-VN') || 0}đ
+                      </span>
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
                       <span className={getStatusBadgeClass(getLatestStatus(order))}>
                         {getStatusLabel(getLatestStatus(order))}
                       </span>
                     </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
+                      {order.createdAt
+                        ? new Date(order.createdAt).toLocaleDateString('vi-VN')
+                        : 'N/A'}
+                    </td>
+                    <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-1 md:gap-2">
+                        <button
+                          onClick={() => navigate(`/order/${order._id}`)}
+                          className="p-1.5 md:p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="Xem chi tiết"
+                        >
+                          <Eye size={16} className="md:w-[18px] md:h-[18px]" />
+                        </button>
+                        <button
+                          onClick={() => handleEdit(order)}
+                          className="p-1.5 md:p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                          title="Chỉnh sửa"
+                        >
+                          <Edit size={16} className="md:w-[18px] md:h-[18px]" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(order._id)}
+                          className="p-1.5 md:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Xóa"
+                        >
+                          <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3 animate-fade-in-up">
+            {paginatedOrders.map((order) => (
+              <div 
+                key={order._id} 
+                className="bg-white rounded-lg shadow-lg border-2 border-gray-100 p-4"
+              >
+                {/* Header: Order Code & Status */}
+                <div className="flex items-center justify-between mb-3 border-b pb-3">
+                  <div className="flex items-center gap-2">
+                    <ShoppingBag size={18} className="text-blue-600" />
+                    <span className="font-bold text-sm text-gray-900">{order.orderCode || order._id.slice(-8)}</span>
+                  </div>
+                  <span className={getStatusBadgeClass(getLatestStatus(order))}>
+                    {getStatusLabel(getLatestStatus(order))}
+                  </span>
+                </div>
+
+                {/* Customer Info */}
+                <div className="mb-3">
+                  {order.userInfo ? (
+                    <div className="flex items-start gap-2">
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={order.userInfo.avatarUrl || '/avatar.png'}
+                          alt={order.userInfo.fullName}
+                          className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 shadow-md"
+                        />
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-bold text-sm text-gray-900 flex items-center gap-1 mb-1">
+                          <User size={12} className="text-gray-400" />
+                          {order.userInfo.fullName}
+                        </div>
+                        <div className="text-xs text-gray-500 flex items-center gap-1 mb-0.5">
+                          <Mail size={10} className="text-gray-400" />
+                          {order.userInfo.email}
+                        </div>
+                        {order.userInfo.phone && (
+                          <div className="text-xs text-gray-500 flex items-center gap-1">
+                            <Phone size={10} className="text-gray-400" />
+                            {order.userInfo.phone}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{order.customer?.fullName || 'N/A'}</div>
+                      <div className="text-xs text-gray-500">{order.customer?.email || ''}</div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Order Details */}
+                <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                  <div className="text-gray-500 font-medium">Tổng tiền:</div>
+                  <div className="text-right font-bold text-green-600">
+                    {order.total?.toLocaleString('vi-VN') || 0}đ
+                  </div>
+                  <div className="text-gray-500 font-medium">Ngày tạo:</div>
+                  <div className="text-right text-gray-700">
                     {order.createdAt
                       ? new Date(order.createdAt).toLocaleDateString('vi-VN')
                       : 'N/A'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => navigate(`/order/${order._id}`)}
-                        className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
-                      >
-                        <Eye size={16} />
-                        Xem
-                      </button>
-                      <button
-                        onClick={() => handleEdit(order)}
-                        className="text-purple-600 hover:text-purple-900 hover:bg-purple-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
-                      >
-                        <Edit size={16} />
-                        Sửa
-                      </button>
-                      <button
-                        onClick={() => handleDelete(order._id)}
-                        className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
-                      >
-                        <Trash2 size={16} />
-                        Xóa
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-                ))}
-              </tbody>
-            </table>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
+                  <button
+                    onClick={() => navigate(`/order/${order._id}`)}
+                    className="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
+                  >
+                    <Eye size={14} />
+                    Xem
+                  </button>
+                  <button
+                    onClick={() => handleEdit(order)}
+                    className="px-3 py-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
+                  >
+                    <Edit size={14} />
+                    Sửa
+                  </button>
+                  <button
+                    onClick={() => handleDelete(order._id)}
+                    className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
+                  >
+                    <Trash2 size={14} />
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
           {totalPages > 1 && (
             <Pagination
@@ -357,44 +471,42 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
 
       {/* Edit Form Modal */}
       {showForm && editingOrder && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full animate-scale-in">
-            <div className="p-6 border-b-2 border-gray-200">
-              <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold gradient-text flex items-center gap-2">
-                  <Edit size={24} className="text-purple-600" />
-                  Sửa đơn hàng
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingOrder(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
-                >
-                  ×
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="bg-white rounded-lg md:rounded-2xl shadow-2xl max-w-lg w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
+            <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+              <h3 className="text-base md:text-xl font-bold gradient-text flex items-center gap-2">
+                <Edit size={20} className="md:w-6 md:h-6 text-purple-600" />
+                <span className="text-sm md:text-xl">Sửa đơn hàng</span>
+              </h3>
+              <button
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingOrder(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-xl md:text-2xl font-bold"
+              >
+                ×
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4 md:space-y-6">
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Mã đơn hàng</label>
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Mã đơn hàng</label>
                 <input
                   type="text"
                   value={editingOrder.orderCode || editingOrder._id.slice(-8)}
                   disabled
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl bg-gray-50 font-medium"
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl bg-gray-50 font-medium"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Trạng thái *</label>
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Trạng thái *</label>
                 <select
                   required
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                 >
                   <option value="pending">Chờ xử lý</option>
                   <option value="confirmed">Đã xác nhận</option>
@@ -408,32 +520,32 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Ghi chú</label>
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Ghi chú</label>
                 <textarea
                   rows={3}
                   value={formData.note}
                   onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                 />
               </div>
 
-              <div className="flex gap-4 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  <Edit size={18} />
-                  Lưu thay đổi
-                </button>
+              <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end pt-3 md:pt-4 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => {
                     setShowForm(false);
                     setEditingOrder(null);
                   }}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 text-gray-700 rounded-lg md:rounded-xl font-bold hover:bg-gray-50 transition-all duration-300"
                 >
                   Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg md:rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
+                >
+                  <Edit size={16} className="md:w-[18px] md:h-[18px]" />
+                  Lưu thay đổi
                 </button>
               </div>
             </form>

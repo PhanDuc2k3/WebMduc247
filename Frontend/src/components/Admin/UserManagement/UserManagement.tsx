@@ -235,14 +235,29 @@ const UserManagement: React.FC = () => {
 
   return (
     <div className="p-4 lg:p-8"> {/* Adjusted padding for mobile */}
-      <div className="mb-6 animate-fade-in-down">
-        <h2 className="text-xl md:text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <UserIcon size={24} className="text-blue-600" />
-          Quản lý người dùng
+      <div className="mb-4 md:mb-6 animate-fade-in-down">
+        <h2 className="text-xl md:text-2xl font-bold mb-1 md:mb-2 gradient-text flex items-center gap-2">
+          <UserIcon size={20} className="md:w-6 md:h-6 text-blue-600" />
+          <span className="text-base md:text-2xl">Quản lý người dùng</span>
         </h2>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-xs md:text-sm">
           Danh sách và quản lý tài khoản người dùng trong hệ thống
         </p>
+      </div>
+
+      {/* Total Users Count */}
+      <div className="mb-4 md:mb-6 animate-fade-in-up">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số người dùng</p>
+              <p className="text-white text-2xl md:text-4xl font-bold">
+                {filteredAndSortedUsers.length.toLocaleString('vi-VN')}
+              </p>
+            </div>
+            <UserIcon className="w-12 h-12 md:w-16 md:h-16 text-white opacity-80" />
+          </div>
+        </div>
       </div>
 
       {/* Search */}

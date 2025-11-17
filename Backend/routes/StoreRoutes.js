@@ -5,6 +5,7 @@ const {
   createStore,
   getStoreByOwner,
   updateStore,
+  updateStoreById,
   activateStore,
   deactivateStore,
   getAllActiveStores,
@@ -22,6 +23,7 @@ const {
 
 const { upload } = require('../middlewares/upload'); // dùng giống product
 const auth = require('../middlewares/authMiddleware');
+const optionalAuth = require('../middlewares/optionalAuthMiddleware');
 const authorize = require('../middlewares/roleMiddleware');
 
 // ========================
@@ -59,6 +61,14 @@ router.put(
   updateStore
 );
 
+// Admin: Cập nhật cửa hàng theo ID
+router.put(
+  '/:id',
+  auth,
+  authorize('admin'),
+  updateStoreById
+);
+
 // ========================
 // KÍCH HOẠT / VÔ HIỆU HÓA
 // ========================
@@ -71,7 +81,10 @@ router.patch('/deactivate', auth, authorize('seller', 'admin'), deactivateStore)
 router.get('/owner', auth, getStoreByOwner);
 router.get('/me', auth, getMyStore);
 router.get('/search', searchStores);
-router.get('/', getAllActiveStores);
+// Route này có thể hoạt động với hoặc không có auth (optional auth)
+// Nếu có auth và là admin: trả về tất cả stores (kể cả inactive)
+// Nếu không có auth hoặc không phải admin: chỉ trả về active stores
+router.get('/', optionalAuth, getAllActiveStores);
 router.get('/:id', getStoreById);
 router.get('/:id/categories', auth, getCategories);
 // Lấy sản phẩm theo category

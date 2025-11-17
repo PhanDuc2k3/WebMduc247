@@ -180,28 +180,43 @@ const PromotionManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-6 lg:p-8">
-      <div className="mb-6 animate-fade-in-down">
-        <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <Megaphone size={24} className="text-blue-600" />
-          Quản lý Tin tức Khuyến mãi
+    <div className="p-4 md:p-6 lg:p-8">
+      <div className="mb-4 md:mb-6 animate-fade-in-down">
+        <h2 className="text-xl md:text-2xl font-bold mb-1 md:mb-2 gradient-text flex items-center gap-2">
+          <Megaphone size={20} className="md:w-6 md:h-6 text-blue-600" />
+          <span className="text-base md:text-2xl">Quản lý Tin tức Khuyến mãi</span>
         </h2>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-xs md:text-sm">
           Quản lý và tạo các tin tức khuyến mãi cho khách hàng
         </p>
       </div>
 
+      {/* Total Promotions Count */}
+      <div className="mb-4 md:mb-6 animate-fade-in-up">
+        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số khuyến mãi</p>
+              <p className="text-white text-2xl md:text-4xl font-bold">
+                {filteredAndSortedPromotions.length.toLocaleString('vi-VN')}
+              </p>
+            </div>
+            <Megaphone className="w-12 h-12 md:w-16 md:h-16 text-white opacity-80" />
+          </div>
+        </div>
+      </div>
+
       {/* Actions */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in-up">
+      <div className="mb-4 md:mb-6 flex flex-col sm:flex-row gap-3 md:gap-4 items-stretch sm:items-center justify-between animate-fade-in-up">
         {/* Search */}
-        <div className="relative flex-1 max-w-md w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <div className="relative flex-1 w-full sm:max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
           <input
             type="text"
             placeholder="Tìm kiếm tin tức khuyến mãi..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+            className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
           />
         </div>
 
@@ -223,33 +238,33 @@ const PromotionManagement: React.FC = () => {
             setImagePreview('');
             setShowForm(true);
           }}
-          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2"
+          className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg md:rounded-xl text-sm md:text-base font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
         >
-          <Plus size={20} />
-          Thêm mới
+          <Plus size={18} className="md:w-5 md:h-5" />
+          <span>Thêm mới</span>
         </button>
       </div>
 
       {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-              <h3 className="text-xl font-bold gradient-text">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="bg-white rounded-lg md:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
+            <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+              <h3 className="text-base md:text-xl font-bold gradient-text">
                 {editingPromotion ? 'Chỉnh sửa' : 'Thêm mới'} Tin tức Khuyến mãi
               </h3>
               <button
                 onClick={() => setShowForm(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                className="text-gray-500 hover:text-gray-700 text-xl md:text-2xl font-bold"
               >
                 ×
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+            <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4 md:space-y-6">
               {/* Title */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">
                   Tiêu đề <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -257,14 +272,14 @@ const PromotionManagement: React.FC = () => {
                   required
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Nhập tiêu đề..."
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">
                   Mô tả <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -272,35 +287,35 @@ const PromotionManagement: React.FC = () => {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   placeholder="Nhập mô tả..."
                 />
               </div>
 
               {/* Content */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">
                   Nội dung chi tiết
                 </label>
                 <textarea
                   value={formData.content}
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                  rows={6}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  rows={4}
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent md:rows-6"
                   placeholder="Nhập nội dung chi tiết..."
                 />
               </div>
 
               {/* Category & Tags */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">
                     Danh mục
                   </label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
                     <option value="Sale lớn">Sale lớn</option>
                     <option value="Flash Sale">Flash Sale</option>
@@ -313,7 +328,7 @@ const PromotionManagement: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">
                     Tags (phân cách bởi dấu phẩy)
                   </label>
                   <input
@@ -323,16 +338,16 @@ const PromotionManagement: React.FC = () => {
                       const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t);
                       setFormData({ ...formData, tags });
                     }}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                     placeholder="Mới, Hot, Khuyến mãi..."
                   />
                 </div>
               </div>
 
               {/* Dates */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">
                     Ngày bắt đầu
                   </label>
                   <input
@@ -340,12 +355,12 @@ const PromotionManagement: React.FC = () => {
                     required
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">
                     Ngày kết thúc
                   </label>
                   <input
@@ -353,27 +368,27 @@ const PromotionManagement: React.FC = () => {
                     required
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               {/* Image */}
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">
                   Hình ảnh
                 </label>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleImageChange}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
                 {imagePreview && (
                   <img
                     src={imagePreview}
                     alt="Preview"
-                    className="mt-4 w-full h-48 object-cover rounded-xl"
+                    className="mt-3 md:mt-4 w-full h-32 md:h-48 object-cover rounded-lg md:rounded-xl"
                   />
                 )}
               </div>
@@ -384,23 +399,23 @@ const PromotionManagement: React.FC = () => {
                   type="checkbox"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
+                  className="w-4 h-4 md:w-5 md:h-5 text-purple-600 rounded focus:ring-purple-500"
                 />
-                <label className="text-sm font-bold text-gray-700">Kích hoạt</label>
+                <label className="text-xs md:text-sm font-bold text-gray-700">Kích hoạt</label>
               </div>
 
               {/* Buttons */}
-              <div className="flex gap-4 justify-end pt-4 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end pt-3 md:pt-4 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => setShowForm(false)}
-                  className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-all duration-300"
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 text-gray-700 rounded-lg md:rounded-xl font-bold hover:bg-gray-50 transition-all duration-300"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg"
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg md:rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg"
                 >
                   {editingPromotion ? 'Cập nhật' : 'Tạo mới'}
                 </button>
@@ -413,61 +428,62 @@ const PromotionManagement: React.FC = () => {
       {/* Promotions List */}
       {filteredAndSortedPromotions.length > 0 ? (
         <>
-          <div className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-lg md:rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Tiêu đề</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Danh mục</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thời gian</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Lượt xem</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
-                    <th className="px-6 py-4 text-center text-xs font-bold text-gray-700 uppercase">Thao tác</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Tiêu đề</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Danh mục</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Thời gian</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Lượt xem</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-center text-xs font-bold text-gray-700 uppercase">Thao tác</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedPromotions.map((promo) => (
                   <tr key={promo._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-gray-900">{promo.title}</div>
-                      <div className="text-sm text-gray-500 line-clamp-1">{promo.description}</div>
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      <div className="font-bold text-sm md:text-base text-gray-900">{promo.title}</div>
+                      <div className="text-xs md:text-sm text-gray-500 line-clamp-1">{promo.description}</div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                    <td className="px-4 md:px-6 py-3 md:py-4">
+                      <span className="px-2 md:px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
                         {promo.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
+                    <td className="px-4 md:px-6 py-3 md:py-4 text-xs md:text-sm text-gray-600">
                       {new Date(promo.startDate).toLocaleDateString('vi-VN')} -{' '}
                       {new Date(promo.endDate).toLocaleDateString('vi-VN')}
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 md:px-6 py-3 md:py-4">
                       <div className="flex items-center gap-1 text-gray-600">
-                        <Eye size={16} />
-                        <span className="font-bold">{promo.views || 0}</span>
+                        <Eye size={14} className="md:w-4 md:h-4" />
+                        <span className="text-xs md:text-sm font-bold">{promo.views || 0}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 md:px-6 py-3 md:py-4">
                       <span className={getStatusBadgeClass(promo.isActive ?? true)}>
                         {promo.isActive ? 'Hoạt động' : 'Tạm khóa'}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 md:px-6 py-3 md:py-4">
                       <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEdit(promo)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1.5 md:p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           title="Chỉnh sửa"
                         >
-                          <Edit size={18} />
+                          <Edit size={16} className="md:w-[18px] md:h-[18px]" />
                         </button>
                         <button
                           onClick={() => promo._id && handleDelete(promo._id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 md:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Xóa"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
                         </button>
                       </div>
                     </td>
@@ -476,6 +492,54 @@ const PromotionManagement: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3 animate-fade-in-up">
+            {paginatedPromotions.map((promo) => (
+              <div key={promo._id} className="bg-white rounded-lg shadow-lg border-2 border-gray-100 p-4">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-sm text-gray-900 mb-1 line-clamp-2">{promo.title}</h3>
+                    <p className="text-xs text-gray-500 line-clamp-2">{promo.description}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 mb-3">
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">
+                    {promo.category}
+                  </span>
+                  <span className={getStatusBadgeClass(promo.isActive ?? true)}>
+                    {promo.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-gray-600 mb-3">
+                  <div>
+                    {new Date(promo.startDate).toLocaleDateString('vi-VN')} -{' '}
+                    {new Date(promo.endDate).toLocaleDateString('vi-VN')}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Eye size={14} />
+                    <span className="font-bold">{promo.views || 0}</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
+                  <button
+                    onClick={() => handleEdit(promo)}
+                    className="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
+                  >
+                    <Edit size={14} />
+                    Sửa
+                  </button>
+                  <button
+                    onClick={() => promo._id && handleDelete(promo._id)}
+                    className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
+                  >
+                    <Trash2 size={14} />
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
           {totalPages > 1 && (
             <Pagination

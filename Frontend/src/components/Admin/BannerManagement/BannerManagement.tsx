@@ -123,6 +123,21 @@ const BannerManagement: React.FC = () => {
         </p>
       </div>
 
+      {/* Total Banners Count */}
+      <div className="mb-4 sm:mb-6 animate-fade-in-up">
+        <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số banner</p>
+              <p className="text-white text-2xl md:text-4xl font-bold">
+                {allBanners.length.toLocaleString('vi-VN')}
+              </p>
+            </div>
+            <Image className="w-12 h-12 md:w-16 md:h-16 text-white opacity-80" />
+          </div>
+        </div>
+      </div>
+
       <div className="space-y-4 sm:space-y-6">
         {allBanners.map((b, idx) => (
           <div 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import storeApi from '../../../api/storeApi';
-import { Edit, Trash2, Plus, Search, Eye, Store as StoreIcon, Loader2, User, Tag, Calendar } from 'lucide-react';
+import { Edit, Search, Eye, Store as StoreIcon, Loader2, User, Tag, Calendar, Lock, Unlock } from 'lucide-react';
 import Pagination from '../Pagination';
 import { toast } from 'react-toastify';
 
@@ -62,27 +62,79 @@ const StoreManagement: React.FC = () => {
     try {
       setLoading(true);
       const response = await storeApi.getAllStores();
-      const data = response.data?.stores || response.data || [];
+      console.log('📦 [StoreManagement] Full response:', JSON.stringify(response, null, 2));
+      console.log('📦 [StoreManagement] response.data:', response.data);
+      console.log('📦 [StoreManagement] response.data.stores:', response.data?.stores);
+      console.log('📦 [StoreManagement] response.data (direct):', response.data);
+      
+      // Thử nhiều cách parse
+      let data = [];
+      if (Array.isArray(response.data)) {
+        data = response.data;
+      } else if (response.data?.stores && Array.isArray(response.data.stores)) {
+        data = response.data.stores;
+      } else if (response.data && typeof response.data === 'object') {
+        // Nếu response.data là object, thử lấy stores property
+        data = (response.data as any).stores || [];
+      }
+      
+      console.log('📦 [StoreManagement] Final data:', data);
+      console.log('📦 [StoreManagement] Số lượng stores:', data.length);
       setStores(Array.isArray(data) ? data : []);
     } catch (error: any) {
-      console.error('Error fetching stores:', error);
+      console.error('❌ Error fetching stores:', error);
       toast.error(error?.response?.data?.message || 'Lỗi khi tải danh sách cửa hàng');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (storeId: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa cửa hàng này?')) return;
+  const handleToggleStatus = async (store: Store) => {
+    const isActive = store.isActive ?? true;
+    const action = isActive ? 'khóa' : 'mở khóa';
     
-    try {
-      await storeApi.deleteStore(storeId);
-      toast.success('Đã xóa cửa hàng thành công!');
-      fetchStores();
-    } catch (error: any) {
-      console.error('Error deleting store:', error);
-      toast.error(error?.response?.data?.message || 'Lỗi khi xóa cửa hàng');
-    }
+    const confirmToastId = toast.info(
+      <div>
+        <p className="font-bold mb-2">Xác nhận {action} cửa hàng</p>
+        <p className="mb-3">Bạn có chắc muốn {action} cửa hàng <strong>{store.name}</strong>?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(confirmToastId);
+              try {
+                await storeApi.updateStoreById(store._id, { isActive: !isActive });
+                toast.success(`Đã ${action} cửa hàng ${store.name} thành công!`, {
+                  position: "top-right",
+                  containerId: "general-toast",
+                });
+                await fetchStores();
+              } catch (error: any) {
+                console.error(`❌ Lỗi khi ${action} cửa hàng:`, error?.response || error);
+                toast.error(error?.response?.data?.message || `Không thể ${action} cửa hàng. Vui lòng thử lại!`, {
+                  position: "top-right",
+                  containerId: "general-toast",
+                });
+              }
+            }}
+            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors mr-2"
+          >
+            Xác nhận
+          </button>
+          <button
+            onClick={() => toast.dismiss(confirmToastId)}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Hủy
+          </button>
+        </div>
+      </div>,
+      {
+        position: "top-right",
+        containerId: "general-toast",
+        autoClose: false,
+        closeOnClick: false,
+      }
+    );
   };
 
   const handleEdit = (store: Store) => {
@@ -170,42 +222,43 @@ const StoreManagement: React.FC = () => {
 
   return (
     <div className="p-4 lg:p-8">
-      <div className="mb-6 animate-fade-in-down">
-        <h2 className="text-xl md:text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <StoreIcon size={24} className="text-blue-600" />
-          Quản lý cửa hàng
+      <div className="mb-4 md:mb-6 animate-fade-in-down">
+        <h2 className="text-xl md:text-2xl font-bold mb-1 md:mb-2 gradient-text flex items-center gap-2">
+          <StoreIcon size={20} className="md:w-6 md:h-6 text-blue-600" />
+          <span className="text-base md:text-2xl">Quản lý cửa hàng</span>
         </h2>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-xs md:text-sm">
           Quản lý và chỉnh sửa thông tin các cửa hàng trong hệ thống
         </p>
       </div>
 
-      {/* Actions */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in-up">
-        {/* Search */}
-        <div className="relative flex-1 max-w-full sm:max-w-md w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+      {/* Total Stores Count */}
+      <div className="mb-4 md:mb-6 animate-fade-in-up">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số cửa hàng</p>
+              <p className="text-white text-2xl md:text-4xl font-bold">
+                {filteredAndSortedStores.length.toLocaleString('vi-VN')}
+              </p>
+            </div>
+            <StoreIcon className="w-12 h-12 md:w-16 md:h-16 text-white opacity-80" />
+          </div>
+        </div>
+      </div>
+
+      {/* Search */}
+      <div className="mb-4 md:mb-6 animate-fade-in-up">
+        <div className="relative w-full sm:max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
           <input
             type="text"
             placeholder="Tìm kiếm cửa hàng..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+            className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
           />
         </div>
-
-        {/* Add Button */}
-        <button
-          onClick={() => {
-            setEditingStore(null);
-            setFormData({ name: '', description: '', category: '' });
-            setShowForm(true);
-          }}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 w-full sm:w-auto justify-center"
-        >
-          <Plus size={20} />
-          Thêm cửa hàng
-        </button>
       </div>
 
       {/* Stores List */}
@@ -266,10 +319,12 @@ const StoreManagement: React.FC = () => {
                         <Edit size={16} /> Sửa
                       </button>
                       <button
-                        onClick={() => handleDelete(store._id)}
-                        className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
+                        onClick={() => handleToggleStatus(store)}
+                        className={`${store.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1`}
+                        title={store.isActive ? 'Khóa cửa hàng' : 'Mở khóa cửa hàng'}
                       >
-                        <Trash2 size={16} /> Xóa
+                        {store.isActive ? <Lock size={16} /> : <Unlock size={16} />}
+                        {store.isActive ? 'Khóa' : 'Mở khóa'}
                       </button>
                     </div>
                   </td>
@@ -348,10 +403,12 @@ const StoreManagement: React.FC = () => {
                     <Edit size={16} /> Sửa
                   </button>
                   <button
-                    onClick={() => handleDelete(store._id)}
-                    className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
+                    onClick={() => handleToggleStatus(store)}
+                    className={`${store.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm`}
+                    title={store.isActive ? 'Khóa cửa hàng' : 'Mở khóa cửa hàng'}
                   >
-                    <Trash2 size={16} /> Xóa
+                    {store.isActive ? <Lock size={16} /> : <Unlock size={16} />}
+                    {store.isActive ? 'Khóa' : 'Mở khóa'}
                   </button>
                 </div>
               </div>

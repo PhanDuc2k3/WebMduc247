@@ -29,45 +29,100 @@ interface AdminSidebarProps {
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, onCollapseChange }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [desktopWidth, setDesktopWidth] = useState(256); // Width có thể thay đổi trên desktop
   const sidebarRef = React.useRef<HTMLDivElement>(null);
+  const resizeHandleRef = React.useRef<HTMLDivElement>(null);
+  const isResizing = React.useRef(false);
+
+  // Kiểm tra mobile/desktop và set mặc định collapsed trên mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768; // md breakpoint
+      setIsMobile(mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  // Trên mobile, mặc định collapsed (chỉ hiển thị icon)
+  useEffect(() => {
+    if (isMobile && !isCollapsed) {
+      setIsCollapsed(true);
+      if (onCollapseChange) {
+        onCollapseChange(true);
+      }
+    }
+  }, [isMobile, isCollapsed, onCollapseChange]);
+
+
+  // Desktop: Handle resize sidebar bằng cách kéo - CHỈ hoạt động trên desktop
+  useEffect(() => {
+    // KHÔNG cho phép resize trên mobile - vô hiệu hóa hoàn toàn
+    if (isMobile) {
+      // Reset về width mặc định nếu đang ở mobile
+      if (desktopWidth !== 256) {
+        setDesktopWidth(256);
+      }
+      // Vô hiệu hóa resize handle
+      if (resizeHandleRef.current) {
+        resizeHandleRef.current.style.pointerEvents = 'none';
+        resizeHandleRef.current.style.cursor = 'default';
+      }
+      return;
+    }
+
+    const handleMouseDown = (e: MouseEvent) => {
+      // Chỉ cho phép resize trên desktop
+      if (isMobile) return;
+      if (e.target === resizeHandleRef.current || resizeHandleRef.current?.contains(e.target as Node)) {
+        isResizing.current = true;
+        e.preventDefault();
+      }
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      // Chỉ cho phép resize trên desktop
+      if (isMobile || !isResizing.current || isCollapsed) return;
+      
+      const newWidth = e.clientX;
+      // Giới hạn width từ 200px đến 600px
+      if (newWidth >= 200 && newWidth <= 600) {
+        setDesktopWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      isResizing.current = false;
+    };
+
+    document.addEventListener('mousedown', handleMouseDown);
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isMobile, isCollapsed, desktopWidth]);
 
   const handleToggleCollapse = () => {
+    // Không cho phép toggle trên mobile
+    if (isMobile) return;
+    
     const newCollapsed = !isCollapsed;
     setIsCollapsed(newCollapsed);
-    setIsExpanded(false);
     if (onCollapseChange) {
       onCollapseChange(newCollapsed);
     }
   };
 
-  const handleMouseEnter = () => {
-    if (!isCollapsed) {
-      setIsExpanded(true);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (!isCollapsed) {
-      setIsExpanded(false);
-    }
-  };
-
-  useEffect(() => {
-    const sidebar = sidebarRef.current;
-    if (!sidebar || isCollapsed) return;
-
-    const handleScroll = () => {
-      if (sidebar.scrollLeft > 0) {
-        setIsExpanded(true);
-      } else if (sidebar.scrollLeft === 0) {
-        setIsExpanded(false);
-      }
-    };
-
-    sidebar.addEventListener('scroll', handleScroll);
-    return () => sidebar.removeEventListener('scroll', handleScroll);
-  }, [isCollapsed]);
 
   useEffect(() => {
     const fetchPendingCount = async () => {
@@ -97,42 +152,42 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
     { label: 'Tin tức Khuyến mãi', key: 'promotions', icon: Megaphone },
   ];
 
-  const currentWidth = isCollapsed ? 80 : (isExpanded ? window.innerWidth : 256);
+  // Desktop: dùng desktopWidth có thể thay đổi
+  // Mobile: giữ width cố định (256px hoặc 80px khi collapsed)
+  const currentWidth = isCollapsed 
+    ? 80 
+    : (isMobile ? 256 : desktopWidth);
 
   return (
-    <div
-      ref={sidebarRef}
-      className={`admin-sidebar bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen transition-all duration-300 ${
-        isCollapsed ? 'w-20' : 'w-64'
-      } flex flex-col shadow-2xl fixed left-0 top-0 h-full z-50 overflow-x-auto`}
-      style={{ 
-        width: `${currentWidth}px`,
-        minWidth: isCollapsed ? '80px' : (isExpanded ? '100vw' : '256px'),
-        maxWidth: '100vw'
-      }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onWheel={(e) => {
-        if (!isCollapsed && e.deltaX !== 0) {
-          // Khi scroll ngang bằng wheel, mở rộng sidebar
-          if (e.deltaX > 0) {
-            setIsExpanded(true);
-          } else if (e.deltaX < 0 && sidebarRef.current?.scrollLeft === 0) {
-            setIsExpanded(false);
-          }
-        }
-      }}
-      onTouchStart={(e) => {
-        if (!isCollapsed) {
-          setIsExpanded(true);
-        }
-      }}
-      onTouchEnd={(e) => {
-        if (!isCollapsed && sidebarRef.current?.scrollLeft === 0) {
-          setIsExpanded(false);
-        }
-      }}
-    >
+    <>
+      <div
+        ref={sidebarRef}
+        className={`admin-sidebar bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen ${
+          isMobile ? 'transition-all duration-300' : '' // Desktop không transition khi resize
+        } ${
+          isCollapsed ? 'w-20' : 'w-64'
+        } flex flex-col shadow-2xl fixed left-0 top-0 h-full z-50 overflow-x-auto`}
+        style={{ 
+          width: `${currentWidth}px`,
+          minWidth: isCollapsed 
+            ? '80px' 
+            : (isMobile ? '256px' : '200px'),
+          maxWidth: isMobile ? '256px' : '600px',
+          // Vô hiệu hóa resize trên mobile
+          resize: isMobile ? 'none' : 'none',
+          userSelect: isMobile ? 'none' : 'auto'
+        }}
+      >
+        {/* Resize handle cho desktop - chỉ hiển thị trên desktop */}
+        {!isMobile && !isCollapsed && (
+          <div
+            ref={resizeHandleRef}
+            className="absolute right-0 top-0 w-1 h-full bg-purple-700 hover:bg-purple-500 cursor-col-resize z-10 group"
+            style={{ cursor: 'col-resize', pointerEvents: isMobile ? 'none' : 'auto' }}
+          >
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-16 bg-purple-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        )}
       {/* Logo */}
       <div className="p-6 border-b border-purple-800">
         <div className="flex items-center justify-between">
@@ -147,21 +202,24 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
               </div>
             </div>
           )}
-          <button
-            onClick={handleToggleCollapse}
-            className="w-8 h-8 flex items-center justify-center bg-purple-800 hover:bg-purple-700 rounded-lg transition-all duration-300"
-          >
-            {isCollapsed ? (
-              <ChevronRight className="text-white w-4 h-4" />
-            ) : (
-              <ChevronLeft className="text-white w-4 h-4" />
-            )}
-          </button>
+          {/* Chỉ hiển thị nút collapse/expand trên desktop */}
+          {!isMobile && (
+            <button
+              onClick={handleToggleCollapse}
+              className="w-8 h-8 flex items-center justify-center bg-purple-800 hover:bg-purple-700 rounded-lg transition-all duration-300"
+            >
+              {isCollapsed ? (
+                <ChevronRight className="text-white w-4 h-4" />
+              ) : (
+                <ChevronLeft className="text-white w-4 h-4" />
+              )}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Menu Items */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden" style={{ minWidth: isExpanded ? '100vw' : '100%' }}>
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden">
         {menuItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -209,8 +267,9 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
             <p className="text-purple-200 text-xs">Contact admin support</p>
           </div>
         )}
-      </div>
-    </div>
+        </div>
+        </div>
+    </>
   );
 };
 

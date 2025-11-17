@@ -29,6 +29,18 @@ exports.updateStore = async (req, res) => {
   }
 };
 
+// Admin: Cập nhật cửa hàng theo ID
+exports.updateStoreById = async (req, res) => {
+  try {
+    const storeId = req.params.id;
+    const store = await storeService.updateStoreById(storeId, req.body);
+    res.status(200).json({ message: 'Cập nhật cửa hàng thành công', store });
+  } catch (error) {
+    const statusCode = error.message.includes('Không tìm thấy') ? 404 : 500;
+    res.status(statusCode).json({ message: error.message || 'Lỗi khi cập nhật cửa hàng' });
+  }
+};
+
 // ========================
 // KÍCH HOẠT / VÔ HIỆU HÓA
 // ========================
@@ -95,9 +107,52 @@ exports.getStoreById = async (req, res) => {
 
 exports.getAllActiveStores = async (req, res) => {
   try {
+    console.log('🚀 [StoreController] getAllActiveStores called');
+    console.log('👤 [StoreController] req.user:', req.user ? JSON.stringify({ role: req.user.role, userId: req.user.userId, _id: req.user._id }) : 'null');
+    console.log('🔍 [StoreController] req.user.role === "admin":', req.user && req.user.role === 'admin');
+    
+    // Nếu là admin, trả về tất cả stores (bao gồm cả inactive)
+    if (req.user && req.user.role === 'admin') {
+      console.log(`🔐 [StoreController] Admin request - lấy tất cả stores`);
+      console.log(`👤 [StoreController] User role: ${req.user.role}, User ID: ${req.user._id || req.user.userId}`);
+      
+      const stores = await storeService.getAllStores();
+      console.log(`📋 [StoreController] Nhận được ${stores.length} stores từ service`);
+      console.log(`📋 [StoreController] Stores IDs:`, stores.map(s => (s._id || s._id?.toString())));
+      
+      // Đảm bảo trả về đúng format - KHÔNG filter stores
+      const storesData = stores.map((store, index) => {
+        const storeObj = store.toObject ? store.toObject() : store;
+        console.log(`📦 [StoreController] Store ${index + 1}: _id=${storeObj._id}, name=${storeObj.name}, isActive=${storeObj.isActive}`);
+        return {
+          ...storeObj,
+          owner: storeObj.owner || null,
+          userInfo: storeObj.owner ? {
+            fullName: storeObj.owner.fullName || '',
+            email: storeObj.owner.email || '',
+            phone: storeObj.owner.phone || ''
+          } : null
+        };
+      });
+      
+      console.log(`✅ [StoreController] Trả về ${storesData.length} stores cho admin`);
+      console.log(`✅ [StoreController] Stores trong response:`, storesData.map(s => ({ _id: s._id, name: s.name, isActive: s.isActive })));
+      
+      // Trả về cả stores array trực tiếp và trong object
+      return res.status(200).json({ 
+        message: 'Lấy danh sách cửa hàng thành công', 
+        stores: storesData,
+        count: storesData.length
+      });
+    }
+    
+    // Nếu không phải admin, chỉ trả về active stores
+    console.log('👤 [StoreController] Non-admin request - chỉ trả về active stores');
     const stores = await storeService.getAllActiveStores();
     res.status(200).json({ message: 'Lấy danh sách cửa hàng thành công', stores });
   } catch (error) {
+    console.error('❌ Error in getAllActiveStores:', error);
+    console.error('❌ Error stack:', error.stack);
     res.status(500).json({ message: error.message || 'Lỗi khi lấy danh sách cửa hàng' });
   }
 };

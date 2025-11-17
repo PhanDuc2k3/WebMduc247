@@ -219,27 +219,43 @@ const VoucherManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-4 lg:p-8"> {/* Padding tối ưu cho mobile */}
-      <div className="mb-6 animate-fade-in-down">
-        <h2 className="text-xl md:text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <Gift size={24} className="text-purple-600" /> Quản lý Voucher
+    <div className="p-4 md:p-6 lg:p-8">
+      <div className="mb-4 md:mb-6 animate-fade-in-down">
+        <h2 className="text-xl md:text-2xl font-bold mb-1 md:mb-2 gradient-text flex items-center gap-2">
+          <Gift size={20} className="md:w-6 md:h-6 text-purple-600" />
+          <span className="text-base md:text-2xl">Quản lý Voucher</span>
         </h2>
-        <p className="text-gray-600 text-sm">
+        <p className="text-gray-600 text-xs md:text-sm">
           Quản lý và tạo các mã giảm giá cho khách hàng
         </p>
       </div>
 
+      {/* Total Vouchers Count */}
+      <div className="mb-4 md:mb-6 animate-fade-in-up">
+        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số voucher</p>
+              <p className="text-white text-2xl md:text-4xl font-bold">
+                {filteredAndSortedVouchers.length.toLocaleString('vi-VN')}
+              </p>
+            </div>
+            <Gift className="w-12 h-12 md:w-16 md:h-16 text-white opacity-80" />
+          </div>
+        </div>
+      </div>
+
       {/* Actions */}
-      <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in-up">
+      <div className="mb-4 md:mb-6 flex flex-col sm:flex-row gap-3 md:gap-4 items-stretch sm:items-center justify-between animate-fade-in-up">
         {/* Search */}
-        <div className="relative flex-1 max-w-full sm:max-w-md w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+        <div className="relative flex-1 w-full sm:max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 md:w-5 md:h-5" />
           <input
             type="text"
             placeholder="Tìm kiếm voucher..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+            className="w-full pl-9 md:pl-10 pr-3 md:pr-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
           />
         </div>
 
@@ -266,174 +282,189 @@ const VoucherManagement: React.FC = () => {
             setSelectedCategories([]);
             setShowForm(true);
           }}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 w-full sm:w-auto justify-center" // Full width on mobile
+          className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg md:rounded-xl text-sm md:text-base font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
         >
-          <Plus size={20} />
-          Thêm voucher
+          <Plus size={18} className="md:w-5 md:h-5" />
+          <span>Thêm voucher</span>
         </button>
       </div>
 
       {/* Vouchers List */}
       {filteredAndSortedVouchers.length > 0 ? (
         <>
-          {/* --- DESKTOP TABLE VIEW (md and up) --- */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
-                <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã voucher</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mô tả</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Giảm giá</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Đơn tối thiểu</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thời hạn</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thao tác</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {paginatedVouchers.map((voucher, index) => (
-                  <tr
-                    key={voucher._id}
-                    className={`hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in-up ${!voucher.isActive ? 'bg-gray-50 opacity-75' : ''}`}
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        {!voucher.isActive && <Lock size={16} className="text-gray-400" />}
-                        <span className={`font-bold ${!voucher.isActive ? 'text-gray-500' : 'text-gray-900'}`}>
-                          {voucher.code}
+          {/* Desktop Table View */}
+          <div className="hidden md:block bg-white rounded-lg md:rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                  <tr>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã voucher</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Mô tả</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Giảm giá</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Đơn tối thiểu</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Thời hạn</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
+                    <th className="px-4 md:px-6 py-3 md:py-4 text-center text-xs font-bold text-gray-700 uppercase">Thao tác</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {paginatedVouchers.map((voucher, index) => (
+                    <tr
+                      key={voucher._id}
+                      className={`hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 ${!voucher.isActive ? 'bg-gray-50 opacity-75' : ''}`}
+                    >
+                      <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          {!voucher.isActive && <Lock size={14} className="md:w-4 md:h-4 text-gray-400" />}
+                          <span className={`text-sm md:text-base font-bold ${!voucher.isActive ? 'text-gray-500' : 'text-gray-900'}`}>
+                            {voucher.code}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-4 md:px-6 py-3 md:py-4">
+                        <div className={`text-xs md:text-sm max-w-xs truncate ${!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}`}>
+                          {voucher.description || 'Không có mô tả'}
+                        </div>
+                      </td>
+                      <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                        <span className={`text-sm md:text-base font-bold ${!voucher.isActive ? 'text-gray-400' : 'text-green-600'}`}>
+                          {formatDiscountValue(voucher)}
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className={`text-sm max-w-xs truncate ${!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}`}>
-                        {voucher.description || 'Không có mô tả'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`font-bold ${!voucher.isActive ? 'text-gray-400' : 'text-green-600'}`}>
-                        {formatDiscountValue(voucher)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}>
-                        {formatMinOrderValue(voucher.minOrderValue)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      </td>
+                      <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                        <span className={`text-xs md:text-sm ${!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}`}>
+                          {formatMinOrderValue(voucher.minOrderValue)}
+                        </span>
+                      </td>
+                      <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap text-xs md:text-sm text-gray-500">
+                        {voucher.startDate && voucher.endDate
+                          ? `${new Date(voucher.startDate).toLocaleDateString('vi-VN')} - ${new Date(voucher.endDate).toLocaleDateString('vi-VN')}`
+                          : 'N/A'}
+                      </td>
+                      <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                        <span className={getStatusBadgeClass(voucher.isActive ?? true)}>
+                          {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                        </span>
+                      </td>
+                      <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1 md:gap-2">
+                          <button
+                            onClick={() => handleEdit(voucher)}
+                            className="p-1.5 md:p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Chỉnh sửa"
+                          >
+                            <Edit size={16} className="md:w-[18px] md:h-[18px]" />
+                          </button>
+                          {voucher._id && (
+                            <button
+                              onClick={() => handleToggleStatus(voucher._id)}
+                              className={`p-1.5 md:p-2 rounded-lg transition-colors ${voucher.isActive ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
+                              title={voucher.isActive ? 'Khóa voucher' : 'Mở khóa voucher'}
+                            >
+                              {voucher.isActive ? <Lock size={16} className="md:w-[18px] md:h-[18px]" /> : <Unlock size={16} className="md:w-[18px] md:h-[18px]" />}
+                            </button>
+                          )}
+                          <button
+                            onClick={() => voucher._id && handleDelete(voucher._id)}
+                            className="p-1.5 md:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden space-y-3 animate-fade-in-up">
+            {paginatedVouchers.map((voucher) => (
+              <div 
+                key={voucher._id} 
+                className={`bg-white rounded-lg shadow-lg border-2 border-gray-100 p-4 transition-shadow duration-300 ${!voucher.isActive ? 'opacity-75' : ''}`}
+              >
+                {/* Header: Code & Status */}
+                <div className="flex items-center justify-between mb-3 border-b pb-3">
+                  <div className="flex items-center gap-2">
+                    <Ticket size={20} className="text-purple-500" />
+                    <span className={`font-bold text-base ${!voucher.isActive ? 'text-gray-500' : 'text-purple-700'}`}>
+                      {voucher.code}
+                    </span>
+                    {!voucher.isActive && <Lock size={14} className="text-gray-400" />}
+                  </div>
+                  <span className={getStatusBadgeClass(voucher.isActive ?? true)}>
+                    {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                  </span>
+                </div>
+
+                {/* Description */}
+                <p className={`text-xs text-gray-500 mb-3 line-clamp-2 ${!voucher.isActive ? 'text-gray-400' : ''}`}>
+                  {voucher.description || 'Không có mô tả'}
+                </p>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-y-2 text-xs mb-3">
+                  {/* Discount Value */}
+                  <div className="text-gray-500 font-medium flex items-center gap-1">
+                    <Zap size={12} className="text-red-400" /> Giảm giá:
+                  </div>
+                  <div className="text-right font-bold text-green-600">{formatDiscountValue(voucher)}</div>
+                  
+                  {/* Min Order Value */}
+                  <div className="text-gray-500 font-medium flex items-center gap-1">
+                    <DollarSign size={12} className="text-blue-400" /> Đơn tối thiểu:
+                  </div>
+                  <div className="text-right text-gray-700">{formatMinOrderValue(voucher.minOrderValue)}</div>
+
+                  {/* Usage Limit */}
+                  <div className="text-gray-500 font-medium flex items-center gap-1">
+                    <Ticket size={12} className="text-yellow-400" /> Giới hạn:
+                  </div>
+                  <div className="text-right text-gray-700">{voucher.usageLimit > 0 ? `${voucher.usageLimit} lần` : 'Không giới hạn'}</div>
+                  
+                  {/* Date Range */}
+                  <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+                    <div className="text-gray-500 font-medium flex items-center gap-1 mb-1">
+                      <Calendar size={12} className="text-gray-400" /> Thời hạn:
+                    </div>
+                    <p className="text-xs text-gray-700 ml-4">
                       {voucher.startDate && voucher.endDate
                         ? `${new Date(voucher.startDate).toLocaleDateString('vi-VN')} - ${new Date(voucher.endDate).toLocaleDateString('vi-VN')}`
                         : 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={getStatusBadgeClass(voucher.isActive ?? true)}>
-                        {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => handleEdit(voucher)}
-                          className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
-                        >
-                          <Edit size={16} /> Sửa
-                        </button>
-                        {voucher._id && (
-                          <button
-                            onClick={() => handleToggleStatus(voucher._id)}
-                            className={`${voucher.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1`}
-                            title={voucher.isActive ? 'Khóa voucher' : 'Mở khóa voucher'}
-                          >
-                            {voucher.isActive ? <Lock size={16} /> : <Unlock size={16} />}
-                            {voucher.isActive ? 'Khóa' : 'Mở khóa'}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => voucher._id && handleDelete(voucher._id)}
-                          className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
-                        >
-                          <Trash2 size={16} /> Xóa
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* --- MOBILE CARD VIEW (max-md) --- */}
-          <div className="md:hidden space-y-4">
-            {paginatedVouchers.map((voucher, index) => (
-              <div 
-                key={voucher._id} 
-                className={`bg-white p-4 shadow-xl rounded-xl border border-gray-100 transition-shadow duration-300 hover:shadow-2xl animate-fade-in-up ${!voucher.isActive ? 'opacity-75' : ''}`}
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                {/* Header: Code & Status */}
-                <div className="flex items-center justify-between mb-4 border-b pb-3">
-                    <div className="flex items-center gap-2">
-                        <Ticket size={24} className="text-purple-500" />
-                        <span className={`font-extrabold text-xl ${!voucher.isActive ? 'text-gray-500' : 'text-purple-700'}`}>
-                            {voucher.code}
-                        </span>
-                    </div>
-                    <span className={getStatusBadgeClass(voucher.isActive ?? true)}>
-                        {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
-                    </span>
-                </div>
-
-                {/* Details Grid */}
-                <div className="grid grid-cols-2 gap-y-3 text-sm">
-                    {/* Discount Value */}
-                    <div className="text-gray-500 font-medium flex items-center gap-2">
-                        <Zap size={14} className="text-red-400" /> Giảm giá:
-                    </div>
-                    <div className="text-right font-bold text-green-600">{formatDiscountValue(voucher)}</div>
-                    
-                    {/* Min Order Value */}
-                    <div className="text-gray-500 font-medium flex items-center gap-2">
-                        <DollarSign size={14} className="text-blue-400" /> Đơn tối thiểu:
-                    </div>
-                    <div className="text-right text-gray-700">{formatMinOrderValue(voucher.minOrderValue)}</div>
-
-                    {/* Usage Limit */}
-                    <div className="text-gray-500 font-medium flex items-center gap-2">
-                        <Ticket size={14} className="text-yellow-400" /> Giới hạn:
-                    </div>
-                    <div className="text-right text-gray-700">{voucher.usageLimit > 0 ? `${voucher.usageLimit} lần` : 'Không giới hạn'}</div>
-                    
-                    {/* Date Range */}
-                    <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
-                        <div className="text-gray-500 font-medium flex items-center gap-2 mb-1">
-                            <Calendar size={14} className="text-gray-400" /> Thời hạn:
-                        </div>
-                        <p className="text-xs text-gray-700 ml-5">
-                            {voucher.startDate && voucher.endDate
-                                ? `${new Date(voucher.startDate).toLocaleDateString('vi-VN')} - ${new Date(voucher.endDate).toLocaleDateString('vi-VN')}`
-                                : 'N/A'}
-                        </p>
-                    </div>
+                    </p>
+                  </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-200">
                   <button
                     onClick={() => handleEdit(voucher)}
-                    className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
+                    className="px-3 py-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
                   >
-                    <Edit size={16} /> Sửa
+                    <Edit size={14} />
+                    Sửa
                   </button>
                   {voucher._id && (
                     <button
                       onClick={() => handleToggleStatus(voucher._id)}
-                      className={`${voucher.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm`}
+                      className={`px-3 py-1.5 rounded-lg transition-colors text-xs font-bold flex items-center gap-1 ${voucher.isActive ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50'}`}
                       title={voucher.isActive ? 'Khóa voucher' : 'Mở khóa voucher'}
                     >
-                      {voucher.isActive ? <Lock size={16} /> : <Unlock size={16} />}
-                      {voucher.isActive ? 'Khóa' : 'Mở khóa'}
+                      {voucher.isActive ? <Lock size={14} /> : <Unlock size={14} />}
+                      {voucher.isActive ? 'Khóa' : 'Mở'}
                     </button>
                   )}
+                  <button
+                    onClick={() => voucher._id && handleDelete(voucher._id)}
+                    className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
+                  >
+                    <Trash2 size={14} />
+                    Xóa
+                  </button>
                 </div>
               </div>
             ))}
@@ -458,176 +489,172 @@ const VoucherManagement: React.FC = () => {
       )}
 
 
-      {/* Form Modal (Optimized for Mobile) */}
+      {/* Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[98vh] overflow-y-auto animate-scale-in">
-            <div className="p-4 sm:p-6 border-b-2 border-gray-200 sticky top-0 bg-white z-10">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl sm:text-2xl font-bold gradient-text flex items-center gap-2">
-                  <Edit size={24} className="text-purple-600" />
-                  {editingVoucher ? 'Sửa voucher' : 'Thêm voucher mới'}
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingVoucher(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold p-1"
-                >
-                  ×
-                </button>
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
+          <div className="bg-white rounded-lg md:rounded-2xl shadow-2xl max-w-2xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
+            <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+              <h3 className="text-base md:text-xl font-bold gradient-text flex items-center gap-2">
+                <Edit size={20} className="md:w-6 md:h-6 text-purple-600" />
+                <span className="text-sm md:text-xl">{editingVoucher ? 'Sửa voucher' : 'Thêm voucher mới'}</span>
+              </h3>
+              <button
+                onClick={() => {
+                  setShowForm(false);
+                  setEditingVoucher(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-xl md:text-2xl font-bold"
+              >
+                ×
+              </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-              {/* Form fields (using grid-cols-1 on mobile, grid-cols-2 on tablet/desktop) */}
-              
-              <div className='space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4'>
-                {/* Mã voucher & Tiêu đề */}
+            <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4 md:space-y-6">
+              {/* Mã voucher & Tiêu đề */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Mã voucher *</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Mã voucher *</label>
                   <input
                     type="text"
                     required
                     value={formData.code}
                     onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Tiêu đề *</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Tiêu đề *</label>
                   <input
                     type="text"
                     required
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                     placeholder="Nhập tiêu đề voucher"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả *</label>
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Mô tả *</label>
                 <textarea
-                  rows={2} // Giảm số hàng để tối ưu chiều cao trên mobile
+                  rows={2}
                   required
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   placeholder="Nhập mô tả voucher"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Điều kiện *</label>
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Điều kiện *</label>
                 <textarea
                   rows={2}
                   required
                   value={formData.condition}
                   onChange={(e) => setFormData({ ...formData, condition: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   placeholder="Nhập điều kiện áp dụng voucher"
                 />
               </div>
 
               {/* Loại voucher, Loại giảm giá, Giá trị giảm */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Loại voucher *</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Loại voucher *</label>
                   <select
                     required
                     value={formData.voucherType || 'product'}
                     onChange={(e) => setFormData({ ...formData, voucherType: e.target.value as 'product' | 'freeship' })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   >
                     <option value="product">Giảm giá sản phẩm</option>
                     <option value="freeship">Miễn phí vận chuyển</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Loại giảm giá *</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Loại giảm giá *</label>
                   <select
                     required
                     value={formData.discountType}
                     onChange={(e) => setFormData({ ...formData, discountType: e.target.value as 'percent' | 'fixed' })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   >
                     <option value="percent">Phần trăm (%)</option>
                     <option value="fixed">Số tiền cố định</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Giá trị giảm *</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Giá trị giảm *</label>
                   <input
                     type="number"
                     required
                     min="0"
                     value={formData.discountValue}
                     onChange={(e) => setFormData({ ...formData, discountValue: Number(e.target.value) })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   />
                 </div>
               </div>
 
               {/* Đơn tối thiểu & Giảm tối đa */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Đơn hàng tối thiểu</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Đơn hàng tối thiểu</label>
                   <input
                     type="number"
                     min="0"
                     value={formData.minOrderValue}
                     onChange={(e) => setFormData({ ...formData, minOrderValue: Number(e.target.value) })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   />
                 </div>
 
                 {formData.discountType === 'percent' && (
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Giảm tối đa</label>
+                    <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Giảm tối đa</label>
                     <input
                       type="number"
                       min="0"
                       value={formData.maxDiscount}
                       onChange={(e) => setFormData({ ...formData, maxDiscount: Number(e.target.value) })}
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                      className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                     />
                   </div>
                 )}
               </div>
 
               {/* Ngày bắt đầu & Ngày kết thúc */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Ngày bắt đầu *</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Ngày bắt đầu *</label>
                   <input
                     type="date"
                     required
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Ngày kết thúc *</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Ngày kết thúc *</label>
                   <input
                     type="date"
                     required
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   />
                 </div>
               </div>
 
               {/* Phần chọn loại cửa hàng (chỉ Admin) */}
-              <div className="border-2 border-gray-200 rounded-xl p-4 bg-gray-50">
-                <label className="block text-sm font-bold text-gray-700 mb-3">Áp dụng cho cửa hàng</label>
+              <div className="border-2 border-gray-200 rounded-lg md:rounded-xl p-3 md:p-4 bg-gray-50">
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-2 md:mb-3">Áp dụng cho cửa hàng</label>
                 
-                <div className="mb-4">
+                <div className="mb-3 md:mb-4">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
@@ -637,30 +664,30 @@ const VoucherManagement: React.FC = () => {
                         setIsGlobal(true);
                         setSelectedCategories([]);
                       }}
-                      className="w-4 h-4 text-purple-600"
+                      className="w-4 h-4 md:w-5 md:h-5 text-purple-600"
                     />
-                    <span className="font-semibold text-gray-700">Áp dụng cho tất cả cửa hàng (Global)</span>
+                    <span className="text-xs md:text-sm font-semibold text-gray-700">Áp dụng cho tất cả cửa hàng (Global)</span>
                   </label>
                 </div>
 
-                <div className="mb-3">
-                  <label className="flex items-center gap-2 cursor-pointer mb-3">
+                <div className="mb-2 md:mb-3">
+                  <label className="flex items-center gap-2 cursor-pointer mb-2 md:mb-3">
                     <input
                       type="radio"
                       name="storeScope"
                       checked={!isGlobal}
                       onChange={() => setIsGlobal(false)}
-                      className="w-4 h-4 text-purple-600"
+                      className="w-4 h-4 md:w-5 md:h-5 text-purple-600"
                     />
-                    <span className="font-semibold text-gray-700">Áp dụng cho loại cửa hàng</span>
+                    <span className="text-xs md:text-sm font-semibold text-gray-700">Áp dụng cho loại cửa hàng</span>
                   </label>
                   
                   {!isGlobal && (
-                    <div className="ml-6 border-2 border-gray-300 rounded-lg p-3 bg-white">
-                      <p className="text-xs text-gray-500 mb-3">Chọn loại cửa hàng để áp dụng voucher:</p>
-                      <div className="space-y-2">
+                    <div className="ml-4 md:ml-6 border-2 border-gray-300 rounded-lg p-2 md:p-3 bg-white">
+                      <p className="text-xs text-gray-500 mb-2 md:mb-3">Chọn loại cửa hàng để áp dụng voucher:</p>
+                      <div className="space-y-1 md:space-y-2">
                         {availableCategories.map((category) => (
-                          <label key={category.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-2 rounded">
+                          <label key={category.value} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1.5 md:p-2 rounded">
                             <input
                               type="checkbox"
                               checked={selectedCategories.includes(category.value)}
@@ -671,14 +698,14 @@ const VoucherManagement: React.FC = () => {
                                   setSelectedCategories(selectedCategories.filter(c => c !== category.value));
                                 }
                               }}
-                              className="w-4 h-4 text-purple-600"
+                              className="w-3 h-3 md:w-4 md:h-4 text-purple-600"
                             />
-                            <span className="text-sm text-gray-700">{category.label}</span>
+                            <span className="text-xs md:text-sm text-gray-700">{category.label}</span>
                           </label>
                         ))}
                       </div>
                       {selectedCategories.length > 0 && (
-                        <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-200">
+                        <p className="text-xs text-gray-500 mt-2 md:mt-3 pt-2 md:pt-3 border-t border-gray-200">
                           Đã chọn: {selectedCategories.map(c => availableCategories.find(cat => cat.value === c)?.label).join(', ')}
                         </p>
                       )}
@@ -688,24 +715,24 @@ const VoucherManagement: React.FC = () => {
               </div>
 
               {/* Giới hạn sử dụng & Trạng thái */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Giới hạn sử dụng</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Giới hạn sử dụng</label>
                   <input
                     type="number"
                     min="0"
                     value={formData.usageLimit}
                     onChange={(e) => setFormData({ ...formData, usageLimit: Number(e.target.value) })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-700 mb-2">Trạng thái</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Trạng thái</label>
                   <select
                     value={formData.isActive ? 'active' : 'inactive'}
                     onChange={(e) => setFormData({ ...formData, isActive: e.target.value === 'active' })}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                   >
                     <option value="active">Hoạt động</option>
                     <option value="inactive">Tạm khóa</option>
@@ -714,22 +741,22 @@ const VoucherManagement: React.FC = () => {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
-                >
-                  {editingVoucher ? '💾 Lưu thay đổi' : '➕ Tạo voucher'}
-                </button>
+              <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end pt-3 md:pt-4 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={() => {
                     setShowForm(false);
                     setEditingVoucher(null);
                   }}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 text-gray-700 rounded-lg md:rounded-xl font-bold hover:bg-gray-50 transition-all duration-300"
                 >
                   Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg md:rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
+                >
+                  {editingVoucher ? 'Cập nhật' : 'Tạo mới'}
                 </button>
               </div>
             </form>
