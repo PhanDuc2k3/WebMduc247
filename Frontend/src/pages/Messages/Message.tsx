@@ -37,27 +37,78 @@ export default function ChatInterface() {
     } catch {}
   }, []);
 
-  // ✅ Khi có state từ StoreCard → hiện luôn ChatWindow
+  // ✅ Khi có state từ StoreCard hoặc OrderShare → hiển thị chat window ngay
   useEffect(() => {
-    if (location.state?.chatUser && location.state?.initialMessages) {
-      const chatUser = location.state.chatUser;
-      const convId = conversationId || "temp";
+    const fetchOwnerInfo = async () => {
+      // Kiểm tra nếu có state từ StoreCard hoặc OrderShare
+      if (location.state?.chatUser && location.state?.initialMessages && conversationId) {
+        const chatUser = location.state.chatUser;
+        const convId = conversationId;
 
-      console.log("[ChatInterface] ⚡ Load từ state:", chatUser);
+        console.log("[ChatInterface] ⚡ Load từ state (StoreCard/OrderShare), đang fetch thông tin owner:", chatUser);
 
-      setSelectedChat({
-        conversationId: convId,
-        userId: chatUser._id,
-        name: chatUser.name,
-        avatarUrl: chatUser.avatar,
-        lastMessage: "",
-      });
-    }
-  }, [location.state, conversationId]);
+        // Nếu chưa có currentUserId, set chat ngay với thông tin từ state
+        if (!currentUserId) {
+          setSelectedChat({
+            conversationId: convId,
+            userId: chatUser._id,
+            name: chatUser.name,
+            avatarUrl: chatUser.avatar,
+            lastMessage: "",
+          });
+          return;
+        }
+
+        try {
+          // Fetch conversation để lấy thông tin owner (participant)
+          const convList = await messageApi.getUserConversations(currentUserId);
+          const conv = convList.data.find(
+            (c: any) =>
+              c.conversationId === convId || c._id === convId
+          );
+
+          if (conv) {
+            const partner = conv.participants?.find(
+              (p: any) => String(p._id) !== String(currentUserId)
+            );
+            if (partner) {
+              // Sử dụng thông tin owner (fullName, avatarUrl) thay vì store info
+              setSelectedChat({
+                conversationId: convId,
+                userId: partner._id,
+                name: partner.fullName || "Chủ cửa hàng",
+                avatarUrl: partner.avatarUrl || "/default-avatar.png",
+                lastMessage: "",
+              });
+              return;
+            }
+          }
+        } catch (err) {
+          console.error("[ChatInterface] ❌ Lỗi fetch owner info:", err);
+        }
+
+        // Fallback: nếu không fetch được, dùng thông tin từ state
+        setSelectedChat({
+          conversationId: convId,
+          userId: chatUser._id,
+          name: chatUser.name,
+          avatarUrl: chatUser.avatar,
+          lastMessage: "",
+        });
+      }
+    };
+
+    fetchOwnerInfo();
+  }, [location.state, conversationId, currentUserId]);
 
   // ✅ Nếu vào từ URL (không có state) thì fetch conversation
   useEffect(() => {
     const fetchChat = async () => {
+      // Chỉ fetch nếu không có state từ location (tránh conflict với state từ StoreCard/OrderShare)
+      if (location.state?.chatUser && location.state?.initialMessages) {
+        return; // Đã xử lý ở useEffect trên
+      }
+
       if (!conversationId || !currentUserId) {
         console.log("[ChatInterface] ⏸ Chưa có conversationId hoặc currentUserId");
         return;
@@ -90,7 +141,7 @@ export default function ChatInterface() {
     };
 
     fetchChat();
-  }, [conversationId, currentUserId]);
+  }, [conversationId, currentUserId, location.state]);
 
   useEffect(() => {
     console.log("[ChatInterface] 🔍 selectedChat:", selectedChat);
@@ -108,7 +159,7 @@ export default function ChatInterface() {
 
   return (
     <div className="w-full px-0 sm:px-4 lg:px-6 xl:px-8 2xl:mx-auto 2xl:w-full 2xl:max-w-[1920px]">
-      <div className="flex relative h-[calc(100vh-80px)] sm:h-[calc(100vh-85px)] md:h-[calc(100vh-90px)]">
+<div className="flex relative h-[calc(100vh-80px)] sm:h-[calc(100vh-85px)] md:h-[calc(100vh-90px)]">
         {/* Chat List - Hidden on mobile when chat is selected */}
         <div className={`${showChatOnMobile ? "hidden md:block" : "block"} ${showListOnMobile ? "w-full md:w-[380px] lg:w-[420px]" : "w-full md:w-[380px] lg:w-[420px]"} flex-shrink-0`}>
           <ChatList
@@ -126,7 +177,7 @@ export default function ChatInterface() {
         </div>
 
         {/* Chat Window - Hidden on mobile when no chat selected */}
-        <div className={`${showListOnMobile ? "hidden md:flex" : "flex"} flex-1 min-w-0`}>
+<div className={`${showListOnMobile ? "hidden md:flex" : "flex"} flex-1 min-w-0 h-full`}>
           {selectedChat ? (
             <ChatWindow
               conversationId={selectedChat.conversationId}

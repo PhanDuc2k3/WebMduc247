@@ -3,6 +3,7 @@ import voucherApi from '../../../api/voucherApi';
 import type { VoucherType } from '../../../api/voucherApi';
 import { Edit, Trash2, Plus, Search, Gift, Lock, Unlock, Loader2, Ticket, Calendar, DollarSign, Zap } from 'lucide-react';
 import Pagination from '../Pagination';
+import { toast } from 'react-toastify';
 
 // Đồng nhất CSS cho status badges
 const getStatusBadgeClass = (isActive: boolean) => {
@@ -73,10 +74,10 @@ const VoucherManagement: React.FC = () => {
       // Sử dụng getAllVouchers để lấy tất cả voucher (bao gồm cả đã khóa)
       const response = await voucherApi.getAllVouchers();
       setVouchers(response.data || []);
-    } catch (error: any) {
-      console.error('Error fetching vouchers:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi tải danh sách voucher');
-    } finally {
+    } catch (error: any) {
+      console.error('Error fetching vouchers:', error);
+      toast.error(error?.response?.data?.message || 'Lỗi khi tải danh sách voucher');
+    } finally {
       setLoading(false);
     }
   };
@@ -84,26 +85,26 @@ const VoucherManagement: React.FC = () => {
   const handleDelete = async (voucherId: string) => {
     if (!window.confirm('Bạn có chắc muốn xóa voucher này?')) return;
     
-    try {
-      await voucherApi.deleteVoucher(voucherId);
-      alert('Đã xóa voucher thành công!');
-      fetchVouchers();
-    } catch (error: any) {
-      console.error('Error deleting voucher:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi xóa voucher');
-    }
+    try {
+      await voucherApi.deleteVoucher(voucherId);
+      toast.success('Đã xóa voucher thành công!');
+      fetchVouchers();
+    } catch (error: any) {
+      console.error('Error deleting voucher:', error);
+      toast.error(error?.response?.data?.message || 'Lỗi khi xóa voucher');
+    }
   };
 
-  const handleToggleStatus = async (voucherId: string) => {
-    try {
-      const response = await voucherApi.toggleVoucherStatus(voucherId);
-      alert(response.data.message);
-      fetchVouchers();
-    } catch (error: any) {
-      console.error('Error toggling voucher status:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi thay đổi trạng thái voucher');
-    }
-  };
+  const handleToggleStatus = async (voucherId: string) => {
+    try {
+      const response = await voucherApi.toggleVoucherStatus(voucherId);
+      toast.success(response.data.message);
+      fetchVouchers();
+    } catch (error: any) {
+      console.error('Error toggling voucher status:', error);
+      toast.error(error?.response?.data?.message || 'Lỗi khi thay đổi trạng thái voucher');
+    }
+  };
 
   const handleEdit = (voucher: VoucherType) => {
     setEditingVoucher(voucher);
@@ -146,38 +147,38 @@ const VoucherManagement: React.FC = () => {
         submitData.categories = [];
       }
 
-      if (editingVoucher?._id) {
-        await voucherApi.updateVoucher(editingVoucher._id, submitData);
-        alert('Đã cập nhật voucher thành công!');
-      } else {
-        await voucherApi.createVoucher(submitData);
-        alert('Đã tạo voucher thành công!');
-      }
-      
-      setShowForm(false);
-      setEditingVoucher(null);
-      setSelectedCategories([]);
-      setIsGlobal(false);
-      setFormData({
-        code: '',
-        title: '',
-        description: '',
-        condition: '',
-        voucherType: 'product',
-        discountType: 'percent',
-        discountValue: 0,
-        minOrderValue: 0,
-        maxDiscount: 0,
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        usageLimit: 0,
-        isActive: true,
-      });
-      fetchVouchers();
-    } catch (error: any) {
-      console.error('Error saving voucher:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi lưu voucher');
-    }
+      if (editingVoucher?._id) {
+        await voucherApi.updateVoucher(editingVoucher._id, submitData);
+        toast.success('Đã cập nhật voucher thành công!');
+      } else {
+        await voucherApi.createVoucher(submitData);
+        toast.success('Đã tạo voucher thành công!');
+      }
+      
+      setShowForm(false);
+      setEditingVoucher(null);
+      setSelectedCategories([]);
+      setIsGlobal(false);
+      setFormData({
+        code: '',
+        title: '',
+        description: '',
+        condition: '',
+        voucherType: 'product',
+        discountType: 'percent',
+        discountValue: 0,
+        minOrderValue: 0,
+        maxDiscount: 0,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        usageLimit: 0,
+        isActive: true,
+      });
+      fetchVouchers();
+    } catch (error: any) {
+      console.error('Error saving voucher:', error);
+      toast.error(error?.response?.data?.message || 'Lỗi khi lưu voucher');
+    }
   };
 
   // Sắp xếp và lọc vouchers

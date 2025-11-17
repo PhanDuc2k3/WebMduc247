@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Package, Star, Eye, ShoppingBag, Calendar, CheckCircle } from "lucide-react";
 import reviewApi from "../../../api/apiReview";
 import orderApi from "../../../api/orderApi";
+import { toast } from "react-toastify";
 
 interface OrderItem {
   name: string;
@@ -236,14 +237,14 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                         if (window.confirm("Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã nhận hàng' và bạn có thể đánh giá sản phẩm.")) {
                           try {
                             const response = await orderApi.confirmDelivery(order._id);
-                            alert("Xác nhận nhận hàng thành công!");
+                            toast.success("Xác nhận nhận hàng thành công!");
                             window.location.reload();
                           } catch (err: any) {
                             console.error("Lỗi xác nhận nhận hàng:", err);
                             const errorMessage = err.response?.data?.message 
                               || err.message 
                               || "Lỗi khi xác nhận nhận hàng!";
-                            alert(`Lỗi: ${errorMessage}`);
+                            toast.error(`Lỗi: ${errorMessage}`);
                           }
                         }
                       }}

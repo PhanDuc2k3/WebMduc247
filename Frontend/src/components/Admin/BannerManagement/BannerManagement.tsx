@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import bannerApi from "../../../api/bannerApi";
 import type { Banner } from "../../../api/bannerApi";
+import { toast } from "react-toastify";
 
 const BannerManagement: React.FC = () => {
   const [mainBanner, setMainBanner] = useState<Banner | null>(null);
@@ -65,7 +66,7 @@ const BannerManagement: React.FC = () => {
 
   const handleSave = async (banner: Banner) => {
     if (!files[banner._id] && !banner.imageUrl) {
-      alert("Vui lòng chọn ảnh trước khi lưu!");
+      toast.warning("Vui lòng chọn ảnh trước khi lưu!");
       return;
     }
 
@@ -78,7 +79,7 @@ const BannerManagement: React.FC = () => {
           type: banner.type,
           imageFile: files[banner._id] || undefined,
         });
-        alert("Đã tạo banner mới!");
+        toast.success("Đã tạo banner mới!");
         if (banner.type === "main") setMainBanner(res.data);
         else setSubBanners(prev => prev.map(b => (b._id === banner._id ? res.data : b)));
       } else {
@@ -88,11 +89,11 @@ const BannerManagement: React.FC = () => {
           link: banner.link,
           imageFile: files[banner._id] || undefined,
         });
-        alert("Đã lưu banner!");
+        toast.success("Đã lưu banner!");
       }
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi lưu banner!");
+      toast.error("Lỗi khi lưu banner!");
     }
   };
 
@@ -128,10 +129,10 @@ const BannerManagement: React.FC = () => {
           return newBanners;
         });
       }
-      alert("Banner đã được xóa!");
+      toast.success("Banner đã được xóa!");
     } catch (err) {
       console.error(err);
-      alert("Lỗi khi xóa banner!");
+      toast.error("Lỗi khi xóa banner!");
     }
   };
 

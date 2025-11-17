@@ -278,3 +278,24 @@
         padding: 2rem;
     }
 }
+
+/* Custom Toast Notification Styles */
+.custom-toast {
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+    backdrop-filter: blur(10px);
+}
+
+@media (max-width: 640px) {
+    .Toastify__toast-container {
+        width: calc(100% - 20px) !important;
+        left: 10px !important;
+        right: 10px !important;
+        bottom: 20px !important;
+    }
+    
+    .Toastify__toast {
+        margin-bottom: 10px !important;
+        min-height: auto !important;
+    }
+}

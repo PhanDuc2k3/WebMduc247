@@ -304,8 +304,8 @@ const Login: React.FC = () => {
 
       {/* Forgot Password Modal */}
       {showForgotPassword && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 relative animate-fade-in-up">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-md p-4 sm:p-6 md:p-8 relative animate-fade-in-up max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => {
                 setShowForgotPassword(false);
@@ -320,7 +320,7 @@ const Login: React.FC = () => {
               <X className="w-6 h-6" />
             </button>
 
-            <h2 className="text-2xl font-bold text-center mb-6 text-gray-900">
+            <h2 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6 text-gray-900">
               {forgotPasswordStep === "email" && "Quên mật khẩu"}
               {forgotPasswordStep === "code" && "Nhập mã xác thực"}
               {forgotPasswordStep === "password" && "Đặt lại mật khẩu"}
@@ -328,38 +328,38 @@ const Login: React.FC = () => {
 
             {/* Step 1: Enter Email */}
             {forgotPasswordStep === "email" && (
-              <form onSubmit={handleForgotPassword} className="space-y-5">
+              <form onSubmit={handleForgotPassword} className="space-y-4 sm:space-y-5">
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    Email
+                  <label className="block text-xs sm:text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span>Email</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                     <input
                       type="email"
-                      className="relative w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300"
+                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                       placeholder="Nhập email của bạn"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
                       required
                     />
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Mail className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
 
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="relative w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3.5 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-bold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="relative w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {forgotLoading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Đang gửi...
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      <span className="text-xs sm:text-base">Đang gửi...</span>
                     </span>
                   ) : (
-                    "Gửi mã xác thực"
+                    <span className="text-xs sm:text-base">Gửi mã xác thực</span>
                   )}
                 </button>
               </form>
@@ -367,19 +367,19 @@ const Login: React.FC = () => {
 
             {/* Step 2: Enter Code */}
             {forgotPasswordStep === "code" && (
-              <form onSubmit={handleVerifyResetCode} className="space-y-5">
+              <form onSubmit={handleVerifyResetCode} className="space-y-4 sm:space-y-5">
                 <div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Chúng tôi đã gửi mã xác thực đến email <strong>{forgotEmail}</strong>. Vui lòng kiểm tra và nhập mã bên dưới.
+                  <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed">
+                    Chúng tôi đã gửi mã xác thực đến email <strong className="break-all">{forgotEmail}</strong>. Vui lòng kiểm tra và nhập mã bên dưới.
                   </p>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700">
+                  <label className="block text-xs sm:text-sm font-semibold mb-2 text-gray-700">
                     Mã xác thực (6 chữ số)
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                     <input
                       type="text"
-                      className="relative w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300 text-center text-2xl font-bold tracking-widest"
+                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300 text-center text-xl sm:text-2xl font-bold tracking-widest"
                       placeholder="000000"
                       value={resetCode}
                       onChange={(e) => setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -419,44 +419,44 @@ const Login: React.FC = () => {
 
             {/* Step 3: Enter New Password */}
             {forgotPasswordStep === "password" && (
-              <form onSubmit={handleResetPassword} className="space-y-5">
+              <form onSubmit={handleResetPassword} className="space-y-4 sm:space-y-5">
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
-                    <Lock className="w-4 h-4" />
-                    Mật khẩu mới
+                  <label className="block text-xs sm:text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span>Mật khẩu mới</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                     <input
                       type="password"
-                      className="relative w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300"
+                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                       placeholder="Nhập mật khẩu mới"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required
                       minLength={6}
                     />
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
-                    <Lock className="w-4 h-4" />
-                    Xác nhận mật khẩu
+                  <label className="block text-xs sm:text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span>Xác nhận mật khẩu</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                     <input
                       type="password"
-                      className="relative w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300"
+                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                       placeholder="Nhập lại mật khẩu mới"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                       minLength={6}
                     />
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <Lock className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
                   {confirmPassword && newPassword !== confirmPassword && (
                     <p className="text-red-500 text-xs mt-1">Mật khẩu xác nhận không khớp</p>
@@ -466,15 +466,15 @@ const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={forgotLoading || newPassword !== confirmPassword || newPassword.length < 6}
-                  className="relative w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3.5 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-bold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="relative w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {forgotLoading ? (
                     <span className="flex items-center justify-center gap-2">
-                      <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      Đang xử lý...
+                      <span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      <span className="text-xs sm:text-base">Đang xử lý...</span>
                     </span>
                   ) : (
-                    "Đặt lại mật khẩu"
+                    <span className="text-xs sm:text-base">Đặt lại mật khẩu</span>
                   )}
                 </button>
 
@@ -485,7 +485,7 @@ const Login: React.FC = () => {
                     setNewPassword("");
                     setConfirmPassword("");
                   }}
-                  className="w-full text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors duration-200"
+                  className="w-full text-xs sm:text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors duration-200"
                 >
                   Quay lại nhập mã
                 </button>

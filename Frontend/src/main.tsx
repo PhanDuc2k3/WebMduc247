@@ -20,8 +20,8 @@ createRoot(document.getElementById("root")!).render(
           <CartProvider>
             <App />
             <ToastContainer 
-              position="top-right" 
-              autoClose={3000}
+              position="bottom-right" 
+              autoClose={4000}
               hideProgressBar={false}
               newestOnTop={true}
               closeOnClick
@@ -30,7 +30,12 @@ createRoot(document.getElementById("root")!).render(
               draggable
               pauseOnHover
               theme="light"
-              style={{ top: '20px', right: '20px' }}
+              style={{ 
+                bottom: '20px', 
+                right: '20px',
+                zIndex: 9999
+              }}
+              toastClassName="custom-toast"
             />
           </CartProvider>
         </ChatProvider>

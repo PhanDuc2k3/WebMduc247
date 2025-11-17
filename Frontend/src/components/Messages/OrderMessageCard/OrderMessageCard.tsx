@@ -1,10 +1,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, MapPin, CreditCard, Truck, ExternalLink } from "lucide-react";
+import { Package, MapPin, CreditCard, Phone, ExternalLink, ShoppingBag } from "lucide-react";
 
 interface OrderMessageCardProps {
-  message: string;
-  isMine?: boolean;
+  message: string;
+  isMine?: boolean;
 }
 
 const OrderMessageCard: React.FC<OrderMessageCardProps> = ({ message, isMine = false }) => {
@@ -12,240 +12,286 @@ const OrderMessageCard: React.FC<OrderMessageCardProps> = ({ message, isMine = f
 
   // Parse message để extract thông tin order
   const parseOrderMessage = (text: string) => {
-    const orderCodeMatch = text.match(/#([A-Z0-9-]+)/);
-    const orderCode = orderCodeMatch ? orderCodeMatch[1] : "";
+    if (!text) return {
+      orderCode: "",
+      products: [],
+      subtotal: "",
+      shippingFee: "",
+      discount: "",
+      total: "",
+      paymentMethod: "",
+      status: "",
+      address: null,
+      orderLink: "",
+    };
+    // 1. Order Code
+    const orderCodeMatch = text.match(/#([A-Z0-9-]+)/);
+    const orderCode = orderCodeMatch ? orderCodeMatch[1] : "";
 
-    // Extract sản phẩm - improved regex to handle various formats
-    const productsSection = text.match(/🛍️ Sản phẩm:\s*\n((?:\d+\.\s*.+?\s*x\d+\s*-\s*.+?₫\s*\n?)+)/);
-    const products: Array<{ name: string; quantity: number; price: string }> = [];
-    if (productsSection) {
-      const productLines = productsSection[1].trim().split("\n").filter(line => line.trim());
-      productLines.forEach((line) => {
-        // Match pattern: "1. Product Name x2 - 100,000₫"
-        const match = line.match(/\d+\.\s*(.+?)\s*x(\d+)\s*-\s*(.+?₫)/);
-        if (match) {
-          products.push({
-            name: match[1].trim(),
-            quantity: parseInt(match[2]),
-            price: match[3].trim(),
-          });
+    // 2. Sản phẩm
+    const productsSection = text.match(/(?:🛍️\s*)?Sản phẩm:\s*\n((?:\d+\.\s*.+?\s*x\d+\s*-\s*.+?₫\s*\n?)+)/);
+    const products: Array<{ name: string; quantity: number; price: string }> = [];
+    if (productsSection) {
+      const productLines = productsSection[1].trim().split("\n").filter(line => line.trim());
+      productLines.forEach((line) => {
+        const match = line.match(/\d+\.\s*(.+?)\s*x(\d+)\s*-\s*(.+?₫)/);
+        if (match) {
+          products.push({
+            name: match[1].trim(),
+            quantity: parseInt(match[2]),
+            price: match[3].trim(),
+          });
+        }
+      });
+    }
+
+    // 3. Chi tiết thanh toán
+    const chiTietSection = text.match(/(?:💰\s*)?Chi tiết thanh toán:\s*\n((?:[- ]*.+?:\s*.+?₫\s*\n?)+)/);
+    let subtotal = "";
+    let shippingFee = "";
+    let discount = "";
+    let total = "";
+    
+    if (chiTietSection) {
+      const lines = chiTietSection[1].split("\n").filter(line => line.trim());
+      lines.forEach((line) => {
+        // Xử lý dòng có thể có dấu "-" ở đầu
+        const cleanLine = line.replace(/^-\s*/, "").trim();
+        if (cleanLine.includes("Tạm tính:")) {
+          const match = cleanLine.match(/Tạm tính:\s*(.+?₫)/);
+          if (match) subtotal = match[1].trim();
+        } else if (cleanLine.includes("Phí vận chuyển:")) {
+          const match = cleanLine.match(/Phí vận chuyển:\s*(.+?₫)/);
+          if (match) shippingFee = match[1].trim();
+        } else if (cleanLine.includes("Giảm giá:")) {
+          const match = cleanLine.match(/Giảm giá:\s*-?(.+?₫)/);
+          if (match) discount = match[1].trim();
+        } else if (cleanLine.includes("Tổng tiền:")) {
+          const match = cleanLine.match(/Tổng tiền:\s*(.+?₫)/);
+          if (match) total = match[1].trim();
         }
       });
     }
 
-    // Extract chi tiết thanh toán - improved regex (handle "- " prefix)
-    const subtotalMatch = text.match(/[- ]*Tạm tính:\s*(.+?₫)/);
-    const shippingMatch = text.match(/[- ]*Phí vận chuyển:\s*(.+?₫)/);
-    const discountMatch = text.match(/[- ]*Giảm giá:\s*-?(.+?₫)/);
-    const totalMatch = text.match(/[- ]*Tổng tiền:\s*(.+?₫)/);
-    const paymentMethodMatch = text.match(/💳 Phương thức thanh toán:\s*(.+?)(?:\n|$)/);
-    const statusMatch = text.match(/📊 Trạng thái:\s*(.+?)(?:\n|$)/);
+    // 4. Phương thức thanh toán
+    const paymentMethodMatch = text.match(/(?:💳\s*)?Phương thức thanh toán:\s*(.+?)(?:\n|$)/);
+    const paymentMethod = paymentMethodMatch ? paymentMethodMatch[1].trim() : "";
 
-    // Extract địa chỉ - improved to handle multiline
-    const addressSection = text.match(/📍 Địa chỉ giao hàng:\s*\n(.+?)\n(.+?)\n(.+?)(?:\n\n|$)/);
+    // 5. Trạng thái
+    const statusMatch = text.match(/(?:📊\s*)?Trạng thái:\s*(.+?)(?:\n|$)/);
+    const status = statusMatch ? statusMatch[1].trim() : "";
+
+    // 6. Địa chỉ giao hàng
+    const addressSection = text.match(/(?:📍\s*)?Địa chỉ giao hàng:\s*\n\s*(.+?)\s*\n\s*(.+?)\s*\n\s*(.+?)\s*(?:\n\s*\n|(?:\n|$))/s);
+
     const address = addressSection
-      ? {
-          fullName: addressSection[1].trim(),
-          phone: addressSection[2].trim(),
-          address: addressSection[3].trim(),
-        }
-      : null;
+      ? {
+          fullName: addressSection[1].trim(),
+          phone: addressSection[2].trim(),
+          address: addressSection[3].trim(),
+        }
+      : null;
 
-    // Extract link - improved regex
-    const linkMatch = text.match(/Xem chi tiết đơn hàng:\s*(.+?)(?:\n|$)/);
-    const orderLink = linkMatch ? linkMatch[1].trim() : "";
+    // 7. Link
+    const linkMatch = text.match(/(?:🔗\s*)?Xem chi tiết đơn hàng:\s*(https?:\/\/[^\s\n]+)/);
+    const orderLink = linkMatch ? linkMatch[1].trim() : "";
 
-    return {
-      orderCode,
-      products,
-      subtotal: subtotalMatch ? subtotalMatch[1].trim() : "",
-      shippingFee: shippingMatch ? shippingMatch[1].trim() : "",
-      discount: discountMatch ? discountMatch[1].trim() : "",
-      total: totalMatch ? totalMatch[1].trim() : "",
-      paymentMethod: paymentMethodMatch ? paymentMethodMatch[1].trim() : "",
-      status: statusMatch ? statusMatch[1].trim() : "",
-      address,
-      orderLink,
-    };
-  };
+    return {
+      orderCode,
+      products,
+      subtotal,
+      shippingFee,
+      discount,
+      total,
+      paymentMethod,
+      status,
+      address,
+      orderLink,
+    };
+  };
 
   const orderInfo = parseOrderMessage(message);
 
   // Chỉ hiển thị card nếu có order code
   if (!orderInfo.orderCode) {
     return (
-      <div className="font-medium whitespace-pre-wrap">{message}</div>
+      <div className="font-medium whitespace-pre-wrap text-xs sm:text-sm md:text-base">{message}</div>
     );
   }
 
   const statusColors: Record<string, string> = {
-    "Đã đặt hàng": "bg-gray-100 text-gray-800",
-    "Đã xác nhận": "bg-blue-100 text-blue-800",
-    "Đã đóng gói": "bg-purple-100 text-purple-800",
-    "Đang vận chuyển": "bg-yellow-100 text-yellow-800",
-    "Đã giao hàng": "bg-green-100 text-green-800",
-    "Đã nhận hàng": "bg-emerald-100 text-emerald-800",
-    "Đã hủy": "bg-red-100 text-red-800",
+    "Chờ xử lý": "bg-yellow-100 text-yellow-700",
+    "Đã xác nhận": "bg-blue-100 text-blue-700",
+    "Đã đóng gói": "bg-purple-100 text-purple-700",
+    "Đang giao hàng": "bg-purple-100 text-purple-700",
+    "Đã giao hàng": "bg-green-100 text-green-700",
+    "Đã nhận hàng": "bg-green-100 text-green-700",
+    "Hoàn thành": "bg-green-100 text-green-700",
+    "Đã hủy": "bg-red-100 text-red-700",
+    "pending": "bg-yellow-100 text-yellow-700",
+    "confirmed": "bg-blue-100 text-blue-700",
+    "packed": "bg-purple-100 text-purple-700",
+    "shipping": "bg-purple-100 text-purple-700",
+    "shipped": "bg-purple-100 text-purple-700",
+    "delivered": "bg-green-100 text-green-700",
+    "received": "bg-green-100 text-green-700",
+    "completed": "bg-green-100 text-green-700",
+    "cancelled": "bg-red-100 text-red-700",
   };
 
   const handleViewOrder = () => {
     if (orderInfo.orderLink) {
-      const orderId = orderInfo.orderLink.split("/order/")[1];
-      if (orderId) {
-        navigate(`/order/${orderId}`);
+      // Nếu là internal link, navigate
+      if (orderInfo.orderLink.includes(window.location.origin) || orderInfo.orderLink.startsWith('/')) {
+        const url = new URL(orderInfo.orderLink, window.location.origin);
+        const path = url.pathname;
+        navigate(path);
+      } else {
+        // Nếu là external link, mở tab mới
+        window.open(orderInfo.orderLink, '_blank');
       }
     }
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-full">
       {/* Order Card */}
-      <div
-        className={`rounded-2xl shadow-xl border-2 overflow-hidden ${
-          isMine
-            ? "bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200"
-            : "bg-gradient-to-br from-white to-gray-50 border-gray-200"
-        }`}
-      >
+      <div className={`rounded sm:rounded-md overflow-hidden border shadow-sm transition-all duration-300 hover:shadow ${
+        isMine
+          ? "bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200"
+          : "bg-white border-green-300"
+      }`}>
         {/* Header */}
-        <div
-          className={`p-4 border-b-2 ${
-            isMine
-              ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white"
-              : "bg-gradient-to-r from-purple-500 to-pink-600 text-white"
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Package size={20} />
-              <span className="font-bold text-lg">Đơn hàng #{orderInfo.orderCode}</span>
-            </div>
+        <div className={`px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 md:py-1.5 flex items-center justify-between ${
+          isMine
+            ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
+            : "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+        }`}>
+          <div className="flex items-center gap-1 min-w-0">
+            <Package className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 flex-shrink-0" />
+            <span className="font-bold text-[9px] sm:text-[10px] md:text-base truncate">
+              Đơn hàng #{orderInfo.orderCode}
+            </span>
           </div>
         </div>
 
         {/* Body */}
-        <div className="p-4 space-y-4">
-          {/* Products */}
+        <div className="p-1 sm:p-1.5 md:p-2 space-y-0.5 sm:space-y-1 md:space-y-1.5">
+          {/* Sản phẩm Section */}
           {orderInfo.products.length > 0 && (
-            <div className="space-y-2">
-              <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                <span>🛍️</span> Sản phẩm
+            <div className="bg-white/60 border border-gray-200 rounded p-0.5 sm:p-1 md:p-1.5">
+              <h4 className="font-semibold text-gray-900 text-[9px] sm:text-[10px] md:text-base mb-0.5 md:mb-1 flex items-center gap-0.5 md:gap-1">
+                <ShoppingBag className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 text-gray-700 flex-shrink-0" />
+                <span>Sản phẩm</span>
               </h4>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
+              <div className="space-y-0.5 md:space-y-1">
                 {orderInfo.products.map((product, index) => (
-                  <div
-                    key={index}
-                    className="p-3 bg-white rounded-xl border border-gray-200 shadow-sm"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-900 text-sm">
-                          {product.name}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-1">
-                          Số lượng: {product.quantity}
-                        </p>
-                      </div>
-                      <p className="font-bold text-blue-600 text-sm ml-2">
-                        {product.price}
+                  <div key={index} className="flex justify-between items-start gap-1 md:gap-1.5 p-0.5 sm:p-1 md:p-1.5 bg-white/50 rounded">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 text-[9px] sm:text-[10px] md:text-base truncate">
+                        {product.name}
+                      </p>
+                      <p className="text-[8px] sm:text-[9px] md:text-sm text-gray-500">
+                        x{product.quantity}
                       </p>
                     </div>
+                    <p className="font-semibold text-blue-600 text-[9px] sm:text-[10px] md:text-base whitespace-nowrap flex-shrink-0">
+                      {product.price}
+                    </p>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Payment Details */}
-          <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
-            <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-              <CreditCard size={16} />
-              Chi tiết thanh toán
+          {/* Chi tiết thanh toán Section */}
+          <div className="bg-white/60 border border-gray-200 rounded p-0.5 sm:p-1 md:p-1.5">
+            <h4 className="font-semibold text-gray-900 text-[9px] sm:text-[10px] md:text-base mb-0.5 md:mb-1 flex items-center gap-0.5 md:gap-1">
+              <CreditCard className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 text-gray-700 flex-shrink-0" />
+              <span>Chi tiết thanh toán</span>
             </h4>
-            <div className="space-y-1 text-sm">
+            <div className="space-y-0.5 md:space-y-1 text-[9px] sm:text-[10px] md:text-base">
               {orderInfo.subtotal && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tạm tính:</span>
-                  <span className="font-semibold text-gray-900">{orderInfo.subtotal}</span>
+                  <span className="font-medium text-gray-900">{orderInfo.subtotal}</span>
                 </div>
               )}
               {orderInfo.shippingFee && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Phí vận chuyển:</span>
-                  <span className="font-semibold text-gray-900">{orderInfo.shippingFee}</span>
+                  <span className="font-medium text-gray-900">{orderInfo.shippingFee}</span>
                 </div>
               )}
               {orderInfo.discount && (
                 <div className="flex justify-between text-green-600">
                   <span>Giảm giá:</span>
-                  <span className="font-semibold">-{orderInfo.discount}</span>
+                  <span className="font-medium">-{orderInfo.discount}</span>
                 </div>
               )}
               {orderInfo.total && (
-                <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
-                  <span className="font-bold text-gray-900">Tổng tiền:</span>
-                  <span className="font-bold text-lg text-blue-600">{orderInfo.total}</span>
+                <div className="flex justify-between pt-0.5 md:pt-1 border-t border-gray-300 mt-0.5 md:mt-1">
+                  <span className="font-bold text-[9px] sm:text-[10px] md:text-base text-gray-900">Tổng:</span>
+                  <span className="font-bold text-[9px] sm:text-[10px] md:text-base text-blue-600">{orderInfo.total}</span>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Payment Method & Status */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Phương thức & Trạng thái - Grid */}
+          <div className="grid grid-cols-2 gap-0.5 sm:gap-1 md:gap-1.5">
             {orderInfo.paymentMethod && (
-              <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
-                <p className="text-xs text-gray-600 mb-1">Phương thức</p>
-                <p className="font-semibold text-gray-900 text-sm">{orderInfo.paymentMethod}</p>
+              <div className="bg-white/60 border border-gray-200 rounded p-0.5 sm:p-1 md:p-1.5">
+                <p className="text-[8px] sm:text-[9px] md:text-sm text-gray-600 mb-0.5 md:mb-1 font-medium">Phương thức</p>
+                <p className="font-semibold text-gray-900 text-[9px] sm:text-[10px] md:text-base truncate">{orderInfo.paymentMethod}</p>
               </div>
             )}
             {orderInfo.status && (
-              <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
-                <p className="text-xs text-gray-600 mb-1">Trạng thái</p>
-                <span
-                  className={`inline-block px-2 py-1 rounded-lg text-xs font-semibold ${
-                    statusColors[orderInfo.status] || "bg-gray-100 text-gray-800"
-                  }`}
-                >
+              <div className="bg-white/60 border border-gray-200 rounded p-0.5 sm:p-1 md:p-1.5">
+                <p className="text-[8px] sm:text-[9px] md:text-sm text-gray-600 mb-0.5 md:mb-1 font-medium">Trạng thái</p>
+                <span className={`inline-block px-0.5 py-0.5 sm:px-1 sm:py-0.5 md:px-1.5 md:py-1 rounded-full text-[8px] sm:text-[9px] md:text-sm font-semibold ${
+                  statusColors[orderInfo.status] || "bg-gray-100 text-gray-800"
+                }`}>
                   {orderInfo.status}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Address */}
+          {/* Địa chỉ giao hàng Section */}
           {orderInfo.address && (
-            <div className="p-3 bg-white rounded-xl border border-gray-200 shadow-sm">
-              <h4 className="font-bold text-gray-900 mb-2 flex items-center gap-2">
-                <MapPin size={16} />
-                Địa chỉ giao hàng
+            <div className="bg-white/60 border border-gray-200 rounded p-0.5 sm:p-1 md:p-1.5">
+              <h4 className="font-semibold text-gray-900 text-[9px] sm:text-[10px] md:text-base mb-0.5 md:mb-1 flex items-center gap-0.5 md:gap-1">
+                <MapPin className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 text-green-600 flex-shrink-0" />
+                <span>Giao đến</span>
               </h4>
-              <div className="text-sm text-gray-700 space-y-1">
-                <p className="font-semibold">{orderInfo.address.fullName}</p>
-                <p>📞 {orderInfo.address.phone}</p>
-                <p className="text-xs">{orderInfo.address.address}</p>
+              <div className="text-[9px] sm:text-[10px] md:text-base text-gray-700 space-y-0.5 md:space-y-1">
+                <p className="font-medium text-gray-900 text-[9px] sm:text-[10px] md:text-base">{orderInfo.address.fullName}</p>
+                <p className="flex items-center gap-0.5 md:gap-1 text-gray-600 break-all">
+                  <Phone className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 text-gray-500 flex-shrink-0" />
+                  <span className="text-[8px] sm:text-[9px] md:text-sm">{orderInfo.address.phone}</span>
+                </p>
+                <p className="text-[9px] sm:text-[10px] md:text-base break-words text-gray-600 leading-tight md:leading-normal">
+                  {orderInfo.address.address}
+                </p>
               </div>
             </div>
           )}
 
-          {/* View Order Button */}
+          {/* Xem chi tiết Button */}
           {orderInfo.orderLink && (
             <button
               onClick={handleViewOrder}
-              className={`w-full py-3 px-4 rounded-xl font-bold text-white transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
-                isMine
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800"
-                  : "bg-gradient-to-r from-purple-600 to-pink-700 hover:from-purple-700 hover:to-pink-800"
-              }`}
+              className="w-full py-0.5 sm:py-1 md:py-1.5 px-1.5 sm:px-2 md:px-3 rounded font-semibold text-white text-[9px] sm:text-[10px] md:text-base transition-all duration-300 shadow-sm hover:shadow md:hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-0.5 md:gap-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
             >
-              <ExternalLink size={18} />
-              <span>Xem chi tiết đơn hàng</span>
+              <ExternalLink className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 flex-shrink-0" />
+              <span>Xem chi tiết</span>
             </button>
           )}
         </div>
       </div>
-    </div>
-  );
+      </div>
+  );
 };
 
 export default OrderMessageCard;
-

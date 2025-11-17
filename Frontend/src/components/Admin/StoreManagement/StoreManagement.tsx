@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import storeApi from '../../../api/storeApi';
 import { Edit, Trash2, Plus, Search, Eye, Store as StoreIcon, Loader2, User, Tag, Calendar } from 'lucide-react';
 import Pagination from '../Pagination';
+import { toast } from 'react-toastify';
 
 // Đồng nhất CSS cho status badges
 const getStatusBadgeClass = (isActive: boolean) => {
@@ -65,7 +66,7 @@ const StoreManagement: React.FC = () => {
       setStores(Array.isArray(data) ? data : []);
     } catch (error: any) {
       console.error('Error fetching stores:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi tải danh sách cửa hàng');
+      toast.error(error?.response?.data?.message || 'Lỗi khi tải danh sách cửa hàng');
     } finally {
       setLoading(false);
     }
@@ -76,11 +77,11 @@ const StoreManagement: React.FC = () => {
     
     try {
       await storeApi.deleteStore(storeId);
-      alert('Đã xóa cửa hàng thành công!');
+      toast.success('Đã xóa cửa hàng thành công!');
       fetchStores();
     } catch (error: any) {
       console.error('Error deleting store:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi xóa cửa hàng');
+      toast.error(error?.response?.data?.message || 'Lỗi khi xóa cửa hàng');
     }
   };
 
@@ -107,7 +108,7 @@ const StoreManagement: React.FC = () => {
           updateData.category = formData.category;
         }
         await storeApi.updateStoreById(editingStore._id, updateData);
-        alert('Đã cập nhật cửa hàng thành công!');
+        toast.success('Đã cập nhật cửa hàng thành công!');
       } else {
         const formDataObj = new FormData();
         formDataObj.append('name', formData.name);
@@ -116,7 +117,7 @@ const StoreManagement: React.FC = () => {
           formDataObj.append('category', formData.category);
         }
         await storeApi.createStore(formDataObj);
-        alert('Đã tạo cửa hàng thành công!');
+        toast.success('Đã tạo cửa hàng thành công!');
       }
       setShowForm(false);
       setEditingStore(null);
@@ -124,7 +125,7 @@ const StoreManagement: React.FC = () => {
       fetchStores();
     } catch (error: any) {
       console.error('Error saving store:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi lưu cửa hàng');
+      toast.error(error?.response?.data?.message || 'Lỗi khi lưu cửa hàng');
     }
   };
 

@@ -5,6 +5,7 @@ import type { StoreType, Category, Product } from "../../../types/store";
 import StoreInfo from "./StoreInfo";
 import CategoryList from "./CategoryList";
 import CategoryProducts from "./CategoryProducts";
+import { toast } from "react-toastify";
 
 const ManageStore: React.FC = () => {
   const [store, setStore] = useState<StoreType | null>(null);
@@ -85,10 +86,10 @@ const ManageStore: React.FC = () => {
       setStore(res.data.store);
       setLogoFile(null);
       setBannerFile(null);
-      alert("Cập nhật cửa hàng thành công!");
+      toast.success("Cập nhật cửa hàng thành công!");
     } catch (err) {
       console.error("Update store error:", err);
-      alert("Cập nhật cửa hàng thất bại!");
+      toast.error("Cập nhật cửa hàng thất bại!");
     }
   };
 
@@ -104,7 +105,7 @@ const ManageStore: React.FC = () => {
       setNewCategoryName("");
     } catch (err) {
       console.error("Add category error:", err);
-      alert("Thêm danh mục thất bại!");
+      toast.error("Thêm danh mục thất bại!");
     }
   };
 const handleEditCategory = async (id: string, name: string) => {
@@ -116,7 +117,7 @@ const handleEditCategory = async (id: string, name: string) => {
     setCategories(categories.map(c => (c._id === id ? { ...c, name } : c)));
   } catch (err) {
     console.error("❌ [DEBUG] Edit category error:", err);
-    alert("Sửa danh mục thất bại!");
+    toast.error("Sửa danh mục thất bại!");
   }
 };
 
@@ -128,7 +129,7 @@ const handleEditCategory = async (id: string, name: string) => {
       if (selectedCategory === id) setSelectedCategory(null);
     } catch (err) {
       console.error("Delete category error:", err);
-      alert("Xóa danh mục thất bại!");
+      toast.error("Xóa danh mục thất bại!");
     }
   };
 
@@ -146,7 +147,7 @@ const handleEditCategory = async (id: string, name: string) => {
       ));
     } catch (err) {
       console.error("Remove product error:", err);
-      alert("Xóa sản phẩm khỏi danh mục thất bại!");
+      toast.error("Xóa sản phẩm khỏi danh mục thất bại!");
     }
   };
 
@@ -174,7 +175,7 @@ const handleEditCategory = async (id: string, name: string) => {
       setShowProductModal(false);
     } catch (err) {
       console.error("Add products error:", err);
-      alert("Thêm sản phẩm thất bại!");
+      toast.error("Thêm sản phẩm thất bại!");
     }
   };
 

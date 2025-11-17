@@ -3,6 +3,7 @@ import orderApi from '../../../api/orderApi';
 import { Edit, Trash2, Search, Eye, User, Mail, Phone, ShoppingBag, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from '../Pagination';
+import { toast } from 'react-toastify';
 
 // Đồng nhất CSS cho status badges
 const getStatusBadgeClass = (status: string) => {
@@ -88,7 +89,7 @@ const fetchOrders = useCallback(async (showLoading = true) => {
   } catch (error: any) {
     console.error('Error fetching orders:', error);
     if (showLoading) {
-      alert(error?.response?.data?.message || 'Lỗi khi tải danh sách đơn hàng');
+      toast.error(error?.response?.data?.message || 'Lỗi khi tải danh sách đơn hàng');
     }
   } finally {
     if (showLoading) setLoading(false);
@@ -114,11 +115,11 @@ const fetchOrders = useCallback(async (showLoading = true) => {
     
     try {
       await orderApi.deleteOrder(orderId);
-      alert('Đã xóa đơn hàng thành công!');
+      toast.success('Đã xóa đơn hàng thành công!');
       fetchOrders();
     } catch (error: any) {
       console.error('Error deleting order:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi xóa đơn hàng');
+      toast.error(error?.response?.data?.message || 'Lỗi khi xóa đơn hàng');
     }
   };
 
@@ -141,14 +142,14 @@ const fetchOrders = useCallback(async (showLoading = true) => {
       if (formData.note) {
         await orderApi.updateOrder(editingOrder._id, { note: formData.note });
       }
-      alert('Đã cập nhật đơn hàng thành công!');
+      toast.success('Đã cập nhật đơn hàng thành công!');
       setShowForm(false);
       setEditingOrder(null);
       setFormData({ status: '', note: '' });
       fetchOrders();
     } catch (error: any) {
       console.error('Error updating order:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi cập nhật đơn hàng');
+      toast.error(error?.response?.data?.message || 'Lỗi khi cập nhật đơn hàng');
     }
   };
 

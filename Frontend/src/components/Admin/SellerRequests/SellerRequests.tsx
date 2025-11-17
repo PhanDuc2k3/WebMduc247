@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import userApi from "../../../api/userApi";
 import { CheckCircle2, XCircle, Calendar, Store, FileText, User, Mail, Loader2 } from "lucide-react";
 import Pagination from "../Pagination";
+import { toast } from "react-toastify";
 
 // Đồng nhất CSS cho status badges
 const getStatusBadgeClass = (status: string) => {
@@ -46,7 +47,7 @@ const SellerApproval: React.FC = () => {
       setRequests(filtered);
     } catch (error: any) {
       console.error("❌ [SellerApproval] Lỗi khi lấy danh sách:", error?.response || error);
-      alert(error?.response?.data?.message || "Không thể tải danh sách yêu cầu");
+      toast.error(error?.response?.data?.message || "Không thể tải danh sách yêu cầu");
     } finally {
       setLoading(false);
     }
@@ -58,12 +59,12 @@ const SellerApproval: React.FC = () => {
       const res = await userApi.handleSellerRequest({ userId, action });
 
       console.log("✅ [SellerApproval] Kết quả xử lý:", res);
-      alert(res.data.message || "Thao tác thành công");
+      toast.success(res.data.message || "Thao tác thành công");
 
       await fetchRequests();
     } catch (error: any) {
       console.error("❌ [SellerApproval] Lỗi xử lý yêu cầu:", error?.response || error);
-      alert(error?.response?.data?.message || "Xử lý thất bại");
+      toast.error(error?.response?.data?.message || "Xử lý thất bại");
     }
   };
 

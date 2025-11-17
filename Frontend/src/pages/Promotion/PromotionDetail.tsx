@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { CalendarDays, Eye, ArrowLeft, Tag } from "lucide-react";
 import promotionApi from "../../api/promotionApi";
 import type { PromotionType } from "../../api/promotionApi";
+import { toast } from "react-toastify";
 
 const PromotionDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,7 +34,7 @@ const PromotionDetail: React.FC = () => {
         }
       } catch (error) {
         console.error("Error fetching promotion:", error);
-        alert("Không tìm thấy tin tức khuyến mãi");
+        toast.error("Không tìm thấy tin tức khuyến mãi");
         navigate("/new");
       } finally {
         setLoading(false);

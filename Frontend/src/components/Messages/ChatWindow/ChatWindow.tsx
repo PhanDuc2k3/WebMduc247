@@ -226,28 +226,42 @@ useEffect(() => {
 
         {messages.map((msg) => {
           const isMine = msg.sender === currentUserId;
-          const isOrderMessage = msg.text?.includes("📦 Thông tin đơn hàng #");
+          const isOrderMessage = msg.text?.includes("Thông tin đơn hàng #") || msg.text?.includes("📦 Thông tin đơn hàng #");
 
           return (
             <div
               key={msg._id}
               className={`flex ${isMine ? "justify-end" : "justify-start"} ${msg.tempId ? "opacity-60" : ""}`}
             >
-              <div className="space-y-1 md:space-y-2 max-w-[85%] md:max-w-[60%] lg:max-w-[55%] xl:max-w-[50%]">
-                <div
-                  className={`text-[10px] md:text-xs font-semibold px-2 ${
-                    isMine ? "text-right text-gray-600" : "text-left text-gray-600"
-                  }`}
-                >
-                  {new Date(msg.createdAt).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                  {msg.tempId && <span className="italic"> (Đang gửi...)</span>}
+              {isOrderMessage ? (
+                // ✅ Order message - mobile 50%, desktop 40%
+                <div className={`w-full ${isMine ? "flex justify-end" : "flex justify-start"} px-2 md:px-4`}>
+                  <div className="w-[50%] md:w-[40%] max-w-full">
+                    <div className={`text-[10px] md:text-xs font-semibold mb-1 ${
+                      isMine ? "text-right text-gray-600" : "text-left text-gray-600"
+                    }`}>
+                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                      {msg.tempId && <span className="italic"> (Đang gửi...)</span>}
+                    </div>
+                    <OrderMessageCard message={msg.text || ""} isMine={isMine} />
+                  </div>
                 </div>
-                {isOrderMessage ? (
-                  <OrderMessageCard message={msg.text || ""} isMine={isMine} />
-                ) : (
+              ) : (
+                <div className="space-y-1 md:space-y-2 max-w-[85%] md:max-w-[60%] lg:max-w-[55%] xl:max-w-[50%]">
+                  <div
+                    className={`text-[10px] md:text-xs font-semibold px-2 ${
+                      isMine ? "text-right text-gray-600" : "text-left text-gray-600"
+                    }`}
+                  >
+                    {new Date(msg.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                    {msg.tempId && <span className="italic"> (Đang gửi...)</span>}
+                  </div>
                   <div
                     className={`p-3 md:p-4 lg:p-4 rounded-xl md:rounded-2xl w-fit max-w-full break-words shadow-md md:shadow-lg animate-fade-in-up ${
                       isMine 
@@ -271,8 +285,8 @@ useEffect(() => {
                       <div className="font-medium text-sm md:text-base whitespace-pre-wrap">{msg.text}</div>
                     )}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           );
         })}

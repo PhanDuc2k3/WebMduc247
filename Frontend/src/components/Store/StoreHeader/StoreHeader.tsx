@@ -109,7 +109,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
     try {
       const stored = localStorage.getItem("user");
       if (!stored) {
-        alert("⚠️ Vui lòng đăng nhập để chat với cửa hàng");
+        toast.warning("Vui lòng đăng nhập để chat với cửa hàng");
         return;
       }
 
@@ -118,7 +118,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
       const receiverId = typeof store.owner === "string" ? store.owner : store.owner._id;
 
       if (!senderId || !receiverId) {
-        alert("Không tìm thấy ID người dùng hoặc chủ cửa hàng");
+        toast.error("Không tìm thấy ID người dùng hoặc chủ cửa hàng");
         return;
       }
 
@@ -153,7 +153,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
       });
     } catch (err: any) {
       console.error("Lỗi khi mở chat:", err);
-      alert("Không thể mở cuộc trò chuyện. Vui lòng thử lại.");
+      toast.error("Không thể mở cuộc trò chuyện. Vui lòng thử lại.");
     } finally {
       setIsLoadingChat(false);
     }

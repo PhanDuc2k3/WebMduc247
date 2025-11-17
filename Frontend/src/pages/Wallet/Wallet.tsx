@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import walletApi, { Transaction } from '../../api/walletApi';
 import paymentApi from '../../api/paymentApi';
-import { Wallet, ArrowDown, ArrowUp, History, Plus, Minus } from 'lucide-react';
+import { Wallet, ArrowDown, ArrowUp, History, Plus, Minus, Mail } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 const WalletPage: React.FC = () => {
   const [balance, setBalance] = useState<number>(0);
@@ -94,12 +95,12 @@ const WalletPage: React.FC = () => {
   const handleDeposit = async () => {
     const amount = parseFloat(depositAmount);
     if (!amount || amount <= 0) {
-      alert('Vui lòng nhập số tiền hợp lệ');
+      toast.error('Vui lòng nhập số tiền hợp lệ');
       return;
     }
 
     if (amount < 10000) {
-      alert('Số tiền nạp tối thiểu là 10,000₫');
+      toast.error('Số tiền nạp tối thiểu là 10,000₫');
       return;
     }
 
@@ -148,34 +149,34 @@ const WalletPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error('Lỗi nạp tiền:', err);
-      alert(err.response?.data?.message || 'Không thể tạo thanh toán');
+      toast.error(err.response?.data?.message || 'Không thể tạo thanh toán');
     }
   };
 
   const handleSendWithdrawalCode = async () => {
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
-      alert('Vui lòng nhập số tiền hợp lệ');
+      toast.error('Vui lòng nhập số tiền hợp lệ');
       return;
     }
 
     if (amount < 10000) {
-      alert('Số tiền rút tối thiểu là 10,000₫');
+      toast.error('Số tiền rút tối thiểu là 10,000₫');
       return;
     }
 
     if (amount > balance) {
-      alert('Số dư không đủ để rút tiền');
+      toast.error('Số dư không đủ để rút tiền');
       return;
     }
 
     if (!bankName) {
-      alert('Vui lòng chọn ngân hàng');
+      toast.error('Vui lòng chọn ngân hàng');
       return;
     }
 
     if (!accountNumber || accountNumber.trim() === '') {
-      alert('Vui lòng nhập số tài khoản ngân hàng');
+      toast.error('Vui lòng nhập số tài khoản ngân hàng');
       return;
     }
 
@@ -188,10 +189,10 @@ const WalletPage: React.FC = () => {
       });
 
       setShowEmailCodeInput(true);
-      alert('Đã gửi mã xác thực đến email của bạn. Vui lòng kiểm tra email và nhập mã.');
+      toast.success('Đã gửi mã xác thực đến email của bạn. Vui lòng kiểm tra email và nhập mã.');
     } catch (err: any) {
       console.error('Lỗi gửi mã:', err);
-      alert(err.response?.data?.message || 'Không thể gửi mã xác thực');
+      toast.error(err.response?.data?.message || 'Không thể gửi mã xác thực');
     } finally {
       setSendingCode(false);
     }
@@ -200,12 +201,12 @@ const WalletPage: React.FC = () => {
   const handleWithdraw = async () => {
     const amount = parseFloat(withdrawAmount);
     if (!amount || amount <= 0) {
-      alert('Vui lòng nhập số tiền hợp lệ');
+      toast.error('Vui lòng nhập số tiền hợp lệ');
       return;
     }
 
     if (!emailCode || emailCode.length !== 6) {
-      alert('Vui lòng nhập mã xác thực 6 chữ số từ email');
+      toast.error('Vui lòng nhập mã xác thực 6 chữ số từ email');
       return;
     }
 
@@ -225,13 +226,13 @@ const WalletPage: React.FC = () => {
       setEmailCode('');
       setShowEmailCodeInput(false);
       setShowWithdraw(false);
-      alert('Yêu cầu rút tiền đã được gửi, vui lòng chờ xử lý!');
+      toast.success('Yêu cầu rút tiền đã được gửi, vui lòng chờ xử lý!');
       
       // Refresh transactions
       fetchTransactions();
     } catch (err: any) {
       console.error('Lỗi rút tiền:', err);
-      alert(err.response?.data?.message || 'Không thể rút tiền');
+      toast.error(err.response?.data?.message || 'Không thể rút tiền');
     } finally {
       setWithdrawLoading(false);
     }
@@ -422,18 +423,19 @@ const WalletPage: React.FC = () => {
 
               {showEmailCodeInput && (
                 <div>
-                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2">
-                    Mã xác thực từ email <span className="text-red-500">*</span>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2 flex items-center gap-1.5">
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" />
+                    <span>Mã xác thực từ email <span className="text-red-500">*</span></span>
                   </label>
                   <input
                     type="text"
                     value={emailCode}
                     onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="Nhập mã 6 chữ số từ email"
+                    placeholder="000000"
                     maxLength={6}
-                    className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm md:text-base text-center text-2xl font-mono tracking-widest"
+                    className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm sm:text-base text-center text-xl sm:text-2xl font-mono tracking-widest"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 mt-1.5 sm:mt-2">
                     Mã xác thực đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.
                   </p>
                 </div>

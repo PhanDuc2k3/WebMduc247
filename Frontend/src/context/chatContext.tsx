@@ -123,11 +123,27 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
       senderName: string;
       text: string;
       avatarUrl?: string;
+      senderId?: string;
+      recipientId?: string;
     }) => {
-      const { conversationId, senderName, text, avatarUrl } = data;
+      const { conversationId, senderName, text, avatarUrl, senderId, recipientId } = data;
       const isActiveConversation = window.location.pathname.includes(conversationId);
 
-      if (!isActiveConversation) {
+      // Lấy currentUserId từ localStorage
+      const storedUser = localStorage.getItem("user");
+      let currentUserId = "";
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          currentUserId = user._id || user.id || "";
+        } catch (e) {}
+      }
+
+      // Chỉ hiển thị thông báo cho người nhận (không phải người gửi)
+      const isRecipient = recipientId && currentUserId && recipientId === currentUserId;
+      const isNotSender = senderId && currentUserId && senderId !== currentUserId;
+
+      if (!isActiveConversation && (isRecipient || isNotSender)) {
         setUnreadMessages((prev) => ({
           ...prev,
           [conversationId]: (prev[conversationId] || 0) + 1,
@@ -139,20 +155,37 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         toast.info(
-          <div style={{ display: "flex", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <img
               src={avatarUrl || "/default-avatar.png"}
               alt={senderName}
-              style={{ width: 32, height: 32, borderRadius: "50%", marginRight: 8 }}
+              style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", border: "2px solid white", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
             />
-            <div>
-              <strong>{senderName}</strong>
-              <div style={{ fontSize: 12, opacity: 0.9 }}>
-                {text.length > 60 ? text.slice(0, 60) + "..." : text}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <strong style={{ display: "block", fontSize: "14px", fontWeight: 600, color: "#1f2937", marginBottom: "4px" }}>
+                {senderName}
+              </strong>
+              <div style={{ fontSize: "13px", color: "#6b7280", lineHeight: "1.4", wordBreak: "break-word" }}>
+                {text.length > 50 ? text.slice(0, 50) + "..." : text}
               </div>
             </div>
           </div>,
-          { position: "bottom-right", toastId: conversationId }
+          { 
+            position: "bottom-right", 
+            toastId: conversationId,
+            style: {
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              borderRadius: "12px",
+              padding: "16px",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+              minWidth: "300px",
+              maxWidth: "400px",
+            },
+            bodyStyle: {
+              color: "white",
+            }
+          }
         );
       }
     };

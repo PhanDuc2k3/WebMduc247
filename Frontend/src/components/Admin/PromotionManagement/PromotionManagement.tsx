@@ -3,6 +3,7 @@ import promotionApi from '../../../api/promotionApi';
 import type { PromotionType } from '../../../api/promotionApi';
 import { Edit, Trash2, Plus, Search, Tag, Eye, Loader2, Megaphone } from 'lucide-react';
 import Pagination from '../Pagination';
+import { toast } from 'react-toastify';
 
 // Đồng nhất CSS cho status badges
 const getStatusBadgeClass = (isActive: boolean) => {
@@ -45,7 +46,7 @@ const PromotionManagement: React.FC = () => {
       setPromotions(response.data || []);
     } catch (error: any) {
       console.error('Error fetching promotions:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi tải danh sách tin tức khuyến mãi');
+      toast.error(error?.response?.data?.message || 'Lỗi khi tải danh sách tin tức khuyến mãi');
     } finally {
       setLoading(false);
     }
@@ -56,11 +57,11 @@ const PromotionManagement: React.FC = () => {
     
     try {
       await promotionApi.deletePromotion(promotionId);
-      alert('Đã xóa tin tức khuyến mãi thành công!');
+      toast.success('Đã xóa tin tức khuyến mãi thành công!');
       fetchPromotions();
     } catch (error: any) {
       console.error('Error deleting promotion:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi xóa tin tức khuyến mãi');
+      toast.error(error?.response?.data?.message || 'Lỗi khi xóa tin tức khuyến mãi');
     }
   };
 
@@ -101,10 +102,10 @@ const PromotionManagement: React.FC = () => {
 
       if (editingPromotion?._id) {
         await promotionApi.updatePromotion(editingPromotion._id, submitData);
-        alert('Đã cập nhật tin tức khuyến mãi thành công!');
+        toast.success('Đã cập nhật tin tức khuyến mãi thành công!');
       } else {
         await promotionApi.createPromotion(submitData);
-        alert('Đã tạo tin tức khuyến mãi thành công!');
+        toast.success('Đã tạo tin tức khuyến mãi thành công!');
       }
       
       setShowForm(false);
@@ -124,7 +125,7 @@ const PromotionManagement: React.FC = () => {
       fetchPromotions();
     } catch (error: any) {
       console.error('Error saving promotion:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi lưu tin tức khuyến mãi');
+      toast.error(error?.response?.data?.message || 'Lỗi khi lưu tin tức khuyến mãi');
     }
   };
 
