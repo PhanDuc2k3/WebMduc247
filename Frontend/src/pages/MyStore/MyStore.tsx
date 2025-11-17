@@ -60,17 +60,33 @@ const MyStore: React.FC = () => {
     );
   }
 
-  if (role === "buyer" && !hasStore && sellerRequestStatus === "none") {
+  if (role === "buyer" && !hasStore && (sellerRequestStatus === "none" || sellerRequestStatus === "rejected")) {
     return (
       <div className="w-full py-8 md:py-12">
         <div className="mb-8 animate-fade-in-down">
           <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-            <span>🏪</span> Đăng ký mở cửa hàng
+            <span>🏪</span> {sellerRequestStatus === "rejected" ? "Đăng ký lại mở cửa hàng" : "Đăng ký mở cửa hàng"}
           </h1>
-          <p className="text-gray-600 text-lg">Bắt đầu hành trình bán hàng của bạn ngay hôm nay</p>
+          <p className="text-gray-600 text-lg">
+            {sellerRequestStatus === "rejected" 
+              ? "Yêu cầu trước đó của bạn đã bị từ chối. Vui lòng cập nhật thông tin và gửi lại yêu cầu mới."
+              : "Bắt đầu hành trình bán hàng của bạn ngay hôm nay"
+            }
+          </p>
+          {sellerRequestStatus === "rejected" && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <p className="text-sm text-red-800">
+                ⚠️ Yêu cầu trước đó của bạn đã bị từ chối. Vui lòng kiểm tra và cập nhật thông tin cửa hàng trước khi gửi lại.
+              </p>
+            </div>
+          )}
         </div>
         <div className="animate-fade-in-up delay-200">
-          <StoreRegisterForm onSuccess={() => setSellerRequestStatus("pending")} />
+          <StoreRegisterForm onSuccess={() => {
+            setSellerRequestStatus("pending");
+            // Refresh để lấy thông tin mới
+            window.location.reload();
+          }} />
         </div>
       </div>
     );

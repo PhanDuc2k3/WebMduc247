@@ -70,6 +70,7 @@ axiosClient.interceptors.response.use(
           toast.error(message, {
             position: "top-right",
             autoClose: 3000,
+            containerId: "general-toast",
             toastId: `error-400-${message.slice(0, 20)}`, // Dùng message để tạo ID duy nhất
           });
           break;
@@ -80,6 +81,7 @@ axiosClient.interceptors.response.use(
             toast.warning("Vui lòng đăng nhập để tiếp tục", {
               position: "top-right",
               autoClose: 3000,
+              containerId: "general-toast",
               toastId: "auth-required", // Cùng ID để chỉ hiển thị 1 toast
             });
           } else {
@@ -89,6 +91,7 @@ axiosClient.interceptors.response.use(
             toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại", {
               position: "top-right",
               autoClose: 3000,
+              containerId: "general-toast",
               toastId: "session-expired", // Cùng ID để chỉ hiển thị 1 toast
             });
             // Redirect to login nếu không phải đang ở trang login
@@ -101,13 +104,39 @@ axiosClient.interceptors.response.use(
           break;
 
         case 403:
-          // Forbidden - Không có quyền hoặc tài khoản chưa xác thực
-          if (data?.needsVerification) {
+          // Forbidden - Không có quyền, tài khoản chưa xác thực, hoặc tài khoản bị ban
+          if (data?.isBanned) {
+            // Tài khoản bị ban - tự động đăng xuất
+            toast.error(message || "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.", {
+              position: "top-right",
+              autoClose: 5000,
+              containerId: "general-toast",
+              toastId: "account-banned",
+              onClose: () => {
+                // Xóa token và user khỏi localStorage
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                // Chuyển đến trang đăng nhập
+                if (window.location.pathname !== "/login") {
+                  window.location.href = "/login";
+                }
+              },
+            });
+            // Đăng xuất ngay lập tức
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            setTimeout(() => {
+              if (window.location.pathname !== "/login") {
+                window.location.href = "/login";
+              }
+            }, 2000);
+          } else if (data?.needsVerification) {
             // Tài khoản chưa xác thực email
             const userEmail = data?.email || "";
             toast.error(message || "Tài khoản chưa được xác thực. Vui lòng kiểm tra email và xác thực tài khoản.", {
               position: "top-right",
               autoClose: 4000,
+              containerId: "general-toast",
               toastId: "email-verification-required",
               onClose: () => {
                 // Chuyển đến trang xác thực email nếu không phải đang ở đó
@@ -120,6 +149,7 @@ axiosClient.interceptors.response.use(
             toast.error(message || "Bạn không có quyền thực hiện thao tác này", {
               position: "top-right",
               autoClose: 3000,
+              containerId: "general-toast",
               toastId: `error-403-${message.slice(0, 20)}`,
             });
           }
@@ -131,6 +161,7 @@ axiosClient.interceptors.response.use(
             toast.error(message || "Không tìm thấy dữ liệu", {
               position: "top-right",
               autoClose: 3000,
+              containerId: "general-toast",
               toastId: `error-404-${url.slice(-20)}`,
             });
           }
@@ -141,6 +172,7 @@ axiosClient.interceptors.response.use(
           toast.warning(message || "Dữ liệu đã tồn tại", {
             position: "top-right",
             autoClose: 3000,
+            containerId: "general-toast",
             toastId: `error-409-${message.slice(0, 20)}`,
           });
           break;
@@ -150,6 +182,7 @@ axiosClient.interceptors.response.use(
           toast.error(message || "Dữ liệu không hợp lệ", {
             position: "top-right",
             autoClose: 3000,
+            containerId: "general-toast",
             toastId: `error-422-${message.slice(0, 20)}`,
           });
           break;
@@ -161,6 +194,7 @@ axiosClient.interceptors.response.use(
           toast.error(message || "Lỗi máy chủ. Vui lòng thử lại sau", {
             position: "top-right",
             autoClose: 4000,
+            containerId: "general-toast",
             toastId: `error-${status}`, // Cùng ID cho cùng loại lỗi server
           });
           break;
@@ -170,6 +204,7 @@ axiosClient.interceptors.response.use(
           toast.error(message || "Có lỗi xảy ra. Vui lòng thử lại", {
             position: "top-right",
             autoClose: 3000,
+            containerId: "general-toast",
             toastId: `error-${status}-${Date.now()}`,
           });
       }
@@ -178,6 +213,7 @@ axiosClient.interceptors.response.use(
       toast.error("Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng và thử lại", {
         position: "top-right",
         autoClose: 4000,
+        containerId: "general-toast",
         toastId: "network-error", // Cùng ID để chỉ hiển thị 1 toast
       });
     } else {
@@ -185,6 +221,7 @@ axiosClient.interceptors.response.use(
       toast.error("Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại", {
         position: "top-right",
         autoClose: 3000,
+        containerId: "general-toast",
         toastId: "request-error",
       });
     }

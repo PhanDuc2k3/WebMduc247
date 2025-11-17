@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import adminStatisticsApi from "../../../api/adminStatisticsApi";
 
 const SellerBox: React.FC = () => {
   const [showBox, setShowBox] = useState(false);
+  const [stats, setStats] = useState<{
+    totalUsers?: number;
+    totalStores?: number;
+    totalProducts?: number;
+  }>({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     try {
@@ -19,6 +27,31 @@ const SellerBox: React.FC = () => {
       setShowBox(true);
     }
   }, []);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await adminStatisticsApi.getDashboardStats();
+        if (res.data) {
+          setStats({
+            totalUsers: res.data.totalUsers || 0,
+            totalStores: res.data.totalStores || 0,
+            totalProducts: res.data.totalProducts || 0,
+          });
+        }
+      } catch (err) {
+        console.error("❌ Lỗi khi lấy thống kê:", err);
+      }
+    };
+
+    if (showBox) {
+      fetchStats();
+    }
+  }, [showBox]);
+
+  const handleRegisterClick = () => {
+    navigate("/mystore");
+  };
 
   if (!showBox) return null;
 
@@ -50,18 +83,21 @@ const SellerBox: React.FC = () => {
 
             <div className="flex flex-wrap justify-center md:justify-start gap-2 sm:gap-3 md:gap-4 lg:gap-8 text-xs sm:text-sm md:text-base mb-4 sm:mb-6 md:mb-8">
               <span className="bg-white/20 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold shadow-lg transform hover:scale-110 transition-transform duration-300">
-                👥 50M+ Người mua
+                👥 {stats.totalUsers ? stats.totalUsers.toLocaleString('vi-VN') : "..."} Người mua
               </span>
               <span className="bg-white/20 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold shadow-lg transform hover:scale-110 transition-transform duration-300">
-                📦 500K+ Sản phẩm
+                📦 {stats.totalProducts ? stats.totalProducts.toLocaleString('vi-VN') : "..."} Sản phẩm
               </span>
               <span className="bg-white/20 backdrop-blur-sm px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-bold shadow-lg transform hover:scale-110 transition-transform duration-300">
-                📈 Tăng trưởng 200%
+                🏪 {stats.totalStores ? stats.totalStores.toLocaleString('vi-VN') : "..."} Cửa hàng
               </span>
             </div>
 
             <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-3 sm:gap-4">
-              <button className="bg-white text-[#00c6fb] font-bold rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 transform group-hover:scale-105">
+              <button 
+                onClick={handleRegisterClick}
+                className="bg-white text-[#00c6fb] font-bold rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 transform group-hover:scale-105"
+              >
                 ✨ Đăng ký bán hàng
               </button>
               <button className="bg-white/10 backdrop-blur-md border-2 border-white/30 text-white font-bold rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base shadow-lg hover:bg-white/20 hover:scale-105 active:scale-95 transition-all duration-300 transform">

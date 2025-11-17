@@ -72,6 +72,11 @@ class UserService {
       throw new Error('Email hoặc mật khẩu không đúng');
     }
 
+    // Kiểm tra tài khoản có bị ban không
+    if (user.status === 'banned') {
+      throw new Error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.');
+    }
+
     const isPasswordValid = await this.comparePassword(password, user.password);
     if (!isPasswordValid) {
       throw new Error('Email hoặc mật khẩu không đúng');
@@ -101,7 +106,8 @@ class UserService {
         role: user.role,
         avatarUrl: user.avatarUrl || '',
         online: true,
-        lastSeen: new Date()
+        lastSeen: new Date(),
+        status: user.status || 'active'
       }
     };
   }
@@ -116,6 +122,11 @@ class UserService {
     const user = await userRepository.findById(userId);
     if (!user) {
       throw new Error('Người dùng không tồn tại');
+    }
+
+    // Kiểm tra tài khoản có bị ban không
+    if (user.status === 'banned') {
+      throw new Error('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.');
     }
 
     let store = null;
@@ -163,6 +174,10 @@ class UserService {
 
   // Xử lý yêu cầu seller
   async handleSellerRequest(userId, action) {
+    const notificationService = require('./NotificationService');
+    const emailService = require('../utils/emailService');
+    const Store = require('../models/Store');
+
     const user = await userRepository.findByIdWithPassword(userId);
     if (!user || !user.sellerRequest) {
       throw new Error('Không tìm thấy yêu cầu của user này');
@@ -171,6 +186,9 @@ class UserService {
     if (user.sellerRequest.status !== 'pending') {
       throw new Error('Yêu cầu đã được xử lý trước đó');
     }
+
+    const storeName = user.sellerRequest.store?.name || 'Cửa hàng của bạn';
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
     if (action === 'approve') {
       user.sellerRequest.status = 'approved';
@@ -195,11 +213,59 @@ class UserService {
       await newStore.save();
       await user.save();
 
+      // Gửi notification
+      try {
+        await notificationService.createNotification(user._id, {
+          type: 'seller',
+          title: '🎉 Yêu cầu mở cửa hàng đã được duyệt',
+          message: `Yêu cầu mở cửa hàng "${storeName}" của bạn đã được phê duyệt thành công. Bạn có thể bắt đầu quản lý cửa hàng ngay bây giờ!`,
+          link: `${frontendUrl}/mystore`,
+          icon: '🏪',
+          metadata: {
+            storeId: newStore._id,
+            storeName: name,
+          },
+        });
+      } catch (err) {
+        console.error('❌ Lỗi khi tạo notification:', err);
+      }
+
+      // Gửi email
+      try {
+        await emailService.sendSellerRequestEmail(user, 'approve', storeName);
+      } catch (err) {
+        console.error('❌ Lỗi khi gửi email:', err);
+      }
+
       return { store: newStore };
     } else if (action === 'reject') {
       user.sellerRequest.status = 'rejected';
       user.sellerRequest.processedAt = new Date();
       await user.save();
+
+      // Gửi notification
+      try {
+        await notificationService.createNotification(user._id, {
+          type: 'seller',
+          title: '❌ Yêu cầu mở cửa hàng đã bị từ chối',
+          message: `Yêu cầu mở cửa hàng "${storeName}" của bạn đã bị từ chối. Vui lòng liên hệ hỗ trợ nếu bạn có câu hỏi hoặc gửi lại yêu cầu mới.`,
+          link: `${frontendUrl}/mystore`,
+          icon: '🏪',
+          metadata: {
+            storeName: storeName,
+          },
+        });
+      } catch (err) {
+        console.error('❌ Lỗi khi tạo notification:', err);
+      }
+
+      // Gửi email
+      try {
+        await emailService.sendSellerRequestEmail(user, 'reject', storeName);
+      } catch (err) {
+        console.error('❌ Lỗi khi gửi email:', err);
+      }
+
       return {};
     }
   }
@@ -371,10 +437,21 @@ class UserService {
 
   // Cập nhật user (admin)
   async updateUser(userId, role, status) {
-    const user = await userRepository.update(userId, {
-      role,
-      'sellerRequest.status': status
-    });
+    const updateData = {};
+    
+    if (role !== undefined) {
+      updateData.role = role;
+    }
+    
+    // Nếu status là "banned" hoặc "active", cập nhật user.status
+    if (status === 'banned' || status === 'active') {
+      updateData.status = status;
+    } else if (status) {
+      // Nếu status là cho sellerRequest (pending, approved, rejected)
+      updateData['sellerRequest.status'] = status;
+    }
+    
+    const user = await userRepository.update(userId, updateData);
     if (!user) {
       throw new Error('Người dùng không tồn tại');
     }

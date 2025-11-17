@@ -33,6 +33,13 @@ const userSchema = new mongoose.Schema({
     default: 'buyer'
   },
 
+  // User status (for admin management)
+  status: {
+    type: String,
+    enum: ['active', 'banned'],
+    default: 'active'
+  },
+
   // Seller request (cửa hàng)
   sellerRequest: {
     status: {

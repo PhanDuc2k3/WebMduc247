@@ -95,8 +95,6 @@ const StoreList: React.FC = () => {
     fetchStores();
   }, [searchKeyword]);
 
-  if (loading) return <StoreLoading />;
-
   // Filter stores dựa trên filters
   let filteredStores = stores.filter((s) => {
     // Filter theo region (khu vực) - hỗ trợ cả tiếng Việt và tiếng Anh
@@ -179,6 +177,9 @@ const StoreList: React.FC = () => {
       setSearchParams(newParams, { replace: true });
     }
   }, [totalPages, currentPage, searchParams, setSearchParams]);
+
+  // Early return sau khi tất cả hooks đã được gọi
+  if (loading) return <StoreLoading />;
 
   // Xử lý chuyển trang
   const handlePageChange = (newPage: number) => {

@@ -19,6 +19,27 @@ createRoot(document.getElementById("root")!).render(
         <ChatProvider>
           <CartProvider>
             <App />
+            {/* Toast cho thông báo thông thường (success, error, warning) - top-right */}
+            <ToastContainer 
+              position="top-right" 
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={true}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+              style={{ 
+                top: '20px', 
+                right: '20px',
+                zIndex: 9999
+              }}
+              toastClassName="custom-toast-general"
+              containerId="general-toast"
+            />
+            {/* Toast cho thông báo tin nhắn - bottom-right */}
             <ToastContainer 
               position="bottom-right" 
               autoClose={4000}
@@ -35,7 +56,8 @@ createRoot(document.getElementById("root")!).render(
                 right: '20px',
                 zIndex: 9999
               }}
-              toastClassName="custom-toast"
+              toastClassName="custom-toast-message"
+              containerId="message-toast"
             />
           </CartProvider>
         </ChatProvider>

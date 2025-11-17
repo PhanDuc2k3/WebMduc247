@@ -10,10 +10,13 @@ router.get("/", bannerController.getAllBanners);
 // Lấy banner theo type
 router.get("/type/:type", bannerController.getBannersByType);
 
+// Tạo banner mới
+router.post("/", upload.single("image"), bannerController.createBanner);
+
 // Sửa banner (admin) → có thể upload ảnh
 router.put("/:id", upload.single("image"), bannerController.updateBanner);
 
-// Tạo banner mới
-router.post("/", upload.single("image"), bannerController.createBanner);
+// Xóa banner
+router.delete("/:id", bannerController.deleteBanner);
 
 module.exports = router;

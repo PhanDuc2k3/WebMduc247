@@ -96,15 +96,18 @@ const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, setShow
       >
         <UserCircle className="mr-2" size={18} /> Trang cá nhân
       </button>
-      <button
-        onClick={() => {
-          setShowDropdown(false);
-          navigate("/mystore");
-        }}
-        className="flex items-center w-full px-3 py-2 rounded-md hover:bg-gray-100"
-      >
-        <Store className="mr-2" size={18} /> Cửa hàng của tôi
-      </button>
+      {/* Chỉ hiển thị "Cửa hàng của tôi" nếu user là seller hoặc admin */}
+      {(userRole === "seller" || userRole === "admin") && (
+        <button
+          onClick={() => {
+            setShowDropdown(false);
+            navigate("/mystore");
+          }}
+          className="flex items-center w-full px-3 py-2 rounded-md hover:bg-gray-100"
+        >
+          <Store className="mr-2" size={18} /> Cửa hàng của tôi
+        </button>
+      )}
       {/* Admin option - chỉ hiển thị khi user là admin */}
       {userRole === "admin" && (
         <button

@@ -50,6 +50,14 @@ requestSeller: (formData: FormData) => {
   updateUser: (userId: string, data: Record<string, any>) =>
     axiosClient.put(`/api/users/${userId}`, data),
 
+  // Admin: khóa tài khoản người dùng
+  banUser: (userId: string) =>
+    axiosClient.put(`/api/users/${userId}`, { status: "banned" }),
+
+  // Admin: gỡ khóa tài khoản người dùng
+  unbanUser: (userId: string) =>
+    axiosClient.put(`/api/users/${userId}`, { status: "active" }),
+
   // Xác thực email
   verifyEmail: (data: { email: string; verificationCode: string }) =>
     axiosClient.post("/api/users/verify-email", data),

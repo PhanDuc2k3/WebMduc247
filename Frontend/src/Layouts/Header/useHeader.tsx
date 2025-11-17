@@ -49,6 +49,19 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
       });
       const profile = res.data.user || res.data;
 
+      // Kiểm tra nếu tài khoản bị ban
+      if (profile.status === 'banned') {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
+        setOnline(false);
+        setLastSeen(null);
+        if (window.location.pathname !== "/login") {
+          window.location.href = "/login";
+        }
+        return;
+      }
+
       setUser({
         _id: profile._id,                // ✅ luôn set _id
         fullName: profile.fullName || "Khách",
@@ -70,7 +83,11 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
       } catch (err) {
         console.warn("[UserContext] Failed to update localStorage role:", err);
       }
-    } catch (err) {
+    } catch (err: any) {
+      // Nếu lỗi là do tài khoản bị ban, đã được xử lý ở axiosClient interceptor
+      if (err?.response?.data?.isBanned) {
+        return;
+      }
       console.warn("[UserContext] fetchUser failed", err);
       setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
       setOnline(false);

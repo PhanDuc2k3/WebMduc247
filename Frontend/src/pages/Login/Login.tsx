@@ -69,11 +69,17 @@ const Login: React.FC = () => {
           }
         }
 
-        // ✅ Toast xong mới navigate
+        // ✅ Hiển thị toast và chuyển đến trang chủ
         toast.success(data.message || "Đăng nhập thành công", {
-          autoClose: 1500,
-          onClose: () => navigate("/"),
+          position: "top-right",
+          containerId: "general-toast",
+          autoClose: 2000,
         });
+        
+        // Chuyển đến trang chủ ngay sau khi đăng nhập thành công
+        setTimeout(() => {
+          navigate("/");
+        }, 500);
       }
     } catch (err: any) {
       // Interceptor đã tự động hiển thị toast cho các lỗi

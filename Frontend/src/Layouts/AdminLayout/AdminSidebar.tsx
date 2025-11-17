@@ -23,11 +23,51 @@ interface MenuItem {
 interface AdminSidebarProps {
   activeMenu: string;
   onMenuChange: (menu: string) => void;
+  onCollapseChange?: (isCollapsed: boolean) => void;
 }
 
-const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange }) => {
+const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, onCollapseChange }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const sidebarRef = React.useRef<HTMLDivElement>(null);
+
+  const handleToggleCollapse = () => {
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+    setIsExpanded(false);
+    if (onCollapseChange) {
+      onCollapseChange(newCollapsed);
+    }
+  };
+
+  const handleMouseEnter = () => {
+    if (!isCollapsed) {
+      setIsExpanded(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isCollapsed) {
+      setIsExpanded(false);
+    }
+  };
+
+  useEffect(() => {
+    const sidebar = sidebarRef.current;
+    if (!sidebar || isCollapsed) return;
+
+    const handleScroll = () => {
+      if (sidebar.scrollLeft > 0) {
+        setIsExpanded(true);
+      } else if (sidebar.scrollLeft === 0) {
+        setIsExpanded(false);
+      }
+    };
+
+    sidebar.addEventListener('scroll', handleScroll);
+    return () => sidebar.removeEventListener('scroll', handleScroll);
+  }, [isCollapsed]);
 
   useEffect(() => {
     const fetchPendingCount = async () => {
@@ -57,11 +97,41 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange })
     { label: 'Tin tức Khuyến mãi', key: 'promotions', icon: Megaphone },
   ];
 
+  const currentWidth = isCollapsed ? 80 : (isExpanded ? window.innerWidth : 256);
+
   return (
     <div
-      className={`bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen transition-all duration-300 ${
+      ref={sidebarRef}
+      className={`admin-sidebar bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen transition-all duration-300 ${
         isCollapsed ? 'w-20' : 'w-64'
-      } flex flex-col shadow-2xl`}
+      } flex flex-col shadow-2xl fixed left-0 top-0 h-full z-50 overflow-x-auto`}
+      style={{ 
+        width: `${currentWidth}px`,
+        minWidth: isCollapsed ? '80px' : (isExpanded ? '100vw' : '256px'),
+        maxWidth: '100vw'
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onWheel={(e) => {
+        if (!isCollapsed && e.deltaX !== 0) {
+          // Khi scroll ngang bằng wheel, mở rộng sidebar
+          if (e.deltaX > 0) {
+            setIsExpanded(true);
+          } else if (e.deltaX < 0 && sidebarRef.current?.scrollLeft === 0) {
+            setIsExpanded(false);
+          }
+        }
+      }}
+      onTouchStart={(e) => {
+        if (!isCollapsed) {
+          setIsExpanded(true);
+        }
+      }}
+      onTouchEnd={(e) => {
+        if (!isCollapsed && sidebarRef.current?.scrollLeft === 0) {
+          setIsExpanded(false);
+        }
+      }}
     >
       {/* Logo */}
       <div className="p-6 border-b border-purple-800">
@@ -78,7 +148,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange })
             </div>
           )}
           <button
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={handleToggleCollapse}
             className="w-8 h-8 flex items-center justify-center bg-purple-800 hover:bg-purple-700 rounded-lg transition-all duration-300"
           >
             {isCollapsed ? (
@@ -91,7 +161,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange })
       </div>
 
       {/* Menu Items */}
-      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden" style={{ minWidth: isExpanded ? '100vw' : '100%' }}>
         {menuItems.map((item) => {
           const Icon = item.icon;
           return (

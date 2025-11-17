@@ -155,17 +155,17 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         toast.info(
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <img
               src={avatarUrl || "/default-avatar.png"}
               alt={senderName}
-              style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", border: "2px solid white", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+              style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", border: "2px solid white", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", flexShrink: 0 }}
             />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <strong style={{ display: "block", fontSize: "14px", fontWeight: 600, color: "#1f2937", marginBottom: "4px" }}>
+              <strong style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "white", marginBottom: "3px" }}>
                 {senderName}
               </strong>
-              <div style={{ fontSize: "13px", color: "#6b7280", lineHeight: "1.4", wordBreak: "break-word" }}>
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.9)", lineHeight: "1.4", wordBreak: "break-word" }}>
                 {text.length > 50 ? text.slice(0, 50) + "..." : text}
               </div>
             </div>
@@ -173,14 +173,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           { 
             position: "bottom-right", 
             toastId: conversationId,
+            containerId: "message-toast",
             style: {
               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               color: "white",
-              borderRadius: "12px",
-              padding: "16px",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-              minWidth: "300px",
-              maxWidth: "400px",
+              borderRadius: "10px",
+              padding: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              minWidth: "280px",
+              maxWidth: "350px",
+              fontSize: "14px",
             },
             bodyStyle: {
               color: "white",

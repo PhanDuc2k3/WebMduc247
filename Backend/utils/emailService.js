@@ -1898,10 +1898,199 @@ const sendWithdrawalEmail = async (email, withdrawalCode, fullName, amount, bank
   return false;
 };
 
+// Gửi email thông báo kết quả đơn làm người bán
+const sendSellerRequestEmail = async (user, action, storeName, retries = 2) => {
+  // Kiểm tra nếu user đã tắt thông báo email
+  if (user.emailNotifications === false) {
+    console.log(`📧 Người dùng ${user.email} đã tắt thông báo email. Bỏ qua gửi email thông báo seller request.`);
+    return false;
+  }
+
+  // Kiểm tra nếu không có cấu hình email
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ RESEND_API_KEY chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  if (!FROM_EMAIL) {
+    console.warn('⚠️ RESEND_FROM_EMAIL chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  const isApproved = action === 'approve';
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const storeUrl = `${frontendUrl}/mystore`;
+
+  // SVG Icons
+  const iconCheckCircle = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>';
+  const iconXCircle = '<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>';
+  const iconStore = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-1.82 0A2.7 2.7 0 0 1 15 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-1.82 0A2.7 2.7 0 0 1 10 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-1.82 0A2.7 2.7 0 0 1 5 12a2 2 0 0 1-2-2V7"/></svg>';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 10px;
+          background-color: #f5f5f5;
+        }
+        .email-container {
+          background: white;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          background: ${isApproved ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'};
+          padding: 30px 20px;
+          text-align: center;
+          color: white;
+        }
+        .header-icon {
+          width: 64px;
+          height: 64px;
+          margin: 0 auto 15px;
+          color: white;
+        }
+        .content {
+          padding: 30px;
+        }
+        .title {
+          font-size: 24px;
+          font-weight: bold;
+          margin-bottom: 15px;
+          color: ${isApproved ? '#10b981' : '#ef4444'};
+        }
+        .message {
+          font-size: 16px;
+          margin-bottom: 20px;
+          color: #555;
+        }
+        .store-info {
+          background: #f9fafb;
+          border-left: 4px solid ${isApproved ? '#10b981' : '#ef4444'};
+          padding: 15px;
+          margin: 20px 0;
+          border-radius: 4px;
+        }
+        .button {
+          display: inline-block;
+          padding: 12px 30px;
+          background: ${isApproved ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'};
+          color: white;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: bold;
+          margin-top: 20px;
+        }
+        .footer {
+          background: #f9fafb;
+          padding: 20px;
+          text-align: center;
+          color: #666;
+          font-size: 14px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header">
+          <div class="header-icon">
+            ${isApproved ? iconCheckCircle : iconXCircle}
+          </div>
+          <h1 style="margin: 0; font-size: 28px;">
+            ${isApproved ? '🎉 Chúc mừng! Yêu cầu của bạn đã được duyệt' : '❌ Yêu cầu của bạn đã bị từ chối'}
+          </h1>
+        </div>
+        <div class="content">
+          <p class="title">Xin chào ${user.fullName},</p>
+          <div class="message">
+            ${isApproved 
+              ? `<p>Chúng tôi rất vui mừng thông báo rằng yêu cầu mở cửa hàng <strong>"${storeName}"</strong> của bạn đã được phê duyệt thành công!</p>
+                 <p>Tài khoản của bạn đã được nâng cấp lên <strong>Người bán</strong> và cửa hàng của bạn đã được kích hoạt.</p>
+                 <p>Bây giờ bạn có thể:</p>
+                 <ul>
+                   <li>Quản lý cửa hàng của mình</li>
+                   <li>Thêm sản phẩm và bắt đầu bán hàng</li>
+                   <li>Theo dõi đơn hàng và doanh thu</li>
+                 </ul>`
+              : `<p>Chúng tôi rất tiếc phải thông báo rằng yêu cầu mở cửa hàng <strong>"${storeName}"</strong> của bạn đã bị từ chối.</p>
+                 <p>Nếu bạn có bất kỳ câu hỏi nào về quyết định này, vui lòng liên hệ với bộ phận hỗ trợ của chúng tôi.</p>
+                 <p>Bạn có thể gửi lại yêu cầu mới sau khi đã cập nhật thông tin cửa hàng.</p>`
+            }
+          </div>
+          ${isApproved ? `
+          <div class="store-info">
+            <p style="margin: 0; font-weight: bold; margin-bottom: 8px;">🏪 Thông tin cửa hàng:</p>
+            <p style="margin: 0;"><strong>Tên cửa hàng:</strong> ${storeName}</p>
+          </div>
+          <div style="text-align: center;">
+            <a href="${storeUrl}" class="button">Quản lý cửa hàng ngay</a>
+          </div>
+          ` : ''}
+        </div>
+        <div class="footer">
+          <p style="margin: 0;"><strong>Trân trọng,<br>Đội ngũ ShopMDuc247</strong></p>
+          <p style="margin: 5px 0;">Email này được gửi tự động, vui lòng không trả lời.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const { data, error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: user.email,
+        subject: isApproved 
+          ? `🎉 Yêu cầu mở cửa hàng "${storeName}" đã được duyệt - ShopMDuc247`
+          : `❌ Yêu cầu mở cửa hàng "${storeName}" đã bị từ chối - ShopMDuc247`,
+        html: htmlContent,
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Resend API error');
+      }
+
+      console.log(`✅ Seller request email sent successfully to ${user.email} (${action}) (ID: ${data?.id})`);
+      return true;
+    } catch (error) {
+      const isLastAttempt = attempt === retries;
+      const errorMessage = error.message || error.toString();
+      
+      if (errorMessage.includes('domain') && (errorMessage.includes('not verified') || errorMessage.includes('unverified'))) {
+        console.error(`❌ Domain chưa được verify trên Resend.`);
+        return false;
+      }
+      
+      console.error(`❌ Email send attempt ${attempt + 1}/${retries + 1} failed:`, errorMessage);
+      
+      if (isLastAttempt) {
+        console.error('❌ All email send attempts failed.');
+        return false;
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
+    }
+  }
+  
+  return false;
+};
+
 module.exports = {
   sendVerificationEmail,
   sendOrderConfirmationEmail,
   sendOrderDeliveredEmail,
   sendResetPasswordEmail,
   sendWithdrawalEmail,
+  sendSellerRequestEmail,
 };

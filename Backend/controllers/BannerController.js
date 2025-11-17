@@ -37,3 +37,13 @@ exports.updateBanner = async (req, res) => {
     res.status(statusCode).json({ message: err.message });
   }
 };
+
+exports.deleteBanner = async (req, res) => {
+  try {
+    await bannerService.deleteBanner(req.params.id);
+    res.json({ message: "Banner đã được xóa thành công" });
+  } catch (err) {
+    const statusCode = err.message.includes("not found") ? 404 : 500;
+    res.status(statusCode).json({ message: err.message });
+  }
+};

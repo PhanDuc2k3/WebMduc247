@@ -1,21 +1,43 @@
 import React, { useEffect, useState, useMemo } from "react";
 import userApi from "../../../api/userApi";
-import { Search, Edit, Trash2, Calendar, User as UserIcon, Loader2 } from "lucide-react";
+import { Search, Lock, Unlock, Calendar, User as UserIcon, Loader2 } from "lucide-react";
+import { toast } from "react-toastify";
 import Pagination from "../Pagination";
 
 // Đồng nhất CSS cho status badges
 const getStatusBadgeClass = (status: string) => {
   const statusMap: Record<string, string> = {
-    "Hoạt động": "bg-green-100 text-green-700",
-    "Chờ duyệt": "bg-yellow-100 text-yellow-700",
-    "Tạm khóa": "bg-red-100 text-red-700",
-    "pending": "bg-yellow-100 text-yellow-700",
-    "approved": "bg-green-100 text-green-700",
-    "rejected": "bg-red-100 text-red-700",
+    "Chưa xác minh": "bg-yellow-100 text-yellow-700",
+    "Đã xác minh": "bg-green-100 text-green-700",
+    "Bị ban": "bg-red-100 text-red-700",
+    "unverified": "bg-yellow-100 text-yellow-700",
+    "verified": "bg-green-100 text-green-700",
+    "banned": "bg-red-100 text-red-700",
   };
   return `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
     statusMap[status] || "bg-gray-100 text-gray-700"
   }`;
+};
+
+// Hàm để format status
+const formatStatus = (status: string | undefined, isVerified: boolean | undefined): string => {
+  // Ưu tiên kiểm tra status banned trước
+  if (status === "banned" || status === "Bị ban") {
+    return "Bị ban";
+  }
+  
+  // Nếu status là active hoặc không có status, kiểm tra isVerified
+  if (status === "active" || !status) {
+    if (isVerified === true) {
+      return "Đã xác minh";
+    }
+    if (isVerified === false) {
+      return "Chưa xác minh";
+    }
+  }
+  
+  // Mặc định nếu không có thông tin
+  return "Chưa xác minh";
 };
 interface Order {
   _id: string;
@@ -32,6 +54,7 @@ interface User {
   createdAt: string;
   avatarUrl: string;
   status?: string;
+  isVerified?: boolean;
 }
 const getLatestStatus = (order: Order & { statusHistory?: { status: string; timestamp: string | number }[] }) => {
   if (order.statusHistory && order.statusHistory.length > 0) {
@@ -52,29 +75,38 @@ const UserManagement: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  const fetchUsers = async () => {
+    try {
+      console.log("🔄 Đang gọi API lấy danh sách người dùng...");
+      const response = await userApi.getAllUsers();
+
+      const payload = (response && (response as any).data !== undefined) ? (response as any).data : response;
+
+      console.log("✅ Dữ liệu trả về từ API:", payload);
+
+      const userList = Array.isArray(payload)
+        ? payload
+        : payload?.users || [];
+
+      setUsers(userList);
+    } catch (error: any) {
+      console.error("❌ Lỗi khi fetch users:", error?.response || error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        console.log("🔄 Đang gọi API lấy danh sách người dùng...");
-        const response = await userApi.getAllUsers();
-
-        const payload = (response && (response as any).data !== undefined) ? (response as any).data : response;
-
-        console.log("✅ Dữ liệu trả về từ API:", payload);
-
-        const userList = Array.isArray(payload)
-          ? payload
-          : payload?.users || [];
-
-        setUsers(userList);
-      } catch (error: any) {
-        console.error("❌ Lỗi khi fetch users:", error?.response || error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
+  }, []);
+
+  // Auto-refresh mỗi 30 giây
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUsers();
+    }, 30000); // 30 giây
+
+    return () => clearInterval(interval);
   }, []);
 
   const filteredAndSortedUsers = useMemo(() => {
@@ -97,6 +129,96 @@ const UserManagement: React.FC = () => {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm]);
+
+  const handleBanUser = async (userId: string, userName: string) => {
+    const confirmToastId = toast.info(
+      <div>
+        <p className="font-bold mb-2">Xác nhận khóa tài khoản</p>
+        <p className="mb-3">Bạn có chắc muốn khóa tài khoản của <strong>{userName}</strong>?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(confirmToastId);
+              try {
+                await userApi.banUser(userId);
+                toast.success(`Đã khóa tài khoản của ${userName}`, {
+                  position: "top-right",
+                  containerId: "general-toast",
+                });
+                await fetchUsers();
+              } catch (error: any) {
+                console.error("❌ Lỗi khi khóa tài khoản:", error?.response || error);
+                toast.error(error?.response?.data?.message || "Không thể khóa tài khoản. Vui lòng thử lại!", {
+                  position: "top-right",
+                  containerId: "general-toast",
+                });
+              }
+            }}
+            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors mr-2"
+          >
+            Xác nhận
+          </button>
+          <button
+            onClick={() => toast.dismiss(confirmToastId)}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Hủy
+          </button>
+        </div>
+      </div>,
+      {
+        position: "top-right",
+        containerId: "general-toast",
+        autoClose: false,
+        closeOnClick: false,
+      }
+    );
+  };
+
+  const handleUnbanUser = async (userId: string, userName: string) => {
+    const confirmToastId = toast.info(
+      <div>
+        <p className="font-bold mb-2">Xác nhận gỡ khóa tài khoản</p>
+        <p className="mb-3">Bạn có chắc muốn gỡ khóa tài khoản của <strong>{userName}</strong>?</p>
+        <div className="flex gap-2">
+          <button
+            onClick={async () => {
+              toast.dismiss(confirmToastId);
+              try {
+                await userApi.unbanUser(userId);
+                toast.success(`Đã gỡ khóa tài khoản của ${userName}`, {
+                  position: "top-right",
+                  containerId: "general-toast",
+                });
+                await fetchUsers();
+              } catch (error: any) {
+                console.error("❌ Lỗi khi gỡ khóa tài khoản:", error?.response || error);
+                toast.error(error?.response?.data?.message || "Không thể gỡ khóa tài khoản. Vui lòng thử lại!", {
+                  position: "top-right",
+                  containerId: "general-toast",
+                });
+              }
+            }}
+            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors mr-2"
+          >
+            Xác nhận
+          </button>
+          <button
+            onClick={() => toast.dismiss(confirmToastId)}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+          >
+            Hủy
+          </button>
+        </div>
+      </div>,
+      {
+        position: "top-right",
+        containerId: "general-toast",
+        autoClose: false,
+        closeOnClick: false,
+      }
+    );
+  };
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center py-20">
@@ -202,21 +324,28 @@ const UserManagement: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={getStatusBadgeClass(user.status || 'pending')}>
-                      {user.status || 'Chưa có trạng thái'}
+                    <span className={getStatusBadgeClass(formatStatus(user.status, user.isVerified))}>
+                      {formatStatus(user.status, user.isVerified)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <button className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1">
-                        <Edit size={16} />
-                        Sửa
+                    {user.status === "banned" ? (
+                      <button 
+                        onClick={() => handleUnbanUser(user._id, user.fullName)}
+                        className="text-green-600 hover:text-green-900 hover:bg-green-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
+                      >
+                        <Unlock size={16} />
+                        Gỡ khóa tài khoản
                       </button>
-                      <button className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1">
-                        <Trash2 size={16} />
-                        Xóa
+                    ) : (
+                      <button 
+                        onClick={() => handleBanUser(user._id, user.fullName)}
+                        className="text-orange-600 hover:text-orange-900 hover:bg-orange-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
+                      >
+                        <Lock size={16} />
+                        Khóa tài khoản
                       </button>
-                    </div>
+                    )}
                   </td>
                 </tr>
                 ))}
@@ -277,22 +406,31 @@ const UserManagement: React.FC = () => {
                   {/* Status */}
                   <div className="text-gray-500 font-medium">Trạng thái:</div>
                   <div className="text-right">
-                    <span className={getStatusBadgeClass(user.status || 'pending')}>
-                      {user.status || 'Chưa có trạng thái'}
+                    <span className={getStatusBadgeClass(formatStatus(user.status, user.isVerified))}>
+                      {formatStatus(user.status, user.isVerified)}
                     </span>
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
-                  <button className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm">
-                    <Edit size={16} />
-                    Sửa
-                  </button>
-                  <button className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm">
-                    <Trash2 size={16} />
-                    Xóa
-                  </button>
+                  {user.status === "banned" ? (
+                    <button 
+                      onClick={() => handleUnbanUser(user._id, user.fullName)}
+                      className="text-green-600 hover:text-green-900 hover:bg-green-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
+                    >
+                      <Unlock size={16} />
+                      Gỡ khóa tài khoản
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => handleBanUser(user._id, user.fullName)}
+                      className="text-orange-600 hover:text-orange-900 hover:bg-orange-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
+                    >
+                      <Lock size={16} />
+                      Khóa tài khoản
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

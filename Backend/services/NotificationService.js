@@ -8,6 +8,7 @@ class NotificationService {
       voucher: "🎁",
       news: "📢",
       system: "🔔",
+      seller: "🏪",
     };
     return iconMap[type] || "🔔";
   }
