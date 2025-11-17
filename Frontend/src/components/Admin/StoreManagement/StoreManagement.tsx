@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import storeApi from '../../../api/storeApi';
-import { Edit, Trash2, Plus, Search, Eye, Store as StoreIcon, Loader2 } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, Eye, Store as StoreIcon, Loader2, User, Tag, Calendar } from 'lucide-react';
 import Pagination from '../Pagination';
 
 // Đồng nhất CSS cho status badges
@@ -11,6 +11,17 @@ const getStatusBadgeClass = (isActive: boolean) => {
       : 'bg-gray-100 text-gray-700'
   }`;
 };
+
+// Hàm hỗ trợ hiển thị tên danh mục
+const getCategoryLabel = (category: string | undefined) => {
+    switch (category) {
+        case 'electronics': return 'Điện tử';
+        case 'fashion': return 'Thời trang';
+        case 'home': return 'Đồ gia dụng';
+        case 'books': return 'Sách';
+        default: return 'Khác/Chưa có';
+    }
+}
 
 interface Store {
   _id: string;
@@ -121,7 +132,9 @@ const StoreManagement: React.FC = () => {
   const filteredAndSortedStores = useMemo(() => {
     let filtered = stores.filter(store =>
       store.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      store.description?.toLowerCase().includes(searchTerm.toLowerCase())
+      store.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      store.owner?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      getCategoryLabel(store.category).toLowerCase().includes(searchTerm.toLowerCase())
     );
     
     // Sắp xếp theo createdAt desc (mới nhất lên trước)
@@ -155,9 +168,9 @@ const StoreManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 lg:p-8">
       <div className="mb-6 animate-fade-in-down">
-        <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
+        <h2 className="text-xl md:text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
           <StoreIcon size={24} className="text-blue-600" />
           Quản lý cửa hàng
         </h2>
@@ -169,7 +182,7 @@ const StoreManagement: React.FC = () => {
       {/* Actions */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in-up">
         {/* Search */}
-        <div className="relative flex-1 max-w-md w-full">
+        <div className="relative flex-1 max-w-full sm:max-w-md w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
@@ -187,18 +200,19 @@ const StoreManagement: React.FC = () => {
             setFormData({ name: '', description: '', category: '' });
             setShowForm(true);
           }}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 w-full sm:w-auto justify-center"
         >
           <Plus size={20} />
           Thêm cửa hàng
         </button>
       </div>
 
-      {/* Stores Table */}
+      {/* Stores List */}
       {filteredAndSortedStores.length > 0 ? (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          {/* --- DESKTOP TABLE VIEW (md and up) --- */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Cửa hàng</th>
@@ -234,7 +248,7 @@ const StoreManagement: React.FC = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg">
-                      {store.category || 'Chưa có'}
+                      {getCategoryLabel(store.category)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -248,15 +262,13 @@ const StoreManagement: React.FC = () => {
                         onClick={() => handleEdit(store)}
                         className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
                       >
-                        <Edit size={16} />
-                        Sửa
+                        <Edit size={16} /> Sửa
                       </button>
                       <button
                         onClick={() => handleDelete(store._id)}
                         className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
                       >
-                        <Trash2 size={16} />
-                        Xóa
+                        <Trash2 size={16} /> Xóa
                       </button>
                     </div>
                   </td>
@@ -265,6 +277,86 @@ const StoreManagement: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* --- MOBILE CARD VIEW (max-md) --- */}
+          <div className="md:hidden space-y-4">
+            {paginatedStores.map((store, index) => (
+              <div 
+                key={store._id} 
+                className="bg-white p-4 shadow-xl rounded-xl border border-gray-100 transition-shadow duration-300 hover:shadow-2xl animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                {/* Header: Store Info & Status */}
+                <div className="flex items-start justify-between mb-4 border-b pb-3">
+                    <div className="flex items-center gap-3">
+                        <img
+                            src={store.logoUrl || '/default-store.png'}
+                            alt={store.name}
+                            className="w-12 h-12 rounded-xl object-cover border-2 border-blue-500 shadow-md flex-shrink-0"
+                        />
+                        <div>
+                            <div className="font-bold text-lg text-gray-900">{store.name}</div>
+                            <div className="text-xs text-gray-500 max-w-xs truncate">{store.description}</div>
+                        </div>
+                    </div>
+                    <span className={getStatusBadgeClass(store.isActive ?? true)}>
+                        {store.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                    </span>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-y-3 text-sm">
+                    {/* Owner */}
+                    <div className="text-gray-500 font-medium flex items-center gap-2">
+                        <User size={14} className="text-purple-400" /> Chủ sở hữu:
+                    </div>
+                    <div className="text-right text-gray-700">
+                        <div className="font-medium">{store.owner?.fullName || 'N/A'}</div>
+                        <div className="text-xs text-gray-500">{store.owner?.email || ''}</div>
+                    </div>
+                    
+                    {/* Category */}
+                    <div className="text-gray-500 font-medium flex items-center gap-2">
+                        <Tag size={14} className="text-green-400" /> Danh mục:
+                    </div>
+                    <div className="text-right">
+                        <span className="px-3 py-1 text-xs leading-5 font-bold rounded-full bg-green-500 text-white shadow-lg">
+                            {getCategoryLabel(store.category)}
+                        </span>
+                    </div>
+
+                    {/* Created At */}
+                    {store.createdAt && (
+                        <>
+                            <div className="text-gray-500 font-medium flex items-center gap-2">
+                                <Calendar size={14} className="text-gray-400" /> Ngày tạo:
+                            </div>
+                            <div className="text-right text-gray-700">
+                                {new Date(store.createdAt).toLocaleDateString("vi-VN")}
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
+                  <button
+                    onClick={() => handleEdit(store)}
+                    className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
+                  >
+                    <Edit size={16} /> Sửa
+                  </button>
+                  <button
+                    onClick={() => handleDelete(store._id)}
+                    className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
+                  >
+                    <Trash2 size={16} /> Xóa
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
@@ -284,13 +376,13 @@ const StoreManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Form Modal */}
+      {/* Form Modal (Optimized for Mobile) */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
-            <div className="p-6 border-b-2 border-gray-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[98vh] overflow-y-auto animate-scale-in">
+            <div className="p-4 sm:p-6 border-b-2 border-gray-200 sticky top-0 bg-white z-10">
               <div className="flex items-center justify-between">
-                <h3 className="text-2xl font-bold gradient-text flex items-center gap-2">
+                <h3 className="text-xl sm:text-2xl font-bold gradient-text flex items-center gap-2">
                   <Edit size={24} className="text-purple-600" />
                   {editingStore ? 'Sửa cửa hàng' : 'Thêm cửa hàng mới'}
                 </h3>
@@ -299,14 +391,14 @@ const StoreManagement: React.FC = () => {
                     setShowForm(false);
                     setEditingStore(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold p-1"
                 >
                   ×
                 </button>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Tên cửa hàng *</label>
                 <input
@@ -322,33 +414,32 @@ const StoreManagement: React.FC = () => {
                 <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả *</label>
                 <textarea
                   required
-                  rows={4}
+                  rows={3}
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
                 />
               </div>
 
-<div>
-  <label className="block text-sm font-bold text-gray-700 mb-2">Danh mục</label>
-  <select
-    value={formData.category}
-    onChange={(e) =>
-      setFormData({ ...formData, category: e.target.value as "electronics" | "fashion" | "home" | "books" | "other" })
-    }
-    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-  >
-    <option value="">-- Chọn danh mục --</option>
-    <option value="electronics">Điện tử</option>
-    <option value="fashion">Thời trang</option>
-    <option value="home">Đồ gia dụng</option>
-    <option value="books">Sách</option>
-    <option value="other">Khác</option>
-  </select>
-</div>
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Danh mục</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value as "electronics" | "fashion" | "home" | "books" | "other" | '' })
+                  }
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                >
+                  <option value="">-- Chọn danh mục --</option>
+                  <option value="electronics">Điện tử</option>
+                  <option value="fashion">Thời trang</option>
+                  <option value="home">Đồ gia dụng</option>
+                  <option value="books">Sách</option>
+                  <option value="other">Khác</option>
+                </select>
+              </div>
 
-
-              <div className="flex gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <button
                   type="submit"
                   className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
@@ -376,4 +467,3 @@ const StoreManagement: React.FC = () => {
 };
 
 export default StoreManagement;
-

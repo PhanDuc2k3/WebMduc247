@@ -1,219 +1,227 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import voucherApi from '../../../api/voucherApi';
 import type { VoucherType } from '../../../api/voucherApi';
-import { Edit, Trash2, Plus, Search, Gift, Lock, Unlock, Loader2, Ticket } from 'lucide-react';
+import { Edit, Trash2, Plus, Search, Gift, Lock, Unlock, Loader2, Ticket, Calendar, DollarSign, Zap } from 'lucide-react';
 import Pagination from '../Pagination';
 
 // Đồng nhất CSS cho status badges
 const getStatusBadgeClass = (isActive: boolean) => {
-  return `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
-    isActive
-      ? 'bg-green-100 text-green-700'
-      : 'bg-gray-100 text-gray-700'
-  }`;
+  return `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
+    isActive
+      ? 'bg-green-100 text-green-700'
+      : 'bg-gray-100 text-gray-700'
+  }`;
+};
+
+// Định dạng giá trị giảm giá
+const formatDiscountValue = (voucher: VoucherType) => {
+    if (voucher.discountType === 'percent') {
+        return `${voucher.discountValue}%`;
+    }
+    return `${voucher.discountValue.toLocaleString('vi-VN')}đ`;
+};
+
+// Định dạng giá trị tối thiểu
+const formatMinOrderValue = (value: number | undefined) => {
+    return value && value > 0 ? `${value.toLocaleString('vi-VN')}đ` : 'Không có';
 };
 
 const VoucherManagement: React.FC = () => {
-  const [vouchers, setVouchers] = useState<VoucherType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
-  const [showForm, setShowForm] = useState(false);
-  const [editingVoucher, setEditingVoucher] = useState<VoucherType | null>(null);
-  const [formData, setFormData] = useState<VoucherType>({
-    code: '',
-    title: '',
-    description: '',
-    condition: '',
-    voucherType: 'product',
-    discountType: 'percent',
-    discountValue: 0,
-    minOrderValue: 0,
-    maxDiscount: 0,
-    startDate: new Date().toISOString().split('T')[0],
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    usageLimit: 0,
-    isActive: true,
-  });
-  
-  // State cho chọn category (chỉ admin)
-  const [isGlobal, setIsGlobal] = useState(false);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  
-  // Danh sách categories có sẵn
-  const availableCategories = [
-    { value: 'electronics', label: 'Điện tử' },
-    { value: 'fashion', label: 'Thời trang' },
-    { value: 'home', label: 'Nội thất' },
-    { value: 'books', label: 'Sách' },
-    { value: 'other', label: 'Khác' },
-  ];
+  const [vouchers, setVouchers] = useState<VoucherType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  const [showForm, setShowForm] = useState(false);
+  const [editingVoucher, setEditingVoucher] = useState<VoucherType | null>(null);
+  const [formData, setFormData] = useState<VoucherType>({
+    code: '',
+    title: '',
+    description: '',
+    condition: '',
+    voucherType: 'product',
+    discountType: 'percent',
+    discountValue: 0,
+    minOrderValue: 0,
+    maxDiscount: 0,
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+    usageLimit: 0,
+    isActive: true,
+  });
+  
+  // State cho chọn category (chỉ admin)
+  const [isGlobal, setIsGlobal] = useState(false);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  
+  // Danh sách categories có sẵn
+  const availableCategories = [
+    { value: 'electronics', label: 'Điện tử' },
+    { value: 'fashion', label: 'Thời trang' },
+    { value: 'home', label: 'Nội thất' },
+    { value: 'books', label: 'Sách' },
+    { value: 'other', label: 'Khác' },
+  ];
 
-  useEffect(() => {
-    fetchVouchers();
-  }, []);
+  useEffect(() => {
+    fetchVouchers();
+  }, []);
 
-  const fetchVouchers = async () => {
-    try {
-      setLoading(true);
-      // Sử dụng getAllVouchers để lấy tất cả voucher (bao gồm cả đã khóa)
-      const response = await voucherApi.getAllVouchers();
-      setVouchers(response.data || []);
-    } catch (error: any) {
-      console.error('Error fetching vouchers:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi tải danh sách voucher');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchVouchers = async () => {
+    try {
+      setLoading(true);
+      // Sử dụng getAllVouchers để lấy tất cả voucher (bao gồm cả đã khóa)
+      const response = await voucherApi.getAllVouchers();
+      setVouchers(response.data || []);
+    } catch (error: any) {
+      console.error('Error fetching vouchers:', error);
+      alert(error?.response?.data?.message || 'Lỗi khi tải danh sách voucher');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleDelete = async (voucherId: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa voucher này?')) return;
+  const handleDelete = async (voucherId: string) => {
+    if (!window.confirm('Bạn có chắc muốn xóa voucher này?')) return;
+    
+    try {
+      await voucherApi.deleteVoucher(voucherId);
+      alert('Đã xóa voucher thành công!');
+      fetchVouchers();
+    } catch (error: any) {
+      console.error('Error deleting voucher:', error);
+      alert(error?.response?.data?.message || 'Lỗi khi xóa voucher');
+    }
+  };
+
+  const handleToggleStatus = async (voucherId: string) => {
+    try {
+      const response = await voucherApi.toggleVoucherStatus(voucherId);
+      alert(response.data.message);
+      fetchVouchers();
+    } catch (error: any) {
+      console.error('Error toggling voucher status:', error);
+      alert(error?.response?.data?.message || 'Lỗi khi thay đổi trạng thái voucher');
+    }
+  };
+
+  const handleEdit = (voucher: VoucherType) => {
+    setEditingVoucher(voucher);
+    setFormData({
+      ...voucher,
+      startDate: voucher.startDate ? new Date(voucher.startDate).toISOString().split('T')[0] : '',
+      endDate: voucher.endDate ? new Date(voucher.endDate).toISOString().split('T')[0] : '',
+    });
+    
+    // Set selected categories và global cho edit
+    const isGlobalVoucher = (voucher as any).global === true;
+    const categories = (voucher as any).categories || [];
     
-    try {
-      await voucherApi.deleteVoucher(voucherId);
-      alert('Đã xóa voucher thành công!');
-      fetchVouchers();
-    } catch (error: any) {
-      console.error('Error deleting voucher:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi xóa voucher');
-    }
-  };
+    setIsGlobal(isGlobalVoucher);
+    setSelectedCategories(isGlobalVoucher ? [] : categories);
+    
+    setShowForm(true);
+  };
 
-  const handleToggleStatus = async (voucherId: string) => {
-    try {
-      const response = await voucherApi.toggleVoucherStatus(voucherId);
-      alert(response.data.message);
-      fetchVouchers();
-    } catch (error: any) {
-      console.error('Error toggling voucher status:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi thay đổi trạng thái voucher');
-    }
-  };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const submitData: any = {
+        ...formData,
+        startDate: new Date(formData.startDate).toISOString(),
+        endDate: new Date(formData.endDate).toISOString(),
+      };
 
-  const handleEdit = (voucher: VoucherType) => {
-    setEditingVoucher(voucher);
-    setFormData({
-      ...voucher,
-      startDate: voucher.startDate ? new Date(voucher.startDate).toISOString().split('T')[0] : '',
-      endDate: voucher.endDate ? new Date(voucher.endDate).toISOString().split('T')[0] : '',
-    });
-    
-    // Set selected categories và global cho edit
-    if ((voucher as any).global) {
-      setIsGlobal(true);
-      setSelectedCategories([]);
-    } else if ((voucher as any).categories && Array.isArray((voucher as any).categories) && (voucher as any).categories.length > 0) {
-      setIsGlobal(false);
-      setSelectedCategories((voucher as any).categories);
-    } else {
-      // Nếu có store cụ thể = seller tạo, admin không thể edit
-      setIsGlobal(false);
-      setSelectedCategories([]);
-    }
-    
-    setShowForm(true);
-  };
+      // Admin: thêm categories hoặc global
+      if (isGlobal) {
+        submitData.global = true;
+        submitData.categories = [];
+      } else if (selectedCategories.length > 0) {
+        submitData.global = false;
+        submitData.categories = selectedCategories;
+      } else {
+        // Nếu không chọn global và không chọn category nào, mặc định là global
+        submitData.global = true;
+        submitData.categories = [];
+      }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const submitData: any = {
-        ...formData,
-        startDate: new Date(formData.startDate).toISOString(),
-        endDate: new Date(formData.endDate).toISOString(),
-      };
+      if (editingVoucher?._id) {
+        await voucherApi.updateVoucher(editingVoucher._id, submitData);
+        alert('Đã cập nhật voucher thành công!');
+      } else {
+        await voucherApi.createVoucher(submitData);
+        alert('Đã tạo voucher thành công!');
+      }
+      
+      setShowForm(false);
+      setEditingVoucher(null);
+      setSelectedCategories([]);
+      setIsGlobal(false);
+      setFormData({
+        code: '',
+        title: '',
+        description: '',
+        condition: '',
+        voucherType: 'product',
+        discountType: 'percent',
+        discountValue: 0,
+        minOrderValue: 0,
+        maxDiscount: 0,
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        usageLimit: 0,
+        isActive: true,
+      });
+      fetchVouchers();
+    } catch (error: any) {
+      console.error('Error saving voucher:', error);
+      alert(error?.response?.data?.message || 'Lỗi khi lưu voucher');
+    }
+  };
 
-      // Admin: thêm categories hoặc global
-      if (isGlobal) {
-        submitData.global = true;
-        submitData.categories = [];
-      } else if (selectedCategories.length > 0) {
-        submitData.global = false;
-        submitData.categories = selectedCategories;
-      } else {
-        submitData.global = true; // Mặc định global nếu không chọn gì
-        submitData.categories = [];
-      }
+  // Sắp xếp và lọc vouchers
+  const filteredAndSortedVouchers = useMemo(() => {
+    let filtered = vouchers.filter(voucher =>
+      voucher.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      voucher.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    
+    // Sắp xếp theo createdAt desc (mới nhất lên trước)
+    filtered.sort((a, b) => {
+      const dateA = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0;
+      const dateB = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+    
+    return filtered;
+  }, [vouchers, searchTerm]);
 
-      if (editingVoucher?._id) {
-        await voucherApi.updateVoucher(editingVoucher._id, submitData);
-        alert('Đã cập nhật voucher thành công!');
-      } else {
-        await voucherApi.createVoucher(submitData);
-        alert('Đã tạo voucher thành công!');
-      }
-      
-      setShowForm(false);
-      setEditingVoucher(null);
-      setSelectedCategories([]);
-      setIsGlobal(false);
-      setFormData({
-        code: '',
-        title: '',
-        description: '',
-        condition: '',
-        voucherType: 'product',
-        discountType: 'percent',
-        discountValue: 0,
-        minOrderValue: 0,
-        maxDiscount: 0,
-        startDate: new Date().toISOString().split('T')[0],
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        usageLimit: 0,
-        isActive: true,
-      });
-      fetchVouchers();
-    } catch (error: any) {
-      console.error('Error saving voucher:', error);
-      alert(error?.response?.data?.message || 'Lỗi khi lưu voucher');
-    }
-  };
+  // Pagination
+  const totalPages = Math.ceil(filteredAndSortedVouchers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedVouchers = filteredAndSortedVouchers.slice(startIndex, endIndex);
 
-  // Sắp xếp và lọc vouchers
-  const filteredAndSortedVouchers = useMemo(() => {
-    let filtered = vouchers.filter(voucher =>
-      voucher.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      voucher.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    
-    // Sắp xếp theo createdAt desc (mới nhất lên trước)
-    filtered.sort((a, b) => {
-      const dateA = (a as any).createdAt ? new Date((a as any).createdAt).getTime() : 0;
-      const dateB = (b as any).createdAt ? new Date((b as any).createdAt).getTime() : 0;
-      return dateB - dateA;
-    });
-    
-    return filtered;
-  }, [vouchers, searchTerm]);
+  // Reset page khi search thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
-  // Pagination
-  const totalPages = Math.ceil(filteredAndSortedVouchers.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const paginatedVouchers = filteredAndSortedVouchers.slice(startIndex, endIndex);
-
-  // Reset page khi search thay đổi
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
-
-  if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20">
-        <Loader2 className="w-16 h-16 text-purple-500 animate-spin mb-4" />
-        <p className="text-gray-600 text-lg font-medium">Đang tải voucher...</p>
-      </div>
-    );
-  }
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="w-16 h-16 text-purple-500 animate-spin mb-4" />
+        <p className="text-gray-600 text-lg font-medium">Đang tải voucher...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 lg:p-8"> {/* Padding tối ưu cho mobile */}
       <div className="mb-6 animate-fade-in-down">
-        <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
-          <span>��</span> Quản lý Voucher
+        <h2 className="text-xl md:text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
+          <Gift size={24} className="text-purple-600" /> Quản lý Voucher
         </h2>
         <p className="text-gray-600 text-sm">
           Quản lý và tạo các mã giảm giá cho khách hàng
@@ -223,7 +231,7 @@ const VoucherManagement: React.FC = () => {
       {/* Actions */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4 items-center justify-between animate-fade-in-up">
         {/* Search */}
-        <div className="relative flex-1 max-w-md w-full">
+        <div className="relative flex-1 max-w-full sm:max-w-md w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
@@ -253,163 +261,256 @@ const VoucherManagement: React.FC = () => {
               usageLimit: 0,
               isActive: true,
             });
+            setIsGlobal(false);
+            setSelectedCategories([]);
             setShowForm(true);
           }}
-          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+          className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 w-full sm:w-auto justify-center" // Full width on mobile
         >
           <Plus size={20} />
           Thêm voucher
         </button>
       </div>
 
-      {/* Vouchers Table */}
-{filteredAndSortedVouchers.length > 0 ? (
-  <>
-    <div className="overflow-x-auto">
-      <table className="w-full">
-        <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
-          <tr>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã voucher</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mô tả</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Giảm giá</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Đơn tối thiểu</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thời hạn</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
-            <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thao tác</th>
-          </tr>
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {paginatedVouchers.map((voucher, index) => (
-            <tr
-              key={voucher._id}
-              className={`hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in-up ${!voucher.isActive ? 'bg-gray-50 opacity-75' : ''}`}
-              style={{ animationDelay: `${index * 0.05}s` }}
-            >
-              <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center gap-2">
-                  {!voucher.isActive && <Lock size={16} className="text-gray-400" />}
-                  <span className={`font-bold ${!voucher.isActive ? 'text-gray-500' : 'text-gray-900'}`}>
-                    {voucher.code}
-                  </span>
+      {/* Vouchers List */}
+      {filteredAndSortedVouchers.length > 0 ? (
+        <>
+          {/* --- DESKTOP TABLE VIEW (md and up) --- */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full">
+              <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã voucher</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Mô tả</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Giảm giá</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Đơn tối thiểu</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thời hạn</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Trạng thái</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {paginatedVouchers.map((voucher, index) => (
+                  <tr
+                    key={voucher._id}
+                    className={`hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in-up ${!voucher.isActive ? 'bg-gray-50 opacity-75' : ''}`}
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2">
+                        {!voucher.isActive && <Lock size={16} className="text-gray-400" />}
+                        <span className={`font-bold ${!voucher.isActive ? 'text-gray-500' : 'text-gray-900'}`}>
+                          {voucher.code}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className={`text-sm max-w-xs truncate ${!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}`}>
+                        {voucher.description || 'Không có mô tả'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`font-bold ${!voucher.isActive ? 'text-gray-400' : 'text-green-600'}`}>
+                        {formatDiscountValue(voucher)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}>
+                        {formatMinOrderValue(voucher.minOrderValue)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {voucher.startDate && voucher.endDate
+                        ? `${new Date(voucher.startDate).toLocaleDateString('vi-VN')} - ${new Date(voucher.endDate).toLocaleDateString('vi-VN')}`
+                        : 'N/A'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={getStatusBadgeClass(voucher.isActive ?? true)}>
+                        {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleEdit(voucher)}
+                          className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
+                        >
+                          <Edit size={16} /> Sửa
+                        </button>
+                        {voucher._id && (
+                          <button
+                            onClick={() => handleToggleStatus(voucher._id)}
+                            className={`${voucher.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1`}
+                            title={voucher.isActive ? 'Khóa voucher' : 'Mở khóa voucher'}
+                          >
+                            {voucher.isActive ? <Lock size={16} /> : <Unlock size={16} />}
+                            {voucher.isActive ? 'Khóa' : 'Mở khóa'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => voucher._id && handleDelete(voucher._id)}
+                          className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
+                        >
+                          <Trash2 size={16} /> Xóa
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* --- MOBILE CARD VIEW (max-md) --- */}
+          <div className="md:hidden space-y-4">
+            {paginatedVouchers.map((voucher, index) => (
+              <div 
+                key={voucher._id} 
+                className={`bg-white p-4 shadow-xl rounded-xl border border-gray-100 transition-shadow duration-300 hover:shadow-2xl animate-fade-in-up ${!voucher.isActive ? 'opacity-75' : ''}`}
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                {/* Header: Code & Status */}
+                <div className="flex items-center justify-between mb-4 border-b pb-3">
+                    <div className="flex items-center gap-2">
+                        <Ticket size={24} className="text-purple-500" />
+                        <span className={`font-extrabold text-xl ${!voucher.isActive ? 'text-gray-500' : 'text-purple-700'}`}>
+                            {voucher.code}
+                        </span>
+                    </div>
+                    <span className={getStatusBadgeClass(voucher.isActive ?? true)}>
+                        {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
+                    </span>
                 </div>
-              </td>
-              <td className="px-6 py-4">
-                <div className={`text-sm max-w-xs truncate ${!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}`}>
-                  {voucher.description || 'Không có mô tả'}
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-y-3 text-sm">
+                    {/* Discount Value */}
+                    <div className="text-gray-500 font-medium flex items-center gap-2">
+                        <Zap size={14} className="text-red-400" /> Giảm giá:
+                    </div>
+                    <div className="text-right font-bold text-green-600">{formatDiscountValue(voucher)}</div>
+                    
+                    {/* Min Order Value */}
+                    <div className="text-gray-500 font-medium flex items-center gap-2">
+                        <DollarSign size={14} className="text-blue-400" /> Đơn tối thiểu:
+                    </div>
+                    <div className="text-right text-gray-700">{formatMinOrderValue(voucher.minOrderValue)}</div>
+
+                    {/* Usage Limit */}
+                    <div className="text-gray-500 font-medium flex items-center gap-2">
+                        <Ticket size={14} className="text-yellow-400" /> Giới hạn:
+                    </div>
+                    <div className="text-right text-gray-700">{voucher.usageLimit > 0 ? `${voucher.usageLimit} lần` : 'Không giới hạn'}</div>
+                    
+                    {/* Date Range */}
+                    <div className="col-span-2 mt-2 pt-2 border-t border-gray-100">
+                        <div className="text-gray-500 font-medium flex items-center gap-2 mb-1">
+                            <Calendar size={14} className="text-gray-400" /> Thời hạn:
+                        </div>
+                        <p className="text-xs text-gray-700 ml-5">
+                            {voucher.startDate && voucher.endDate
+                                ? `${new Date(voucher.startDate).toLocaleDateString('vi-VN')} - ${new Date(voucher.endDate).toLocaleDateString('vi-VN')}`
+                                : 'N/A'}
+                        </p>
+                    </div>
                 </div>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={`font-bold ${!voucher.isActive ? 'text-gray-400' : 'text-green-600'}`}>
-                  {voucher.discountType === 'percent' ? `${voucher.discountValue}%` : `${voucher.discountValue.toLocaleString('vi-VN')}đ`}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={!voucher.isActive ? 'text-gray-400' : 'text-gray-700'}>
-                  {voucher.minOrderValue ? `${voucher.minOrderValue.toLocaleString('vi-VN')}đ` : 'Không có'}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                {voucher.startDate && voucher.endDate
-                  ? `${new Date(voucher.startDate).toLocaleDateString('vi-VN')} - ${new Date(voucher.endDate).toLocaleDateString('vi-VN')}`
-                  : 'N/A'}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap">
-                <span className={getStatusBadgeClass(voucher.isActive ?? true)}>
-                  {voucher.isActive ? 'Hoạt động' : 'Tạm khóa'}
-                </span>
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <div className="flex items-center gap-2">
+
+                {/* Actions */}
+                <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
                   <button
                     onClick={() => handleEdit(voucher)}
-                    className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
+                    className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
                   >
-                    <Edit size={16} />
-                    Sửa
+                    <Edit size={16} /> Sửa
                   </button>
                   {voucher._id && (
                     <button
                       onClick={() => handleToggleStatus(voucher._id)}
-                      className={`${voucher.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1`}
+                      className={`${voucher.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm`}
                       title={voucher.isActive ? 'Khóa voucher' : 'Mở khóa voucher'}
                     >
                       {voucher.isActive ? <Lock size={16} /> : <Unlock size={16} />}
                       {voucher.isActive ? 'Khóa' : 'Mở khóa'}
                     </button>
                   )}
-                  <button
-                    onClick={() => voucher._id && handleDelete(voucher._id)}
-                    className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
-                  >
-                    <Trash2 size={16} />
-                    Xóa
-                  </button>
                 </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </>   /* <-- DONG fragment quan trong */
-) : (
-  <div className="text-center py-20 animate-fade-in-up">
-    <div className="text-8xl mb-4 animate-bounce">🎫</div>
-    <p className="text-gray-500 text-lg font-medium">Không tìm thấy voucher nào</p>
-  </div>
-)}
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              itemsPerPage={itemsPerPage}
+              totalItems={filteredAndSortedVouchers.length}
+            />
+          )}
+        </>
+      ) : (
+        <div className="text-center py-20 animate-fade-in-up">
+          <div className="text-8xl mb-4 animate-bounce">🎫</div>
+          <p className="text-gray-500 text-lg font-medium">Không tìm thấy voucher nào</p>
+        </div>
+      )}
 
 
-      {/* Form Modal */}
+      {/* Form Modal (Optimized for Mobile) */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-scale-in">
-            <div className="p-6 border-b-2 border-gray-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[98vh] overflow-y-auto animate-scale-in">
+            <div className="p-4 sm:p-6 border-b-2 border-gray-200 sticky top-0 bg-white z-10">
               <div className="flex items-center justify-between">
-                                  <h3 className="text-2xl font-bold gradient-text flex items-center gap-2">
-                    <Edit size={24} className="text-purple-600" />
-                    {editingVoucher ? 'Sửa voucher' : 'Thêm voucher mới'}
-                  </h3>
+                <h3 className="text-xl sm:text-2xl font-bold gradient-text flex items-center gap-2">
+                  <Edit size={24} className="text-purple-600" />
+                  {editingVoucher ? 'Sửa voucher' : 'Thêm voucher mới'}
+                </h3>
                 <button
                   onClick={() => {
                     setShowForm(false);
                     setEditingVoucher(null);
                   }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold p-1"
                 >
                   ×
                 </button>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Mã voucher *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Tiêu đề *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-                  placeholder="Nhập tiêu đề voucher"
-                />
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
+              {/* Form fields (using grid-cols-1 on mobile, grid-cols-2 on tablet/desktop) */}
+              
+              <div className='space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4'>
+                {/* Mã voucher & Tiêu đề */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Mã voucher *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Tiêu đề *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    placeholder="Nhập tiêu đề voucher"
+                  />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả *</label>
                 <textarea
-                  rows={3}
+                  rows={2} // Giảm số hàng để tối ưu chiều cao trên mobile
                   required
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -430,20 +531,20 @@ const VoucherManagement: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Loại voucher *</label>
-                <select
-                  required
-                  value={formData.voucherType || 'product'}
-                  onChange={(e) => setFormData({ ...formData, voucherType: e.target.value as 'product' | 'freeship' })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-                >
-                  <option value="product">Giảm giá sản phẩm</option>
-                  <option value="freeship">Miễn phí vận chuyển</option>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
+              {/* Loại voucher, Loại giảm giá, Giá trị giảm */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-2">Loại voucher *</label>
+                  <select
+                    required
+                    value={formData.voucherType || 'product'}
+                    onChange={(e) => setFormData({ ...formData, voucherType: e.target.value as 'product' | 'freeship' })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  >
+                    <option value="product">Giảm giá sản phẩm</option>
+                    <option value="freeship">Miễn phí vận chuyển</option>
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Loại giảm giá *</label>
                   <select
@@ -456,7 +557,6 @@ const VoucherManagement: React.FC = () => {
                     <option value="fixed">Số tiền cố định</option>
                   </select>
                 </div>
-
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Giá trị giảm *</label>
                   <input
@@ -470,7 +570,8 @@ const VoucherManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Đơn tối thiểu & Giảm tối đa */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Đơn hàng tối thiểu</label>
                   <input
@@ -496,7 +597,8 @@ const VoucherManagement: React.FC = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Ngày bắt đầu & Ngày kết thúc */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Ngày bắt đầu *</label>
                   <input
@@ -584,7 +686,8 @@ const VoucherManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              {/* Giới hạn sử dụng & Trạng thái */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Giới hạn sử dụng</label>
                   <input
@@ -609,12 +712,13 @@ const VoucherManagement: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <button
                   type="submit"
                   className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
                 >
-                  {editingVoucher ? '�� Lưu thay đổi' : '➕ Tạo voucher'}
+                  {editingVoucher ? '💾 Lưu thay đổi' : '➕ Tạo voucher'}
                 </button>
                 <button
                   type="button"
@@ -636,8 +740,3 @@ const VoucherManagement: React.FC = () => {
 };
 
 export default VoucherManagement;
-
-
-
-
-

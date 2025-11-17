@@ -45,6 +45,7 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
 };
 
 const UserManagement: React.FC = () => {
+  // HOOKS
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -76,14 +77,6 @@ const UserManagement: React.FC = () => {
     fetchUsers();
   }, []);
 
-  if (loading) return (
-    <div className="flex flex-col items-center justify-center py-20">
-      <Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-4" />
-      <p className="text-gray-600 text-lg font-medium">Đang tải danh sách người dùng...</p>
-    </div>
-  );
-
-  // Sắp xếp và lọc users
   const filteredAndSortedUsers = useMemo(() => {
     let filtered = users.filter(user =>
       user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,21 +94,27 @@ const UserManagement: React.FC = () => {
     return filtered;
   }, [users, searchTerm]);
 
-  // Pagination
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center py-20">
+      <Loader2 className="w-16 h-16 text-blue-500 animate-spin mb-4" />
+      <p className="text-gray-600 text-lg font-medium">Đang tải danh sách người dùng...</p>
+    </div>
+  );
+
+  // Pagination logic
   const totalPages = Math.ceil(filteredAndSortedUsers.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const paginatedUsers = filteredAndSortedUsers.slice(startIndex, endIndex);
 
-  // Reset page khi search thay đổi
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
-
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-4 lg:p-8"> {/* Adjusted padding for mobile */}
       <div className="mb-6 animate-fade-in-down">
-        <h2 className="text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
+        <h2 className="text-xl md:text-2xl font-bold mb-2 gradient-text flex items-center gap-2">
           <UserIcon size={24} className="text-blue-600" />
           Quản lý người dùng
         </h2>
@@ -126,7 +125,7 @@ const UserManagement: React.FC = () => {
 
       {/* Search */}
       <div className="mb-6 animate-fade-in-up">
-        <div className="relative max-w-md">
+        <div className="relative max-w-full md:max-w-md"> {/* Ensure search bar is full width on mobile */}
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
@@ -140,8 +139,9 @@ const UserManagement: React.FC = () => {
 
       {filteredAndSortedUsers.length > 0 ? (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          {/* --- DESKTOP TABLE VIEW (md and up) --- */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="min-w-full">
               <thead>
                 <tr className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Người dùng</th>
@@ -201,12 +201,11 @@ const UserManagement: React.FC = () => {
                       {new Date(user.createdAt).toLocaleDateString("vi-VN")}
                     </div>
                   </td>
-<td className="px-6 py-4 whitespace-nowrap">
-  <span className={getStatusBadgeClass(user.status || 'pending')}>
-    {user.status || 'Chưa có trạng thái'}
-  </span>
-</td>
-
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={getStatusBadgeClass(user.status || 'pending')}>
+                      {user.status || 'Chưa có trạng thái'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <button className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1">
@@ -224,6 +223,81 @@ const UserManagement: React.FC = () => {
               </tbody>
             </table>
           </div>
+
+          {/* --- MOBILE CARD VIEW (max-md) --- */}
+          <div className="md:hidden space-y-4">
+            {paginatedUsers.map((user, index) => (
+              <div 
+                key={user._id} 
+                className="bg-white p-4 shadow-xl rounded-xl border border-gray-100 transition-shadow duration-300 hover:shadow-2xl animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                {/* Header: User Info */}
+                <div className="flex items-center gap-3 mb-4 border-b pb-3">
+                  <img
+                    src={user.avatarUrl || "/default-avatar.png"}
+                    alt={user.fullName}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-md"
+                  />
+                  <div>
+                    <div className="font-bold text-lg text-gray-900">{user.fullName}</div>
+                    <div className="text-sm text-gray-500">{user.email}</div>
+                  </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-y-3 text-sm">
+                  {/* Role */}
+                  <div className="text-gray-500 font-medium">Vai trò:</div>
+                  <div className="text-right">
+                    <span
+                      className={`px-3 py-1 text-xs leading-5 font-bold rounded-full ${
+                        user.role === "seller"
+                          ? "bg-indigo-500 text-white"
+                          : user.role === "admin"
+                          ? "bg-red-500 text-white"
+                          : "bg-blue-500 text-white"
+                      }`}
+                    >
+                      {user.role === "buyer"
+                        ? "Khách hàng"
+                        : user.role === "seller"
+                        ? "Người bán"
+                        : "Quản trị viên"}
+                    </span>
+                  </div>
+
+                  {/* Join Date */}
+                  <div className="text-gray-500 font-medium">Ngày tham gia:</div>
+                  <div className="text-right text-gray-700 flex justify-end items-center gap-2">
+                    <Calendar size={14} className="text-gray-400" />
+                    {new Date(user.createdAt).toLocaleDateString("vi-VN")}
+                  </div>
+
+                  {/* Status */}
+                  <div className="text-gray-500 font-medium">Trạng thái:</div>
+                  <div className="text-right">
+                    <span className={getStatusBadgeClass(user.status || 'pending')}>
+                      {user.status || 'Chưa có trạng thái'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
+                  <button className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm">
+                    <Edit size={16} />
+                    Sửa
+                  </button>
+                  <button className="text-red-600 hover:text-red-900 hover:bg-red-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm">
+                    <Trash2 size={16} />
+                    Xóa
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
           {totalPages > 1 && (
             <Pagination
               currentPage={currentPage}
