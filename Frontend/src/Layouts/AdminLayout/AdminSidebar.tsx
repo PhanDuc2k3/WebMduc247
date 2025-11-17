@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
@@ -9,7 +10,8 @@ import {
   Image as ImageIcon,
   CheckCircle2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Home
 } from 'lucide-react';
 import userApi from '../../api/userApi';
 
@@ -27,6 +29,7 @@ interface AdminSidebarProps {
 }
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, onCollapseChange }) => {
+  const navigate = useNavigate();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
@@ -162,7 +165,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
     <>
       <div
         ref={sidebarRef}
-        className={`admin-sidebar bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen ${
+        className={`admin-sidebar bg-slate-700 min-h-screen ${
           isMobile ? 'transition-all duration-300' : '' // Desktop không transition khi resize
         } ${
           isCollapsed ? 'w-20' : 'w-64'
@@ -182,23 +185,23 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
         {!isMobile && !isCollapsed && (
           <div
             ref={resizeHandleRef}
-            className="absolute right-0 top-0 w-1 h-full bg-purple-700 hover:bg-purple-500 cursor-col-resize z-10 group"
+            className="absolute right-0 top-0 w-1 h-full bg-slate-600 hover:bg-slate-500 cursor-col-resize z-10 group"
             style={{ cursor: 'col-resize', pointerEvents: isMobile ? 'none' : 'auto' }}
           >
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-16 bg-purple-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-16 bg-slate-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         )}
       {/* Logo */}
-      <div className="p-6 border-b border-purple-800">
+      <div className="p-6 border-b border-slate-600">
         <div className="flex items-center justify-between">
           {!isCollapsed && (
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-600 rounded-lg flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-slate-600 rounded-lg flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-sm">A</span>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Admin</h1>
-                <p className="text-xs text-purple-300">Dashboard</p>
+                <p className="text-xs text-slate-300">Dashboard</p>
               </div>
             </div>
           )}
@@ -206,7 +209,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
           {!isMobile && (
             <button
               onClick={handleToggleCollapse}
-              className="w-8 h-8 flex items-center justify-center bg-purple-800 hover:bg-purple-700 rounded-lg transition-all duration-300"
+              className="w-8 h-8 flex items-center justify-center bg-slate-600 hover:bg-slate-500 rounded-lg transition-all duration-300"
             >
               {isCollapsed ? (
                 <ChevronRight className="text-white w-4 h-4" />
@@ -220,6 +223,22 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
 
       {/* Menu Items */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden">
+        {/* Quay trở lại trang chủ */}
+        <button
+          onClick={() => navigate('/')}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative hover:bg-slate-600 hover:scale-105 border border-slate-600"
+        >
+          <Home 
+            size={20} 
+            className="text-slate-300 group-hover:text-white group-hover:scale-110 transition-transform duration-300" 
+          />
+          {!isCollapsed && (
+            <span className="font-bold transition-colors flex-1 text-left text-slate-200 group-hover:text-white">
+              Quay trở lại
+            </span>
+          )}
+        </button>
+
         {menuItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -228,23 +247,23 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
               onClick={() => onMenuChange(item.key)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group relative ${
                 activeMenu === item.key
-                  ? 'bg-gradient-to-r from-purple-600 to-pink-600 shadow-lg scale-105'
-                  : 'hover:bg-purple-800/50 hover:scale-105'
+                  ? 'bg-slate-600 shadow-lg scale-105'
+                  : 'hover:bg-slate-600 hover:scale-105'
               }`}
             >
               <Icon 
                 size={20} 
                 className={`transition-transform duration-300 ${
-                  activeMenu === item.key ? 'text-white scale-110' : 'text-purple-300 group-hover:text-white group-hover:scale-110'
+                  activeMenu === item.key ? 'text-white scale-110' : 'text-slate-300 group-hover:text-white group-hover:scale-110'
                 }`} 
               />
               {!isCollapsed && (
                 <>
-                  <span className={`font-bold transition-colors flex-1 text-left ${activeMenu === item.key ? 'text-white' : 'text-purple-200'}`}>
+                  <span className={`font-bold transition-colors flex-1 text-left ${activeMenu === item.key ? 'text-white' : 'text-slate-200'}`}>
                     {item.label}
                   </span>
                   {item.badge !== undefined && item.badge > 0 && (
-                    <span className="bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse min-w-[24px] text-center">
+                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full animate-pulse min-w-[24px] text-center">
                       {item.badge}
                     </span>
                   )}
@@ -260,11 +279,11 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-purple-800">
+      <div className="p-4 border-t border-slate-600">
         {!isCollapsed && (
-          <div className="bg-gradient-to-r from-purple-800 to-pink-800 rounded-xl p-4">
+          <div className="bg-slate-600 rounded-xl p-4">
             <p className="text-white text-sm font-bold mb-2">Need Help?</p>
-            <p className="text-purple-200 text-xs">Contact admin support</p>
+            <p className="text-slate-300 text-xs">Contact admin support</p>
           </div>
         )}
         </div>

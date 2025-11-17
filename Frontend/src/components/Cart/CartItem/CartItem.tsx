@@ -27,6 +27,7 @@ interface CartItemProps {
   onSelect: (id: string) => void;
   // onUpdateQty đã bị loại bỏ
   onRemove: (id: string) => void;
+  disabled?: boolean; // ✅ Disable checkbox nếu có cửa hàng khác được chọn
 }
 
 const CartItem: React.FC<CartItemProps> = ({
@@ -34,6 +35,7 @@ const CartItem: React.FC<CartItemProps> = ({
   selected,
   onSelect,
   onRemove,
+  disabled = false,
 }) => {
   const [loading, setLoading] = useState(false);
   const { fetchCart } = useCart(); // Lấy hàm fetchCart từ Context
@@ -94,7 +96,12 @@ const handleUpdateQuantity = async (newQuantity: number) => {
               type="checkbox"
               checked={selected}
               onChange={() => onSelect(item._id)}
-              className="w-5 h-5 sm:w-6 sm:h-6 rounded border-2 border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 cursor-pointer transition-all duration-300 accent-blue-600 hover:scale-110 touch-manipulation"
+              disabled={disabled}
+              className={`w-5 h-5 sm:w-6 sm:h-6 rounded border-2 text-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-300 accent-blue-600 touch-manipulation ${
+                disabled
+                  ? "border-gray-200 bg-gray-100 cursor-not-allowed opacity-50"
+                  : "border-gray-300 hover:scale-110 cursor-pointer"
+              }`}
             />
           </div>
 

@@ -234,7 +234,7 @@ const StoreManagement: React.FC = () => {
 
       {/* Total Stores Count */}
       <div className="mb-4 md:mb-6 animate-fade-in-up">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+        <div className="bg-blue-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số cửa hàng</p>
@@ -267,7 +267,7 @@ const StoreManagement: React.FC = () => {
           {/* --- DESKTOP TABLE VIEW (md and up) --- */}
           <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full">
-              <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+              <thead className="bg-gray-100 border-b-2 border-gray-200">
                 <tr>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Cửa hàng</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase">Chủ sở hữu</th>
@@ -280,7 +280,7 @@ const StoreManagement: React.FC = () => {
                 {paginatedStores.map((store, index) => (
                 <tr
                   key={store._id}
-                  className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 animate-fade-in-up"
+                  className="hover:bg-gray-50 transition-all duration-300 animate-fade-in-up"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -301,7 +301,7 @@ const StoreManagement: React.FC = () => {
                     <div className="text-xs text-gray-500">{store.owner?.email || ''}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg">
+                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-green-500 text-white shadow-lg">
                       {getCategoryLabel(store.category)}
                     </span>
                   </td>
@@ -500,7 +500,7 @@ const StoreManagement: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-blue-700 transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
                 >
                   <Edit size={18} />
                   {editingStore ? 'Lưu thay đổi' : 'Tạo cửa hàng'}
@@ -511,7 +511,7 @@ const StoreManagement: React.FC = () => {
                     setShowForm(false);
                     setEditingStore(null);
                   }}
-                  className="flex-1 bg-gradient-to-r from-gray-400 to-gray-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300"
+                  className="flex-1 bg-gray-500 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-gray-600 transform hover:scale-105 transition-all duration-300"
                 >
                   Hủy
                 </button>

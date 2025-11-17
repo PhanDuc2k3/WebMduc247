@@ -54,7 +54,7 @@ const AdminLayout: React.FC = () => {
   }, [isSidebarCollapsed, isMobile]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-screen overflow-hidden bg-slate-50">
       {/* Sidebar */}
       <AdminSidebar 
         activeMenu={activeMenu} 
@@ -80,7 +80,7 @@ const AdminLayout: React.FC = () => {
         }}
       >
         {/* Content */}
-        <main className="flex-1 overflow-x-auto overflow-y-auto bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 w-full" style={{ minWidth: '100%' }}>
+        <main className="flex-1 overflow-x-auto overflow-y-auto bg-slate-50 w-full" style={{ minWidth: '100%' }}>
           <Outlet context={{ activeMenu }} />
         </main>
       </div>

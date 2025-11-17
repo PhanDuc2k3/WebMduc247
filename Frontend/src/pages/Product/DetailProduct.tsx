@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Loader2, XCircle } from "lucide-react";
 import ProductImages from "../../components/ProductDetail/ProductImages/ProductImages";
 import ProductInfo from "../../components/ProductDetail/ProductInfo/ProductInfo";
 import ProductTabs from "../../components/ProductDetail/ProductTabs/ProductTabs";
@@ -8,6 +11,7 @@ import axiosClient from "../../api/axiosClient"; // lấy baseURL
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [product, setProduct] = useState<any>(null);
@@ -31,8 +35,20 @@ const ProductDetail: React.FC = () => {
 
         setProduct({ ...data, images: imagesWithUrl });
         if (imagesWithUrl.length > 0) setMainImage(imagesWithUrl[0]);
-      } catch (err) {
+      } catch (err: any) {
         console.error("❌ Lỗi fetch product:", err);
+        toast.error(
+          "Không thể tải thông tin sản phẩm. Vui lòng thử lại sau.",
+          { containerId: "general-toast" }
+        );
+        
+        // Nếu không tìm thấy sản phẩm, chuyển về trang chủ sau 2 giây
+        if (err.response?.status === 404) {
+          setTimeout(() => {
+            navigate("/");
+            toast.info("Đang chuyển về trang chủ...", { containerId: "general-toast" });
+          }, 2000);
+        }
       } finally {
         setLoading(false);
       }
@@ -61,7 +77,7 @@ const ProductDetail: React.FC = () => {
     return (
       <div className="w-full py-16 flex items-center justify-center animate-fade-in">
         <div className="text-center">
-          <div className="text-6xl mb-4 animate-pulse">⏳</div>
+          <Loader2 className="w-16 h-16 text-blue-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 text-lg">Đang tải sản phẩm...</p>
         </div>
       </div>
@@ -72,7 +88,7 @@ const ProductDetail: React.FC = () => {
     return (
       <div className="w-full py-16 flex items-center justify-center animate-fade-in">
         <div className="text-center">
-          <div className="text-6xl mb-4">❌</div>
+          <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <p className="text-gray-600 text-lg font-semibold">Không tìm thấy sản phẩm</p>
         </div>
       </div>

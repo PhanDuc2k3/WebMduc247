@@ -1,28 +1,44 @@
 import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
-import { useCart } from "../../../context/CartContext";
 import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface OrderSummaryProps {
   selectedItems: string[]; // ✅ danh sách id sản phẩm được chọn
+  cart: any; // ✅ cart từ Cart.tsx
 }
 
-const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems }) => {
+const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
   const navigate = useNavigate();
-  const { cart } = useCart();
 
   // ✅ Bảo vệ cart luôn là mảng
-  const safeCart = Array.isArray(cart) ? cart : [];
+  const safeCart = Array.isArray(cart?.items) ? cart.items : [];
 
   // ✅ Lọc ra sản phẩm được chọn
   const selectedProducts = safeCart.filter((item: any) =>
     selectedItems.includes(item._id)
   );
 
+  // ✅ Kiểm tra xem có nhiều cửa hàng được chọn không
+  const getStoreId = (item: any): string => {
+    return typeof item.storeId === "string" ? item.storeId : item.storeId?._id || "";
+  };
+
+  const storeIds = useMemo(() => {
+    const ids = new Set(selectedProducts.map((item: any) => getStoreId(item)));
+    return Array.from(ids);
+  }, [selectedProducts]);
+
+  const hasMultipleStores = storeIds.length > 1;
+
   // ✅ Tính toán giá trị đơn hàng
   const { subtotal, total } = useMemo(() => {
     const subtotal = selectedProducts.reduce((sum, item) => {
+      // Sử dụng subtotal từ item nếu có, nếu không thì tính toán
+      if (item.subtotal) {
+        return sum + item.subtotal;
+      }
       const price = item.salePrice ?? item.price ?? 0;
       const extra = item.variation?.additionalPrice ?? 0;
       const qty = item.quantity ?? 0;
@@ -37,10 +53,17 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems }) => {
   const handleCheckout = () => {
     if (!selectedProducts || selectedProducts.length === 0) {
       toast.warning(
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="text-yellow-500" size={18} />
-          <span>Vui lòng chọn ít nhất một sản phẩm để thanh toán!</span>
-        </div>
+        "Vui lòng chọn ít nhất một sản phẩm để thanh toán!",
+        { containerId: "general-toast" }
+      );
+      return;
+    }
+
+    // ✅ Kiểm tra chỉ cho phép thanh toán từ 1 cửa hàng
+    if (hasMultipleStores) {
+      toast.error(
+        "Chỉ có thể thanh toán sản phẩm từ cùng một cửa hàng!",
+        { containerId: "general-toast" }
       );
       return;
     }
@@ -67,6 +90,18 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems }) => {
         <h2 className="text-2xl font-bold text-gray-900 gradient-text">Tóm tắt đơn hàng</h2>
       </div>
 
+      {/* ✅ Cảnh báo nếu có nhiều cửa hàng */}
+      {hasMultipleStores && (
+        <div className="mb-4 p-4 bg-red-50 border-2 border-red-300 rounded-xl">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="text-red-500 flex-shrink-0 mt-0.5" size={18} />
+            <p className="text-sm text-red-800 font-medium">
+              Bạn đang chọn sản phẩm từ {storeIds.length} cửa hàng khác nhau. Vui lòng chỉ chọn sản phẩm từ một cửa hàng để thanh toán.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Total */}
       <div className="mb-6">
         <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-300">
@@ -80,10 +115,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems }) => {
       {/* Checkout button */}
       <button
         onClick={handleCheckout}
-        disabled={!selectedProducts || selectedProducts.length === 0}
-        className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 ${
-          selectedProducts && selectedProducts.length > 0
-            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700"
+        disabled={!selectedProducts || selectedProducts.length === 0 || hasMultipleStores}
+        className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform ${
+          selectedProducts && selectedProducts.length > 0 && !hasMultipleStores
+            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:scale-105 active:scale-95"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"
         }`}
       >

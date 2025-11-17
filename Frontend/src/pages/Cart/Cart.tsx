@@ -5,6 +5,7 @@ import OrderSummary from "../../components/Cart/OrderSummary/OrderSummary";
 import { useNavigate } from "react-router-dom";
 import cartApi from "../../api/cartApi"; // ✅ dùng axiosClient
 import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface CartItem {
   _id: string;
@@ -48,11 +49,58 @@ export default function CartPage() {
     fetchCart();
   }, []);
 
-  // Toggle chọn sản phẩm
+  // ✅ Đồng bộ selectedItems khi cart thay đổi (đảm bảo không có item đã bị xóa)
+  useEffect(() => {
+    if (cart && cart.items) {
+      setSelectedItems((prev) => 
+        prev.filter((id) => cart.items.some((item: CartItem) => item._id === id))
+      );
+    }
+  }, [cart]);
+
+  // Lấy storeId của item
+  const getStoreId = (item: CartItem): string => {
+    return typeof item.storeId === "string" ? item.storeId : item.storeId._id;
+  };
+
+  // Toggle chọn sản phẩm - chỉ cho phép chọn từ 1 cửa hàng
   const toggleSelectItem = (itemId: string) => {
-    setSelectedItems((prev) =>
-      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
-    );
+    // ✅ Đảm bảo itemId tồn tại trong cart trước khi toggle
+    if (!cart || !cart.items.some((item) => item._id === itemId)) return;
+    
+    const targetItem = cart.items.find((item) => item._id === itemId);
+    if (!targetItem) return;
+
+    const targetStoreId = getStoreId(targetItem);
+    
+    setSelectedItems((prev) => {
+      // Nếu đang bỏ chọn item này
+      if (prev.includes(itemId)) {
+        return prev.filter((id) => id !== itemId);
+      }
+      
+      // Nếu đang chọn item mới
+      // Kiểm tra xem đã có item từ cửa hàng khác được chọn chưa
+      const selectedItemsFromOtherStores = prev.filter((id) => {
+        const item = cart.items.find((i) => i._id === id);
+        if (!item) return false;
+        const itemStoreId = getStoreId(item);
+        return itemStoreId !== targetStoreId;
+      });
+
+      // Nếu đã có item từ cửa hàng khác, bỏ chọn tất cả và chỉ chọn item mới
+      if (selectedItemsFromOtherStores.length > 0) {
+        toast.warning(
+          "Chỉ có thể thanh toán sản phẩm từ cùng một cửa hàng. Đã bỏ chọn sản phẩm từ cửa hàng khác.",
+          { containerId: "general-toast" }
+        );
+        // Bỏ chọn tất cả và chỉ chọn item mới
+        return [itemId];
+      }
+
+      // Nếu chưa có item nào được chọn hoặc tất cả đều từ cùng cửa hàng, thêm item mới
+      return [...prev, itemId];
+    });
   };
 
   // Cập nhật số lượng
@@ -61,6 +109,10 @@ export default function CartPage() {
     try {
       const res = await cartApi.updateQuantity(itemId, newQty);
       setCart(res.data.cart);
+      // ✅ Đảm bảo selectedItems chỉ chứa các item còn tồn tại
+      setSelectedItems((prev) => 
+        prev.filter((id) => res.data.cart.items?.some((item: CartItem) => item._id === id))
+      );
     } catch (err) {
       console.error("Lỗi updateQuantity:", err);
     }
@@ -71,10 +123,19 @@ export default function CartPage() {
     if (!cart) return;
     try {
       const res = await cartApi.removeFromCart(itemId);
-      setCart(res.data);
-      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
+      const updatedCart = res.data;
+      setCart(updatedCart);
+      // ✅ Xóa item khỏi selectedItems và đảm bảo chỉ giữ lại các item còn tồn tại
+      setSelectedItems((prev) => {
+        const filtered = prev.filter((id) => id !== itemId);
+        // ✅ Đảm bảo chỉ giữ lại các item còn tồn tại trong cart mới
+        return filtered.filter((id) => 
+          updatedCart.items?.some((item: CartItem) => item._id === id)
+        );
+      });
     } catch (err) {
       console.error("Lỗi removeItem:", err);
+      toast.error("Không thể xóa sản phẩm khỏi giỏ hàng");
     }
   };
 
@@ -99,17 +160,27 @@ export default function CartPage() {
   const handleCheckout = () => {
     if (selectedItems.length === 0) {
       toast.warning(
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="text-yellow-500" size={18} />
-          <span>Vui lòng chọn ít nhất 1 sản phẩm để thanh toán</span>
-        </div>
+        "Vui lòng chọn ít nhất 1 sản phẩm để thanh toán",
+        { containerId: "general-toast" }
       );
       return;
     }
+    
     // Lưu toàn bộ sản phẩm được chọn thay vì chỉ ID
     const selectedProducts = cart?.items.filter((item) =>
       selectedItems.includes(item._id)
     ) || [];
+    
+    // ✅ Kiểm tra tất cả sản phẩm phải từ cùng 1 cửa hàng
+    const storeIds = new Set(selectedProducts.map((item) => getStoreId(item)));
+    if (storeIds.size > 1) {
+      toast.error(
+        "Chỉ có thể thanh toán sản phẩm từ cùng một cửa hàng!",
+        { containerId: "general-toast" }
+      );
+      return;
+    }
+    
     localStorage.setItem("checkoutItems", JSON.stringify(selectedProducts));
     navigate("/checkout");
   };
@@ -171,6 +242,7 @@ export default function CartPage() {
                   onSelect={toggleSelectItem}
                   onUpdateQty={updateQuantity}
                   onRemove={removeItem}
+                  cart={cart}
                 />
               </div>
             ))
@@ -183,6 +255,7 @@ export default function CartPage() {
             <div className="sticky top-[180px]">
               <OrderSummary
                 selectedItems={selectedItems}
+                cart={cart}
               />
             </div>
           </div>

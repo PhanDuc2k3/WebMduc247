@@ -115,7 +115,7 @@ const SellerApproval: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="bg-gradient-to-r from-gray-50 to-purple-50 border-b-2 border-gray-200">
+                <tr className="bg-gray-100 border-b-2 border-gray-200">
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Thông tin cửa hàng</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Người đăng ký</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Danh mục</th>
@@ -128,12 +128,12 @@ const SellerApproval: React.FC = () => {
                 {sortedAndPaginatedRequests.map((req, idx) => (
                 <tr 
                   key={idx} 
-                  className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 animate-fade-in-up"
+                  className="hover:bg-gray-50 transition-all duration-300 animate-fade-in-up"
                   style={{ animationDelay: `${idx * 0.05}s` }}
                 >
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white shadow-lg">
+                      <div className="w-12 h-12 rounded-xl bg-purple-500 flex items-center justify-center text-white shadow-lg">
                         <Store size={24} />
                       </div>
                       <div>
@@ -158,7 +158,7 @@ const SellerApproval: React.FC = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg">
+                    <span className="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-green-500 text-white shadow-lg">
                       {req.sellerRequest.store.category}
                     </span>
                   </td>
@@ -178,7 +178,7 @@ const SellerApproval: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleAction(req._id, "approve")}
-                          className="bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-2 font-bold"
+                          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-2 font-bold"
                           title="Duyệt"
                         >
                           <CheckCircle2 size={18} />
@@ -186,7 +186,7 @@ const SellerApproval: React.FC = () => {
                         </button>
                         <button
                           onClick={() => handleAction(req._id, "reject")}
-                          className="bg-gradient-to-r from-red-500 to-pink-600 text-white hover:from-red-600 hover:to-pink-700 px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-2 font-bold"
+                          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-2 font-bold"
                           title="Từ chối"
                         >
                           <XCircle size={18} />

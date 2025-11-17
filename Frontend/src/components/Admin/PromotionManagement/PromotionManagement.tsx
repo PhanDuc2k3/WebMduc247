@@ -193,7 +193,7 @@ const PromotionManagement: React.FC = () => {
 
       {/* Total Promotions Count */}
       <div className="mb-4 md:mb-6 animate-fade-in-up">
-        <div className="bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+        <div className="bg-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số khuyến mãi</p>
@@ -238,7 +238,7 @@ const PromotionManagement: React.FC = () => {
             setImagePreview('');
             setShowForm(true);
           }}
-          className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg md:rounded-xl text-sm md:text-base font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+          className="px-4 md:px-6 py-2 md:py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg md:rounded-xl text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
         >
           <Plus size={18} className="md:w-5 md:h-5" />
           <span>Thêm mới</span>
@@ -415,7 +415,7 @@ const PromotionManagement: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg md:rounded-xl font-bold hover:from-purple-700 hover:to-pink-700 transition-all duration-300 shadow-lg"
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-purple-600 hover:bg-purple-700 text-white rounded-lg md:rounded-xl font-bold transition-all duration-300 shadow-lg"
                 >
                   {editingPromotion ? 'Cập nhật' : 'Tạo mới'}
                 </button>
@@ -432,7 +432,7 @@ const PromotionManagement: React.FC = () => {
           <div className="hidden md:block bg-white rounded-lg md:rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                <thead className="bg-gray-100 border-b-2 border-gray-200">
                   <tr>
                     <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Tiêu đề</th>
                     <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Danh mục</th>

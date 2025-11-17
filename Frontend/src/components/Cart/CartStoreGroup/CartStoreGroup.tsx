@@ -2,8 +2,25 @@ import React from "react";
 import { CheckCircle2, Circle } from "lucide-react";
 import CartItem from "../CartItem/CartItem";
 
-const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, onRemove }: any) => {
+const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, onRemove, cart }: any) => {
   const allSelected = items.every((item: any) => selectedItems.includes(item._id));
+  
+  // Lấy storeId của store này
+  const getStoreId = (item: any): string => {
+    return typeof item.storeId === "string" ? item.storeId : item.storeId._id;
+  };
+  
+  const currentStoreId = items.length > 0 ? getStoreId(items[0]) : null;
+  
+  // Kiểm tra xem có item từ cửa hàng khác đang được chọn không
+  const hasOtherStoreSelected = cart?.items?.some((item: any) => {
+    const itemStoreId = getStoreId(item);
+    return itemStoreId !== currentStoreId && selectedItems.includes(item._id);
+  }) || false;
+  
+  // Nếu có cửa hàng khác được chọn, disable checkbox của cửa hàng này
+  const isDisabled = hasOtherStoreSelected;
+  
   const handleToggleAll = () => {
     if (allSelected) {
       items.forEach((item: any) => {
@@ -12,6 +29,17 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
         }
       });
     } else {
+      // Nếu đã có cửa hàng khác được chọn, bỏ chọn tất cả cửa hàng khác trước
+      if (hasOtherStoreSelected) {
+        // Bỏ chọn tất cả item từ cửa hàng khác
+        cart?.items?.forEach((item: any) => {
+          const itemStoreId = getStoreId(item);
+          if (itemStoreId !== currentStoreId && selectedItems.includes(item._id)) {
+            onSelect(item._id);
+          }
+        });
+      }
+      // Sau đó chọn tất cả item từ cửa hàng này
       items.forEach((item: any) => {
         if (!selectedItems.includes(item._id)) {
           onSelect(item._id);
@@ -51,7 +79,12 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
         
         <button
           onClick={handleToggleAll}
-          className="px-3 sm:px-4 py-2 rounded-lg md:rounded-xl border-2 border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-xs sm:text-sm font-semibold text-gray-700 hover:text-blue-600 transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex items-center gap-1.5 sm:gap-2"
+          disabled={isDisabled}
+          className={`px-3 sm:px-4 py-2 rounded-lg md:rounded-xl border-2 text-xs sm:text-sm font-semibold transition-all duration-300 transform touch-manipulation flex items-center gap-1.5 sm:gap-2 ${
+            isDisabled
+              ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
+              : "border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-700 hover:text-blue-600 hover:scale-105 active:scale-95"
+          }`}
         >
           {allSelected ? (
             <>
@@ -81,6 +114,7 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
               selected={selectedItems.includes(item._id)}
               onSelect={onSelect}
               onRemove={onRemove}
+              disabled={isDisabled}
             />
           </div>
         ))}

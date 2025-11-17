@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { XCircle } from "lucide-react";
 import reviewApi from "../../../api/apiReview";
 import productApi from "../../../api/productApi"; // 🔹 Thêm API để lấy product
 
@@ -33,8 +36,9 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
         const res = await productApi.getProductById(productId);
         setProduct(res.data.data);
         console.log("data: ",res.data)
-      } catch (err) {
+      } catch (err: any) {
         console.error("Lỗi khi fetch product:", err);
+        toast.error("Không thể tải mô tả sản phẩm", { containerId: "general-toast" });
       }
     };
     fetchProduct();
@@ -48,8 +52,12 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
         setLoadingReviews(true);
         const res = await reviewApi.getReviewsByProduct(productId);
         setReviews(res.data);
-      } catch (err) {
+      } catch (err: any) {
         console.error("Lỗi khi fetch reviews:", err);
+        toast.error(
+          "Không thể tải đánh giá sản phẩm",
+          { containerId: "general-toast" }
+        );
       } finally {
         setLoadingReviews(false);
       }

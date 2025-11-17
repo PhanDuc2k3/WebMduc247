@@ -232,7 +232,7 @@ const VoucherManagement: React.FC = () => {
 
       {/* Total Vouchers Count */}
       <div className="mb-4 md:mb-6 animate-fade-in-up">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+        <div className="bg-blue-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số voucher</p>
@@ -282,7 +282,7 @@ const VoucherManagement: React.FC = () => {
             setSelectedCategories([]);
             setShowForm(true);
           }}
-          className="px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg md:rounded-xl text-sm md:text-base font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
+          className="px-4 md:px-6 py-2 md:py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg md:rounded-xl text-sm md:text-base font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
         >
           <Plus size={18} className="md:w-5 md:h-5" />
           <span>Thêm voucher</span>
@@ -296,7 +296,7 @@ const VoucherManagement: React.FC = () => {
           <div className="hidden md:block bg-white rounded-lg md:rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                <thead className="bg-gray-100 border-b-2 border-gray-200">
                   <tr>
                     <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã voucher</th>
                     <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Mô tả</th>
@@ -311,7 +311,7 @@ const VoucherManagement: React.FC = () => {
                   {paginatedVouchers.map((voucher, index) => (
                     <tr
                       key={voucher._id}
-                      className={`hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300 ${!voucher.isActive ? 'bg-gray-50 opacity-75' : ''}`}
+                      className={`hover:bg-gray-50 transition-all duration-300 ${!voucher.isActive ? 'bg-gray-50 opacity-75' : ''}`}
                     >
                       <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
@@ -754,7 +754,7 @@ const VoucherManagement: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg md:rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-blue-600 hover:bg-blue-700 text-white rounded-lg md:rounded-xl font-bold transition-all duration-300 shadow-lg"
                 >
                   {editingVoucher ? 'Cập nhật' : 'Tạo mới'}
                 </button>

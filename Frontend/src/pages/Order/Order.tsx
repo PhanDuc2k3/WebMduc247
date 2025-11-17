@@ -254,7 +254,7 @@ export default function OrderPage() {
       };
 
   return (
-    <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6">
+    <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6 bg-gray-50 min-h-screen">
       <div className="mb-4 sm:mb-6 md:mb-8 animate-fade-in-down">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
           <Package className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />

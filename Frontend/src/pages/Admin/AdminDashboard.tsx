@@ -106,10 +106,10 @@ const AdminDashboard: React.FC = () => {
       {/* Welcome Section */}
       {activeMenu === 'dashboard' && (
         <div className="p-4 md:p-6">
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-xl md:rounded-2xl p-6 md:p-8 text-white shadow-xl md:shadow-2xl">
+          <div className="bg-slate-700 rounded-xl md:rounded-2xl p-6 md:p-8 text-white shadow-xl md:shadow-2xl">
             <div>
               <h1 className="text-2xl md:text-4xl font-bold mb-2">Welcome back, Admin!</h1>
-              <p className="text-blue-100 text-sm md:text-lg">Chào mừng bạn trở lại trang quản trị</p>
+              <p className="text-slate-300 text-sm md:text-lg">Chào mừng bạn trở lại trang quản trị</p>
             </div>
           </div>
         </div>

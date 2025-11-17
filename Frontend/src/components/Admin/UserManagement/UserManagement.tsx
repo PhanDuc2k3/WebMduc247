@@ -247,7 +247,7 @@ const UserManagement: React.FC = () => {
 
       {/* Total Users Count */}
       <div className="mb-4 md:mb-6 animate-fade-in-up">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+        <div className="bg-blue-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số người dùng</p>
@@ -280,7 +280,7 @@ const UserManagement: React.FC = () => {
           <div className="hidden md:block overflow-x-auto">
             <table className="min-w-full">
               <thead>
-                <tr className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                <tr className="bg-gray-100 border-b-2 border-gray-200">
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Người dùng</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Email</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">Vai trò</th>
@@ -293,7 +293,7 @@ const UserManagement: React.FC = () => {
                 {paginatedUsers.map((user, index) => (
                 <tr 
                   key={user._id} 
-                  className="hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 animate-fade-in-up"
+                  className="hover:bg-gray-50 transition-all duration-300 animate-fade-in-up"
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -319,10 +319,10 @@ const UserManagement: React.FC = () => {
                     <span
                       className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${
                         user.role === "seller"
-                          ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg"
+                          ? "bg-purple-500 text-white shadow-lg"
                           : user.role === "admin"
-                          ? "bg-gradient-to-r from-red-500 to-pink-500 text-white shadow-lg"
-                          : "bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg"
+                          ? "bg-red-500 text-white shadow-lg"
+                          : "bg-blue-500 text-white shadow-lg"
                       }`}
                     >
                       {user.role === "buyer"

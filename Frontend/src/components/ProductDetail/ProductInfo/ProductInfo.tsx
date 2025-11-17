@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { Heart, AlertTriangle } from "lucide-react";
+import { Heart, AlertTriangle, Star, Flame, Palette, Package, Hash, ShoppingCart, Zap, Store, Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "../../../api/axiosClient";
 import { toast } from "react-toastify"; 
@@ -106,10 +106,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   const handleAddToCart = async () => {
     if (!selectedColor || !selectedStorage || !selectedOption) {
       toast.warning(
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="text-yellow-500" size={18} />
-          <span>Vui lòng chọn màu sắc và dung lượng!</span>
-        </div>
+        "Vui lòng chọn loại 1 và loại 2!",
+        { containerId: "general-toast" }
       );
       return;
     }
@@ -138,15 +136,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       fetchCart();
 
       toast.success(
-        <div className="flex items-center gap-2">
-          <span>Đã thêm vào giỏ hàng!</span>
-        </div>
+        "Đã thêm vào giỏ hàng!",
+        { containerId: "general-toast" }
       );
     } catch {
       toast.error(
-        <div className="flex items-center gap-2">
-          <span>Lỗi khi thêm vào giỏ hàng!</span>
-        </div>
+        "Lỗi khi thêm vào giỏ hàng!",
+        { containerId: "general-toast" }
       );
     } finally {
       setLoading(false);
@@ -157,16 +153,14 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   const handleBuyNow = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.warning("Vui lòng đăng nhập để mua hàng!");
+      toast.warning("Vui lòng đăng nhập để mua hàng!", { containerId: "general-toast" });
       return;
     }
 
     if (!selectedColor || !selectedStorage || !selectedOption) {
       toast.warning(
-        <div className="flex items-center gap-2">
-          <AlertTriangle className="text-yellow-500" size={18} />
-          <span>Vui lòng chọn màu sắc và dung lượng!</span>
-        </div>
+        "Vui lòng chọn loại 1 và loại 2!",
+        { containerId: "general-toast" }
       );
       return;
     }
@@ -215,7 +209,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     } catch (err: any) {
       console.error("Lỗi mua ngay:", err);
       toast.error(
-        err.response?.data?.message || "Lỗi khi thực hiện mua ngay!"
+        err.response?.data?.message || "Lỗi khi thực hiện mua ngay!",
+        { containerId: "general-toast" }
       );
     } finally {
       setLoading(false);
@@ -226,7 +221,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
   const handleToggleFavorite = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
-      toast.warning("Vui lòng đăng nhập để thêm vào yêu thích!");
+      toast.warning("Vui lòng đăng nhập để thêm vào yêu thích!", { containerId: "general-toast" });
       return;
     }
 
@@ -236,13 +231,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         // Xóa khỏi yêu thích
         await favoriteApi.removeFavorite({ productId: product._id });
         setIsFavorite(false);
-        toast.success("Đã xóa khỏi yêu thích");
+        toast.success("Đã xóa khỏi yêu thích", { containerId: "general-toast" });
       } else {
         // Thêm vào yêu thích
         const res = await favoriteApi.addFavorite({ productId: product._id });
         // Kiểm tra response - có thể đã tồn tại (status 200) hoặc mới tạo (status 201)
         setIsFavorite(true);
-        toast.success(res.data?.message || "Đã thêm vào yêu thích");
+        toast.success(res.data?.message || "Đã thêm vào yêu thích", { containerId: "general-toast" });
       }
     } catch (err: any) {
       console.error("Lỗi yêu thích:", err);
@@ -254,12 +249,12 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       // Nếu đã yêu thích rồi (409 Conflict) - coi như success và set isFavorite = true
       if (statusCode === 409 || statusCode === 200 || errorMessage.includes("Đã yêu thích") || errorMessage.includes("đã yêu thích")) {
         setIsFavorite(true);
-        toast.success("Đã thêm vào yêu thích");
+        toast.success("Đã thêm vào yêu thích", { containerId: "general-toast" });
         return; // Thoát sớm để không hiển thị error
       }
       
       // Các lỗi khác
-      toast.error(errorMessage);
+      toast.error("Không thể cập nhật yêu thích. Vui lòng thử lại sau.", { containerId: "general-toast" });
     } finally {
       setFavoriteLoading(false);
     }
@@ -274,7 +269,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         </h1>
         <div className="flex items-center gap-3 text-base text-gray-600">
           <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-full">
-            <span className="text-yellow-500 text-lg">⭐</span>
+            <Star className="text-yellow-500" size={18} fill="currentColor" />
             <span className="font-semibold">{product.rating || 0}</span>
           </div>
           <span className="text-gray-500">
@@ -296,16 +291,17 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           )}
         </div>
         {product.salePrice && (
-          <span className="inline-block bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-semibold">
-            🔥 Giảm {Math.round((1 - product.salePrice / product.price) * 100)}%
+          <span className="inline-flex items-center gap-1 bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-semibold">
+            <Flame size={16} />
+            <span>Giảm {Math.round((1 - product.salePrice / product.price) * 100)}%</span>
           </span>
         )}
       </div>
 
-      {/* Chọn màu */}
+      {/* Chọn loại 1 */}
       <div className="animate-fade-in-up delay-200">
-        <h3 className="font-bold text-lg mb-3 text-gray-900 flex items-center gap-2">
-          <span>🎨</span> Màu sắc
+        <h3 className="font-bold text-lg mb-3 text-gray-900">
+          Loại 1
         </h3>
         <div className="flex gap-3 flex-wrap">
           {colors.map((color) => (
@@ -328,11 +324,11 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         </div>
       </div>
 
-      {/* Chọn loại */}
+      {/* Chọn loại 2 */}
       {selectedColor && (
         <div className="animate-fade-in-up delay-300">
-          <h3 className="font-bold text-lg mb-3 text-gray-900 flex items-center gap-2">
-            <span>💾</span> Dung lượng / Phiên bản
+          <h3 className="font-bold text-lg mb-3 text-gray-900">
+            Loại 2
           </h3>
           <div className="flex gap-3 flex-wrap">
             {availableStorages.map((s) => {
@@ -366,7 +362,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       {/* Số lượng */}
       <div className="animate-fade-in-up delay-400">
         <h3 className="font-bold text-lg mb-3 text-gray-900 flex items-center gap-2">
-          <span>🔢</span> Số lượng
+          <Hash size={20} className="text-gray-700" />
+          <span>Số lượng</span>
         </h3>
         <div className="flex items-center gap-3">
           <button
@@ -411,10 +408,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="animate-spin">⏳</span> Đang thêm...
+              <Loader2 className="animate-spin" size={18} /> Đang thêm...
             </span>
           ) : (
-            "🛒 Thêm vào giỏ"
+            <span className="flex items-center justify-center gap-2">
+              <ShoppingCart size={18} />
+              <span>Thêm vào giỏ</span>
+            </span>
           )}
         </button>
         <button 
@@ -424,18 +424,24 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="animate-spin">⏳</span> Đang xử lý...
+              <Loader2 className="animate-spin" size={18} /> Đang xử lý...
             </span>
           ) : (
-            "⚡ Mua ngay"
+            <span className="flex items-center justify-center gap-2">
+              <Zap size={18} />
+              <span>Mua ngay</span>
+            </span>
           )}
         </button>
       </div>
 
       {/* Người bán */}
       <div className="text-sm text-gray-600 bg-gray-50 p-4 rounded-xl border border-gray-200 animate-fade-in-up delay-600">
-        <span className="font-semibold text-gray-700">🏪 Người bán:</span>{" "}
-        <span className="font-bold text-blue-600">{product.store?.name || "Không rõ"}</span>
+        <div className="flex items-center gap-2">
+          <Store size={16} className="text-gray-700" />
+          <span className="font-semibold text-gray-700">Người bán:</span>{" "}
+          <span className="font-bold text-blue-600">{product.store?.name || "Không rõ"}</span>
+        </div>
       </div>
     </div>
   );

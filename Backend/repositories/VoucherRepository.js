@@ -50,9 +50,10 @@ class VoucherRepository {
 
   // Tìm vouchers theo query
   async findByQuery(query, populate = false) {
+    // ✅ Không dùng lean() để giữ nguyên Mongoose document, đảm bảo usersUsed được load đúng
     let dbQuery = Voucher.find(query);
     if (populate) {
-      query = query.populate("store", "name category");
+      dbQuery = dbQuery.populate("store", "name category");
     }
     return await dbQuery;
   }

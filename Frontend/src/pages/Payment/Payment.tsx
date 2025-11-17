@@ -12,6 +12,8 @@ import cartApi from "../../api/cartApi";
 import addressApi from "../../api/addressApi";
 import type { AddressType } from "../../api/addressApi";
 import type { AvailableVoucher } from "../../api/voucherApi";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const CheckoutPage: React.FC = () => {
   const [shippingFee, setShippingFee] = useState<number>(30000);
@@ -81,8 +83,12 @@ const CheckoutPage: React.FC = () => {
             setCartSubtotal(subtotal);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("❌ Lỗi load checkout items:", err);
+        toast.error(
+          "Không thể tải thông tin đơn hàng. Vui lòng thử lại sau.",
+          { containerId: "general-toast" }
+        );
       }
     };
 

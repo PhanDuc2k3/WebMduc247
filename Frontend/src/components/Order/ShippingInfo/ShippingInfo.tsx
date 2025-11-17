@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Truck, MapPin, Phone, User, Building2, FileText, Clock, Share2, Loader2, Check, Package, ShoppingBag, BarChart, AlertTriangle, XCircle } from "lucide-react";
+import { Truck, MapPin, Phone, User, Building2, FileText, Clock, Share2, Loader2, AlertTriangle, XCircle } from "lucide-react";
 import messageApi from "../../../api/messageApi";
 import axiosClient from "../../../api/axiosClient";
 import { toast } from "react-toastify";
@@ -57,7 +57,6 @@ export default function ShippingInfo({
   order,
   storeName,
 }: ShippingInfoProps) {
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isSharing, setIsSharing] = useState(false);
   const navigate = useNavigate();
 
@@ -73,6 +72,7 @@ export default function ShippingInfo({
   }
 
   const deliveryDate = new Date(estimatedDeliveryTime);
+
 
   // Format thông tin order thành message text
   const formatOrderMessage = (order: Order): string => {
@@ -174,10 +174,7 @@ export default function ShippingInfo({
       const msgRes = await axiosClient.get(`/api/messages/${conversationId}`);
       const initialMessages = msgRes.data || [];
 
-      // Đóng modal
-      setShowConfirmModal(false);
-
-      // Navigate đến trang message
+      // Navigate đến trang message (room chat)
       navigate(`/messages/${conversationId}`, {
         state: {
           chatUser: {
@@ -261,65 +258,26 @@ export default function ShippingInfo({
 
           {ownerId && order && (
             <button
-              onClick={() => setShowConfirmModal(true)}
-              className="w-full py-2.5 sm:py-3 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-lg sm:rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 mt-3 sm:mt-4 text-xs sm:text-sm flex items-center justify-center gap-2"
+              onClick={handleShareOrder}
+              disabled={isSharing}
+              className="w-full py-2.5 sm:py-3 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-lg sm:rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 mt-3 sm:mt-4 text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
-              Chia sẻ đơn hàng
+              {isSharing ? (
+                <>
+                  <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
+                  Đang chia sẻ...
+                </>
+              ) : (
+                <>
+                  <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                  Chia sẻ đơn hàng
+                </>
+              )}
             </button>
           )}
         </div>
       </div>
 
-      {/* Modal xác nhận chia sẻ */}
-      {showConfirmModal && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 p-0 sm:p-4"
-          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
-          onClick={() => !isSharing && setShowConfirmModal(false)}
-        >
-          <div
-            className="bg-white rounded-none sm:rounded-2xl shadow-xl border-2 border-gray-200 p-4 sm:p-6 max-w-md w-full h-full sm:h-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2">
-              <Share2 className="w-5 h-5 sm:w-6 sm:h-6" />
-              Chia sẻ đơn hàng
-            </h3>
-            <p className="text-gray-700 mb-4 sm:mb-6 text-sm sm:text-base">
-              Bạn muốn chia sẻ đơn hàng này cho chủ cửa hàng{" "}
-              <span className="font-bold">{storeName || "cửa hàng"}</span>? Thông tin đơn hàng sẽ
-              được gửi qua tin nhắn.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                disabled={isSharing}
-                className="flex-1 px-4 py-2.5 sm:py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg sm:rounded-xl hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={handleShareOrder}
-                disabled={isSharing}
-                className="flex-1 px-4 py-2.5 sm:py-2 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-lg sm:rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm sm:text-base"
-              >
-                {isSharing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
-                    Đang chia sẻ...
-                  </>
-                ) : (
-                  <>
-                    <Check className="w-4 h-4 sm:w-5 sm:h-5" />
-                    Đồng ý
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

@@ -202,10 +202,8 @@ const handleCheckout = async () => {
 
     if (!itemsForOrder.length) {
       toast.error(
-        <div className="flex items-center gap-2">
-          <XCircle className="text-red-500" size={18} />
-          <span>Không có sản phẩm nào để thanh toán</span>
-        </div>
+        "Không có sản phẩm nào để thanh toán",
+        { containerId: "general-toast" }
       );
       return;
     }
@@ -244,22 +242,17 @@ const orderPayload: CreateOrderData = {
         
         if (walletBalance < estimatedTotal) {
           toast.warning(
-            <div className="flex items-center gap-2">
-              <Wallet className="text-yellow-500" size={18} />
-              <span>Số dư ví không đủ! Số dư hiện tại: {walletBalance.toLocaleString('vi-VN')}₫. Vui lòng nạp thêm tiền vào ví.</span>
-            </div>
+            `Số dư ví không đủ! Số dư hiện tại: ${walletBalance.toLocaleString('vi-VN')}₫. Vui lòng nạp thêm tiền vào ví.`,
+            { containerId: "general-toast" }
           );
           navigate('/wallet');
           return; // Dừng lại, không tạo đơn hàng
         }
       } catch (err: any) {
         console.error("=== Lỗi kiểm tra số dư ví ===", err);
-        const errorMessage = err.response?.data?.message || err.message || "Không thể kiểm tra số dư ví";
         toast.error(
-          <div className="flex items-center gap-2">
-            <XCircle className="text-red-500" size={18} />
-            <span>{errorMessage}</span>
-          </div>
+          "Không thể kiểm tra số dư ví. Vui lòng thử lại sau.",
+          { containerId: "general-toast" }
         );
         return; // Dừng lại, không tạo đơn hàng
       }
@@ -300,12 +293,9 @@ const orderPayload: CreateOrderData = {
         return;
       } catch (err: any) {
         console.error("=== Lỗi tạo thanh toán MoMo ===", err);
-        const errorMessage = err.response?.data?.message || err.message || "Không thể tạo thanh toán MoMo";
         toast.error(
-          <div className="flex items-center gap-2">
-            <XCircle className="text-red-500" size={18} />
-            <span>{errorMessage}</span>
-          </div>
+          "Không thể tạo thanh toán MoMo. Vui lòng thử lại sau.",
+          { containerId: "general-toast" }
         );
         // Không xóa checkoutItems, giữ lại để người dùng có thể thử lại
         return; // Dừng lại, không điều hướng
@@ -345,12 +335,9 @@ const orderPayload: CreateOrderData = {
         return;
       } catch (err: any) {
         console.error("=== Lỗi tạo thanh toán VietQR ===", err);
-        const errorMessage = err.response?.data?.message || err.message || "Không thể tạo thanh toán VietQR";
         toast.error(
-          <div className="flex items-center gap-2">
-            <XCircle className="text-red-500" size={18} />
-            <span>{errorMessage}</span>
-          </div>
+          "Không thể tạo thanh toán VietQR. Vui lòng thử lại sau.",
+          { containerId: "general-toast" }
         );
         // Không xóa checkoutItems, giữ lại để người dùng có thể thử lại
         return; // Dừng lại, không điều hướng
@@ -373,21 +360,16 @@ const orderPayload: CreateOrderData = {
         localStorage.removeItem("checkoutItems");
         
         toast.success(
-          <div className="flex items-center gap-2">
-            <CheckCircle className="text-green-500" size={18} />
-            <span>Thanh toán thành công!</span>
-          </div>
+          "Thanh toán thành công!",
+          { containerId: "general-toast" }
         );
         navigate(`/order/${orderData.order._id}`);
         return;
       } catch (err: any) {
         console.error("=== Lỗi thanh toán bằng ví ===", err);
-        const errorMessage = err.response?.data?.message || err.message || "Không thể thanh toán bằng ví";
         toast.error(
-          <div className="flex items-center gap-2">
-            <XCircle className="text-red-500" size={18} />
-            <span>{errorMessage}</span>
-          </div>
+          "Không thể thanh toán bằng ví. Vui lòng thử lại sau.",
+          { containerId: "general-toast" }
         );
         // Không xóa checkoutItems, giữ lại để người dùng có thể thử lại
         return; // Dừng lại, không điều hướng
@@ -398,20 +380,12 @@ const orderPayload: CreateOrderData = {
     localStorage.removeItem("checkoutItems");
     
     toast.success(
-      <div className="flex items-center gap-2">
-        <CheckCircle className="text-green-500" size={18} />
-        <span>Tạo đơn hàng thành công!</span>
-      </div>
+      "Tạo đơn hàng thành công!",
+      { containerId: "general-toast" }
     );
     navigate(`/order/${orderData.order._id}`);
   } catch (err) {
     console.error("=== Lỗi handleCheckout ===", err);
-    toast.error(
-      <div className="flex items-center gap-2">
-        <XCircle className="text-red-500" size={18} />
-        <span>{err instanceof Error ? err.message : "Có lỗi xảy ra khi thanh toán"}</span>
-      </div>
-    );
   }
 };
 

@@ -54,10 +54,8 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
     } catch (error: any) {
       console.error("Lỗi lấy danh sách voucher:", error);
       toast.error(
-        <div className="flex items-center gap-2">
-          <XCircle className="text-red-500" size={18} />
-          <span>{error.response?.data?.message || "Lỗi khi tải danh sách voucher"}</span>
-        </div>
+        "Không thể tải danh sách voucher. Vui lòng thử lại sau.",
+        { containerId: "general-toast" }
       );
     } finally {
       setLoading(false);

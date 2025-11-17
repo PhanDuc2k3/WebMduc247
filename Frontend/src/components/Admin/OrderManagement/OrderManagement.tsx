@@ -219,7 +219,7 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
 
       {/* Total Orders Count */}
       <div className="mb-4 md:mb-6 animate-fade-in-up">
-        <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+        <div className="bg-blue-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số đơn hàng</p>
@@ -253,7 +253,7 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
           <div className="hidden md:block bg-white rounded-lg md:rounded-2xl shadow-xl border-2 border-gray-100 overflow-hidden animate-fade-in-up">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gradient-to-r from-gray-50 to-blue-50 border-b-2 border-gray-200">
+                <thead className="bg-gray-100 border-b-2 border-gray-200">
                   <tr>
                     <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Mã đơn</th>
                     <th className="px-4 md:px-6 py-3 md:py-4 text-left text-xs font-bold text-gray-700 uppercase">Khách hàng</th>
@@ -267,7 +267,7 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
                   {paginatedOrders.map((order) => (
                   <tr
                     key={order._id}
-                    className="hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 transition-all duration-300"
+                    className="hover:bg-gray-50 transition-all duration-300"
                   >
                     <td className="px-4 md:px-6 py-3 md:py-4 whitespace-nowrap">
                       <span className="text-sm md:text-base font-bold text-gray-900">{order.orderCode || order._id.slice(-8)}</span>
@@ -542,7 +542,7 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
                 </button>
                 <button
                   type="submit"
-                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg md:rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-blue-600 hover:bg-blue-700 text-white rounded-lg md:rounded-xl font-bold transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
                 >
                   <Edit size={16} className="md:w-[18px] md:h-[18px]" />
                   Lưu thay đổi

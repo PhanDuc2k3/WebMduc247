@@ -22,14 +22,29 @@ class VoucherService {
 
   // Kiểm tra user đã dùng voucher chưa
   checkUserUsed(voucher, userId) {
-    if (!userId || !voucher.usersUsed || voucher.usersUsed.length === 0) {
+    if (!userId) {
       return false;
     }
+    
+    // Nếu không có usersUsed hoặc mảng rỗng, user chưa dùng
+    if (!voucher.usersUsed || !Array.isArray(voucher.usersUsed) || voucher.usersUsed.length === 0) {
+      return false;
+    }
+    
     const userIdString = userId.toString();
-    const usersUsedStrings = voucher.usersUsed.map(u => {
-      return u && u.toString ? u.toString() : String(u);
+    
+    // Kiểm tra cả ObjectId và String
+    const userUsed = voucher.usersUsed.some(u => {
+      if (!u) return false;
+      // Nếu là ObjectId
+      if (u && u.toString) {
+        return u.toString() === userIdString;
+      }
+      // Nếu là String
+      return String(u) === userIdString;
     });
-    return usersUsedStrings.includes(userIdString);
+    
+    return userUsed;
   }
 
   // Làm sạch voucher data
@@ -427,8 +442,32 @@ class VoucherService {
     
     const vouchers = await voucherRepository.findByQuery(voucherQuery, true);
 
+    console.log(`📊 Tìm thấy ${vouchers.length} voucher từ query`);
+    console.log(`👤 User ID: ${userId || 'NULL (chưa đăng nhập)'}`);
+
     const availableVouchers = vouchers
       .map(voucher => {
+        // ✅ Kiểm tra user đã dùng voucher chưa - ưu tiên check trước
+        if (userId) {
+          console.log(`🔍 Kiểm tra voucher ${voucher.code}:`);
+          console.log(`   - usersUsed:`, JSON.stringify(voucher.usersUsed));
+          console.log(`   - usersUsed length:`, voucher.usersUsed?.length || 0);
+          console.log(`   - usersUsed type:`, Array.isArray(voucher.usersUsed) ? 'Array' : typeof voucher.usersUsed);
+          
+          const userUsed = this.checkUserUsed(voucher, userId);
+          console.log(`   - User đã dùng: ${userUsed}`);
+          
+          if (userUsed) {
+            // Voucher đã được user này sử dụng, ẩn đi
+            console.log(`🚫 Voucher ${voucher.code} đã được user ${userId} sử dụng, ẩn khỏi danh sách`);
+            return null;
+          } else {
+            console.log(`✅ Voucher ${voucher.code} chưa được user ${userId} sử dụng, hiển thị`);
+          }
+        } else {
+          console.log(`⚠️ Không có userId, hiển thị tất cả voucher`);
+        }
+
         if (subtotalToUse < Number(voucher.minOrderValue)) {
           return null;
         }
@@ -450,13 +489,6 @@ class VoucherService {
               }
             }
           } else {
-            return null;
-          }
-        }
-
-        if (userId) {
-          const userUsed = this.checkUserUsed(voucher, userId);
-          if (userUsed) {
             return null;
           }
         }
@@ -524,10 +556,10 @@ class VoucherService {
           usagePercent: voucher.usedCount && voucher.usageLimit 
             ? Math.round((voucher.usedCount / voucher.usageLimit) * 100) 
             : 0,
-          used: userId ? this.checkUserUsed(voucher, userId) : false,
+          used: false, // Vì đã filter ra rồi nên không cần check lại
         };
       })
-      .filter(v => v !== null)
+      .filter(v => v !== null) // ✅ Loại bỏ các voucher đã dùng (đã return null ở trên)
       .sort((a, b) => {
         if (a.voucherType !== b.voucherType) {
           return a.voucherType === "product" ? -1 : 1;

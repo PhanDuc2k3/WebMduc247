@@ -14,11 +14,12 @@ const {
 } = require("../controllers/VoucherController");
 
 const auth = require("../middlewares/authMiddleware");
+const optionalAuth = require("../middlewares/optionalAuthMiddleware");
 
 // Tạm thời bỏ auth để ai cũng có thể truy cập
 router.get("/", getAvailableVouchers);
 router.get("/all", getAllVouchers); // Endpoint lấy tất cả voucher (tạm thời không cần auth)
-router.post("/checkout", getAvailableVouchersForCheckout);
+router.post("/checkout", optionalAuth, getAvailableVouchersForCheckout); // ✅ Dùng optionalAuth để lấy userId nếu có token
 router.post("/preview", previewVoucher);
 router.post("/apply", applyVoucher);
 

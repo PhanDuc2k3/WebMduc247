@@ -39,7 +39,7 @@ const Pagination: React.FC<PaginationProps> = ({
           className={`px-3 py-2 rounded-lg border-2 transition-all duration-300 flex items-center gap-1 ${
             currentPage === 1
               ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-              : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-purple-500'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-slate-500'
           }`}
         >
           <ChevronLeft size={18} />
@@ -65,8 +65,8 @@ const Pagination: React.FC<PaginationProps> = ({
                 onClick={() => onPageChange(pageNum)}
                 className={`px-3 py-2 rounded-lg border-2 transition-all duration-300 font-bold min-w-[40px] ${
                   currentPage === pageNum
-                    ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white border-transparent shadow-lg'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-purple-500'
+                    ? 'bg-slate-600 text-white border-transparent shadow-lg'
+                    : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-slate-500'
                 }`}
               >
                 {pageNum}
@@ -81,7 +81,7 @@ const Pagination: React.FC<PaginationProps> = ({
           className={`px-3 py-2 rounded-lg border-2 transition-all duration-300 flex items-center gap-1 ${
             currentPage === totalPages
               ? 'border-gray-200 text-gray-300 cursor-not-allowed'
-              : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-purple-500'
+              : 'border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-slate-500'
           }`}
         >
           <span className="hidden sm:inline">Sau</span>

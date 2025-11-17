@@ -125,7 +125,7 @@ const BannerManagement: React.FC = () => {
 
       {/* Total Banners Count */}
       <div className="mb-4 sm:mb-6 animate-fade-in-up">
-        <div className="bg-gradient-to-r from-pink-500 to-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
+        <div className="bg-purple-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white text-xs md:text-sm font-medium mb-1">Tổng số banner</p>
@@ -142,15 +142,15 @@ const BannerManagement: React.FC = () => {
         {allBanners.map((b, idx) => (
           <div 
             key={b._id} 
-            className="bg-gradient-to-br from-white to-gray-50 rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden animate-fade-in-up hover:shadow-2xl transition-all duration-300"
+            className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden animate-fade-in-up hover:shadow-2xl transition-all duration-300"
             style={{ animationDelay: `${idx * 0.1}s` }}
           >
             <div className="p-4 sm:p-5 md:p-6">
               <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
                 <span className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-xs sm:text-sm flex items-center gap-1.5 sm:gap-2 ${
                   b.type === "main" 
-                    ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg" 
-                    : "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg"
+                    ? "bg-blue-500 text-white shadow-lg" 
+                    : "bg-green-500 text-white shadow-lg"
                 }`}>
                   {b.type === "main" ? (
                     <>
@@ -213,7 +213,7 @@ const BannerManagement: React.FC = () => {
 
                 {/* Actions */}
                 <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-3 pt-2">
-                  <label className="cursor-pointer bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold sm:font-bold text-xs sm:text-sm shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
+                  <label className="cursor-pointer bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold sm:font-bold text-xs sm:text-sm shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2">
                     <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span>Chọn ảnh</span>
                     <input
@@ -225,7 +225,7 @@ const BannerManagement: React.FC = () => {
                   </label>
                   
                   <button 
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold sm:font-bold text-xs sm:text-sm shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2" 
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold sm:font-bold text-xs sm:text-sm shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2" 
                     onClick={() => handleSave(b)}
                   >
                     <Save className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -233,7 +233,7 @@ const BannerManagement: React.FC = () => {
                   </button>
                   
                   <button 
-                    className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold sm:font-bold text-xs sm:text-sm shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2" 
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold sm:font-bold text-xs sm:text-sm shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2" 
                     onClick={() => handleDeleteImage(b._id)}
                   >
                     <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
