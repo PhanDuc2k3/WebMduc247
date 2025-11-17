@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import orderApi from '../../../api/orderApi';
-import { Edit, Trash2, Search, Eye, User, Mail, Phone, ShoppingBag, Loader2 } from 'lucide-react';
+import { Search, Eye, User, Mail, Phone, ShoppingBag, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Pagination from '../Pagination';
 import { toast } from 'react-toastify';
@@ -63,12 +63,6 @@ const OrderManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
-  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    status: '',
-    note: '',
-  });
 
 const fetchOrders = useCallback(async (showLoading = true) => {
   try {
@@ -110,48 +104,6 @@ const fetchOrders = useCallback(async (showLoading = true) => {
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
-  const handleDelete = async (orderId: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa đơn hàng này? Việc này không thể hoàn tác!')) return;
-    
-    try {
-      await orderApi.deleteOrder(orderId);
-      toast.success('Đã xóa đơn hàng thành công!');
-      fetchOrders();
-    } catch (error: any) {
-      console.error('Error deleting order:', error);
-      toast.error(error?.response?.data?.message || 'Lỗi khi xóa đơn hàng');
-    }
-  };
-
-  const handleEdit = (order: Order) => {
-    setEditingOrder(order);
-    setFormData({
-      status: order.status,
-      note: '',
-    });
-    setShowForm(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!editingOrder) return;
-
-    try {
-      await orderApi.updateOrderStatus(editingOrder._id, { status: formData.status });
-      if (formData.note) {
-        await orderApi.updateOrder(editingOrder._id, { note: formData.note });
-      }
-      toast.success('Đã cập nhật đơn hàng thành công!');
-      setShowForm(false);
-      setEditingOrder(null);
-      setFormData({ status: '', note: '' });
-      fetchOrders();
-    } catch (error: any) {
-      console.error('Error updating order:', error);
-      toast.error(error?.response?.data?.message || 'Lỗi khi cập nhật đơn hàng');
-    }
-  };
 
   // Sắp xếp và lọc orders
   const filteredAndSortedOrders = useMemo(() => {
@@ -331,20 +283,6 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
                         >
                           <Eye size={16} className="md:w-[18px] md:h-[18px]" />
                         </button>
-                        <button
-                          onClick={() => handleEdit(order)}
-                          className="p-1.5 md:p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                          title="Chỉnh sửa"
-                        >
-                          <Edit size={16} className="md:w-[18px] md:h-[18px]" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(order._id)}
-                          className="p-1.5 md:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Xóa"
-                        >
-                          <Trash2 size={16} className="md:w-[18px] md:h-[18px]" />
-                        </button>
                       </div>
                     </td>
                   </tr>
@@ -432,20 +370,6 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
                     <Eye size={14} />
                     Xem
                   </button>
-                  <button
-                    onClick={() => handleEdit(order)}
-                    className="px-3 py-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
-                  >
-                    <Edit size={14} />
-                    Sửa
-                  </button>
-                  <button
-                    onClick={() => handleDelete(order._id)}
-                    className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
-                  >
-                    <Trash2 size={14} />
-                    Xóa
-                  </button>
                 </div>
               </div>
             ))}
@@ -469,89 +393,6 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
         </div>
       )}
 
-      {/* Edit Form Modal */}
-      {showForm && editingOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 md:p-4">
-          <div className="bg-white rounded-lg md:rounded-2xl shadow-2xl max-w-lg w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto">
-            <div className="p-4 md:p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-              <h3 className="text-base md:text-xl font-bold gradient-text flex items-center gap-2">
-                <Edit size={20} className="md:w-6 md:h-6 text-purple-600" />
-                <span className="text-sm md:text-xl">Sửa đơn hàng</span>
-              </h3>
-              <button
-                onClick={() => {
-                  setShowForm(false);
-                  setEditingOrder(null);
-                }}
-                className="text-gray-500 hover:text-gray-700 text-xl md:text-2xl font-bold"
-              >
-                ×
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-4 md:p-6 space-y-4 md:space-y-6">
-              <div>
-                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Mã đơn hàng</label>
-                <input
-                  type="text"
-                  value={editingOrder.orderCode || editingOrder._id.slice(-8)}
-                  disabled
-                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl bg-gray-50 font-medium"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Trạng thái *</label>
-                <select
-                  required
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-                >
-                  <option value="pending">Chờ xử lý</option>
-                  <option value="confirmed">Đã xác nhận</option>
-                  <option value="packed">Đã đóng gói</option>
-                  <option value="shipping">Đang giao hàng</option>
-                  <option value="delivered">Đã giao hàng</option>
-                  <option value="received">Đã nhận hàng</option>
-                  <option value="completed">Hoàn thành</option>
-                  <option value="cancelled">Đã hủy</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Ghi chú</label>
-                <textarea
-                  rows={3}
-                  value={formData.note}
-                  onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-                />
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-2 md:gap-4 justify-end pt-3 md:pt-4 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingOrder(null);
-                  }}
-                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 text-gray-700 rounded-lg md:rounded-xl font-bold hover:bg-gray-50 transition-all duration-300"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="w-full sm:w-auto px-4 md:px-6 py-2 md:py-3 text-sm md:text-base bg-blue-600 hover:bg-blue-700 text-white rounded-lg md:rounded-xl font-bold transition-all duration-300 shadow-lg flex items-center justify-center gap-2"
-                >
-                  <Edit size={16} className="md:w-[18px] md:h-[18px]" />
-                  Lưu thay đổi
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

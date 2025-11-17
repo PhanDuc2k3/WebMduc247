@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import storeApi from '../../../api/storeApi';
-import { Edit, Search, Eye, Store as StoreIcon, Loader2, User, Tag, Calendar, Lock, Unlock } from 'lucide-react';
+import { Search, Store as StoreIcon, Loader2, User, Tag, Calendar, Lock, Unlock } from 'lucide-react';
 import Pagination from '../Pagination';
 import { toast } from 'react-toastify';
 
@@ -42,17 +42,6 @@ const StoreManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
-  const [showForm, setShowForm] = useState(false);
-  const [editingStore, setEditingStore] = useState<Store | null>(null);
-  const [formData, setFormData] = useState<{
-    name: string;
-    description: string;
-    category: 'electronics' | 'fashion' | 'home' | 'books' | 'other' | '';
-  }>({
-    name: '',
-    description: '',
-    category: '',
-  });
 
   useEffect(() => {
     fetchStores();
@@ -137,49 +126,6 @@ const StoreManagement: React.FC = () => {
     );
   };
 
-  const handleEdit = (store: Store) => {
-    setEditingStore(store);
-    setFormData({
-      name: store.name,
-      description: store.description,
-      category: (store.category || '') as 'electronics' | 'fashion' | 'home' | 'books' | 'other' | '',
-    });
-    setShowForm(true);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      if (editingStore) {
-        const updateData: any = {
-          name: formData.name,
-          description: formData.description,
-        };
-        if (formData.category) {
-          updateData.category = formData.category;
-        }
-        await storeApi.updateStoreById(editingStore._id, updateData);
-        toast.success('Đã cập nhật cửa hàng thành công!');
-      } else {
-        const formDataObj = new FormData();
-        formDataObj.append('name', formData.name);
-        formDataObj.append('description', formData.description);
-        if (formData.category) {
-          formDataObj.append('category', formData.category);
-        }
-        await storeApi.createStore(formDataObj);
-        toast.success('Đã tạo cửa hàng thành công!');
-      }
-      setShowForm(false);
-      setEditingStore(null);
-      setFormData({ name: '', description: '', category: '' });
-      fetchStores();
-    } catch (error: any) {
-      console.error('Error saving store:', error);
-      toast.error(error?.response?.data?.message || 'Lỗi khi lưu cửa hàng');
-    }
-  };
 
   // Sắp xếp và lọc stores
   const filteredAndSortedStores = useMemo(() => {
@@ -313,12 +259,6 @@ const StoreManagement: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleEdit(store)}
-                        className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
-                      >
-                        <Edit size={16} /> Sửa
-                      </button>
-                      <button
                         onClick={() => handleToggleStatus(store)}
                         className={`${store.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1`}
                         title={store.isActive ? 'Khóa cửa hàng' : 'Mở khóa cửa hàng'}
@@ -397,12 +337,6 @@ const StoreManagement: React.FC = () => {
                 {/* Actions */}
                 <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
                   <button
-                    onClick={() => handleEdit(store)}
-                    className="text-blue-600 hover:text-blue-900 hover:bg-blue-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
-                  >
-                    <Edit size={16} /> Sửa
-                  </button>
-                  <button
                     onClick={() => handleToggleStatus(store)}
                     className={`${store.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm`}
                     title={store.isActive ? 'Khóa cửa hàng' : 'Mở khóa cửa hàng'}
@@ -434,92 +368,6 @@ const StoreManagement: React.FC = () => {
         </div>
       )}
 
-      {/* Form Modal (Optimized for Mobile) */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[98vh] overflow-y-auto animate-scale-in">
-            <div className="p-4 sm:p-6 border-b-2 border-gray-200 sticky top-0 bg-white z-10">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xl sm:text-2xl font-bold gradient-text flex items-center gap-2">
-                  <Edit size={24} className="text-purple-600" />
-                  {editingStore ? 'Sửa cửa hàng' : 'Thêm cửa hàng mới'}
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingStore(null);
-                  }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl font-bold p-1"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Tên cửa hàng *</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Mô tả *</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Danh mục</label>
-                <select
-                  value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value as "electronics" | "fashion" | "home" | "books" | "other" | '' })
-                  }
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-                >
-                  <option value="">-- Chọn danh mục --</option>
-                  <option value="electronics">Điện tử</option>
-                  <option value="fashion">Thời trang</option>
-                  <option value="home">Đồ gia dụng</option>
-                  <option value="books">Sách</option>
-                  <option value="other">Khác</option>
-                </select>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-blue-700 transform hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2"
-                >
-                  <Edit size={18} />
-                  {editingStore ? 'Lưu thay đổi' : 'Tạo cửa hàng'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForm(false);
-                    setEditingStore(null);
-                  }}
-                  className="flex-1 bg-gray-500 text-white py-3 rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-gray-600 transform hover:scale-105 transition-all duration-300"
-                >
-                  Hủy
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
