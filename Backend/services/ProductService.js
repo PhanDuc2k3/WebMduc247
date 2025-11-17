@@ -83,7 +83,12 @@ class ProductService {
     const { category, search, sortBy, limit = 10, page = 1 } = query;
     const filter = { isActive: true };
 
-    if (category) filter.category = category;
+    if (category) {
+      // Filter theo category (case-insensitive, trim, escape special regex chars)
+      const escapedCategory = category.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const categoryRegex = new RegExp(`^${escapedCategory}$`, 'i');
+      filter.category = categoryRegex;
+    }
 
     const skip = (page - 1) * limit;
 
@@ -306,6 +311,24 @@ class ProductService {
     return counts.map(c => ({
       category: c._id || "Khác",
       count: c.count,
+    }));
+  }
+
+  // Tìm kiếm sản phẩm
+  async searchProducts(keyword, limit = 10) {
+    if (!keyword || !keyword.trim()) {
+      return [];
+    }
+
+    const products = await productRepository.searchProducts(keyword.trim(), limit);
+    
+    // Format lại dữ liệu để đảm bảo consistency
+    return products.map((product) => ({
+      ...product,
+      rating: product.rating || 0,
+      reviewsCount: product.reviewsCount || 0,
+      soldCount: product.soldCount || 0,
+      images: product.images || [],
     }));
   }
 }

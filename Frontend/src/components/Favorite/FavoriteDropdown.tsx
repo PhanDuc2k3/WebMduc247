@@ -208,7 +208,7 @@ const FavoriteDropdown: React.FC<FavoriteDropdownProps> = ({ isOpen, onClose }) 
                 Chưa có cửa hàng yêu thích
               </p>
               <Link
-                to="/stores"
+                to="/store"
                 onClick={onClose}
                 className="inline-block mt-2 text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-semibold"
               >

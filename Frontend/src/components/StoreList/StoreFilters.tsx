@@ -54,10 +54,14 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
   }, [rating, region, category, onFilterChange]);
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 p-3 md:p-4 lg:p-6 rounded-xl md:rounded-2xl shadow-lg border border-gray-200 relative">
+    <div className="bg-gradient-to-br from-white to-gray-50 p-3 md:p-4 lg:p-6 rounded-xl md:rounded-2xl shadow-lg border border-gray-200">
       <div className="flex flex-col sm:flex-row flex-wrap gap-2 md:gap-3 lg:gap-4">
         {/* Bộ lọc đánh giá */}
-        <div className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-[250px]" ref={ratingRef} style={{ zIndex: ratingOpen ? 10000 : 'auto' }}>
+        <div 
+          ref={ratingRef} 
+          className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-[250px]"
+          style={{ zIndex: ratingOpen ? 101 : 50 }}
+        >
           <button
             onClick={() => {
               setRatingOpen(!ratingOpen);
@@ -75,7 +79,10 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
             />
           </button>
           {ratingOpen && (
-            <div className="absolute z-[9999] mt-2 w-full bg-white border-2 border-gray-200 rounded-lg md:rounded-xl shadow-xl overflow-hidden animate-fade-in">
+            <div 
+              className="absolute top-full left-0 right-0 mt-2 w-full bg-white border-2 border-gray-200 rounded-lg md:rounded-xl shadow-2xl overflow-hidden"
+              style={{ zIndex: 101 }}
+            >
               {ratingOptions.map((opt) => (
                 <div
                   key={opt}
@@ -93,7 +100,11 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
         </div>
 
         {/* Bộ lọc khu vực */}
-        <div className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-[250px]" ref={regionRef} style={{ zIndex: regionOpen ? 10000 : 'auto' }}>
+        <div 
+          ref={regionRef} 
+          className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-[250px]"
+          style={{ zIndex: regionOpen ? 101 : 50 }}
+        >
           <button
             onClick={() => {
               setRegionOpen(!regionOpen);
@@ -111,7 +122,10 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
             />
           </button>
           {regionOpen && (
-            <div className="absolute z-[9999] mt-2 w-full bg-white border-2 border-gray-200 rounded-lg md:rounded-xl shadow-xl overflow-hidden animate-fade-in max-h-48 md:max-h-60 overflow-y-auto custom-scrollbar">
+            <div 
+              className="absolute top-full left-0 right-0 mt-2 w-full bg-white border-2 border-gray-200 rounded-lg md:rounded-xl shadow-2xl overflow-hidden max-h-48 md:max-h-60 overflow-y-auto custom-scrollbar"
+              style={{ zIndex: 101 }}
+            >
               {regionOptions.map((opt) => (
                 <div
                   key={opt}
@@ -129,7 +143,11 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
         </div>
 
         {/* Bộ lọc ngành hàng */}
-        <div className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-[250px]" ref={categoryRef} style={{ zIndex: categoryOpen ? 10000 : 'auto' }}>
+        <div 
+          ref={categoryRef} 
+          className="relative flex-1 min-w-0 sm:min-w-[200px] sm:max-w-[250px]"
+          style={{ zIndex: categoryOpen ? 101 : 50 }}
+        >
           <button
             onClick={() => {
               setCategoryOpen(!categoryOpen);
@@ -147,7 +165,10 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
             />
           </button>
           {categoryOpen && (
-            <div className="absolute z-[9999] mt-2 w-full bg-white border-2 border-gray-200 rounded-lg md:rounded-xl shadow-xl overflow-hidden animate-fade-in max-h-48 md:max-h-60 overflow-y-auto custom-scrollbar">
+            <div 
+              className="absolute top-full left-0 right-0 mt-2 w-full bg-white border-2 border-gray-200 rounded-lg md:rounded-xl shadow-2xl overflow-hidden max-h-48 md:max-h-60 overflow-y-auto custom-scrollbar"
+              style={{ zIndex: 101 }}
+            >
               {categoryOptions.map((opt) => (
                 <div
                   key={opt}

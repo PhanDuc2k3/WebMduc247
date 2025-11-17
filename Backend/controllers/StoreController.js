@@ -201,3 +201,18 @@ exports.getProductsByCategory = async (req, res) => {
     res.status(statusCode).json({ message: err.message || "Server error" });
   }
 };
+
+// Tìm kiếm stores
+exports.searchStores = async (req, res) => {
+  try {
+    const { keyword, limit = 10 } = req.query;
+    if (!keyword || !keyword.trim()) {
+      return res.status(200).json({ stores: [] });
+    }
+    const stores = await storeService.searchStores(keyword, parseInt(limit));
+    res.status(200).json({ stores });
+  } catch (err) {
+    console.error("Search stores error:", err);
+    res.status(500).json({ message: err.message || "Lỗi khi tìm kiếm cửa hàng" });
+  }
+};

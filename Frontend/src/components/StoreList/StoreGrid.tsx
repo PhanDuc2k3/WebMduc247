@@ -15,7 +15,7 @@ const StoreGrid: React.FC<Props> = ({ stores, onlineStores = [] }) => {
   }
   
   return (
-    <div className="grid gap-3 md:gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid gap-3 md:gap-4 lg:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" style={{ position: 'relative', zIndex: 1 }}>
       {stores.map((store, index) => (
         <StoreCard
           key={store._id}

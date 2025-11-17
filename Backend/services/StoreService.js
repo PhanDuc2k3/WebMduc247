@@ -308,6 +308,38 @@ class StoreService {
 
     return products;
   }
+
+  // Tìm kiếm stores
+  async searchStores(keyword, limit = 10) {
+    if (!keyword || !keyword.trim()) {
+      return [];
+    }
+
+    const stores = await storeRepository.searchStores(keyword.trim(), limit);
+    
+    // Tính rating cho mỗi store
+    const storesWithRating = await Promise.all(
+      stores.map(async (store) => {
+        const products = await storeRepository.getProductsByStore(store._id);
+        const productIds = products.map(p => p._id);
+        const reviews = await storeRepository.getReviewsByProductIds(productIds);
+        
+        let avgRating = 0;
+        if (reviews.length > 0) {
+          const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+          avgRating = totalRating / reviews.length;
+        }
+        
+        return {
+          ...store,
+          rating: Math.round(avgRating * 10) / 10,
+          productsCount: products.length
+        };
+      })
+    );
+    
+    return storesWithRating;
+  }
 }
 
 module.exports = new StoreService();

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Store, AlertCircle, Download } from "lucide-react";
+import { Store, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import StoreFilters from "../../components/StoreList/StoreFilters";
 import StoreGrid from "../../components/StoreList/StoreGrid";
 import StoreLoading from "../../components/StoreList/StoreLoading";
@@ -8,8 +8,12 @@ import type { StoreType } from "../../types/store";
 import storeApi from "../../api/storeApi"; // dùng API đã tách
 import { useChat } from "../../context/chatContext";
 
+const ITEMS_PER_PAGE = 9;
+
 const StoreList: React.FC = () => {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchKeyword = searchParams.get("search");
+  const pageParam = searchParams.get("page");
   const [stores, setStores] = useState<StoreType[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -17,23 +21,45 @@ const StoreList: React.FC = () => {
     region: "Tất cả khu vực",
     category: "Tất cả ngành hàng",
   });
+  const [currentPage, setCurrentPage] = useState(1);
   const { onlineStores } = useChat();
+
+  // Khởi tạo currentPage từ URL params
+  useEffect(() => {
+    const page = parseInt(pageParam || "1", 10);
+    if (page > 0) {
+      setCurrentPage(page);
+    } else {
+      setCurrentPage(1);
+    }
+  }, [pageParam]);
+
+  // Reset về trang 1 khi search keyword thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("page");
+    setSearchParams(newParams, { replace: true });
+  }, [searchKeyword]);
 
   useEffect(() => {
     const fetchStores = async () => {
       try {
-        const res = await storeApi.getAllActiveStores();
-        const data = res.data; // axios trả về data trong res.data
-
-        // Debug: Log raw data từ API
-        console.log("[StoreList] Raw API stores:", data.stores);
-        if (data.stores && data.stores.length > 0) {
-          console.log("[StoreList] First store from API:", data.stores[0]);
-          console.log("[StoreList] First store createdAt:", data.stores[0].createdAt);
-        }
+        setLoading(true);
+        let data;
         
+        // Nếu có search keyword, tìm kiếm stores
+        if (searchKeyword && searchKeyword.trim()) {
+          const res = await storeApi.searchStores(searchKeyword.trim(), 100);
+          data = { stores: res.data.stores || [] };
+        } else {
+          // Nếu không có search, lấy tất cả stores
+          const res = await storeApi.getAllActiveStores();
+          data = res.data;
+        }
+
         // Giống hệt FeaturedStores để đảm bảo consistency
-        const mappedStores: StoreType[] = data.stores.map((s: any) => {
+        const mappedStores: StoreType[] = (data.stores || []).map((s: any) => {
           // Đảm bảo createdAt được truyền đúng format - giống FeaturedStores
           const createdAtValue = s.createdAt || s.created_at || s.created;
           
@@ -67,7 +93,7 @@ const StoreList: React.FC = () => {
     };
 
     fetchStores();
-  }, []);
+  }, [searchKeyword]);
 
   if (loading) return <StoreLoading />;
 
@@ -138,21 +164,58 @@ const StoreList: React.FC = () => {
     }
   });
 
+  // Tính toán phân trang
+  const totalPages = Math.ceil(filteredStores.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedStores = filteredStores.slice(startIndex, endIndex);
+
+  // Reset về trang 1 nếu currentPage vượt quá totalPages (khi filter thay đổi)
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(1);
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("page");
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [totalPages, currentPage, searchParams, setSearchParams]);
+
+  // Xử lý chuyển trang
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    
+    setCurrentPage(newPage);
+    const newParams = new URLSearchParams(searchParams);
+    if (newPage === 1) {
+      newParams.delete("page");
+    } else {
+      newParams.set("page", newPage.toString());
+    }
+    setSearchParams(newParams);
+    
+    // Scroll to top khi chuyển trang
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="w-full p-3 md:p-4 lg:p-6 xl:p-8">
       {/* Header */}
       <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
         <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
           <Store className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
-          <span>Danh sách cửa hàng</span>
+          <span>
+            {searchKeyword ? `Kết quả tìm kiếm: "${searchKeyword}"` : "Danh sách cửa hàng"}
+          </span>
         </h1>
         <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-          Khám phá các cửa hàng uy tín trên nền tảng
+          {searchKeyword 
+            ? `Tìm thấy ${filteredStores.length} cửa hàng phù hợp`
+            : "Khám phá các cửa hàng uy tín trên nền tảng"}
         </p>
       </div>
 
       {/* Filter Section - ở trên */}
-      <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-up delay-200">
+      <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-up delay-200" style={{ position: 'relative', zIndex: 50 }}>
         <StoreFilters onFilterChange={setFilters} />
       </div>
 
@@ -166,9 +229,93 @@ const StoreList: React.FC = () => {
           </div>
         )}
 
-        <div className="animate-fade-in-up delay-300">
+        <div className="animate-fade-in-up delay-300" style={{ position: 'relative', zIndex: 1 }}>
           {filteredStores.length > 0 ? (
-            <StoreGrid stores={filteredStores} onlineStores={onlineStores} />
+            <>
+              <StoreGrid stores={paginatedStores} onlineStores={onlineStores} />
+              
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in-up delay-400">
+                  <div className="text-gray-600 text-sm md:text-base">
+                    Hiển thị <span className="font-bold text-blue-600">{startIndex + 1}</span> -{" "}
+                    <span className="font-bold text-blue-600">
+                      {Math.min(endIndex, filteredStores.length)}
+                    </span>{" "}
+                    trong tổng số <span className="font-bold text-blue-600">{filteredStores.length}</span> cửa hàng
+                  </div>
+                  
+                  <div className="flex items-center gap-2 md:gap-4">
+                    <span className="text-gray-700 text-xs md:text-sm">
+                      Trang <span className="text-blue-600 font-bold">{currentPage}</span> /{" "}
+                      <span className="text-gray-600">{totalPages}</span>
+                    </span>
+                    
+                    <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className={`px-3 py-2 md:px-4 md:py-2.5 border-r border-gray-200 transition-colors ${
+                          currentPage === 1
+                            ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                        }`}
+                        aria-label="Trang trước"
+                      >
+                        <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
+                      </button>
+                      
+                      {/* Page numbers */}
+                      <div className="flex items-center gap-1 px-2">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                          .filter((page) => {
+                            // Hiển thị trang đầu, cuối, trang hiện tại và các trang xung quanh
+                            return (
+                              page === 1 ||
+                              page === totalPages ||
+                              (page >= currentPage - 1 && page <= currentPage + 1)
+                            );
+                          })
+                          .map((page, index, array) => {
+                            // Thêm dấu ... nếu có khoảng trống
+                            const showEllipsis = index > 0 && array[index] - array[index - 1] > 1;
+                            return (
+                              <React.Fragment key={page}>
+                                {showEllipsis && (
+                                  <span className="px-2 text-gray-400">...</span>
+                                )}
+                                <button
+                                  onClick={() => handlePageChange(page)}
+                                  className={`px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-medium transition-colors ${
+                                    currentPage === page
+                                      ? "bg-blue-600 text-white"
+                                      : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                                  }`}
+                                >
+                                  {page}
+                                </button>
+                              </React.Fragment>
+                            );
+                          })}
+                      </div>
+                      
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages}
+                        className={`px-3 py-2 md:px-4 md:py-2.5 border-l border-gray-200 transition-colors ${
+                          currentPage === totalPages
+                            ? "text-gray-300 cursor-not-allowed bg-gray-50"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                        }`}
+                        aria-label="Trang sau"
+                      >
+                        <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="text-center py-8 md:py-12 lg:py-16 animate-fade-in">
               <div className="flex justify-center mb-3 md:mb-4">
@@ -183,15 +330,6 @@ const StoreList: React.FC = () => {
             </div>
           )}
         </div>
-
-        {filteredStores.length > 0 && (
-          <div className="mt-6 md:mt-8 text-center animate-fade-in-up delay-400">
-            <button className="px-4 sm:px-6 py-2.5 md:px-8 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold text-sm md:text-base hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 touch-manipulation flex items-center gap-2 mx-auto">
-              <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Tải thêm cửa hàng</span>
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );

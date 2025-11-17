@@ -73,6 +73,10 @@ const storeApi = {
     axiosClient.delete(`/api/stores/${storeId}/categories/${categoryId}/products/${productId}`),
   getProductsByCategory: (storeId: string, categoryId: string) =>
   axiosClient.get(`/api/stores/${storeId}/categories/${categoryId}/products`),
+
+  // Tìm kiếm stores
+  searchStores: (keyword: string, limit: number = 10) =>
+    axiosClient.get(`/api/stores/search?keyword=${encodeURIComponent(keyword)}&limit=${limit}`),
 };
 
 export default storeApi;

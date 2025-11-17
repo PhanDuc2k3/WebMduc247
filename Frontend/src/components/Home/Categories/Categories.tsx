@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Smartphone,
   Book,        
@@ -35,6 +36,7 @@ const baseCategories = [
 ];
 
 const Categories: React.FC = () => {
+  const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState(baseCategories);
 
@@ -97,6 +99,7 @@ const Categories: React.FC = () => {
             return (
               <div
                 key={idx}
+                onClick={() => navigate(`/products?category=${encodeURIComponent(cat.key)}`)}
                 className={`flex flex-col items-center justify-center text-center rounded-xl sm:rounded-2xl
                             shadow-md hover:shadow-xl transition-all duration-300
                             p-3 sm:p-4 md:p-6 min-w-[100px] sm:min-w-[120px] md:min-w-[150px] cursor-pointer transform hover:-translate-y-2

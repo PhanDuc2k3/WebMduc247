@@ -101,7 +101,7 @@ const FeaturedStores: React.FC = () => {
 
       {/* 👇 Chuyển hướng đến trang /store */}
       <div
-        onClick={() => navigate("/stores")}
+        onClick={() => navigate("/store")}
         className="text-center mt-6 sm:mt-8 cursor-pointer"
       >
         <span className="inline-block font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all duration-300 transform hover:scale-105 text-sm sm:text-base md:text-lg">

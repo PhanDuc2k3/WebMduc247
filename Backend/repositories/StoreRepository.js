@@ -46,6 +46,22 @@ class StoreRepository {
   async getReviewsByProductIds(productIds) {
     return await Review.find({ productId: { $in: productIds } });
   }
+
+  // Tìm kiếm stores theo keyword
+  async searchStores(keyword, limit = 10) {
+    const searchRegex = new RegExp(keyword, 'i');
+    return await Store.find({
+      isActive: true,
+      $or: [
+        { name: searchRegex },
+        { description: searchRegex },
+        { category: searchRegex }
+      ]
+    })
+    .limit(limit)
+    .select('name description logoUrl category _id')
+    .lean();
+  }
 }
 
 module.exports = new StoreRepository();

@@ -16,7 +16,8 @@ const {
   addProductsToCategory,      // ✅ mới
   removeProductFromCategory,  // ✅ 
   getCategories,
-  getProductsByCategory
+  getProductsByCategory,
+  searchStores
 } = require('../controllers/StoreController');
 
 const { upload } = require('../middlewares/upload'); // dùng giống product
@@ -69,6 +70,7 @@ router.patch('/deactivate', auth, authorize('seller', 'admin'), deactivateStore)
 // ========================
 router.get('/owner', auth, getStoreByOwner);
 router.get('/me', auth, getMyStore);
+router.get('/search', searchStores);
 router.get('/', getAllActiveStores);
 router.get('/:id', getStoreById);
 router.get('/:id/categories', auth, getCategories);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Filter, X, Package } from "lucide-react";
 import ProductLoading from "../../components/ProductList/ProductLoading";
 import ProductCard from "../../components/Home/FeaturedProducts/ProductCard";
 import PriceFilter from "../../components/ProductList/PriceFilter";
@@ -68,18 +68,74 @@ const ProductList: React.FC = () => {
     return [...new Set(variants)]; // Remove duplicates
   };
 
-  // Đọc search term từ URL query
+  // Đọc search term và category từ URL query
+  const [selectedCategory, setSelectedCategory] = useState<string>("");
+
   useEffect(() => {
     const search = searchParams.get("search");
+    const category = searchParams.get("category");
+    
     if (search) {
       setSearchTerm(search);
+    } else {
+      setSearchTerm("");
     }
+    
+    if (category) {
+      setSelectedCategory(category);
+    } else {
+      setSelectedCategory("");
+    }
+    
+    // Reset về trang 1 khi search hoặc category thay đổi
+    setCurrentPage(1);
   }, [searchParams]);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await productApi.getProducts();
+        setLoading(true);
+        // Nếu có search keyword, tìm kiếm sản phẩm
+        let res;
+        if (searchTerm && searchTerm.trim()) {
+          res = await productApi.searchProducts(searchTerm.trim(), 100);
+          const products = res.data.products || [];
+          const mapped: ProductType[] = products.map((p: any) => ({
+            _id: p._id,
+            name: p.name,
+            description: p.description,
+            price: p.price,
+            salePrice: p.salePrice,
+            brand: p.brand,
+            category: p.category,
+            subCategory: p.subCategory,
+            quantity: p.quantity,
+            soldCount: p.soldCount,
+            model: p.model,
+            images: p.images || [],
+            specifications: p.specifications || [],
+            rating: p.rating || 0,
+            reviewsCount: p.reviewsCount || 0,
+            viewsCount: p.viewsCount || 0,
+            isActive: p.isActive ?? true,
+            store: p.store || null,
+            tags: p.tags || [],
+            keywords: p.keywords || [],
+            createdAt: p.createdAt,
+            updatedAt: p.updatedAt,
+          }));
+          setProducts(mapped);
+          setLoading(false);
+          return;
+        }
+        
+        // Nếu có category, filter theo category
+        const params: any = {};
+        if (selectedCategory && selectedCategory.trim()) {
+          params.category = selectedCategory.trim();
+        }
+        
+        res = await productApi.getProducts(params);
         const list = res.data.data || res.data.products || [];
 
         const mapped: ProductType[] = list.map((p: any) => ({
@@ -125,7 +181,7 @@ const ProductList: React.FC = () => {
     };
 
     fetchProducts();
-  }, []);
+  }, [searchTerm, selectedCategory]);
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
@@ -147,6 +203,18 @@ const ProductList: React.FC = () => {
   // 🔎 Lọc và sắp xếp sản phẩm
   let filteredProducts = products
     .filter((p) => {
+      // Filter theo category nếu có
+      if (selectedCategory && selectedCategory.trim()) {
+        const productCategory = (p.category || "").toLowerCase().trim();
+        const selectedCat = selectedCategory.toLowerCase().trim();
+        // So sánh category (case-insensitive)
+        if (productCategory !== selectedCat) {
+          return false;
+        }
+      }
+      return true;
+    })
+    .filter((p) => {
       if (!selectedPrice) return true;
 
       const range = selectedPrice.split("-");
@@ -162,7 +230,6 @@ const ProductList: React.FC = () => {
 
       return true;
     })
-    .filter((p) => !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()))
     .filter((p) => {
       // Filter theo rating
       if (ratingFilter) {
@@ -232,11 +299,22 @@ const ProductList: React.FC = () => {
     <div className="w-full p-3 md:p-4 lg:p-6">
       {/* Header */}
       <div className="pb-4 md:pb-6 animate-fade-in-down">
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold pb-2 md:pb-3 text-gray-900">
-          🛍️ Danh sách sản phẩm
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold pb-2 md:pb-3 text-gray-900 flex items-center gap-2">
+          <Package className="w-6 h-6 md:w-7 md:h-7 text-blue-600" />
+          <span>
+            {searchTerm 
+              ? `Kết quả tìm kiếm: "${searchTerm}"`
+              : selectedCategory
+              ? `Danh mục: ${selectedCategory}`
+              : "Danh sách sản phẩm"}
+          </span>
         </h1>
         <p className="text-gray-600 text-sm md:text-base lg:text-lg">
-          Khám phá các sản phẩm nổi bật được nhiều người yêu thích
+          {searchTerm 
+            ? `Tìm thấy ${filteredProducts.length} sản phẩm phù hợp`
+            : selectedCategory
+            ? `Tìm thấy ${filteredProducts.length} sản phẩm trong danh mục ${selectedCategory}`
+            : "Khám phá các sản phẩm nổi bật được nhiều người yêu thích"}
         </p>
       </div>
 

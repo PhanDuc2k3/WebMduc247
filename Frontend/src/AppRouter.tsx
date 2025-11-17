@@ -41,11 +41,11 @@ const AppRouter = () => (
       <Route path="/cart" element={<Cart />} />
       <Route path="/voucher" element={<VoucherPage />} />
       <Route path="/store/:id" element={<StorePage />} />
+      <Route path="/store" element={<StoreList />} />
       <Route path="/checkout" element={<Checkout />} />
       <Route path="/order/:orderId" element={<OrderPage />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/payment-qr" element={<PaymentQR />} />
-      <Route path="/stores" element={<StoreList />} />
       <Route path="/messages/:id?" element={<Message />} />
       <Route path="/message" element={<Navigate to="/messages" replace />} />
 

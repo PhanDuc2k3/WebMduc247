@@ -76,22 +76,20 @@ const Login: React.FC = () => {
         });
       }
     } catch (err: any) {
-      // Kiểm tra nếu tài khoản chưa được xác thực
+      // Interceptor đã tự động hiển thị toast cho các lỗi
+      // Chỉ cần xử lý logic điều hướng nếu cần
       if (err.response?.status === 403 && err.response?.data?.needsVerification) {
         const userEmail = err.response?.data?.email || email;
-        toast.error(err.response?.data?.message || "Tài khoản chưa được xác thực", {
-          autoClose: 3000,
-          onClose: () => {
-            // Chuyển đến trang xác thực email
+        // Interceptor đã hiển thị toast và điều hướng, nhưng nếu cần điều hướng riêng:
+        setTimeout(() => {
+          if (window.location.pathname !== "/verify-email") {
             navigate("/verify-email", { 
               state: { email: userEmail } 
             });
-          },
-        });
-      } else {
-        const message = err.response?.data?.message || "Đăng nhập thất bại, vui lòng thử lại";
-        toast.error(message);
+          }
+        }, 1000);
       }
+      // Các lỗi khác đã được interceptor xử lý tự động
     } finally {
       setLoading(false);
     }
@@ -108,8 +106,8 @@ const Login: React.FC = () => {
         setForgotPasswordStep("code");
       }
     } catch (err: any) {
-      const message = err.response?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.";
-      toast.error(message);
+      // Interceptor đã tự động hiển thị toast cho các lỗi
+      // Không cần hiển thị lại toast ở đây
     } finally {
       setForgotLoading(false);
     }
@@ -125,8 +123,8 @@ const Login: React.FC = () => {
         setForgotPasswordStep("password");
       }
     } catch (err: any) {
-      const message = err.response?.data?.message || "Mã xác thực không đúng hoặc đã hết hạn.";
-      toast.error(message);
+      // Interceptor đã tự động hiển thị toast cho các lỗi
+      // Không cần hiển thị lại toast ở đây
     } finally {
       setForgotLoading(false);
     }
@@ -162,8 +160,8 @@ const Login: React.FC = () => {
         setConfirmPassword("");
       }
     } catch (err: any) {
-      const message = err.response?.data?.message || "Có lỗi xảy ra. Vui lòng thử lại.";
-      toast.error(message);
+      // Interceptor đã tự động hiển thị toast cho các lỗi
+      // Không cần hiển thị lại toast ở đây
     } finally {
       setForgotLoading(false);
     }

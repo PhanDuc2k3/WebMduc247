@@ -19,7 +19,19 @@ createRoot(document.getElementById("root")!).render(
         <ChatProvider>
           <CartProvider>
             <App />
-            <ToastContainer position="top-right" autoClose={2000} />
+            <ToastContainer 
+              position="top-right" 
+              autoClose={3000}
+              hideProgressBar={false}
+              newestOnTop={true}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="light"
+              style={{ top: '20px', right: '20px' }}
+            />
           </CartProvider>
         </ChatProvider>
       </UserProvider>

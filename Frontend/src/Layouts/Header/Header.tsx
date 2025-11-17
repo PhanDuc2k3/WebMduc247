@@ -22,6 +22,8 @@ import DropdownUser from "./DropdownUser";
 import { HeaderIcons } from "./HeaderIcons";
 import { useCart } from "../../context/CartContext";
 import { useChat } from "../../context/chatContext";
+import storeApi from "../../api/storeApi";
+import productApi from "../../api/productApi";
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -34,11 +36,16 @@ const Header: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState<"product" | "store">("product");
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [totalSearchResults, setTotalSearchResults] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
   const searchDropdownRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const navLinks = [
     { to: "/", label: "Trang chủ", icon: Home },
-    { to: "/stores", label: "Cửa hàng", icon: Store },
+    { to: "/store", label: "Cửa hàng", icon: Store },
     { to: "/products", label: "Sản phẩm", icon: Package },
     { to: "/new", label: "Khuyến mãi", icon: Tag },
     { to: "/support", label: "Hỗ trợ", icon: Headset },
@@ -49,11 +56,57 @@ const Header: React.FC = () => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchDropdownRef.current && !searchDropdownRef.current.contains(e.target as Node)) {
         setShowSearchDropdown(false);
+        setShowSearchResults(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Tìm kiếm real-time cho stores và products
+  useEffect(() => {
+    if (searchTerm.trim().length >= 2) {
+      // Clear timeout trước đó
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      // Debounce search
+      searchTimeoutRef.current = setTimeout(async () => {
+        setIsSearching(true);
+        try {
+          if (searchType === "store") {
+            const res = await storeApi.searchStores(searchTerm.trim(), 10); // Lấy 10 để biết có nhiều hơn 5 không
+            const stores = res.data.stores || [];
+            setTotalSearchResults(stores.length);
+            setSearchResults(stores.slice(0, 5)); // Chỉ hiển thị 5 kết quả đầu
+            setShowSearchResults(true);
+          } else if (searchType === "product") {
+            const res = await productApi.searchProducts(searchTerm.trim(), 10); // Lấy 10 để biết có nhiều hơn 5 không
+            const products = res.data.products || [];
+            setTotalSearchResults(products.length);
+            setSearchResults(products.slice(0, 5)); // Chỉ hiển thị 5 kết quả đầu
+            setShowSearchResults(true);
+          }
+        } catch (error) {
+          console.error("Search error:", error);
+          setSearchResults([]);
+          setTotalSearchResults(0);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300);
+    } else {
+      setShowSearchResults(false);
+      setSearchResults([]);
+    }
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchTerm, searchType]);
 
   // Đóng các menu khi thay đổi route
   useEffect(() => {
@@ -74,11 +127,28 @@ const Header: React.FC = () => {
     e.preventDefault();
     if (searchTerm.trim()) {
       if (searchType === "store") {
-        navigate(`/stores?search=${encodeURIComponent(searchTerm.trim())}`);
+        navigate(`/store?search=${encodeURIComponent(searchTerm.trim())}`);
       } else {
         navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
       }
       setSearchTerm("");
+      setShowSearchResults(false);
+    }
+  };
+
+  // Xử lý click vào kết quả tìm kiếm
+  const handleStoreClick = (storeId: string) => {
+    navigate(`/store/${storeId}`);
+    setSearchTerm("");
+    setShowSearchResults(false);
+  };
+
+  // Xử lý xem thêm kết quả
+  const handleViewMore = () => {
+    if (searchTerm.trim()) {
+      navigate(`/store?search=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm("");
+      setShowSearchResults(false);
     }
   };
 
@@ -88,7 +158,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl shadow-xl border-b-2 border-gray-200">
+    <header className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl shadow-xl border-b-2 border-gray-200">
       {/* Top bar */}
       <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white hidden md:block">
         <div className="flex justify-between items-center px-4 sm:px-8 py-2 text-xs font-semibold">
@@ -153,7 +223,7 @@ const Header: React.FC = () => {
                 <div
                   className="absolute left-0 top-[calc(100%+4px)] w-36 sm:w-40 
                              bg-white border border-gray-200 rounded-xl shadow-xl 
-                             overflow-hidden animate-fade-in z-[9999]"
+                             overflow-hidden animate-fade-in z-[10000]"
                 >
                   <button
                     type="button"
@@ -193,11 +263,61 @@ const Header: React.FC = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => {
+                  if (searchType === "store" && searchResults.length > 0) {
+                    setShowSearchResults(true);
+                  }
+                }}
                 placeholder={searchType === "product" ? "Tìm sản phẩm..." : "Tìm cửa hàng..."}
                 className="w-full pl-[42px] sm:pl-[50px] pr-8 sm:pr-10 py-1.5 sm:py-2 text-[11px] sm:text-xs border-2 border-gray-300 rounded-md sm:rounded-lg 
                            shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400 
                            transition-all duration-200 bg-white/90 backdrop-blur-sm placeholder-gray-400"
               />
+
+              {/* Kết quả tìm kiếm - Mobile */}
+              {showSearchResults && searchType === "store" && (
+                <div className="absolute left-0 top-[calc(100%+4px)] w-full bg-white border border-gray-200 rounded-xl shadow-xl max-h-80 overflow-y-auto z-[10000]">
+                  {isSearching ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">Đang tìm kiếm...</div>
+                  ) : searchResults.length > 0 ? (
+                    <>
+                      {searchResults.map((store) => (
+                        <button
+                          key={store._id}
+                          onClick={() => handleStoreClick(store._id)}
+                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                        >
+                          {store.logoUrl ? (
+                            <img src={store.logoUrl} alt={store.name} className="w-10 h-10 rounded-lg object-cover" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                              <Store size={20} className="text-white" />
+                            </div>
+                          )}
+                          <div className="flex-1 text-left">
+                            <div className="font-semibold text-sm text-gray-900">{store.name}</div>
+                            <div className="text-xs text-gray-500 line-clamp-1">{store.description}</div>
+                            {store.rating > 0 && (
+                              <div className="text-xs text-yellow-500 mt-1">⭐ {store.rating.toFixed(1)}</div>
+                            )}
+                          </div>
+                          <ChevronRight size={16} className="text-gray-400" />
+                        </button>
+                      ))}
+                      {totalSearchResults > 5 && (
+                        <button
+                          onClick={handleViewMore}
+                          className="w-full px-4 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors border-t border-gray-200"
+                        >
+                          Xem thêm {totalSearchResults - 5} kết quả
+                        </button>
+                      )}
+                    </>
+                  ) : searchTerm.trim().length >= 2 ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">Không tìm thấy cửa hàng</div>
+                  ) : null}
+                </div>
+              )}
 
               {/* Nút search - Mobile Compact */}
               <button
@@ -249,7 +369,7 @@ const Header: React.FC = () => {
                 <div
                   className="absolute left-0 top-[calc(100%+6px)] w-44 
                              bg-white border border-gray-200 rounded-xl shadow-xl 
-                             overflow-hidden animate-fade-in z-[9999]"
+                             overflow-hidden animate-fade-in z-[10000]"
                 >
                   <button
                     type="button"
@@ -289,11 +409,104 @@ const Header: React.FC = () => {
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => {
+                  if (searchResults.length > 0) {
+                    setShowSearchResults(true);
+                  }
+                }}
                 placeholder={searchType === "product" ? "Tìm kiếm sản phẩm..." : "Tìm kiếm cửa hàng..."}
                 className="w-full pl-[130px] pr-12 py-2.5 text-sm border-2 border-gray-300 rounded-xl 
                            shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400 
                            transition-all duration-200 bg-white/90 backdrop-blur-sm placeholder-gray-400"
               />
+
+              {/* Kết quả tìm kiếm - Desktop */}
+              {showSearchResults && (
+                <div className="absolute left-0 top-[calc(100%+6px)] w-full bg-white border border-gray-200 rounded-xl shadow-xl max-h-96 overflow-y-auto z-[10000]">
+                  {isSearching ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">Đang tìm kiếm...</div>
+                  ) : searchResults.length > 0 ? (
+                    <>
+                      <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50 border-b">
+                        Kết quả tìm kiếm ({totalSearchResults > 5 ? `5/${totalSearchResults}` : searchResults.length})
+                      </div>
+                      {searchResults.map((item) => (
+                        <button
+                          key={item._id}
+                          onClick={() => searchType === "store" ? handleStoreClick(item._id) : handleProductClick(item._id)}
+                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
+                        >
+                          {searchType === "store" ? (
+                            <>
+                              {item.logoUrl ? (
+                                <img src={item.logoUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                                  <Store size={24} className="text-white" />
+                                </div>
+                              )}
+                              <div className="flex-1 text-left">
+                                <div className="font-semibold text-sm text-gray-900">{item.name}</div>
+                                <div className="text-xs text-gray-500 line-clamp-1 mt-1">{item.description}</div>
+                                <div className="flex items-center gap-3 mt-1">
+                                  {item.rating > 0 && (
+                                    <div className="text-xs text-yellow-500">⭐ {item.rating.toFixed(1)}</div>
+                                  )}
+                                  {item.productsCount > 0 && (
+                                    <div className="text-xs text-gray-400">{item.productsCount} sản phẩm</div>
+                                  )}
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              {item.images && item.images.length > 0 ? (
+                                <img src={item.images[0]} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                                  <Package size={24} className="text-white" />
+                                </div>
+                              )}
+                              <div className="flex-1 text-left">
+                                <div className="font-semibold text-sm text-gray-900">{item.name}</div>
+                                <div className="text-xs text-gray-500 line-clamp-1 mt-1">{item.brand || item.category}</div>
+                                <div className="flex items-center gap-3 mt-1">
+                                  <div className="text-xs font-semibold text-blue-600">
+                                    {item.salePrice ? (
+                                      <>
+                                        <span className="line-through text-gray-400 mr-2">{item.price?.toLocaleString()}đ</span>
+                                        <span>{item.salePrice?.toLocaleString()}đ</span>
+                                      </>
+                                    ) : (
+                                      <span>{item.price?.toLocaleString()}đ</span>
+                                    )}
+                                  </div>
+                                  {item.rating > 0 && (
+                                    <div className="text-xs text-yellow-500">⭐ {item.rating.toFixed(1)}</div>
+                                  )}
+                                </div>
+                              </div>
+                            </>
+                          )}
+                          <ChevronRight size={18} className="text-gray-400" />
+                        </button>
+                      ))}
+                      {totalSearchResults > 5 && (
+                        <button
+                          onClick={handleViewMore}
+                          className="w-full px-4 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors border-t border-gray-200"
+                        >
+                          Xem thêm {totalSearchResults - 5} kết quả
+                        </button>
+                      )}
+                    </>
+                  ) : searchTerm.trim().length >= 2 ? (
+                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                      Không tìm thấy {searchType === "store" ? "cửa hàng" : "sản phẩm"}
+                    </div>
+                  ) : null}
+                </div>
+              )}
 
               {/* Nút search */}
               <button

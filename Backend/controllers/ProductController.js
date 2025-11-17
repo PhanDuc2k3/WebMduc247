@@ -40,6 +40,21 @@ exports.getProductById = async (req, res) => {
   }
 };
 
+// Tìm kiếm sản phẩm
+exports.searchProducts = async (req, res) => {
+  try {
+    const { keyword, limit = 10 } = req.query;
+    if (!keyword || !keyword.trim()) {
+      return res.status(200).json({ products: [] });
+    }
+    const products = await productService.searchProducts(keyword, parseInt(limit));
+    res.status(200).json({ products });
+  } catch (err) {
+    console.error("Search products error:", err);
+    res.status(500).json({ message: err.message || "Lỗi khi tìm kiếm sản phẩm" });
+  }
+};
+
 // Increase product view
 exports.increaseView = async (req, res) => {
   try {

@@ -244,7 +244,7 @@ const Whitelist: React.FC = () => {
                 Khám phá và theo dõi các cửa hàng bạn yêu thích
               </p>
               <Link
-                to="/stores"
+                to="/store"
                 className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 🏪 Xem cửa hàng

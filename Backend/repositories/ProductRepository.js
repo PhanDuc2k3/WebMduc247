@@ -102,6 +102,26 @@ class ProductRepository {
   async aggregateViewLogs(pipeline) {
     return await ViewLog.aggregate(pipeline);
   }
+
+  // Tìm kiếm sản phẩm theo keyword
+  async searchProducts(keyword, limit = 10) {
+    const searchRegex = new RegExp(keyword, 'i');
+    return await Product.find({
+      isActive: true,
+      $or: [
+        { name: searchRegex },
+        { description: searchRegex },
+        { brand: searchRegex },
+        { category: searchRegex },
+        { tags: { $in: [searchRegex] } },
+        { keywords: { $in: [searchRegex] } }
+      ]
+    })
+    .populate('store', 'name logoUrl')
+    .limit(limit)
+    .select('name description price salePrice brand category images rating reviewsCount soldCount store _id')
+    .lean();
+  }
 }
 
 module.exports = new ProductRepository();

@@ -46,6 +46,10 @@ const productApi = {
   // 🧮 Lấy số lượng sản phẩm theo danh mục
   getProductCountByCategory: () =>
     axiosClient.get("/api/products/count-by-category"),
+
+  // 🔍 Tìm kiếm sản phẩm
+  searchProducts: (keyword: string, limit: number = 10) =>
+    axiosClient.get(`/api/products/search?keyword=${encodeURIComponent(keyword)}&limit=${limit}`),
 };
 
 export default productApi;
