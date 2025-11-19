@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package, Star, Eye, ShoppingBag, Calendar, CheckCircle } from "lucide-react";
+import { Package, Star, Eye, ShoppingBag, Calendar, CheckCircle, RotateCcw, XCircle } from "lucide-react";
 import reviewApi from "../../../api/apiReview";
 import orderApi from "../../../api/orderApi";
 import { toast } from "react-toastify";
@@ -19,12 +19,20 @@ interface StatusHistory {
   timestamp: string;
 }
 
+interface ReturnRequest {
+  requestedAt?: string | Date;
+  reason?: string;
+  status?: string;
+  processedAt?: string | Date;
+}
+
 interface Order {
   _id: string;
   date: string;
   statusHistory: StatusHistory[];
   total: string;
   items: OrderItem[];
+  returnRequest?: ReturnRequest;
 }
 
 interface Review {
@@ -63,6 +71,11 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
   
   // Track các productId đã fetch để tránh fetch trùng lặp
   const fetchedProductIdsRef = useRef<Set<string>>(new Set());
+
+  // State cho modal trả lại hàng
+  const [showReturnModal, setShowReturnModal] = useState<string | null>(null);
+  const [returnReason, setReturnReason] = useState("");
+  const [processingReturn, setProcessingReturn] = useState<string | null>(null);
 
   // fetch reviews theo productId
   const fetchReviews = async (productId: string) => {
@@ -131,8 +144,105 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
       delivered: "Đã giao hàng",
       received: "Đã nhận hàng",
       cancelled: "Đã hủy đơn",
+      return_requested: "Đã yêu cầu trả lại",
+      returned: "Đã trả lại",
     };
     return map[latest] || latest;
+  };
+
+  // Kiểm tra xem có thể yêu cầu trả lại không
+  const canRequestReturn = (order: Order) => {
+    const currentStatus = order.statusHistory && order.statusHistory.length > 0
+      ? order.statusHistory[order.statusHistory.length - 1]?.status
+      : null;
+
+    // Chỉ cho phép khi đã nhận hàng và chưa có yêu cầu trả lại
+    if (currentStatus !== "received") return false;
+    if (order.returnRequest && order.returnRequest.status) return false;
+
+    // Kiểm tra trong vòng 3 ngày
+    const receivedStatus = order.statusHistory.find(s => s.status === "received");
+    if (!receivedStatus) return false;
+
+    const receivedDate = new Date(receivedStatus.timestamp);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - receivedDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    return daysDiff <= 3;
+  };
+
+  // Kiểm tra xem có thể hủy đơn không
+  const canCancelOrder = (order: Order) => {
+    const currentStatus = order.statusHistory && order.statusHistory.length > 0
+      ? order.statusHistory[order.statusHistory.length - 1]?.status
+      : null;
+    
+    // Chỉ cho phép hủy khi status là pending, confirmed, packed
+    return ["pending", "confirmed", "packed"].includes(currentStatus || "");
+  };
+
+  // Xử lý hủy đơn hàng
+  const handleCancelOrder = async (orderId: string) => {
+    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.")) {
+      return;
+    }
+
+    try {
+      await orderApi.cancelOrder(orderId, "Khách hàng yêu cầu hủy đơn hàng");
+      toast.success(
+        <div className="flex items-center gap-2">
+          <CheckCircle className="text-green-500" size={18} />
+          <span>Đơn hàng đã được hủy thành công!</span>
+        </div>
+      );
+      window.location.reload(); // Reload để cập nhật trạng thái
+    } catch (err: any) {
+      console.error("Lỗi hủy đơn hàng:", err);
+      const errorMessage = err.response?.data?.message 
+        || err.message 
+        || "Lỗi khi hủy đơn hàng!";
+      toast.error(
+        <div className="flex items-center gap-2">
+          <CheckCircle className="text-red-500" size={18} />
+          <span>{errorMessage}</span>
+        </div>
+      );
+    }
+  };
+
+  // Xử lý yêu cầu trả lại hàng
+  const handleRequestReturn = async (orderId: string) => {
+    if (!returnReason.trim()) {
+      toast.error("Vui lòng nhập lý do trả lại hàng");
+      return;
+    }
+
+    setProcessingReturn(orderId);
+    try {
+      await orderApi.requestReturn(orderId, returnReason.trim());
+      toast.success(
+        <div className="flex items-center gap-2">
+          <CheckCircle className="text-green-500" size={18} />
+          <span>Yêu cầu trả lại hàng đã được gửi thành công!</span>
+        </div>
+      );
+      setShowReturnModal(null);
+      setReturnReason("");
+      window.location.reload(); // Reload để cập nhật trạng thái
+    } catch (err: any) {
+      console.error("Lỗi yêu cầu trả lại hàng:", err);
+      const errorMessage = err.response?.data?.message 
+        || err.message 
+        || "Lỗi khi yêu cầu trả lại hàng!";
+      toast.error(
+        <div className="flex items-center gap-2">
+          <CheckCircle className="text-red-500" size={18} />
+          <span>{errorMessage}</span>
+        </div>
+      );
+    } finally {
+      setProcessingReturn(null);
+    }
   };
 
   // LOG logic hiển thị
@@ -230,6 +340,22 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                           <Star size={14} className="md:w-4 md:h-4" /> Đánh giá
                         </button>
                       ))}
+                      {canRequestReturn(order) && (
+                        <button
+                          onClick={() => setShowReturnModal(order._id)}
+                          className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+                        >
+                          <RotateCcw size={14} className="md:w-4 md:h-4" /> Yêu cầu trả lại hàng
+                        </button>
+                      )}
+                      {order.returnRequest && order.returnRequest.status && (
+                        <div className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gray-100 border-2 border-gray-300 rounded-lg md:rounded-xl text-xs md:text-sm font-semibold text-gray-700 text-center">
+                          {order.returnRequest.status === "pending" && "⏳ Đang chờ xử lý"}
+                          {order.returnRequest.status === "approved" && "✅ Đã được phê duyệt"}
+                          {order.returnRequest.status === "rejected" && "❌ Đã bị từ chối"}
+                          {order.returnRequest.status === "completed" && "✅ Đã hoàn tất"}
+                        </div>
+                      )}
                     </>
                   ) : getShippingStatus(order.statusHistory) === "Đã giao hàng" ? (
                     <button
@@ -252,6 +378,21 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                     >
                       <CheckCircle size={14} className="md:w-4 md:h-4" /> Đã nhận hàng
                     </button>
+                  ) : canCancelOrder(order) ? (
+                    <>
+                      <button
+                        onClick={() => handleCancelOrder(order._id)}
+                        className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-red-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+                      >
+                        <XCircle size={14} className="md:w-4 md:h-4" /> Hủy đơn hàng
+                      </button>
+                      <button
+                        onClick={() => navigate(`/order/${order._id}`)}
+                        className="w-full px-3 md:px-4 py-1.5 md:py-2 border-2 border-gray-300 text-gray-700 rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+                      >
+                        <Eye size={14} className="md:w-4 md:h-4" /> Xem chi tiết
+                      </button>
+                    </>
                   ) : (
                     <button
                       onClick={() => navigate(`/order/${order._id}`)}
@@ -277,6 +418,62 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
           </div>
         ))}
       </div>
+
+      {/* Modal yêu cầu trả lại hàng */}
+      {showReturnModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 p-4" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+          <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full p-6 animate-fade-in-up">
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+              Yêu cầu trả lại hàng
+            </h3>
+            <div className="mb-4">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Lý do trả lại hàng <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={returnReason}
+                onChange={(e) => setReturnReason(e.target.value)}
+                placeholder="Vui lòng nhập lý do trả lại hàng (ví dụ: Sản phẩm không đúng mô tả, bị lỗi, không vừa, v.v.)"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 resize-none"
+                rows={4}
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                ⚠️ Bạn chỉ có thể yêu cầu trả lại hàng trong vòng 3 ngày kể từ ngày nhận hàng
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowReturnModal(null);
+                  setReturnReason("");
+                }}
+                disabled={processingReturn === showReturnModal}
+                className="flex-1 px-4 py-2.5 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-colors disabled:opacity-50"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={() => handleRequestReturn(showReturnModal)}
+                disabled={processingReturn === showReturnModal || !returnReason.trim()}
+                className={`flex-1 px-4 py-2.5 text-white font-semibold rounded-lg transition-all ${
+                  processingReturn === showReturnModal || !returnReason.trim()
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                }`}
+              >
+                {processingReturn === showReturnModal ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    Đang gửi...
+                  </span>
+                ) : (
+                  "Gửi yêu cầu"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

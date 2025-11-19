@@ -57,6 +57,22 @@ const orderApi = {
 
   // Buyer xác nhận đã nhận hàng
   confirmDelivery: (orderId: string) => axiosClient.post(`/api/orders/${orderId}/confirm-delivery`),
+
+  // Buyer yêu cầu trả lại hàng
+  requestReturn: (orderId: string, reason: string) => 
+    axiosClient.post(`/api/orders/${orderId}/request-return`, { reason }),
+
+  // Seller xác nhận đã thu hồi sản phẩm
+  confirmReturnReceived: (orderId: string) =>
+    axiosClient.post(`/api/orders/${orderId}/confirm-return-received`),
+
+  // Admin/Seller xử lý yêu cầu trả lại hàng
+  processReturn: (orderId: string, action: "approved" | "rejected", note?: string) =>
+    axiosClient.post(`/api/orders/${orderId}/process-return`, { action, note }),
+
+  // Buyer hủy đơn hàng
+  cancelOrder: (orderId: string, reason?: string) =>
+    axiosClient.post(`/api/orders/${orderId}/cancel`, { reason }),
 };
 
 export default orderApi;

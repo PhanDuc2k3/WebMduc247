@@ -45,6 +45,7 @@ class UserService {
     const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000);
     const hashedPassword = await this.hashPassword(password);
 
+    // Không cho phép đăng ký với role admin
     const newUser = await userRepository.create({
       email,
       password: hashedPassword,
@@ -52,7 +53,8 @@ class UserService {
       phone,
       isVerified: false,
       verificationCode,
-      verificationCodeExpires
+      verificationCodeExpires,
+      role: 'buyer' // Mặc định là buyer, không cho phép đăng ký admin
     });
 
     // Gửi email xác thực
@@ -440,6 +442,17 @@ class UserService {
     const updateData = {};
     
     if (role !== undefined) {
+      // Kiểm tra nếu đang cố gắng set role admin
+      if (role === 'admin') {
+        // Kiểm tra xem đã có admin nào trong hệ thống chưa
+        const existingAdmin = await userRepository.findAll();
+        const adminExists = existingAdmin.some(u => u.role === 'admin' && u._id.toString() !== userId.toString());
+        
+        if (adminExists) {
+          throw new Error('Hệ thống chỉ cho phép 1 tài khoản admin duy nhất. Đã có admin trong hệ thống.');
+        }
+      }
+      
       updateData.role = role;
     }
     

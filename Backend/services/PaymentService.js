@@ -73,6 +73,15 @@ class PaymentService {
       order.paymentInfo.paymentId = transId;
       await order.save();
       
+      // Trừ stock khi thanh toán thành công
+      const orderService = require('./OrderService');
+      try {
+        await orderService.deductStockOnPayment(actualOrderCode);
+      } catch (stockError) {
+        console.error(`[PaymentService] ❌ Lỗi khi trừ stock:`, stockError);
+        // Không rollback vì đã thanh toán rồi, chỉ log lỗi
+      }
+      
       // Chuyển tiền vào ví chủ cửa hàng
       const { transferToStoreWallets } = require("../utils/walletService");
       try {

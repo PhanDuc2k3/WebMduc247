@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Star, Package, FileText, X } from "lucide-react";
+import { Star, Package, FileText, X, XCircle } from "lucide-react";
+import { toast } from "react-toastify";
 import OrderStatus from "../../components/Order/OrderStatus/OrderStatus";
 import OrderProduct from "../../components/Order/OrderProduct/OrderProduct";
 import PaymentInfo from "../../components/Order/PaymentInfo/PaymentInfo";
@@ -8,6 +9,7 @@ import CustomerInfo from "../../components/Order/CustomerInfo/CustomerInfo";
 import ShippingInfo from "../../components/Order/ShippingInfo/ShippingInfo";
 import OrderUpdate from "../../components/Order/OrderUpdate/OrderUpdate";
 import BuyerConfirmDelivery from "../../components/Order/BuyerConfirmDelivery/BuyerConfirmDelivery";
+import ReturnRequest from "../../components/Order/ReturnRequest/ReturnRequest";
 import ProductReview from "../Review/Review";
 import orderApi from "../../api/orderApi";
 import axiosClient from "../../api/axiosClient";
@@ -217,6 +219,55 @@ export default function OrderPage() {
     orderStoreId &&
     String(orderStoreId) === String(myStoreId);
 
+  // Kiểm tra xem có thể hủy đơn không (chỉ khi status là pending, confirmed, packed)
+  const canCancelOrder = !isOwnerSeller && ["pending", "confirmed", "packed"].includes(currentStatus);
+
+  // Xử lý hủy đơn hàng
+  const handleCancelOrder = async () => {
+    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.")) {
+      return;
+    }
+
+    try {
+      await orderApi.cancelOrder(order._id, "Khách hàng yêu cầu hủy đơn hàng");
+      toast.success(
+        <div className="flex items-center gap-2">
+          <XCircle className="text-green-500" size={18} />
+          <span>Đơn hàng đã được hủy thành công!</span>
+        </div>
+      );
+      // Reload order sau khi hủy
+      const res = await orderApi.getOrderById(order._id);
+      const data = res.data;
+      const estimatedDelivery =
+        typeof data.shippingInfo?.estimatedDelivery === "number"
+          ? data.shippingInfo.estimatedDelivery
+          : data.shippingInfo?.estimatedDelivery?.$date?.$numberLong
+          ? parseInt(data.shippingInfo.estimatedDelivery.$date.$numberLong)
+          : Date.now();
+      const mappedOrder: Order = {
+        ...data,
+        shippingInfo: {
+          method: data.shippingInfo?.method || "Chưa xác định",
+          estimatedDelivery,
+          trackingNumber: data.shippingInfo?.trackingNumber || "",
+        },
+      };
+      setOrder(mappedOrder);
+    } catch (err: any) {
+      console.error("Lỗi hủy đơn hàng:", err);
+      const errorMessage = err.response?.data?.message 
+        || err.message 
+        || "Lỗi khi hủy đơn hàng!";
+      toast.error(
+        <div className="flex items-center gap-2">
+          <XCircle className="text-red-500" size={18} />
+          <span>{errorMessage}</span>
+        </div>
+      );
+    }
+  };
+
   // Debug log để kiểm tra
   console.log("🔍 Debug Order Info:", {
     isSeller,
@@ -288,6 +339,26 @@ export default function OrderPage() {
           {isOwnerSeller && (
             <OrderUpdate orderId={order._id} currentStatus={currentStatus} />
           )}
+          {canCancelOrder && (
+            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-red-100 overflow-hidden animate-fade-in-up">
+              <div className="bg-gradient-to-r from-red-50 to-orange-50 p-4 sm:p-6 border-b-2 border-red-200">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                  <XCircle size={20} className="sm:w-6 sm:h-6 text-red-600" />
+                  Hủy đơn hàng
+                </h2>
+                <p className="text-gray-600 text-xs sm:text-sm mt-1">Bạn có thể hủy đơn hàng khi đơn hàng chưa được vận chuyển</p>
+              </div>
+              <div className="p-4 sm:p-6">
+                <button
+                  onClick={handleCancelOrder}
+                  className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+                >
+                  <XCircle size={18} className="sm:w-5 sm:h-5" />
+                  <span>Hủy đơn hàng</span>
+                </button>
+              </div>
+            </div>
+          )}
           {!isOwnerSeller && currentStatus === "delivered" && (
             <BuyerConfirmDelivery orderId={order._id} onConfirm={async () => {
               // Reload order sau khi confirm
@@ -311,46 +382,72 @@ export default function OrderPage() {
             }} />
           )}
           {!isOwnerSeller && currentStatus === "received" && (
-            <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 sm:p-6 border-b-2 border-gray-200">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-                  <Star size={20} className="sm:w-6 sm:h-6 text-purple-600" />
-                  Đánh giá sản phẩm
-                </h2>
-                <p className="text-gray-600 text-xs sm:text-sm mt-1">Bạn đã nhận được hàng. Hãy chia sẻ đánh giá của bạn!</p>
-              </div>
-              <div className="p-4 sm:p-6 space-y-2 sm:space-y-3">
-                {order.items.map((item, idx) => {
-                  // Get productId from item - could be string or object with _id
-                  let actualProductId = '';
-                  if (item.productId) {
-                    if (typeof item.productId === 'string') {
-                      actualProductId = item.productId;
-                    } else if (typeof item.productId === 'object' && item.productId._id) {
-                      actualProductId = item.productId._id;
-                    } else {
-                      actualProductId = String(item.productId);
+            <>
+              <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
+                <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 sm:p-6 border-b-2 border-gray-200">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+                    <Star size={20} className="sm:w-6 sm:h-6 text-purple-600" />
+                    Đánh giá sản phẩm
+                  </h2>
+                  <p className="text-gray-600 text-xs sm:text-sm mt-1">Bạn đã nhận được hàng. Hãy chia sẻ đánh giá của bạn!</p>
+                </div>
+                <div className="p-4 sm:p-6 space-y-2 sm:space-y-3">
+                  {order.items.map((item, idx) => {
+                    // Get productId from item - could be string or object with _id
+                    let actualProductId = '';
+                    if (item.productId) {
+                      if (typeof item.productId === 'string') {
+                        actualProductId = item.productId;
+                      } else if (typeof item.productId === 'object' && item.productId._id) {
+                        actualProductId = item.productId._id;
+                      } else {
+                        actualProductId = String(item.productId);
+                      }
                     }
-                  }
-                  
-                  if (!actualProductId) return null;
-                  
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => {
-                        setReviewProductId(actualProductId);
-                        setReviewOrderId(order._id);
-                      }}
-                      className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
-                    >
-                      <Star size={18} className="sm:w-5 sm:h-5" />
-                      <span className="break-words">Đánh giá {item.name}</span>
-                    </button>
-                  );
-                })}
+                    
+                    if (!actualProductId) return null;
+                    
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setReviewProductId(actualProductId);
+                          setReviewOrderId(order._id);
+                        }}
+                        className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+                      >
+                        <Star size={18} className="sm:w-5 sm:h-5" />
+                        <span className="break-words">Đánh giá {item.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+              <ReturnRequest
+                orderId={order._id}
+                order={order}
+                onRequestSuccess={async () => {
+                  // Reload order sau khi yêu cầu trả lại thành công
+                  const res = await orderApi.getOrderById(order._id);
+                  const data = res.data;
+                  const estimatedDelivery =
+                    typeof data.shippingInfo?.estimatedDelivery === "number"
+                      ? data.shippingInfo.estimatedDelivery
+                      : data.shippingInfo?.estimatedDelivery?.$date?.$numberLong
+                      ? parseInt(data.shippingInfo.estimatedDelivery.$date.$numberLong)
+                      : Date.now();
+                  const mappedOrder: Order = {
+                    ...data,
+                    shippingInfo: {
+                      method: data.shippingInfo?.method || "Chưa xác định",
+                      estimatedDelivery,
+                      trackingNumber: data.shippingInfo?.trackingNumber || "",
+                    },
+                  };
+                  setOrder(mappedOrder);
+                }}
+              />
+            </>
           )}
         </div>
       </div>

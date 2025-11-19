@@ -67,19 +67,44 @@ const Product: React.FC<ProductProps> = ({ selectedItems }) => {
                   </span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-3 gap-2 sm:gap-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    {item.salePrice ? (
-                      <>
-                        <p className="line-through text-gray-400 text-xs sm:text-sm">
-                          {item.price.toLocaleString("vi-VN")}₫
-                        </p>
-                        <p className="text-xl sm:text-2xl font-bold text-red-600">
-                          {item.salePrice.toLocaleString("vi-VN")}₫
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-xl sm:text-2xl font-bold text-red-600">
-                        {item.price.toLocaleString("vi-VN")}₫
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Tính giá đơn vị bao gồm additionalPrice */}
+                      {(() => {
+                        const basePrice = item.salePrice || item.price || 0;
+                        const additionalPrice = item.variation?.additionalPrice || 0;
+                        const unitPrice = basePrice + additionalPrice;
+                        const totalPrice = item.subtotal || (unitPrice * item.quantity);
+                        
+                        return (
+                          <>
+                            {item.salePrice ? (
+                              <>
+                                <p className="line-through text-gray-400 text-xs sm:text-sm">
+                                  {(item.price + additionalPrice).toLocaleString("vi-VN")}₫
+                                </p>
+                                <p className="text-xl sm:text-2xl font-bold text-red-600">
+                                  {unitPrice.toLocaleString("vi-VN")}₫
+                                </p>
+                              </>
+                            ) : (
+                              <p className="text-xl sm:text-2xl font-bold text-red-600">
+                                {unitPrice.toLocaleString("vi-VN")}₫
+                              </p>
+                            )}
+                            {additionalPrice > 0 && (
+                              <span className="px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded border border-orange-300">
+                                +{additionalPrice.toLocaleString("vi-VN")}₫
+                              </span>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                    {/* Hiển thị tổng giá nếu quantity > 1 */}
+                    {item.quantity > 1 && (
+                      <p className="text-xs sm:text-sm text-gray-600">
+                        Tổng: <span className="font-bold text-gray-900">{(item.subtotal || 0).toLocaleString("vi-VN")}₫</span>
                       </p>
                     )}
                   </div>

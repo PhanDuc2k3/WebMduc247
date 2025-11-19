@@ -46,6 +46,8 @@ const OrderSchema = new mongoose.Schema(
             "delivered",
             "received",
             "cancelled",
+            "return_requested",
+            "returned",
           ],
           required: true,
         },
@@ -54,8 +56,23 @@ const OrderSchema = new mongoose.Schema(
       },
     ],
 
+    // Thông tin trả lại hàng
+    returnRequest: {
+      requestedAt: { type: Date },
+      reason: { type: String },
+      status: {
+        type: String,
+        enum: ["pending", "approved", "rejected", "completed"],
+        default: null,
+      },
+      processedAt: { type: Date },
+      processedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      note: { type: String },
+    },
+
     // Tổng tiền
     subtotal: { type: Number, required: true, default: 0 },
+    platformFee: { type: Number, default: 0 }, // Phí sàn 10%
     shippingFee: { type: Number, default: 0 },
     discount: { type: Number, default: 0 },
     shippingDiscount: { type: Number, default: 0 },

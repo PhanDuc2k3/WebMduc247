@@ -214,6 +214,22 @@ class WalletService {
     order.paymentInfo.paymentId = transactionId;
     await order.save();
 
+    // Trừ stock khi thanh toán thành công
+    const orderService = require('./OrderService');
+    try {
+      await orderService.deductStockOnPayment(order.orderCode);
+    } catch (stockError) {
+      console.error(`[WalletService] ❌ Lỗi khi trừ stock:`, stockError);
+      // Rollback payment nếu không đủ stock
+      order.paymentInfo.status = 'pending';
+      await order.save();
+      // Hoàn lại tiền cho người dùng
+      wallet.balance += parseFloat(amount);
+      wallet.transactions.pop(); // Xóa transaction vừa thêm
+      await walletRepository.save(wallet);
+      throw new Error(stockError.message || "Không đủ số lượng sản phẩm trong kho. Đã hoàn lại tiền vào ví.");
+    }
+
     // Chuyển tiền vào ví chủ cửa hàng
     const { transferToStoreWallets } = require("../utils/walletService");
     try {

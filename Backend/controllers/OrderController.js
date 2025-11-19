@@ -118,3 +118,72 @@ exports.markOrderPaid = async (req, res) => {
     return res.status(statusCode).json({ message: err.message || "Server error", details: err.message });
   }
 };
+
+exports.requestReturn = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    const { reason } = req.body;
+    const order = await orderService.requestReturn(id, userId, reason);
+    res.status(200).json({ message: "Yêu cầu trả lại hàng đã được gửi", order });
+  } catch (error) {
+    console.error("Lỗi requestReturn:", error);
+    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 
+                      error.message.includes("quyền") ? 403 :
+                      error.message.includes("quá 3 ngày") ? 400 :
+                      error.message.includes("đã có yêu cầu") ? 400 : 500;
+    res.status(statusCode).json({ message: error.message || "Lỗi server" });
+  }
+};
+
+exports.confirmReturnReceived = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const sellerId = req.user.userId;
+    const order = await orderService.confirmReturnReceived(id, sellerId);
+    res.status(200).json({ 
+      message: "Đã xác nhận thu hồi sản phẩm. Tiền đã được hoàn lại cho người mua.", 
+      order 
+    });
+  } catch (error) {
+    console.error("Lỗi confirmReturnReceived:", error);
+    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 
+                      error.message.includes("quyền") ? 403 :
+                      error.message.includes("chưa có cửa hàng") ? 400 : 500;
+    res.status(statusCode).json({ message: error.message || "Lỗi server" });
+  }
+};
+
+exports.processReturn = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const processorId = req.user.userId;
+    const { action, note } = req.body; // action: "approved" hoặc "rejected"
+    const order = await orderService.processReturn(id, processorId, action, note);
+    res.status(200).json({ 
+      message: action === "approved" ? "Đã phê duyệt trả lại hàng" : "Đã từ chối yêu cầu trả lại hàng", 
+      order 
+    });
+  } catch (error) {
+    console.error("Lỗi processReturn:", error);
+    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 
+                      error.message.includes("không hợp lệ") ? 400 : 500;
+    res.status(statusCode).json({ message: error.message || "Lỗi server" });
+  }
+};
+
+exports.cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    const { reason } = req.body;
+    const order = await orderService.cancelOrder(id, userId, reason);
+    res.status(200).json({ message: "Đơn hàng đã được hủy thành công", order });
+  } catch (error) {
+    console.error("Lỗi cancelOrder:", error);
+    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 
+                      error.message.includes("quyền") ? 403 :
+                      error.message.includes("Không thể hủy") ? 400 : 500;
+    res.status(statusCode).json({ message: error.message || "Lỗi server" });
+  }
+};

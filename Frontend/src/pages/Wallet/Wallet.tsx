@@ -522,7 +522,7 @@ const WalletPage: React.FC = () => {
                   <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                     <div
                       className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        transaction.type === 'deposit'
+                        transaction.type === 'deposit' || transaction.type === 'refund'
                           ? 'bg-green-100'
                           : transaction.type === 'withdraw'
                           ? 'bg-orange-100'
@@ -531,7 +531,7 @@ const WalletPage: React.FC = () => {
                           : 'bg-blue-100'
                       }`}
                     >
-                      {transaction.type === 'deposit' ? (
+                      {transaction.type === 'deposit' || transaction.type === 'refund' ? (
                         <ArrowDown className="text-green-600" size={18} />
                       ) : transaction.type === 'withdraw' ? (
                         <ArrowUp className="text-orange-600" size={18} />
@@ -560,10 +560,12 @@ const WalletPage: React.FC = () => {
                   <div className="text-right flex-shrink-0">
                     <p
                       className={`font-bold text-sm sm:text-base md:text-lg ${
-                        transaction.type === 'deposit' ? 'text-green-600' : 'text-red-600'
+                        transaction.type === 'deposit' || transaction.type === 'refund'
+                          ? 'text-green-600' 
+                          : 'text-red-600'
                       }`}
                     >
-                      {transaction.type === 'deposit' ? '+' : '-'}
+                      {transaction.type === 'deposit' || transaction.type === 'refund' ? '+' : '-'}
                       {transaction.amount.toLocaleString('vi-VN')}₫
                     </p>
                     <p className="text-[10px] sm:text-xs text-gray-500 capitalize">

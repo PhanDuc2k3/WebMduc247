@@ -73,6 +73,11 @@ class OrderRepository {
       { new: true }
     );
   }
+
+  // Tìm order theo orderCode
+  async findByOrderCode(orderCode) {
+    return await Order.findOne({ orderCode }).populate('items.productId');
+  }
 }
 
 module.exports = new OrderRepository();

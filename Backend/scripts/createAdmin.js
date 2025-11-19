@@ -34,33 +34,51 @@ const createAdmin = async () => {
     const adminFullName = 'Administrator';
     const adminPhone = '0123456789';
 
-    // Kiểm tra xem admin đã tồn tại chưa
-    const existingAdmin = await User.findOne({ email: adminEmail });
+    // Kiểm tra xem đã có admin nào trong hệ thống chưa
+    const existingAdminInSystem = await User.findOne({ role: 'admin' });
     
-    if (existingAdmin) {
-      // Nếu đã tồn tại, cập nhật thành admin
-      if (existingAdmin.role !== 'admin') {
-        existingAdmin.role = 'admin';
-        existingAdmin.isVerified = true;
+    // Kiểm tra xem email admin đã tồn tại chưa
+    const existingAdminByEmail = await User.findOne({ email: adminEmail });
+    
+    if (existingAdminInSystem) {
+      // Nếu đã có admin trong hệ thống
+      if (existingAdminInSystem.email === adminEmail) {
+        // Nếu admin hiện tại chính là email này, cập nhật mật khẩu
         const hashedPassword = await bcrypt.hash(adminPassword, 10);
-        existingAdmin.password = hashedPassword;
-        await existingAdmin.save();
-        console.log('✅ Đã cập nhật tài khoản thành admin');
-      } else {
-        // Cập nhật mật khẩu nếu cần
-        const hashedPassword = await bcrypt.hash(adminPassword, 10);
-        existingAdmin.password = hashedPassword;
-        existingAdmin.isVerified = true;
-        await existingAdmin.save();
+        existingAdminInSystem.password = hashedPassword;
+        existingAdminInSystem.isVerified = true;
+        await existingAdminInSystem.save();
         console.log('✅ Đã cập nhật mật khẩu admin');
+        console.log(`📧 Email: ${adminEmail}`);
+        console.log(`🔑 Password: ${adminPassword}`);
+        console.log(`👤 Role: admin`);
+        return;
+      } else {
+        // Nếu đã có admin khác, không cho tạo admin mới
+        console.error('❌ Hệ thống chỉ cho phép 1 tài khoản admin duy nhất.');
+        console.error(`⚠️ Admin hiện tại: ${existingAdminInSystem.email}`);
+        console.error('💡 Nếu muốn thay đổi admin, vui lòng xóa admin cũ trước.');
+        return;
       }
-      console.log(`📧 Email: ${adminEmail}`);
-      console.log(`🔑 Password: ${adminPassword}`);
-      console.log(`👤 Role: admin`);
-      return;
+    }
+    
+    if (existingAdminByEmail) {
+      // Nếu email đã tồn tại nhưng không phải admin, cập nhật thành admin
+      if (existingAdminByEmail.role !== 'admin') {
+        existingAdminByEmail.role = 'admin';
+        existingAdminByEmail.isVerified = true;
+        const hashedPassword = await bcrypt.hash(adminPassword, 10);
+        existingAdminByEmail.password = hashedPassword;
+        await existingAdminByEmail.save();
+        console.log('✅ Đã cập nhật tài khoản thành admin');
+        console.log(`📧 Email: ${adminEmail}`);
+        console.log(`🔑 Password: ${adminPassword}`);
+        console.log(`👤 Role: admin`);
+        return;
+      }
     }
 
-    // Tạo admin mới
+    // Tạo admin mới (chỉ khi chưa có admin nào trong hệ thống)
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
     const newAdmin = new User({
       email: adminEmail,

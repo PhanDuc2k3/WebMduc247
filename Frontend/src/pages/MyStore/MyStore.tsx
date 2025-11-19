@@ -3,6 +3,7 @@ import StoreRegisterForm from "../../components/MyStore/StoreRegisterForm/StoreR
 import Overview from "../../components/MyStore/Overview/Overview";
 import ProductManagement from "../../components/MyStore/ProductManagement/ProductManagement";
 import OrderManagement from "../../components/MyStore/OrderManagement/OrderManagement";
+import ReturnManagement from "../../components/MyStore/ReturnManagement/ReturnManagement";
 import Statistics from "../../components/MyStore/Statistics/Statistics";
 import VoucherManagement from "../../components/MyStore/VoucherManagement/VoucherManagement";
 import ManageStore from "../../components/MyStore/ManageStore/ManageStore"; // import component mới
@@ -13,6 +14,7 @@ const tabs = [
   { key: "overview", label: "Tổng quan", icon: "" },
   { key: "products", label: "Sản phẩm", icon: "" },
   { key: "orders", label: "Đơn hàng", icon: "" },
+  { key: "returns", label: "Quản lý sản phẩm thu hồi", icon: "" },
   { key: "stats", label: "Thống kê", icon: "" },
   { key: "voucher", label: "Voucher", icon: "" },
 ];
@@ -153,6 +155,7 @@ const MyStore: React.FC = () => {
           {activeTab === "overview" && <Overview />}
           {activeTab === "products" && <ProductManagement />}
           {activeTab === "orders" && <OrderManagement />}
+          {activeTab === "returns" && <ReturnManagement />}
           {activeTab === "stats" && storeId && <Statistics storeId={storeId} />}
           {activeTab === "voucher" && <VoucherManagement />}
         </div>

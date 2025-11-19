@@ -105,6 +105,7 @@ const Profile: React.FC = () => {
                   : item.productId,
             })) || [],
           statusHistory: order.statusHistory || [],
+          returnRequest: order.returnRequest || undefined,
         }));
 
         setOrders(mappedOrders);

@@ -19,12 +19,28 @@ class UserRepository {
 
   // Tạo user mới
   async create(userData) {
+    // Kiểm tra nếu đang tạo user với role admin
+    if (userData.role === 'admin') {
+      const existingAdmin = await User.findOne({ role: 'admin' });
+      if (existingAdmin) {
+        throw new Error('Hệ thống chỉ cho phép 1 tài khoản admin duy nhất. Đã có admin trong hệ thống.');
+      }
+    }
+    
     const newUser = new User(userData);
     return await newUser.save();
   }
 
   // Cập nhật user
   async update(userId, updateData) {
+    // Kiểm tra nếu đang cập nhật role thành admin
+    if (updateData.role === 'admin') {
+      const existingAdmin = await User.findOne({ role: 'admin' });
+      if (existingAdmin && existingAdmin._id.toString() !== userId.toString()) {
+        throw new Error('Hệ thống chỉ cho phép 1 tài khoản admin duy nhất. Đã có admin trong hệ thống.');
+      }
+    }
+    
     return await User.findByIdAndUpdate(userId, updateData, {
       new: true,
       runValidators: true,
@@ -63,6 +79,11 @@ class UserRepository {
     
     user.sellerRequest = sellerRequestData;
     return await user.save();
+  }
+
+  // Tìm admin duy nhất
+  async findAdmin() {
+    return await User.findOne({ role: 'admin' });
   }
 }
 
