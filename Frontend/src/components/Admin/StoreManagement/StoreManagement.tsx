@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import storeApi from '../../../api/storeApi';
 import { Search, Store as StoreIcon, Loader2, User, Tag, Calendar, Lock, Unlock } from 'lucide-react';
+import ConfirmDialog from '../../ui/ConfirmDialog';
 import Pagination from '../Pagination';
 import { toast } from 'react-toastify';
 
@@ -41,6 +42,7 @@ const StoreManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [toggleConfirm, setToggleConfirm] = useState<{ open: boolean; store: Store | null }>({ open: false, store: null });
   const itemsPerPage = 20;
 
   useEffect(() => {
@@ -78,52 +80,29 @@ const StoreManagement: React.FC = () => {
     }
   };
 
-  const handleToggleStatus = async (store: Store) => {
+  const handleToggleStatusClick = (store: Store) => {
+    setToggleConfirm({ open: true, store });
+  };
+
+  const handleToggleStatus = async () => {
+    if (!toggleConfirm.store) return;
+    const store = toggleConfirm.store;
     const isActive = store.isActive ?? true;
     const action = isActive ? 'khóa' : 'mở khóa';
+    setToggleConfirm({ open: false, store: null });
     
-    const confirmToastId = toast.info(
-      <div>
-        <p className="font-bold mb-2">Xác nhận {action} cửa hàng</p>
-        <p className="mb-3">Bạn có chắc muốn {action} cửa hàng <strong>{store.name}</strong>?</p>
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              toast.dismiss(confirmToastId);
-              try {
-                await storeApi.updateStoreById(store._id, { isActive: !isActive });
-                toast.success(`Đã ${action} cửa hàng ${store.name} thành công!`, {
-                  position: "top-right",
-                  containerId: "general-toast",
-                });
-                await fetchStores();
-              } catch (error: any) {
-                console.error(`❌ Lỗi khi ${action} cửa hàng:`, error?.response || error);
-                toast.error(error?.response?.data?.message || `Không thể ${action} cửa hàng. Vui lòng thử lại!`, {
-                  position: "top-right",
-                  containerId: "general-toast",
-                });
-              }
-            }}
-            className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors mr-2"
-          >
-            Xác nhận
-          </button>
-          <button
-            onClick={() => toast.dismiss(confirmToastId)}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Hủy
-          </button>
-        </div>
-      </div>,
-      {
-        position: "top-right",
+    try {
+      await storeApi.updateStoreById(store._id, { isActive: !isActive });
+      toast.success(`Đã ${action} cửa hàng ${store.name} thành công!`, {
         containerId: "general-toast",
-        autoClose: false,
-        closeOnClick: false,
-      }
-    );
+      });
+      await fetchStores();
+    } catch (error: any) {
+      console.error(`❌ Lỗi khi ${action} cửa hàng:`, error?.response || error);
+      toast.error(error?.response?.data?.message || `Không thể ${action} cửa hàng. Vui lòng thử lại!`, {
+        containerId: "general-toast",
+      });
+    }
   };
 
 
@@ -259,7 +238,7 @@ const StoreManagement: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => handleToggleStatus(store)}
+                        onClick={() => handleToggleStatusClick(store)}
                         className={`${store.isActive ? 'text-orange-600 hover:text-orange-900 hover:bg-orange-50' : 'text-green-600 hover:text-green-900 hover:bg-green-50'} px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1`}
                         title={store.isActive ? 'Khóa cửa hàng' : 'Mở khóa cửa hàng'}
                       >
@@ -368,6 +347,15 @@ const StoreManagement: React.FC = () => {
         </div>
       )}
 
+      <ConfirmDialog
+        open={toggleConfirm.open}
+        onClose={() => setToggleConfirm({ open: false, store: null })}
+        onConfirm={handleToggleStatus}
+        title={toggleConfirm.store ? `Xác nhận ${toggleConfirm.store.isActive ? 'khóa' : 'mở khóa'} cửa hàng` : ""}
+        message={toggleConfirm.store ? `Bạn có chắc muốn ${toggleConfirm.store.isActive ? 'khóa' : 'mở khóa'} cửa hàng ${toggleConfirm.store.name}?` : ""}
+        type={toggleConfirm.store?.isActive ? "danger" : "info"}
+        confirmText={toggleConfirm.store?.isActive ? "Khóa cửa hàng" : "Mở khóa cửa hàng"}
+      />
     </div>
   );
 };

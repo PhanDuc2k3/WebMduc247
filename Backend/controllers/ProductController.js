@@ -96,6 +96,19 @@ exports.deleteProduct = async (req, res) => {
   }
 };
 
+// Restore product (bán trở lại)
+exports.restoreProduct = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const productId = req.params.id;
+    const product = await productService.restoreProduct(userId, productId);
+    res.json({ success: true, message: "Sản phẩm đã được khôi phục", data: product });
+  } catch (err) {
+    const statusCode = err.message.includes("Không tìm thấy") ? 404 : 500;
+    res.status(statusCode).json({ success: false, message: err.message });
+  }
+};
+
 // Featured products
 exports.getFeaturedProducts = async (req, res) => {
   try {

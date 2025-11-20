@@ -122,9 +122,9 @@ class StoreRepository {
     return await Store.findByIdAndUpdate(storeId, updateData, { new: true });
   }
 
-  // Lấy products theo store
+  // Lấy products theo store (chỉ lấy sản phẩm active)
   async getProductsByStore(storeId) {
-    return await Product.find({ store: storeId });
+    return await Product.find({ store: storeId, isActive: true });
   }
 
   // Lấy reviews theo productIds

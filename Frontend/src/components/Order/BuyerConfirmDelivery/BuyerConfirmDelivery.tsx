@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Package, CheckCircle, XCircle } from "lucide-react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import orderApi from "../../../api/orderApi";
 import { toast } from "react-toastify";
 
@@ -10,12 +11,14 @@ interface BuyerConfirmDeliveryProps {
 
 const BuyerConfirmDelivery: React.FC<BuyerConfirmDeliveryProps> = ({ orderId, onConfirm }) => {
   const [loading, setLoading] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleConfirmClick = () => {
+    setShowConfirm(true);
+  };
 
   const handleConfirm = async () => {
-    if (!window.confirm("Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã nhận hàng' và bạn có thể đánh giá sản phẩm.")) {
-      return;
-    }
-
+    setShowConfirm(false);
     setLoading(true);
     try {
       const response = await orderApi.confirmDelivery(orderId);
@@ -53,7 +56,7 @@ const BuyerConfirmDelivery: React.FC<BuyerConfirmDeliveryProps> = ({ orderId, on
       </div>
       <div className="p-4 sm:p-6">
         <button
-          onClick={handleConfirm}
+          onClick={handleConfirmClick}
           disabled={loading}
           className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
             loading
@@ -74,6 +77,17 @@ const BuyerConfirmDelivery: React.FC<BuyerConfirmDeliveryProps> = ({ orderId, on
           )}
         </button>
       </div>
+
+      <ConfirmDialog
+        open={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirm}
+        title="Xác nhận nhận hàng"
+        message="Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã nhận hàng' và bạn có thể đánh giá sản phẩm."
+        type="info"
+        loading={loading}
+        confirmText="Xác nhận"
+      />
     </div>
   );
 };

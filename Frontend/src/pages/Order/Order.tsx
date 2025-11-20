@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Star, Package, FileText, X, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import OrderStatus from "../../components/Order/OrderStatus/OrderStatus";
 import OrderProduct from "../../components/Order/OrderProduct/OrderProduct";
 import PaymentInfo from "../../components/Order/PaymentInfo/PaymentInfo";
@@ -93,6 +94,7 @@ export default function OrderPage() {
   const [loading, setLoading] = useState(true);
   const [reviewProductId, setReviewProductId] = useState<string | null>(null);
   const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
 
   // Fetch user profile từ API để lấy role và store info chính xác
   useEffect(() => {
@@ -223,11 +225,12 @@ export default function OrderPage() {
   const canCancelOrder = !isOwnerSeller && ["pending", "confirmed", "packed"].includes(currentStatus);
 
   // Xử lý hủy đơn hàng
-  const handleCancelOrder = async () => {
-    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.")) {
-      return;
-    }
+  const handleCancelOrderClick = () => {
+    setShowCancelConfirm(true);
+  };
 
+  const handleCancelOrder = async () => {
+    setShowCancelConfirm(false);
     try {
       await orderApi.cancelOrder(order._id, "Khách hàng yêu cầu hủy đơn hàng");
       toast.success(
@@ -465,6 +468,16 @@ export default function OrderPage() {
           />
         </div>
       )}
+
+      <ConfirmDialog
+        open={showCancelConfirm}
+        onClose={() => setShowCancelConfirm(false)}
+        onConfirm={handleCancelOrder}
+        title="Xác nhận hủy đơn hàng"
+        message="Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác."
+        type="danger"
+        confirmText="Hủy đơn hàng"
+      />
     </div>
   );
 }

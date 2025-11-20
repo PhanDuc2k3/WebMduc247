@@ -1,5 +1,6 @@
 // VoucherDashboard.tsx
 import React, { useState, useEffect } from "react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import {
   Percent,
   Truck,
@@ -48,8 +49,16 @@ const VoucherDashboard: React.FC = () => {
     fetchVouchers();
   }, []);
 
-  const deleteVoucher = async (id: string) => {
-    if (!window.confirm("Bạn có chắc muốn xóa voucher này?")) return;
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; voucherId: string | null }>({ open: false, voucherId: null });
+
+  const deleteVoucherClick = (id: string) => {
+    setDeleteConfirm({ open: true, voucherId: id });
+  };
+
+  const deleteVoucher = async () => {
+    if (!deleteConfirm.voucherId) return;
+    const id = deleteConfirm.voucherId;
+    setDeleteConfirm({ open: false, voucherId: null });
     try {
       await voucherApi.deleteVoucher(id);
       setVouchers((prev) => prev.filter((v) => v._id !== id));
@@ -214,7 +223,7 @@ const VoucherDashboard: React.FC = () => {
                         </button>
                         <button
                           title="Xóa voucher"
-                          onClick={() => deleteVoucher(v._id!)}
+                          onClick={() => deleteVoucherClick(v._id!)}
                           className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 active:scale-95 sm:hover:scale-110 flex items-center justify-center transition-all duration-300 touch-manipulation"
                         >
                           <Trash2 className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
@@ -238,6 +247,16 @@ const VoucherDashboard: React.FC = () => {
           </table>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, voucherId: null })}
+        onConfirm={deleteVoucher}
+        title="Xác nhận xóa voucher"
+        message="Bạn có chắc muốn xóa voucher này không?"
+        type="danger"
+        confirmText="Xóa"
+      />
     </div>
   );
 };

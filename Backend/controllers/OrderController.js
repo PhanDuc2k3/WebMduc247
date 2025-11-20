@@ -172,6 +172,25 @@ exports.processReturn = async (req, res) => {
   }
 };
 
+exports.rejectReturn = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const sellerId = req.user.userId;
+    const { reason } = req.body;
+    const order = await orderService.rejectReturn(id, sellerId, reason);
+    res.status(200).json({ 
+      message: "Đã từ chối yêu cầu trả lại hàng", 
+      order 
+    });
+  } catch (error) {
+    console.error("Lỗi rejectReturn:", error);
+    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 
+                      error.message.includes("quyền") ? 403 :
+                      error.message.includes("chưa có cửa hàng") ? 400 : 500;
+    res.status(statusCode).json({ message: error.message || "Lỗi server" });
+  }
+};
+
 exports.cancelOrder = async (req, res) => {
   try {
     const { id } = req.params;

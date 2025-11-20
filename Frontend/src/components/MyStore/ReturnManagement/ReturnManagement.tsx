@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { RotateCcw, CheckCircle, XCircle, Package, Clock, User } from "lucide-react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import orderApi from "../../../api/orderApi";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +50,8 @@ const ReturnManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [confirmReturn, setConfirmReturn] = useState<{ open: boolean; orderId: string | null }>({ open: false, orderId: null });
+  const [rejectReturn, setRejectReturn] = useState<{ open: boolean; orderId: string | null; reason: string }>({ open: false, orderId: null, reason: "" });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -82,11 +86,14 @@ const ReturnManagement: React.FC = () => {
     }
   };
 
-  const handleConfirmReturn = async (orderId: string) => {
-    if (!window.confirm("Bạn đã nhận được sản phẩm trả lại? Xác nhận sẽ hoàn tiền cho người mua.")) {
-      return;
-    }
+  const handleConfirmReturnClick = (orderId: string) => {
+    setConfirmReturn({ open: true, orderId });
+  };
 
+  const handleConfirmReturn = async () => {
+    if (!confirmReturn.orderId) return;
+    const orderId = confirmReturn.orderId;
+    setConfirmReturn({ open: false, orderId: null });
     setProcessingId(orderId);
     try {
       await orderApi.confirmReturnReceived(orderId);
@@ -94,7 +101,10 @@ const ReturnManagement: React.FC = () => {
         <div className="flex items-center gap-2">
           <CheckCircle className="text-green-500" size={18} />
           <span>Đã xác nhận thu hồi sản phẩm. Tiền đã được hoàn lại cho người mua.</span>
-        </div>
+        </div>,
+        {
+          containerId: "general-toast",
+        }
       );
       fetchReturnOrders(); // Reload danh sách
     } catch (err: any) {
@@ -106,7 +116,51 @@ const ReturnManagement: React.FC = () => {
         <div className="flex items-center gap-2">
           <XCircle className="text-red-500" size={18} />
           <span>{errorMessage}</span>
-        </div>
+        </div>,
+        {
+          containerId: "general-toast",
+        }
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleRejectReturnClick = (orderId: string) => {
+    setRejectReturn({ open: true, orderId, reason: "" });
+  };
+
+  const handleRejectReturn = async () => {
+    if (!rejectReturn.orderId) return;
+    const orderId = rejectReturn.orderId;
+    const reason = rejectReturn.reason.trim();
+    setRejectReturn({ open: false, orderId: null, reason: "" });
+    setProcessingId(orderId);
+    try {
+      await orderApi.rejectReturn(orderId, reason || undefined);
+      toast.success(
+        <div className="flex items-center gap-2">
+          <CheckCircle className="text-green-500" size={18} />
+          <span>Đã từ chối yêu cầu trả lại hàng</span>
+        </div>,
+        {
+          containerId: "general-toast",
+        }
+      );
+      fetchReturnOrders(); // Reload danh sách
+    } catch (err: any) {
+      console.error("Lỗi từ chối yêu cầu:", err);
+      const errorMessage = err.response?.data?.message 
+        || err.message 
+        || "Lỗi khi từ chối yêu cầu trả lại hàng!";
+      toast.error(
+        <div className="flex items-center gap-2">
+          <XCircle className="text-red-500" size={18} />
+          <span>{errorMessage}</span>
+        </div>,
+        {
+          containerId: "general-toast",
+        }
       );
     } finally {
       setProcessingId(null);
@@ -277,37 +331,131 @@ const ReturnManagement: React.FC = () => {
                 </div>
               </div>
 
-              {/* Nút xác nhận */}
-              <div className="pt-3 sm:pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => handleConfirmReturn(order._id)}
-                  disabled={processingId === order._id || order.returnRequest?.status !== "pending"}
-                  className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
-                    processingId === order._id || order.returnRequest?.status !== "pending"
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                  }`}
-                >
-                  {processingId === order._id ? (
-                    <>
-                      <span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                      <span>Đang xử lý...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle size={18} className="sm:w-5 sm:h-5" />
-                      <span>Xác nhận đã thu hồi sản phẩm</span>
-                    </>
-                  )}
-                </button>
-                <p className="text-xs sm:text-sm text-gray-500 mt-2 text-center">
-                  Sau khi xác nhận, tiền sẽ được hoàn lại cho người mua vào ví
+              {/* Nút xác nhận và từ chối */}
+              <div className="pt-3 sm:pt-4 border-t border-gray-200 space-y-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <button
+                    onClick={() => handleConfirmReturnClick(order._id)}
+                    disabled={processingId === order._id || order.returnRequest?.status !== "pending"}
+                    className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
+                      processingId === order._id || order.returnRequest?.status !== "pending"
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+                    }`}
+                  >
+                    {processingId === order._id ? (
+                      <>
+                        <span className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        <span>Đang xử lý...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle size={18} className="sm:w-5 sm:h-5" />
+                        <span>Xác nhận đã thu hồi</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={() => handleRejectReturnClick(order._id)}
+                    disabled={processingId === order._id || order.returnRequest?.status !== "pending"}
+                    className={`flex-1 px-4 sm:px-6 py-2.5 sm:py-3 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
+                      processingId === order._id || order.returnRequest?.status !== "pending"
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700"
+                    }`}
+                  >
+                    <XCircle size={18} className="sm:w-5 sm:h-5" />
+                    <span>Từ chối</span>
+                  </button>
+                </div>
+                <p className="text-xs sm:text-sm text-gray-500 text-center">
+                  Xác nhận: Tiền sẽ được hoàn lại cho người mua | Từ chối: Yêu cầu sẽ bị hủy
                 </p>
               </div>
             </div>
           </div>
         );
       })}
+
+      <ConfirmDialog
+        open={confirmReturn.open}
+        onClose={() => setConfirmReturn({ open: false, orderId: null })}
+        onConfirm={handleConfirmReturn}
+        title="Xác nhận thu hồi sản phẩm"
+        message="Bạn đã nhận được sản phẩm trả lại? Xác nhận sẽ hoàn tiền cho người mua."
+        type="info"
+        loading={processingId !== null}
+        confirmText="Xác nhận"
+      />
+
+      {/* Modal từ chối yêu cầu */}
+      {rejectReturn.open && createPortal(
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            width: '100vw',
+            height: '100vh',
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget && processingId === null) {
+              setRejectReturn({ open: false, orderId: null, reason: "" });
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-md animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-4 sm:p-6 border-b-2 border-gray-200">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-500" />
+                Từ chối yêu cầu trả lại hàng
+              </h3>
+            </div>
+            <div className="p-4 sm:p-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Lý do từ chối <span className="text-gray-500">(tùy chọn)</span>
+              </label>
+              <textarea
+                value={rejectReturn.reason}
+                onChange={(e) => setRejectReturn({ ...rejectReturn, reason: e.target.value })}
+                placeholder="Nhập lý do từ chối yêu cầu trả lại hàng (ví dụ: Sản phẩm không đúng với mô tả ban đầu, đã qua thời hạn đổi trả, v.v.)"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 resize-none"
+                rows={4}
+                maxLength={500}
+              />
+              <p className="text-xs text-gray-500 mt-1 text-right">
+                {rejectReturn.reason.length}/500 ký tự
+              </p>
+            </div>
+            <div className="p-4 sm:p-6 border-t-2 border-gray-200 flex flex-col sm:flex-row justify-end gap-2 sm:gap-3">
+              <button
+                onClick={() => setRejectReturn({ open: false, orderId: null, reason: "" })}
+                disabled={processingId !== null}
+                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-200 text-gray-700 rounded-lg sm:rounded-xl font-semibold hover:bg-gray-300 transition-colors text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleRejectReturn}
+                disabled={processingId !== null}
+                className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-lg sm:rounded-xl font-semibold transition-all shadow-lg hover:shadow-xl text-sm sm:text-base disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {processingId !== null && (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                )}
+                Từ chối
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

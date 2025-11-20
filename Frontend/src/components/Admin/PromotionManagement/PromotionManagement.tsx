@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import promotionApi from '../../../api/promotionApi';
 import type { PromotionType } from '../../../api/promotionApi';
 import { Edit, Trash2, Plus, Search, Tag, Eye, Loader2, Megaphone } from 'lucide-react';
+import ConfirmDialog from '../../ui/ConfirmDialog';
 import Pagination from '../Pagination';
 import { toast } from 'react-toastify';
 
@@ -19,6 +20,7 @@ const PromotionManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; promotionId: string | null }>({ open: false, promotionId: null });
   const itemsPerPage = 20;
   const [showForm, setShowForm] = useState(false);
   const [editingPromotion, setEditingPromotion] = useState<PromotionType | null>(null);
@@ -52,8 +54,14 @@ const PromotionManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = async (promotionId: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa tin tức khuyến mãi này?')) return;
+  const handleDeleteClick = (promotionId: string) => {
+    setDeleteConfirm({ open: true, promotionId });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm.promotionId) return;
+    const promotionId = deleteConfirm.promotionId;
+    setDeleteConfirm({ open: false, promotionId: null });
     
     try {
       await promotionApi.deletePromotion(promotionId);
@@ -479,7 +487,7 @@ const PromotionManagement: React.FC = () => {
                           <Edit size={16} className="md:w-[18px] md:h-[18px]" />
                         </button>
                         <button
-                          onClick={() => promo._id && handleDelete(promo._id)}
+                          onClick={() => promo._id && handleDeleteClick(promo._id)}
                           className="p-1.5 md:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           title="Xóa"
                         >

@@ -34,6 +34,9 @@ const productApi = {
   // ❌ Xóa (ẩn) sản phẩm
   deleteProduct: (id: string) => axiosClient.delete(`/api/products/${id}`),
 
+  // 🔄 Khôi phục sản phẩm (bán trở lại)
+  restoreProduct: (id: string) => axiosClient.patch(`/api/products/${id}/restore`),
+
   // 👁️‍🗨️ Tăng lượt xem sản phẩm
   increaseView: (id: string) => axiosClient.patch(`/api/products/${id}/view`),
 

@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import type { Category, Product } from "../../../types/store";
 
 interface Props {
@@ -29,6 +30,7 @@ const CategoryProducts: React.FC<Props> = ({
   setSelectedCategory,
   handleToggleProduct,
 }) => {
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; product: Product | null }>({ open: false, product: null });
   const category = categories.find((c) => c._id === selectedCategory);
 
   if (!category) return null;
@@ -81,11 +83,7 @@ const CategoryProducts: React.FC<Props> = ({
               </div>
               <button
                 className="w-full sm:w-auto sm:ml-3 px-3 py-2 text-xs sm:text-sm bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 active:scale-95 sm:hover:scale-105 shadow-md transition-all duration-300 whitespace-nowrap touch-manipulation"
-                onClick={() => {
-                  if (window.confirm(`Bạn có chắc muốn xóa "${prod.name}" khỏi danh mục?`)) {
-                    handleRemoveProductFromCategory(prod._id);
-                  }
-                }}
+                onClick={() => setDeleteConfirm({ open: true, product: prod })}
               >
                 Xóa
               </button>
@@ -200,6 +198,21 @@ const CategoryProducts: React.FC<Props> = ({
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, product: null })}
+        onConfirm={() => {
+          if (deleteConfirm.product) {
+            handleRemoveProductFromCategory(deleteConfirm.product._id);
+            setDeleteConfirm({ open: false, product: null });
+          }
+        }}
+        title="Xác nhận xóa sản phẩm"
+        message={deleteConfirm.product ? `Bạn có chắc muốn xóa "${deleteConfirm.product.name}" khỏi danh mục?` : ""}
+        type="danger"
+        confirmText="Xóa"
+      />
     </div>
   );
 };

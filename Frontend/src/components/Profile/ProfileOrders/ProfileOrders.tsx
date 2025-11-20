@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Package, Star, Eye, ShoppingBag, Calendar, CheckCircle, RotateCcw, XCircle } from "lucide-react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import reviewApi from "../../../api/apiReview";
 import orderApi from "../../../api/orderApi";
 import { toast } from "react-toastify";
@@ -76,6 +77,10 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
   const [showReturnModal, setShowReturnModal] = useState<string | null>(null);
   const [returnReason, setReturnReason] = useState("");
   const [processingReturn, setProcessingReturn] = useState<string | null>(null);
+  
+  // State cho confirm dialogs
+  const [cancelConfirm, setCancelConfirm] = useState<{ open: boolean; orderId: string | null }>({ open: false, orderId: null });
+  const [receiveConfirm, setReceiveConfirm] = useState<{ open: boolean; orderId: string | null }>({ open: false, orderId: null });
 
   // fetch reviews theo productId
   const fetchReviews = async (productId: string) => {
@@ -182,10 +187,14 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
   };
 
   // Xử lý hủy đơn hàng
-  const handleCancelOrder = async (orderId: string) => {
-    if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác.")) {
-      return;
-    }
+  const handleCancelOrderClick = (orderId: string) => {
+    setCancelConfirm({ open: true, orderId });
+  };
+
+  const handleCancelOrder = async () => {
+    if (!cancelConfirm.orderId) return;
+    const orderId = cancelConfirm.orderId;
+    setCancelConfirm({ open: false, orderId: null });
 
     try {
       await orderApi.cancelOrder(orderId, "Khách hàng yêu cầu hủy đơn hàng");
@@ -212,19 +221,40 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
 
   // Xử lý yêu cầu trả lại hàng
   const handleRequestReturn = async (orderId: string) => {
-    if (!returnReason.trim()) {
-      toast.error("Vui lòng nhập lý do trả lại hàng");
+    const trimmedReason = returnReason.trim();
+    
+    if (!trimmedReason) {
+      toast.error("Vui lòng nhập lý do trả lại hàng", {
+        containerId: "general-toast",
+      });
+      return;
+    }
+
+    if (trimmedReason.length < 10) {
+      toast.error("Lý do trả lại hàng phải có ít nhất 10 ký tự", {
+        containerId: "general-toast",
+      });
+      return;
+    }
+
+    if (trimmedReason.length > 500) {
+      toast.error("Lý do trả lại hàng không được vượt quá 500 ký tự", {
+        containerId: "general-toast",
+      });
       return;
     }
 
     setProcessingReturn(orderId);
     try {
-      await orderApi.requestReturn(orderId, returnReason.trim());
+      await orderApi.requestReturn(orderId, trimmedReason);
       toast.success(
         <div className="flex items-center gap-2">
           <CheckCircle className="text-green-500" size={18} />
           <span>Yêu cầu trả lại hàng đã được gửi thành công!</span>
-        </div>
+        </div>,
+        {
+          containerId: "general-toast",
+        }
       );
       setShowReturnModal(null);
       setReturnReason("");
@@ -236,9 +266,12 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
         || "Lỗi khi yêu cầu trả lại hàng!";
       toast.error(
         <div className="flex items-center gap-2">
-          <CheckCircle className="text-red-500" size={18} />
+          <XCircle className="text-red-500" size={18} />
           <span>{errorMessage}</span>
-        </div>
+        </div>,
+        {
+          containerId: "general-toast",
+        }
       );
     } finally {
       setProcessingReturn(null);
@@ -359,21 +392,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                     </>
                   ) : getShippingStatus(order.statusHistory) === "Đã giao hàng" ? (
                     <button
-                      onClick={async () => {
-                        if (window.confirm("Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã nhận hàng' và bạn có thể đánh giá sản phẩm.")) {
-                          try {
-                            const response = await orderApi.confirmDelivery(order._id);
-                            toast.success("Xác nhận nhận hàng thành công!");
-                            window.location.reload();
-                          } catch (err: any) {
-                            console.error("Lỗi xác nhận nhận hàng:", err);
-                            const errorMessage = err.response?.data?.message 
-                              || err.message 
-                              || "Lỗi khi xác nhận nhận hàng!";
-                            toast.error(`Lỗi: ${errorMessage}`);
-                          }
-                        }
-                      }}
+                      onClick={() => setReceiveConfirm({ open: true, orderId: order._id })}
                       className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
                     >
                       <CheckCircle size={14} className="md:w-4 md:h-4" /> Đã nhận hàng
@@ -381,7 +400,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                   ) : canCancelOrder(order) ? (
                     <>
                       <button
-                        onClick={() => handleCancelOrder(order._id)}
+                        onClick={() => handleCancelOrderClick(order._id)}
                         className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-red-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
                       >
                         <XCircle size={14} className="md:w-4 md:h-4" /> Hủy đơn hàng
@@ -436,7 +455,20 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                 placeholder="Vui lòng nhập lý do trả lại hàng (ví dụ: Sản phẩm không đúng mô tả, bị lỗi, không vừa, v.v.)"
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 resize-none"
                 rows={4}
+                maxLength={500}
               />
+              <div className="mt-1 flex justify-between items-center">
+                <p className="text-xs text-gray-500">
+                  {returnReason.length < 10 ? (
+                    <span className="text-orange-600">Cần ít nhất 10 ký tự (còn {10 - returnReason.length} ký tự)</span>
+                  ) : (
+                    <span className="text-gray-500">Độ dài hợp lệ</span>
+                  )}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {returnReason.length}/500 ký tự
+                </p>
+              </div>
               <p className="text-xs text-gray-500 mt-2">
                 ⚠️ Bạn chỉ có thể yêu cầu trả lại hàng trong vòng 3 ngày kể từ ngày nhận hàng
               </p>
@@ -454,9 +486,9 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
               </button>
               <button
                 onClick={() => handleRequestReturn(showReturnModal)}
-                disabled={processingReturn === showReturnModal || !returnReason.trim()}
+                disabled={processingReturn === showReturnModal || !returnReason.trim() || returnReason.trim().length < 10}
                 className={`flex-1 px-4 py-2.5 text-white font-semibold rounded-lg transition-all ${
-                  processingReturn === showReturnModal || !returnReason.trim()
+                  processingReturn === showReturnModal || !returnReason.trim() || returnReason.trim().length < 10
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
                 }`}
@@ -474,6 +506,43 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
           </div>
         </div>
       )}
+
+      {/* Confirm Dialog - Hủy đơn hàng */}
+      <ConfirmDialog
+        open={cancelConfirm.open}
+        onClose={() => setCancelConfirm({ open: false, orderId: null })}
+        onConfirm={handleCancelOrder}
+        title="Xác nhận hủy đơn hàng"
+        message="Bạn có chắc chắn muốn hủy đơn hàng này? Hành động này không thể hoàn tác."
+        type="danger"
+        confirmText="Hủy đơn hàng"
+      />
+
+      {/* Confirm Dialog - Xác nhận nhận hàng */}
+      <ConfirmDialog
+        open={receiveConfirm.open}
+        onClose={() => setReceiveConfirm({ open: false, orderId: null })}
+        onConfirm={async () => {
+          if (!receiveConfirm.orderId) return;
+          const orderId = receiveConfirm.orderId;
+          setReceiveConfirm({ open: false, orderId: null });
+          try {
+            const response = await orderApi.confirmDelivery(orderId);
+            toast.success("Xác nhận nhận hàng thành công!");
+            window.location.reload();
+          } catch (err: any) {
+            console.error("Lỗi xác nhận nhận hàng:", err);
+            const errorMessage = err.response?.data?.message 
+              || err.message 
+              || "Lỗi khi xác nhận nhận hàng!";
+            toast.error(`Lỗi: ${errorMessage}`);
+          }
+        }}
+        title="Xác nhận nhận hàng"
+        message="Bạn đã nhận được hàng? Xác nhận sẽ chuyển đơn hàng sang trạng thái 'Đã nhận hàng' và bạn có thể đánh giá sản phẩm."
+        type="info"
+        confirmText="Xác nhận"
+      />
     </div>
   );
 };

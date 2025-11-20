@@ -59,6 +59,15 @@ class ProductRepository {
     );
   }
 
+  // Khôi phục sản phẩm (bán trở lại)
+  async restore(productId, storeId) {
+    return await Product.findOneAndUpdate(
+      { _id: productId, store: storeId },
+      { isActive: true },
+      { new: true }
+    );
+  }
+
   // Tăng view count
   async incrementViews(productId) {
     const product = await Product.findById(productId);

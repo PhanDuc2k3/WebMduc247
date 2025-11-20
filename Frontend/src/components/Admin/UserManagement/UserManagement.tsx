@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import userApi from "../../../api/userApi";
 import { Search, Lock, Unlock, Calendar, User as UserIcon, Loader2 } from "lucide-react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import { toast } from "react-toastify";
 import Pagination from "../Pagination";
 
@@ -73,6 +74,8 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [banConfirm, setBanConfirm] = useState<{ open: boolean; userId: string | null; userName: string | null }>({ open: false, userId: null, userName: null });
+  const [unbanConfirm, setUnbanConfirm] = useState<{ open: boolean; userId: string | null; userName: string | null }>({ open: false, userId: null, userName: null });
   const itemsPerPage = 20;
 
   const fetchUsers = async () => {
@@ -130,94 +133,50 @@ const UserManagement: React.FC = () => {
     setCurrentPage(1);
   }, [searchTerm]);
 
-  const handleBanUser = async (userId: string, userName: string) => {
-    const confirmToastId = toast.info(
-      <div>
-        <p className="font-bold mb-2">Xác nhận khóa tài khoản</p>
-        <p className="mb-3">Bạn có chắc muốn khóa tài khoản của <strong>{userName}</strong>?</p>
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              toast.dismiss(confirmToastId);
-              try {
-                await userApi.banUser(userId);
-                toast.success(`Đã khóa tài khoản của ${userName}`, {
-                  position: "top-right",
-                  containerId: "general-toast",
-                });
-                await fetchUsers();
-              } catch (error: any) {
-                console.error("❌ Lỗi khi khóa tài khoản:", error?.response || error);
-                toast.error(error?.response?.data?.message || "Không thể khóa tài khoản. Vui lòng thử lại!", {
-                  position: "top-right",
-                  containerId: "general-toast",
-                });
-              }
-            }}
-            className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors mr-2"
-          >
-            Xác nhận
-          </button>
-          <button
-            onClick={() => toast.dismiss(confirmToastId)}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Hủy
-          </button>
-        </div>
-      </div>,
-      {
-        position: "top-right",
-        containerId: "general-toast",
-        autoClose: false,
-        closeOnClick: false,
-      }
-    );
+  const handleBanUserClick = (userId: string, userName: string) => {
+    setBanConfirm({ open: true, userId, userName });
   };
 
-  const handleUnbanUser = async (userId: string, userName: string) => {
-    const confirmToastId = toast.info(
-      <div>
-        <p className="font-bold mb-2">Xác nhận gỡ khóa tài khoản</p>
-        <p className="mb-3">Bạn có chắc muốn gỡ khóa tài khoản của <strong>{userName}</strong>?</p>
-        <div className="flex gap-2">
-          <button
-            onClick={async () => {
-              toast.dismiss(confirmToastId);
-              try {
-                await userApi.unbanUser(userId);
-                toast.success(`Đã gỡ khóa tài khoản của ${userName}`, {
-                  position: "top-right",
-                  containerId: "general-toast",
-                });
-                await fetchUsers();
-              } catch (error: any) {
-                console.error("❌ Lỗi khi gỡ khóa tài khoản:", error?.response || error);
-                toast.error(error?.response?.data?.message || "Không thể gỡ khóa tài khoản. Vui lòng thử lại!", {
-                  position: "top-right",
-                  containerId: "general-toast",
-                });
-              }
-            }}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors mr-2"
-          >
-            Xác nhận
-          </button>
-          <button
-            onClick={() => toast.dismiss(confirmToastId)}
-            className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-          >
-            Hủy
-          </button>
-        </div>
-      </div>,
-      {
-        position: "top-right",
+  const handleBanUser = async () => {
+    if (!banConfirm.userId || !banConfirm.userName) return;
+    const userId = banConfirm.userId;
+    const userName = banConfirm.userName;
+    setBanConfirm({ open: false, userId: null, userName: null });
+    try {
+      await userApi.banUser(userId);
+      toast.success(`Đã khóa tài khoản của ${userName}`, {
         containerId: "general-toast",
-        autoClose: false,
-        closeOnClick: false,
-      }
-    );
+      });
+      await fetchUsers();
+    } catch (error: any) {
+      console.error("❌ Lỗi khi khóa tài khoản:", error?.response || error);
+      toast.error(error?.response?.data?.message || "Không thể khóa tài khoản. Vui lòng thử lại!", {
+        containerId: "general-toast",
+      });
+    }
+  };
+
+  const handleUnbanUserClick = (userId: string, userName: string) => {
+    setUnbanConfirm({ open: true, userId, userName });
+  };
+
+  const handleUnbanUser = async () => {
+    if (!unbanConfirm.userId || !unbanConfirm.userName) return;
+    const userId = unbanConfirm.userId;
+    const userName = unbanConfirm.userName;
+    setUnbanConfirm({ open: false, userId: null, userName: null });
+    try {
+      await userApi.unbanUser(userId);
+      toast.success(`Đã gỡ khóa tài khoản của ${userName}`, {
+        containerId: "general-toast",
+      });
+      await fetchUsers();
+    } catch (error: any) {
+      console.error("❌ Lỗi khi gỡ khóa tài khoản:", error?.response || error);
+      toast.error(error?.response?.data?.message || "Không thể gỡ khóa tài khoản. Vui lòng thử lại!", {
+        containerId: "general-toast",
+      });
+    }
   };
 
   if (loading) return (
@@ -346,7 +305,7 @@ const UserManagement: React.FC = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     {user.status === "banned" ? (
                       <button 
-                        onClick={() => handleUnbanUser(user._id, user.fullName)}
+                        onClick={() => handleUnbanUserClick(user._id, user.fullName)}
                         className="text-green-600 hover:text-green-900 hover:bg-green-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
                       >
                         <Unlock size={16} />
@@ -354,7 +313,7 @@ const UserManagement: React.FC = () => {
                       </button>
                     ) : (
                       <button 
-                        onClick={() => handleBanUser(user._id, user.fullName)}
+                        onClick={() => handleBanUserClick(user._id, user.fullName)}
                         className="text-orange-600 hover:text-orange-900 hover:bg-orange-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1"
                       >
                         <Lock size={16} />
@@ -469,6 +428,26 @@ const UserManagement: React.FC = () => {
           </p>
         </div>
       )}
+
+      <ConfirmDialog
+        open={banConfirm.open}
+        onClose={() => setBanConfirm({ open: false, userId: null, userName: null })}
+        onConfirm={handleBanUser}
+        title="Xác nhận khóa tài khoản"
+        message={banConfirm.userName ? `Bạn có chắc muốn khóa tài khoản của ${banConfirm.userName}?` : ""}
+        type="danger"
+        confirmText="Khóa tài khoản"
+      />
+
+      <ConfirmDialog
+        open={unbanConfirm.open}
+        onClose={() => setUnbanConfirm({ open: false, userId: null, userName: null })}
+        onConfirm={handleUnbanUser}
+        title="Xác nhận gỡ khóa tài khoản"
+        message={unbanConfirm.userName ? `Bạn có chắc muốn gỡ khóa tài khoản của ${unbanConfirm.userName}?` : ""}
+        type="info"
+        confirmText="Gỡ khóa"
+      />
     </div>
   );
 };

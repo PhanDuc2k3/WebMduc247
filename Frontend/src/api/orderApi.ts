@@ -66,6 +66,10 @@ const orderApi = {
   confirmReturnReceived: (orderId: string) =>
     axiosClient.post(`/api/orders/${orderId}/confirm-return-received`),
 
+  // Seller từ chối yêu cầu trả lại hàng
+  rejectReturn: (orderId: string, reason?: string) =>
+    axiosClient.post(`/api/orders/${orderId}/reject-return`, { reason }),
+
   // Admin/Seller xử lý yêu cầu trả lại hàng
   processReturn: (orderId: string, action: "approved" | "rejected", note?: string) =>
     axiosClient.post(`/api/orders/${orderId}/process-return`, { action, note }),

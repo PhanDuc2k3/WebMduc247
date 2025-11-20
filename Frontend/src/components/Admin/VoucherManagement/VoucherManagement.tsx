@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import voucherApi from '../../../api/voucherApi';
 import type { VoucherType } from '../../../api/voucherApi';
 import { Edit, Trash2, Plus, Search, Gift, Lock, Unlock, Loader2, Ticket, Calendar, DollarSign, Zap } from 'lucide-react';
+import ConfirmDialog from '../../ui/ConfirmDialog';
 import Pagination from '../Pagination';
 import { toast } from 'react-toastify';
 
@@ -82,9 +83,17 @@ const VoucherManagement: React.FC = () => {
     }
   };
 
-  const handleDelete = async (voucherId: string) => {
-    if (!window.confirm('Bạn có chắc muốn xóa voucher này?')) return;
-    
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; voucherId: string | null }>({ open: false, voucherId: null });
+
+  const handleDeleteClick = (voucherId: string) => {
+    setDeleteConfirm({ open: true, voucherId });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm.voucherId) return;
+    const voucherId = deleteConfirm.voucherId;
+    setDeleteConfirm({ open: false, voucherId: null });
+    
     try {
       await voucherApi.deleteVoucher(voucherId);
       toast.success('Đã xóa voucher thành công!');
@@ -93,7 +102,7 @@ const VoucherManagement: React.FC = () => {
       console.error('Error deleting voucher:', error);
       toast.error(error?.response?.data?.message || 'Lỗi khi xóa voucher');
     }
-  };
+  };
 
   const handleToggleStatus = async (voucherId: string) => {
     try {
@@ -365,7 +374,7 @@ const VoucherManagement: React.FC = () => {
                             </button>
                           )}
                           <button
-                            onClick={() => voucher._id && handleDelete(voucher._id)}
+                            onClick={() => voucher._id && handleDeleteClick(voucher._id)}
                             className="p-1.5 md:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                             title="Xóa"
                           >
@@ -763,6 +772,16 @@ const VoucherManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, voucherId: null })}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa voucher"
+        message="Bạn có chắc muốn xóa voucher này không?"
+        type="danger"
+        confirmText="Xóa"
+      />
     </div>
   );
 };

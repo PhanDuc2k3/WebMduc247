@@ -1368,6 +1368,70 @@ class OrderService {
     await order.save();
     return order;
   }
+
+  // Seller từ chối yêu cầu trả lại hàng
+  async rejectReturn(orderId, sellerId, reason) {
+    const order = await orderRepository.findById(orderId, true);
+    if (!order) throw new Error("Không tìm thấy đơn hàng");
+
+    // Kiểm tra yêu cầu trả lại
+    if (!order.returnRequest || order.returnRequest.status !== "pending") {
+      throw new Error("Không có yêu cầu trả lại hàng đang chờ xử lý");
+    }
+
+    // Kiểm tra quyền seller (phải là chủ cửa hàng của đơn hàng này)
+    const store = await Store.findOne({ owner: sellerId });
+    if (!store) {
+      throw new Error("Bạn chưa có cửa hàng");
+    }
+
+    // Kiểm tra đơn hàng có thuộc cửa hàng của seller không
+    const orderStoreIds = order.items.map(item => {
+      const storeId = item.storeId?._id || item.storeId;
+      return storeId ? storeId.toString() : null;
+    }).filter(Boolean);
+
+    if (!orderStoreIds.includes(store._id.toString())) {
+      throw new Error("Bạn không có quyền từ chối đơn hàng này");
+    }
+
+    // Từ chối yêu cầu trả lại
+    order.returnRequest.status = "rejected";
+    order.returnRequest.processedAt = new Date();
+    order.returnRequest.processedBy = sellerId;
+    order.returnRequest.note = reason || "Người bán đã từ chối yêu cầu trả lại hàng";
+
+    order.statusHistory.push({
+      status: "received",
+      note: `Yêu cầu trả lại hàng đã bị từ chối. ${reason || ""}`,
+      timestamp: new Date(),
+    });
+
+    // Tạo notification cho buyer
+    const userId = order.userId?._id || order.userId;
+    if (userId) {
+      const { createNotification } = require("./NotificationService");
+      try {
+        await createNotification(userId, {
+          type: "order",
+          title: `Đơn hàng #${order.orderCode}`,
+          message: `Yêu cầu trả lại hàng của bạn đã bị từ chối. ${reason || "Vui lòng liên hệ người bán để biết thêm chi tiết."}`,
+          relatedId: order._id,
+          link: `/order/${order._id}`,
+          icon: "❌",
+          metadata: {
+            orderCode: order.orderCode,
+            status: "return_rejected",
+          },
+        });
+      } catch (notifError) {
+        console.error(`⚠️ Lỗi khi tạo notification:`, notifError);
+      }
+    }
+
+    await order.save();
+    return order;
+  }
 }
 
 module.exports = new OrderService();

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import AddProductPopup from "./AddProductPopup";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import productApi from "../../../api/productApi";
 import type { ProductType } from "../../../types/product";
+import { toast } from "react-toastify";
 import {
   Eye,
   Edit,
@@ -12,6 +14,7 @@ import {
   Warehouse,
   Search,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
@@ -21,6 +24,23 @@ const ProductManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
   const [editProduct, setEditProduct] = useState<ProductType | null>(null);
+  
+  // Confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    type: "danger" | "warning" | "info";
+    onConfirm: () => void;
+    loading?: boolean;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    type: "warning",
+    onConfirm: () => {},
+    loading: false,
+  });
 
   // 🔹 Lấy danh sách sản phẩm
   const fetchProducts = async () => {
@@ -76,14 +96,59 @@ const ProductManagement: React.FC = () => {
   };
 
   // 🔹 Xóa sản phẩm
-  const handleDeleteProduct = async (id: string) => {
-    if (!window.confirm("Bạn có chắc muốn xóa sản phẩm này không?")) return;
-    try {
-      await productApi.deleteProduct(id);
-      setProducts((prev) => prev.filter((p) => p._id !== id));
-    } catch (err) {
-      console.error("❌ Xóa thất bại:", err);
-    }
+  const handleDeleteProduct = (id: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "Xác nhận xóa sản phẩm",
+      message: "Bạn có chắc chắn muốn ẩn sản phẩm này khỏi danh sách bán? Sản phẩm sẽ không hiển thị cho khách hàng nhưng vẫn được lưu trong hệ thống.",
+      type: "danger",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, loading: true }));
+        try {
+          await productApi.deleteProduct(id);
+          setProducts((prev) => prev.map((p) => (p._id === id ? { ...p, isActive: false } : p)));
+          setConfirmDialog((prev) => ({ ...prev, open: false, loading: false }));
+          toast.success("Sản phẩm đã được ẩn khỏi danh sách bán", {
+            containerId: "general-toast",
+          });
+        } catch (err) {
+          console.error("❌ Xóa thất bại:", err);
+          setConfirmDialog((prev) => ({ ...prev, loading: false }));
+          toast.error("Xóa sản phẩm thất bại", {
+            containerId: "general-toast",
+          });
+        }
+      },
+      loading: false,
+    });
+  };
+
+  // 🔹 Khôi phục sản phẩm (bán trở lại)
+  const handleRestoreProduct = (id: string) => {
+    setConfirmDialog({
+      open: true,
+      title: "Xác nhận bán trở lại",
+      message: "Bạn có chắc chắn muốn khôi phục và bán trở lại sản phẩm này? Sản phẩm sẽ hiển thị lại cho khách hàng.",
+      type: "info",
+      onConfirm: async () => {
+        setConfirmDialog((prev) => ({ ...prev, loading: true }));
+        try {
+          await productApi.restoreProduct(id);
+          setProducts((prev) => prev.map((p) => (p._id === id ? { ...p, isActive: true } : p)));
+          setConfirmDialog((prev) => ({ ...prev, open: false, loading: false }));
+          toast.success("Sản phẩm đã được khôi phục và hiển thị trở lại", {
+            containerId: "general-toast",
+          });
+        } catch (err: any) {
+          console.error("❌ Khôi phục thất bại:", err);
+          setConfirmDialog((prev) => ({ ...prev, loading: false }));
+          toast.error(err?.response?.data?.message || "Khôi phục sản phẩm thất bại", {
+            containerId: "general-toast",
+          });
+        }
+      },
+      loading: false,
+    });
   };
 
   if (loading) {
@@ -114,6 +179,18 @@ const ProductManagement: React.FC = () => {
           editProduct={editProduct}
         />
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        open={confirmDialog.open}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        type={confirmDialog.type}
+        loading={confirmDialog.loading}
+        confirmText={confirmDialog.type === "danger" ? "Xóa" : "Xác nhận"}
+      />
 
       {/* Ô thống kê */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -250,13 +327,23 @@ const ProductManagement: React.FC = () => {
                         >
                           <Edit className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                         </button>
-                        <button 
-                          title="Xóa sản phẩm"
-                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 active:scale-95 sm:hover:scale-110 flex items-center justify-center transition-all duration-300 touch-manipulation"
-                          onClick={() => handleDeleteProduct(p._id)}
-                        >
-                          <Trash2 className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-                        </button>
+                        {p.isActive ? (
+                          <button 
+                            title="Xóa sản phẩm"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 active:scale-95 sm:hover:scale-110 flex items-center justify-center transition-all duration-300 touch-manipulation"
+                            onClick={() => handleDeleteProduct(p._id)}
+                          >
+                            <Trash2 className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+                          </button>
+                        ) : (
+                          <button 
+                            title="Bán trở lại"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-purple-100 text-purple-600 hover:bg-purple-200 hover:text-purple-700 active:scale-95 sm:hover:scale-110 flex items-center justify-center transition-all duration-300 touch-manipulation"
+                            onClick={() => handleRestoreProduct(p._id)}
+                          >
+                            <RotateCcw className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

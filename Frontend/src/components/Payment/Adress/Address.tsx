@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MapPin, Plus, User, Phone, Home, Building2, Save, Check, Edit, Trash2 } from "lucide-react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import addressApi from "../../../api/addressApi";
 import type { AddressType } from "../../../api/addressApi";
 
@@ -18,6 +19,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; addressId: string | null }>({ open: false, addressId: null });
 
   const fetchAddresses = async () => {
     try {
@@ -81,8 +83,14 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
     setShowForm(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Bạn có chắc muốn xóa địa chỉ này không?")) return;
+  const handleDeleteClick = (id: string) => {
+    setDeleteConfirm({ open: true, addressId: id });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm.addressId) return;
+    const id = deleteConfirm.addressId;
+    setDeleteConfirm({ open: false, addressId: null });
     try {
       await addressApi.deleteAddress(id);
       setAddresses(addresses.filter(a => a._id !== id));
@@ -233,7 +241,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
                   Sửa
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(addr._id!); }}
+                  onClick={(e) => { e.stopPropagation(); handleDeleteClick(addr._id!); }}
                   className="px-3 sm:px-4 py-1.5 sm:py-2 bg-red-500 text-white text-xs sm:text-sm rounded-lg hover:bg-red-600 transition-all duration-300 transform hover:scale-105 flex items-center gap-1"
                 >
                   <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -244,6 +252,16 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
           ))
         )}
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, addressId: null })}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa địa chỉ"
+        message="Bạn có chắc muốn xóa địa chỉ này không?"
+        type="danger"
+        confirmText="Xóa"
+      />
     </div>
   );
 };

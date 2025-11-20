@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import type { Category } from "../../../types/store";
 
 interface Props {
@@ -24,6 +25,7 @@ const CategoryList: React.FC<Props> = ({
 }) => {
   // Local state để lưu tạm tên khi sửa
   const [editingNames, setEditingNames] = useState<Record<string, string>>({});
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; category: Category | null }>({ open: false, category: null });
 
   const handleChange = (id: string, value: string) => {
     setEditingNames({ ...editingNames, [id]: value });
@@ -104,11 +106,7 @@ const CategoryList: React.FC<Props> = ({
                 </button>
                 <button
                   className="flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 active:scale-95 sm:hover:scale-105 shadow-md transition-all duration-300 whitespace-nowrap touch-manipulation"
-                  onClick={() => {
-                    if (window.confirm(`Bạn có chắc muốn xóa danh mục "${cat.name}"?`)) {
-                      handleDeleteCategory(cat._id);
-                    }
-                  }}
+                  onClick={() => setDeleteConfirm({ open: true, category: cat })}
                 >
                   Xóa
                 </button>
@@ -117,6 +115,21 @@ const CategoryList: React.FC<Props> = ({
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, category: null })}
+        onConfirm={() => {
+          if (deleteConfirm.category) {
+            handleDeleteCategory(deleteConfirm.category._id);
+            setDeleteConfirm({ open: false, category: null });
+          }
+        }}
+        title="Xác nhận xóa danh mục"
+        message={deleteConfirm.category ? `Bạn có chắc muốn xóa danh mục "${deleteConfirm.category.name}"?` : ""}
+        type="danger"
+        confirmText="Xóa"
+      />
     </div>
   );
 };

@@ -141,6 +141,11 @@ class ProductService {
       throw new Error("Product not found");
     }
 
+    // Kiểm tra sản phẩm có đang active không
+    if (!product.isActive) {
+      throw new Error("Product not found");
+    }
+
     return product;
   }
 
@@ -226,6 +231,21 @@ class ProductService {
     return product;
   }
 
+  // Khôi phục sản phẩm (bán trở lại)
+  async restoreProduct(userId, productId) {
+    const store = await Store.findOne({ owner: userId });
+    if (!store) {
+      throw new Error("Bạn chưa có cửa hàng");
+    }
+
+    const product = await productRepository.restore(productId, store._id);
+    if (!product) {
+      throw new Error("Không tìm thấy sản phẩm của bạn");
+    }
+
+    return product;
+  }
+
   // Lấy featured products
   async getFeaturedProducts() {
     return await productRepository.find(
@@ -251,7 +271,7 @@ class ProductService {
   // Lấy sản phẩm theo store
   async getProductsByStore(storeId) {
     const products = await productRepository.find(
-      { store: storeId },
+      { store: storeId, isActive: true },
       { populate: "store" }
     );
     

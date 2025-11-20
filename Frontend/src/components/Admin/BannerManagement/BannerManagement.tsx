@@ -1,58 +1,35 @@
 // src/components/Admin/BannerManagement/BannerManagement.tsx
 import React, { useEffect, useState } from "react";
-import { Image, Megaphone, Sparkles, FileText, Link as LinkIcon, Camera, Save, Trash2, Loader2 } from "lucide-react";
+import { Image, Megaphone, Sparkles, FileText, Link as LinkIcon, Camera, Save, Trash2, Loader2, Plus } from "lucide-react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
 import bannerApi from "../../../api/bannerApi";
 import type { Banner } from "../../../api/bannerApi";
 import { toast } from "react-toastify";
 
 const BannerManagement: React.FC = () => {
-  const [mainBanner, setMainBanner] = useState<Banner | null>(null);
+  const [mainBanners, setMainBanners] = useState<Banner[]>([]);
   const [subBanners, setSubBanners] = useState<Banner[]>([]);
   const [files, setFiles] = useState<{ [key: string]: File | null }>({});
   const [loading, setLoading] = useState(true);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; banner: Banner | null }>({ open: false, banner: null });
+
+  const fetchBanners = async () => {
+    try {
+      const mainRes = await bannerApi.getBannersByType("main");
+      setMainBanners(mainRes.data || []);
+
+      const subRes = await bannerApi.getBannersByType("sub");
+      setSubBanners(subRes.data || []);
+    } catch (err) {
+      console.error("Lỗi khi fetch banner:", err);
+      setMainBanners([]);
+      setSubBanners([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchBanners = async () => {
-      try {
-        const mainRes = await bannerApi.getBannersByType("main");
-        const main = mainRes.data[0] || {
-          _id: "main-placeholder",
-          title: "",
-          link: "",
-          imageUrl: "/placeholder.png",
-          type: "main",
-        };
-        setMainBanner(main);
-
-        const subRes = await bannerApi.getBannersByType("sub");
-        const subData = subRes.data.slice(0, 2);
-        while (subData.length < 2) {
-          subData.push({
-            _id: `sub-placeholder-${subData.length}`,
-            title: "",
-            link: "",
-            imageUrl: "/placeholder.png",
-            type: "sub",
-          });
-        }
-        setSubBanners(subData);
-      } catch (err) {
-        console.error("Lỗi khi fetch banner:", err);
-        setMainBanner({
-          _id: "main-placeholder",
-          title: "",
-          link: "",
-          imageUrl: "/placeholder.png",
-          type: "main",
-        });
-        setSubBanners([
-          { _id: "sub-placeholder-0", title: "", link: "", imageUrl: "/placeholder.png", type: "sub" },
-          { _id: "sub-placeholder-1", title: "", link: "", imageUrl: "/placeholder.png", type: "sub" },
-        ]);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchBanners();
   }, []);
 
@@ -61,8 +38,11 @@ const BannerManagement: React.FC = () => {
   };
 
   const updateBannerState = (bannerId: string, field: "title" | "link", value: string) => {
-    if (mainBanner?._id === bannerId) setMainBanner({ ...mainBanner, [field]: value });
-    else setSubBanners(subBanners.map(b => (b._id === bannerId ? { ...b, [field]: value } : b)));
+    if (mainBanners.some(b => b._id === bannerId)) {
+      setMainBanners(mainBanners.map(b => (b._id === bannerId ? { ...b, [field]: value } : b)));
+    } else {
+      setSubBanners(subBanners.map(b => (b._id === bannerId ? { ...b, [field]: value } : b)));
+    }
   };
 
   const handleSave = async (banner: Banner) => {
@@ -81,8 +61,12 @@ const BannerManagement: React.FC = () => {
           imageFile: files[banner._id] || undefined,
         });
         toast.success("Đã tạo banner mới!");
-        if (banner.type === "main") setMainBanner(res.data);
-        else setSubBanners(prev => prev.map(b => (b._id === banner._id ? res.data : b)));
+        await fetchBanners(); // Refresh danh sách
+        setFiles(prev => {
+          const newFiles = { ...prev };
+          delete newFiles[banner._id];
+          return newFiles;
+        });
       } else {
         // cập nhật banner hiện tại
         await bannerApi.updateBanner(banner._id, {
@@ -91,6 +75,12 @@ const BannerManagement: React.FC = () => {
           imageFile: files[banner._id] || undefined,
         });
         toast.success("Đã lưu banner!");
+        await fetchBanners(); // Refresh danh sách
+        setFiles(prev => {
+          const newFiles = { ...prev };
+          delete newFiles[banner._id];
+          return newFiles;
+        });
       }
     } catch (err) {
       console.error(err);
@@ -98,8 +88,53 @@ const BannerManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteImage = (bannerId: string) => {
-    if (window.confirm("Bạn có chắc muốn xóa ảnh này?")) handleFileChange(bannerId, null);
+  const handleDeleteBanner = async (banner: Banner) => {
+    if (banner._id.includes("placeholder")) {
+      // Nếu là placeholder, chỉ xóa khỏi state
+      if (banner.type === "main") {
+        setMainBanners(prev => prev.filter(b => b._id !== banner._id));
+      } else {
+        setSubBanners(prev => prev.filter(b => b._id !== banner._id));
+      }
+      setFiles(prev => {
+        const newFiles = { ...prev };
+        delete newFiles[banner._id];
+        return newFiles;
+      });
+      return;
+    }
+
+    setDeleteConfirm({ open: true, banner });
+  };
+
+  const handleDelete = async () => {
+    if (!deleteConfirm.banner) return;
+    const banner = deleteConfirm.banner;
+    setDeleteConfirm({ open: false, banner: null });
+    try {
+      await bannerApi.deleteBanner(banner._id);
+      toast.success("Đã xóa banner!");
+      await fetchBanners(); // Refresh danh sách
+    } catch (err) {
+      console.error(err);
+      toast.error("Lỗi khi xóa banner!");
+    }
+  };
+
+  const handleAddBanner = (type: "main" | "sub") => {
+    const newBanner: Banner = {
+      _id: `${type}-placeholder-${Date.now()}`,
+      title: "",
+      link: "",
+      imageUrl: "/placeholder.png",
+      type: type,
+    };
+    
+    if (type === "main") {
+      setMainBanners([...mainBanners, newBanner]);
+    } else {
+      setSubBanners([...subBanners, newBanner]);
+    }
   };
 
   if (loading) return (
@@ -109,7 +144,10 @@ const BannerManagement: React.FC = () => {
     </div>
   );
 
-  const allBanners = mainBanner ? [mainBanner, ...subBanners] : subBanners;
+  const allBanners = [
+    ...mainBanners.map(b => ({ ...b, type: "main" as const })),
+    ...subBanners.map(b => ({ ...b, type: "sub" as const }))
+  ];
 
   return (
     <div className="p-3 sm:p-4 md:p-6 lg:p-8">
@@ -119,7 +157,7 @@ const BannerManagement: React.FC = () => {
           <span>Quản lý Banner</span>
         </h2>
         <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-          1 banner chính và 2 banner phụ. Chỉnh sửa hoặc thay đổi ảnh.
+          Quản lý banner chính và banner phụ. Thêm, chỉnh sửa hoặc xóa banner.
         </p>
       </div>
 
@@ -136,6 +174,24 @@ const BannerManagement: React.FC = () => {
             <Image className="w-12 h-12 md:w-16 md:h-16 text-white opacity-80" />
           </div>
         </div>
+      </div>
+
+      {/* Add Banner Buttons */}
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-3">
+        <button
+          onClick={() => handleAddBanner("main")}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold sm:font-bold text-xs sm:text-sm shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span>Thêm Banner Chính</span>
+        </button>
+        <button
+          onClick={() => handleAddBanner("sub")}
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold sm:font-bold text-xs sm:text-sm shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
+          <span>Thêm Banner Phụ</span>
+        </button>
       </div>
 
       <div className="space-y-4 sm:space-y-6">
@@ -234,10 +290,10 @@ const BannerManagement: React.FC = () => {
                   
                   <button 
                     className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-lg sm:rounded-xl font-semibold sm:font-bold text-xs sm:text-sm shadow-lg transition-all duration-300 transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2" 
-                    onClick={() => handleDeleteImage(b._id)}
+                    onClick={() => handleDeleteBanner(b)}
                   >
                     <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span>Xóa ảnh</span>
+                    <span>Xóa banner</span>
                   </button>
                 </div>
               </div>
@@ -245,6 +301,16 @@ const BannerManagement: React.FC = () => {
           </div>
         ))}
       </div>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, banner: null })}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa banner"
+        message="Bạn có chắc muốn xóa banner này không?"
+        type="danger"
+        confirmText="Xóa"
+      />
     </div>
   );
 };

@@ -49,19 +49,40 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
   };
 
   const handleRequestReturn = async () => {
-    if (!reason.trim()) {
-      toast.error("Vui lòng nhập lý do trả lại hàng");
+    const trimmedReason = reason.trim();
+    
+    if (!trimmedReason) {
+      toast.error("Vui lòng nhập lý do trả lại hàng", {
+        containerId: "general-toast",
+      });
+      return;
+    }
+
+    if (trimmedReason.length < 10) {
+      toast.error("Lý do trả lại hàng phải có ít nhất 10 ký tự", {
+        containerId: "general-toast",
+      });
+      return;
+    }
+
+    if (trimmedReason.length > 500) {
+      toast.error("Lý do trả lại hàng không được vượt quá 500 ký tự", {
+        containerId: "general-toast",
+      });
       return;
     }
 
     setLoading(true);
     try {
-      await orderApi.requestReturn(orderId, reason.trim());
+      await orderApi.requestReturn(orderId, trimmedReason);
       toast.success(
         <div className="flex items-center gap-2">
           <CheckCircle className="text-green-500" size={18} />
           <span>Yêu cầu trả lại hàng đã được gửi thành công!</span>
-        </div>
+        </div>,
+        {
+          containerId: "general-toast",
+        }
       );
       setShowModal(false);
       setReason("");
@@ -75,7 +96,10 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
         <div className="flex items-center gap-2">
           <XCircle className="text-red-500" size={18} />
           <span>{errorMessage}</span>
-        </div>
+        </div>,
+        {
+          containerId: "general-toast",
+        }
       );
     } finally {
       setLoading(false);
@@ -193,7 +217,20 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
                 placeholder="Vui lòng nhập lý do trả lại hàng (ví dụ: Sản phẩm không đúng mô tả, bị lỗi, không vừa, v.v.)"
                 className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 resize-none"
                 rows={4}
+                maxLength={500}
               />
+              <div className="mt-1 flex justify-between items-center">
+                <p className="text-xs text-gray-500">
+                  {reason.length < 10 ? (
+                    <span className="text-orange-600">Cần ít nhất 10 ký tự (còn {10 - reason.length} ký tự)</span>
+                  ) : (
+                    <span className="text-gray-500">Độ dài hợp lệ</span>
+                  )}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {reason.length}/500 ký tự
+                </p>
+              </div>
             </div>
             <div className="flex gap-3">
               <button
@@ -208,9 +245,9 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
               </button>
               <button
                 onClick={handleRequestReturn}
-                disabled={loading || !reason.trim()}
+                disabled={loading || !reason.trim() || reason.trim().length < 10}
                 className={`flex-1 px-4 py-2.5 text-white font-semibold rounded-lg transition-all ${
-                  loading || !reason.trim()
+                  loading || !reason.trim() || reason.trim().length < 10
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
                 }`}

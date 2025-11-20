@@ -8,6 +8,7 @@ const {
   getProductById,
   updateProduct,
   deleteProduct,
+  restoreProduct,
   getMyProducts,
   getProductsByStore,
   getViewsStats,
@@ -60,5 +61,6 @@ router.put(
 );
 
 router.delete("/:id", auth, authorize("seller", "admin"), deleteProduct);
+router.patch("/:id/restore", auth, authorize("seller", "admin"), restoreProduct);
 
 module.exports = router;
