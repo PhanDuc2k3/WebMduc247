@@ -1,8 +1,8 @@
 // routes/ChatbotRoutes.js
 const express = require("express");
 const router = express.Router();
-const { chatWithGemini } = require("../controllers/ChatbotController");
+const { chatWithGroq } = require("../controllers/ChatbotController");
 
-router.post("/", chatWithGemini);
+router.post("/", chatWithGroq);
 
 module.exports = router;

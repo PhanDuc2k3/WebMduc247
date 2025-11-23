@@ -21,7 +21,7 @@ const favoriteRoutes = require("./routes/FavoriteRoutes");
 const walletRoutes = require("./routes/WalletRoutes");
 const promotionRoutes = require("./routes/PromotionRoutes");
 const adminStatisticsRoutes = require("./routes/AdminStatisticsRoutes");
-// const chatbotRoutes = require("./routes/ChatbotRoutes"); // 👈 chatbot
+const chatbotRoutes = require("./routes/ChatbotRoutes"); // 👈 chatbot
 
 dotenv.config();
 connectDB();
@@ -75,7 +75,7 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/admin/statistics', adminStatisticsRoutes);
 app.use('/api/notifications', require('./routes/NotificationRoutes'));
-// app.use('/api/chatbot', chatbotRoutes); // 👈 chatbot route
+app.use('/api/chatbot', chatbotRoutes); // 👈 chatbot route
 
 // 🧩 Middleware xử lý lỗi route không tồn tại
 app.use((req, res) => {
