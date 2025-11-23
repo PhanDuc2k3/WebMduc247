@@ -16,7 +16,7 @@ if (!GEMINI_API_KEY) {
 
 // --- Khởi tạo AI ---
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-const chatModelName = 'gemini-2.0-flash';
+const chatModelName = 'gemini-1.5-flash';
 const embeddingModelName = 'gemini-embedding-001';
 
 // --- Normalize text ---
