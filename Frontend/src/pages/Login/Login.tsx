@@ -235,14 +235,14 @@ const Login: React.FC = () => {
           <div>
             <label className="block text-sm font-semibold mb-2 text-gray-700 flex items-center gap-2">
               <Mail className="w-4 h-4" />
-              Email hoặc số điện thoại
+              Email 
             </label>
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
               <input
                 type="text"
                 className="relative w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300"
-                placeholder="Nhập email hoặc số điện thoại"
+                placeholder="Nhập email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
