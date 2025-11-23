@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const mongoose = require("mongoose");
 const Redis = require("ioredis");
-const { GoogleGenAI } = require("@google/genai");
+// Groq SDK được import trong ChatbotController
 const chatbotRoutes = require("./routes/chatbotRoutes.js");
 
 dotenv.config();
@@ -40,12 +40,8 @@ const redis = new Redis(process.env.REDIS_URL, {
 redis.on("connect", () => console.log("Redis connected"));
 redis.on("error", err => console.error(" Redis error:", err));
 
-// ===== Gemini API =====
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-});
-const chatModelName = "gemini-2.0-flash";
-const embeddingModelName = "gemini-embedding-001";
+// ===== Groq API =====
+// Groq đã được khởi tạo trong ChatbotController
 
 // ===== Routes =====
 app.use("/api/chatbot", chatbotRoutes);
@@ -59,5 +55,4 @@ app.get("/", (req, res) => {
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => console.log(` Chatbot REST service running on port ${PORT}`));
 
-// ===== Export (cho chatbotRoutes.js dùng) =====
-module.exports = { redis, ai, chatModelName, embeddingModelName };
+// Export removed - Groq được khởi tạo trong ChatbotController

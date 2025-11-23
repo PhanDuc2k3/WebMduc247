@@ -1,6 +1,6 @@
 // Controllers/ChatbotController.js
 const dotenv = require("dotenv");
-const { GoogleGenAI } = require("@google/genai");
+const Groq = require("groq-sdk");
 const VectorStore = require("../models/VectorStore");
 const Product = require("../models/Product");
 const Order = require("../models/Order");
@@ -11,8 +11,8 @@ const Redis = require("ioredis");
 dotenv.config();
 
 // ====== ENV ======
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-if (!GEMINI_API_KEY) console.error("⚠️ GEMINI_API_KEY chưa thiết lập!");
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+if (!GROQ_API_KEY) console.error("⚠️ GROQ_API_KEY chưa thiết lập!");
 
 const REDIS_URL = process.env.REDIS_URL;
 if (!REDIS_URL) console.error("⚠️ REDIS_URL chưa thiết lập!");
@@ -22,10 +22,11 @@ const redis = new Redis(REDIS_URL, { tls: { rejectUnauthorized: false } });
 redis.on("connect", () => console.log("✅ Redis connected"));
 redis.on("error", (err) => console.error("❌ Redis error:", err));
 
-// ====== Gemini Models ======
-const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-const chatModelName = "gemini-2.0-flash";
-const embeddingModelName = "gemini-embedding-001";
+// ====== Groq Models ======
+const groq = new Groq({
+  apiKey: GROQ_API_KEY,
+});
+const chatModelName = "llama-3.3-70b-versatile"; // Model Groq nhanh và tốt
 
 // ====== Helpers ======
 function normalizeText(text) {
@@ -33,52 +34,66 @@ function normalizeText(text) {
   return text.toLowerCase().trim().replace(/\s+/g, " ");
 }
 
+// Groq không có embedding API, dùng text search thay thế
 async function createEmbedding(text) {
   if (!text) return [];
-  try {
-    const res = await ai.models.embedContent({
-      model: embeddingModelName,
-      contents: [text],
-    });
-    return res.embeddings?.[0]?.values || [];
-  } catch (err) {
-    console.error("❌ Embedding error:", err);
-    return [];
-  }
+  
+  // Trả về keywords để dùng cho text search
+  const keywords = normalizeText(text).split(/\s+/).filter(w => w.length > 2);
+  return keywords;
 }
 
 // ====== Retrieve top-K Products ======
-async function retrieveTopKProducts(queryVector, k = 5) {
-  if (!queryVector || queryVector.length === 0) return [];
+async function retrieveTopKProducts(queryKeywords, k = 5) {
+  if (!queryKeywords || queryKeywords.length === 0) return [];
 
-  let docs = await VectorStore.find({ type: "product" });
-  docs = docs.map((d) => ({ ...d._doc, score: cosineSim(queryVector, d.vector || []) }));
-  const topK = docs.sort((a, b) => b.score - a.score).slice(0, k);
+  try {
+    // Tìm kiếm bằng text search
+    const searchRegex = new RegExp(queryKeywords.join('|'), 'i');
+    const products = await Product.find({
+      isActive: true,
+      $or: [
+        { name: searchRegex },
+        { description: searchRegex },
+        { brand: searchRegex },
+        { category: searchRegex },
+        { tags: { $in: queryKeywords } },
+        { keywords: { $in: queryKeywords } }
+      ]
+    })
+      .limit(k * 2) // Lấy nhiều hơn để có thể rank
+      .populate('store', 'name logoUrl');
 
-  // Lấy toàn bộ thông tin sản phẩm từ database dựa vào docId
-  const productIds = topK.map((d) => d.docId).filter((id) => id);
-  const fullProducts = await Product.find({ _id: { $in: productIds }, isActive: true })
-    .populate('store', 'name logoUrl');
+    if (products.length === 0) return [];
 
-  // Map lại để có đầy đủ thông tin
-  const enrichedProducts = topK.map((doc) => {
-    const fullProduct = fullProducts.find((p) => p._id.toString() === doc.docId.toString());
-    return {
-      ...doc,
-      metadata: fullProduct || doc.metadata, // dùng full product nếu có, nếu không dùng metadata từ vector
-    };
-  });
+    // Nếu có vector store, ưu tiên products có embedding
+    const productIds = products.map(p => p._id);
+    const vectors = await VectorStore.find({
+      type: 'product',
+      docId: { $in: productIds }
+    });
 
-  // fallback nếu score quá thấp
-  if (topK.every((d) => d.score < 0.2)) {
-    const allProducts = await Product.find({ isActive: true }).populate('store', 'name logoUrl');
-    const directMatch = allProducts.filter((p) =>
-      normalizeText(p.name).includes(normalizeText(queryVector.join(" ")))
-    );
-    if (directMatch.length > 0) return directMatch.map((p) => ({ metadata: p, vector: [], score: 0.5 }));
+    // Map products với score
+    let scoredProducts = products.map(product => {
+      const vectorDoc = vectors.find(v => v.docId.toString() === product._id.toString());
+      // Ưu tiên sản phẩm có trong vector store và match tên tốt hơn
+      const nameMatch = normalizeText(product.name).includes(queryKeywords.join(' '));
+      const score = vectorDoc ? (nameMatch ? 0.9 : 0.8) : (nameMatch ? 0.7 : 0.5);
+      return {
+        metadata: product,
+        vector: vectorDoc?.vector || [],
+        score: score
+      };
+    });
+
+    // Sort theo score
+    scoredProducts.sort((a, b) => b.score - a.score);
+
+    return scoredProducts.slice(0, k);
+  } catch (error) {
+    console.error('Error retrieving products:', error);
+    return [];
   }
-
-  return enrichedProducts;
 }
 
 // ====== Detect Intent ======
@@ -115,7 +130,7 @@ async function getChatHistory(userId) {
 }
 
 // ====== Main Controller ======
-async function chatWithGemini(req, res) {
+async function chatWithGroq(req, res) {
   const { message, userId } = req.body;
   if (!message) return res.status(400).json({ reply: "Thiếu message!" });
 
@@ -132,8 +147,30 @@ async function chatWithGemini(req, res) {
     switch (action) {
       // --- FIND PRODUCT ---
       case "find_product": {
-        const queryVector = await createEmbedding(message);
-        const topProducts = await retrieveTopKProducts(queryVector, 5);
+        const queryKeywords = await createEmbedding(message);
+        
+        if (!queryKeywords.length) {
+          return res.json({ 
+            reply: "Vui lòng nhập từ khóa tìm kiếm cụ thể hơn!", 
+            products: [] 
+          });
+        }
+
+        const topProducts = await retrieveTopKProducts(queryKeywords, 5);
+
+        if (topProducts.length === 0) {
+          reply = "Mình không tìm thấy sản phẩm nào phù hợp. Bạn có thể thử tìm kiếm với từ khóa khác!";
+          
+          if (userId) {
+            await saveChatHistory(userId, "user", message);
+            await saveChatHistory(userId, "bot", reply);
+          }
+          
+          return res.json({ 
+            reply, 
+            products: [] 
+          });
+        }
 
         const dataText = topProducts
           .map((p) => {
@@ -154,7 +191,7 @@ async function chatWithGemini(req, res) {
           .join("\n\n");
 
         const prompt = `
-Bạn là chatbot e-commerce. 
+Bạn là chatbot e-commerce thân thiện của ShopMduc247. 
 Lịch sử trò chuyện:
 ${historyText || "(Không có tin nhắn trước đó)"}
 
@@ -162,16 +199,38 @@ Dữ liệu sản phẩm:
 ${dataText || "Không có sản phẩm nào phù hợp."}
 
 Người dùng hỏi: "${message}"
-Hãy trả lời ngắn gọn, thân thiện, tập trung vào gợi ý sản phẩm. Nhấn mạnh thông tin giá cả, đánh giá và cửa hàng.
+Hãy trả lời ngắn gọn, thân thiện, tối đa 100 từ. Tập trung vào gợi ý sản phẩm. Nhấn mạnh thông tin giá cả, đánh giá và cửa hàng.
         `;
 
-        const chatRes = await ai.models.generateContent({
-          model: chatModelName,
-          contents: prompt,
-          config: { temperature: 0.2 },
-        });
+        try {
+          const chatCompletion = await groq.chat.completions.create({
+            messages: [
+              {
+                role: 'system',
+                content: 'Bạn là chatbot hỗ trợ khách hàng của ShopMduc247. Trả lời ngắn gọn, thân thiện bằng tiếng Việt.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            model: chatModelName,
+            temperature: 0.2,
+            max_tokens: 200,
+          });
 
-        reply = chatRes.text || reply;
+          reply = chatCompletion.choices[0]?.message?.content || reply;
+        } catch (error) {
+          console.error('Error calling Groq API:', error);
+          // Fallback: tạo reply từ dữ liệu sản phẩm
+          if (topProducts.length > 0) {
+            reply = `Tôi tìm thấy ${topProducts.length} sản phẩm cho bạn:\n${topProducts.map((p, i) => {
+              const metadata = p.metadata || {};
+              const price = metadata.salePrice || metadata.price || 0;
+              return `${i + 1}. ${metadata.name} - ${price.toLocaleString('vi-VN')}đ`;
+            }).join('\n')}`;
+          }
+        }
 
         if (userId) {
           await saveChatHistory(userId, "user", message);
@@ -256,7 +315,7 @@ Hãy trả lời ngắn gọn, thân thiện, tập trung vào gợi ý sản ph
           .join("\n\n");
 
         const prompt = `
-Bạn là chatbot e-commerce. 
+Bạn là chatbot e-commerce thân thiện của ShopMduc247. 
 Lịch sử trò chuyện:
 ${historyText || "(Không có tin nhắn trước đó)"}
 
@@ -267,13 +326,28 @@ Người dùng hỏi: "${message}"
 Hãy giới thiệu các cửa hàng phù hợp một cách ngắn gọn, thân thiện.
         `;
 
-        const chatRes = await ai.models.generateContent({
-          model: chatModelName,
-          contents: prompt,
-          config: { temperature: 0.3 },
-        });
+        try {
+          const chatCompletion = await groq.chat.completions.create({
+            messages: [
+              {
+                role: 'system',
+                content: 'Bạn là chatbot hỗ trợ khách hàng của ShopMduc247. Trả lời ngắn gọn, thân thiện bằng tiếng Việt.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            model: chatModelName,
+            temperature: 0.3,
+            max_tokens: 300,
+          });
 
-        reply = chatRes.text || reply;
+          reply = chatCompletion.choices[0]?.message?.content || reply;
+        } catch (error) {
+          console.error('Error calling Groq API:', error);
+          reply = `Tôi tìm thấy ${stores.length} cửa hàng:\n${stores.map((s, i) => `${i + 1}. ${s.name} - ${s.category}`).join('\n')}`;
+        }
 
         if (userId) {
           await saveChatHistory(userId, "user", message);
@@ -294,21 +368,36 @@ Hãy giới thiệu các cửa hàng phù hợp một cách ngắn gọn, thân 
       // --- DEFAULT CHAT ---
       default: {
         const prompt = `
-Bạn là chatbot e-commerce thân thiện.
+Bạn là chatbot e-commerce thân thiện của ShopMduc247.
 Lịch sử trò chuyện:
 ${historyText || "(Không có lịch sử trước đó)"}
 
 Người dùng vừa nói: "${message}"
-Hãy phản hồi tự nhiên, ngắn gọn, thân thiện.
+Hãy phản hồi tự nhiên, ngắn gọn, thân thiện bằng tiếng Việt.
         `;
 
-        const chatRes = await ai.models.generateContent({
-          model: chatModelName,
-          contents: prompt,
-          config: { temperature: 0.3 },
-        });
+        try {
+          const chatCompletion = await groq.chat.completions.create({
+            messages: [
+              {
+                role: 'system',
+                content: 'Bạn là chatbot hỗ trợ khách hàng của ShopMduc247, một trang thương mại điện tử. Trả lời thân thiện, ngắn gọn bằng tiếng Việt. Nếu khách hàng hỏi về sản phẩm, hãy hướng dẫn họ cách tìm kiếm.'
+              },
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+            model: chatModelName,
+            temperature: 0.3,
+            max_tokens: 300,
+          });
 
-        reply = chatRes.text || reply;
+          reply = chatCompletion.choices[0]?.message?.content || reply;
+        } catch (error) {
+          console.error('Error calling Groq API:', error);
+          reply = 'Xin lỗi, tôi đang gặp sự cố kỹ thuật. Vui lòng thử lại sau hoặc liên hệ bộ phận hỗ trợ.';
+        }
 
         if (userId) {
           await saveChatHistory(userId, "user", message);
@@ -324,4 +413,4 @@ Hãy phản hồi tự nhiên, ngắn gọn, thân thiện.
   }
 }
 
-module.exports = { chatWithGemini };
+module.exports = { chatWithGroq };
