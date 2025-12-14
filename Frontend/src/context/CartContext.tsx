@@ -3,11 +3,10 @@ import axiosClient from "../api/axiosClient";
 import { getSocket } from "../socket";
 
 interface CartItem {
-  _id?: string; // ID của cart item từ backend
   productId: string;
   quantity: number;
   variation?: { color?: string; size?: string; additionalPrice?: number };
-  price?: number;
+  price?: number; // ✅ Thêm để tính tổng tiền
   salePrice?: number;
 }
 

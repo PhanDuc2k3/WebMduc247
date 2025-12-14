@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "@/api/axiosClient";
 import userApi from "@/api/userApi";
-import { Mail, Lock, X } from "lucide-react";
+import { Mail, Lock, X, ShoppingCart } from "lucide-react";
 import { useChat } from "../../context/chatContext";
 import { toast } from "react-toastify";
 import { getSocket } from "../../socket";
@@ -29,6 +29,16 @@ const Login: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error("Email không đúng định dạng. Vui lòng nhập lại.", {
+        containerId: "general-toast",
+      });
+      return;
+    }
+    
     setLoading(true);
     try {
       const res = await axiosClient.post("/api/users/login", { email, password });
@@ -82,20 +92,8 @@ const Login: React.FC = () => {
         }, 500);
       }
     } catch (err: any) {
-      // Interceptor đã tự động hiển thị toast cho các lỗi
-      // Chỉ cần xử lý logic điều hướng nếu cần
-      if (err.response?.status === 403 && err.response?.data?.needsVerification) {
-        const userEmail = err.response?.data?.email || email;
-        // Interceptor đã hiển thị toast và điều hướng, nhưng nếu cần điều hướng riêng:
-        setTimeout(() => {
-          if (window.location.pathname !== "/verify-email") {
-            navigate("/verify-email", { 
-              state: { email: userEmail } 
-            });
-          }
-        }, 1000);
-      }
-      // Các lỗi khác đã được interceptor xử lý tự động
+      // Interceptor đã tự động hiển thị toast và điều hướng cho lỗi needsVerification
+      // Không cần xử lý thêm ở đây để tránh trùng lặp
     } finally {
       setLoading(false);
     }
@@ -108,7 +106,9 @@ const Login: React.FC = () => {
     try {
       const res = await userApi.forgotPassword({ email: forgotEmail });
       if (res.status === 200) {
-        toast.success(res.data.message || "Mã đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email.");
+        toast.success(res.data.message || "Mã đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email.", {
+          containerId: "general-toast",
+        });
         setForgotPasswordStep("code");
       }
     } catch (err: any) {
@@ -125,7 +125,9 @@ const Login: React.FC = () => {
     try {
       const res = await userApi.verifyResetCode({ email: forgotEmail, resetCode });
       if (res.status === 200) {
-        toast.success(res.data.message || "Mã xác thực hợp lệ.");
+        toast.success(res.data.message || "Mã xác thực hợp lệ.", {
+          containerId: "general-toast",
+        });
         setForgotPasswordStep("password");
       }
     } catch (err: any) {
@@ -140,12 +142,16 @@ const Login: React.FC = () => {
     e.preventDefault();
     
     if (newPassword !== confirmPassword) {
-      toast.error("Mật khẩu xác nhận không khớp.");
+      toast.error("Mật khẩu xác nhận không khớp.", {
+        containerId: "general-toast",
+      });
       return;
     }
 
     if (newPassword.length < 6) {
-      toast.error("Mật khẩu phải có ít nhất 6 ký tự.");
+      toast.error("Mật khẩu phải có ít nhất 6 ký tự.", {
+        containerId: "general-toast",
+      });
       return;
     }
 
@@ -157,7 +163,9 @@ const Login: React.FC = () => {
         newPassword 
       });
       if (res.status === 200) {
-        toast.success(res.data.message || "Đặt lại mật khẩu thành công!");
+        toast.success(res.data.message || "Đặt lại mật khẩu thành công!", {
+          containerId: "general-toast",
+        });
         setShowForgotPassword(false);
         setForgotPasswordStep("email");
         setForgotEmail("");
@@ -180,7 +188,7 @@ const Login: React.FC = () => {
         <div className="relative mb-4">
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full blur-lg opacity-50 animate-pulse"></div>
           <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
-            <span className="text-white text-3xl font-bold">🛒</span>
+            <ShoppingCart className="text-white w-10 h-10" />
           </div>
         </div>
         <h1 className="text-3xl lg:text-4xl font-extrabold text-gray-900 gradient-text mb-2">

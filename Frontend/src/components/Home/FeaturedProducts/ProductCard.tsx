@@ -116,8 +116,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <div className="flex justify-between items-center pt-1.5 sm:pt-2 text-gray-600 text-[9px] sm:text-[10px] bg-gray-50 rounded-md sm:rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1">
         <div className="flex items-center gap-0.5">
           <span className="text-yellow-500 text-[10px] sm:text-xs">⭐</span>
-          <span className="font-semibold">{product.rating || 0}</span>
-          <span className="text-gray-500 hidden sm:inline">({product.reviewsCount || 0})</span>
+          <span className="font-semibold">{product.rating?.toFixed(1) || "0"}</span>
+          <span className="text-gray-500">({product.reviewsCount ?? 0})</span>
         </div>
         <div className="text-gray-700 font-medium text-[9px] sm:text-[10px]">Đã bán {product.soldCount || 0}</div>
       </div>

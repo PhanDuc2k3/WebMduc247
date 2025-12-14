@@ -53,7 +53,8 @@ exports.login = async (req, res) => {
     if (statusCode === 403) {
       res.status(403).json({ 
         message: error.message,
-        needsVerification: true
+        needsVerification: true,
+        email: req.body.email // Trả về email để frontend có thể điều hướng
       });
     } else {
       res.status(statusCode).json({ message: error.message || 'Lỗi máy chủ' });

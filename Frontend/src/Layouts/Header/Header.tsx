@@ -157,6 +157,12 @@ const Header: React.FC = () => {
     navigate("/login");
   };
 
+  const handleProductClick = (productId: string) => {
+    navigate(`/products/${productId}`);
+    setSearchTerm("");
+    setShowSearchResults(false);
+  };
+
   return (
     <header className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl shadow-xl border-b-2 border-gray-200">
       {/* Top bar */}

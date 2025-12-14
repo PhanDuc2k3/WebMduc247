@@ -2,8 +2,8 @@ import axios, { type AxiosInstance, type AxiosError } from "axios";
 import { toast } from "react-toastify";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL;
-  // "http://localhost:5000";
+  // import.meta.env.VITE_API_BASE_URL;
+  "http://localhost:5000";
 
 const axiosClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -133,18 +133,18 @@ axiosClient.interceptors.response.use(
           } else if (data?.needsVerification) {
             // Tài khoản chưa xác thực email
             const userEmail = data?.email || "";
-            toast.error(message || "Tài khoản chưa được xác thực. Vui lòng kiểm tra email và xác thực tài khoản.", {
-              position: "top-right",
-              autoClose: 4000,
-              containerId: "general-toast",
-              toastId: "email-verification-required",
-              onClose: () => {
-                // Chuyển đến trang xác thực email nếu không phải đang ở đó
-                if (window.location.pathname !== "/verify-email") {
-                  window.location.href = `/verify-email?email=${encodeURIComponent(userEmail)}`;
-                }
-              },
-            });
+            // Điều hướng ngay lập tức đến trang xác thực email
+            if (window.location.pathname !== "/verify-email") {
+              window.location.href = `/verify-email?email=${encodeURIComponent(userEmail)}&fromLogin=true`;
+            } else {
+              // Nếu đã ở trang verify, chỉ hiển thị toast
+              toast.error(message || "Tài khoản chưa được xác thực. Vui lòng kiểm tra email và xác thực tài khoản.", {
+                position: "top-right",
+                autoClose: 4000,
+                containerId: "general-toast",
+                toastId: "email-verification-required",
+              });
+            }
           } else {
             toast.error(message || "Bạn không có quyền thực hiện thao tác này", {
               position: "top-right",

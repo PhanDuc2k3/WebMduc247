@@ -27,14 +27,95 @@ function normalizeText(text) {
   return text.toLowerCase().trim().replace(/\s+/g, ' ');
 }
 
+// Từ điển dịch từ tiếng Việt sang tiếng Anh
+const vietnameseToEnglishMap = {
+  "máy tính xách tay": "laptop",
+  "máy tính": "computer",
+  "điện thoại": "phone",
+  "điện thoại thông minh": "smartphone",
+  "tai nghe": "headphone",
+  "tai nghe không dây": "wireless headphone",
+  "chuột máy tính": "mouse",
+  "bàn phím": "keyboard",
+  "màn hình": "monitor",
+  "macbook": "macbook",
+  "iphone": "iphone",
+  "ipad": "ipad",
+  "samsung": "samsung",
+  "apple": "apple",
+};
+
+// Hàm dịch từ tiếng Việt sang tiếng Anh
+async function translateVietnameseToEnglish(text) {
+  if (!text) return [];
+  
+  const normalized = normalizeText(text);
+  const keywords = [];
+  let remainingText = normalized;
+  
+  // Kiểm tra các cụm từ trong từ điển
+  const sortedEntries = Object.entries(vietnameseToEnglishMap).sort((a, b) => b[0].length - a[0].length);
+  for (const [vn, en] of sortedEntries) {
+    if (remainingText.includes(vn)) {
+      keywords.push(en);
+      remainingText = remainingText.replace(vn, "").trim();
+    }
+  }
+  
+  // Nếu vẫn còn text chưa được dịch, dùng Groq để dịch
+  const remainingWords = remainingText.split(/\s+/).filter(w => w.length > 2);
+  if (remainingWords.length > 0 && keywords.length === 0) {
+    try {
+      const translationPrompt = `Translate Vietnamese to English for e-commerce product search: "${text}". Return only keywords, no explanations.`;
+      const translation = await groq.chat.completions.create({
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a translation tool. Return only keywords separated by space.'
+          },
+          {
+            role: 'user',
+            content: translationPrompt
+          }
+        ],
+        model: chatModelName,
+        temperature: 0.1,
+        max_tokens: 50,
+      });
+      
+      const translated = translation.choices[0]?.message?.content?.trim() || "";
+      if (translated) {
+        const translatedKeywords = translated
+          .toLowerCase()
+          .replace(/[.,;:!?\-]/g, " ")
+          .split(/\s+/)
+          .filter(w => w.length > 2);
+        keywords.push(...translatedKeywords);
+      }
+    } catch (error) {
+      console.error('Error translating:', error);
+    }
+  }
+  
+  // Loại bỏ trùng lặp
+  return [...new Set(keywords)];
+}
+
 // --- Tạo embedding bằng text search (Groq không có embedding API) ---
 async function createEmbedding(text) {
   if (!text) return [];
   
-  // Groq không có embedding API, sử dụng text search thay thế
-  // Trả về keywords để dùng cho text search
+  // Dịch từ tiếng Việt sang tiếng Anh
+  const translatedKeywords = await translateVietnameseToEnglish(text);
+  
+  // Nếu có keywords đã dịch, dùng chúng
+  if (translatedKeywords.length > 0) {
+    return translatedKeywords;
+  }
+  
+  // Fallback: dùng từ khóa gốc
   const keywords = normalizeText(text).split(/\s+/).filter(w => w.length > 2);
-  return keywords; // Trả về array keywords thay vì vector
+  return keywords;
 }
 
 // --- Tìm top-K sản phẩm bằng text search (thay thế vector search) ---
@@ -68,28 +149,81 @@ async function retrieveTopKProducts(queryKeywords, k = 5) {
       docId: { $in: productIds }
     });
 
-    // Map products với score (nếu có vector)
+    // Map products với score - chỉ lấy sản phẩm liên quan
     scoredProducts = products.map(product => {
       const vectorDoc = vectors.find(v => v.docId.toString() === product._id.toString());
-      // Ưu tiên sản phẩm có trong vector store
-      const score = vectorDoc ? 0.8 : 0.5;
+      const normalizedName = normalizeText(product.name || "");
+      const normalizedBrand = normalizeText(product.brand || "");
+      const normalizedCategory = normalizeText(product.category || "");
+      
+      let score = 0;
+      
+      // Đếm số từ khóa match
+      const nameMatches = queryKeywords.filter(keyword => normalizedName.includes(keyword));
+      const brandMatches = queryKeywords.filter(keyword => normalizedBrand.includes(keyword));
+      const categoryMatches = queryKeywords.filter(keyword => normalizedCategory.includes(keyword));
+      
+      // Kiểm tra tags/keywords match
+      const hasTagMatch =
+        product.tags?.some((tag) =>
+          queryKeywords.some(kw => normalizeText(tag).includes(kw))
+        ) ||
+        product.keywords?.some((kw) =>
+          queryKeywords.some(k => normalizeText(kw).includes(k))
+        );
+
+      // Tính score với độ ưu tiên: name > brand/category > tags/keywords
+      // KHÔNG dùng description matching để tránh sản phẩm không liên quan
+      if (nameMatches.length > 0) {
+        // Tên sản phẩm match - score cao nhất
+        const firstKeywordMatch = normalizedName.includes(queryKeywords[0]);
+        score = firstKeywordMatch ? 0.95 : 0.85;
+        if (nameMatches.length > 1) {
+          score += 0.05;
+        }
+      } else if (brandMatches.length > 0 || categoryMatches.length > 0) {
+        // Brand hoặc category match - phải match ít nhất 1 từ khóa chính
+        const firstKeywordMatch = 
+          normalizedBrand.includes(queryKeywords[0]) || 
+          normalizedCategory.includes(queryKeywords[0]);
+        
+        if (firstKeywordMatch) {
+          score = 0.8;
+        } else if (brandMatches.length > 0 || categoryMatches.length > 0) {
+          score = 0.75;
+        }
+      } else if (hasTagMatch) {
+        // Tags/keywords match
+        score = 0.7;
+      }
+      // Nếu không match gì cả -> score = 0 (sẽ bị loại bỏ)
+
+      // Tăng điểm nếu có trong vector store (chỉ tăng nếu đã có điểm cơ bản)
+      if (vectorDoc && score > 0) {
+        score = Math.min(score + 0.05, 1.0);
+      }
+
       return {
         metadata: product,
         vector: vectorDoc?.vector || [],
-        score: score
+        score: Math.min(score, 1.0)
       };
     });
 
-    // Sort theo score và tên match
+    // Sort theo score và ưu tiên match từ khóa đầu tiên
     scoredProducts.sort((a, b) => {
-      const aNameMatch = normalizeText(a.metadata.name).includes(queryKeywords.join(' '));
-      const bNameMatch = normalizeText(b.metadata.name).includes(queryKeywords.join(' '));
-      if (aNameMatch && !bNameMatch) return -1;
-      if (!aNameMatch && bNameMatch) return 1;
+      const aHasFirstKeyword = normalizeText(a.metadata.name || "").includes(queryKeywords[0]);
+      const bHasFirstKeyword = normalizeText(b.metadata.name || "").includes(queryKeywords[0]);
+      if (aHasFirstKeyword && !bHasFirstKeyword) return -1;
+      if (!aHasFirstKeyword && bHasFirstKeyword) return 1;
       return b.score - a.score;
     });
+    
+    // Lọc sản phẩm có score >= 0.7 để chỉ lấy sản phẩm thực sự liên quan
+    // Loại bỏ hoàn toàn sản phẩm chỉ match description
+    const relevantProducts = scoredProducts.filter(p => p.score >= 0.7);
 
-    return scoredProducts.slice(0, k);
+    return relevantProducts.slice(0, k);
   } catch (error) {
     console.error('Error retrieving products:', error);
     return [];
@@ -119,6 +253,7 @@ function isProductIntent(message) {
 
 // --- Controller chat ---
 async function chatWithGroq(req, res) {
+  console.log("🔵🔵🔵 BACKEND SERVICE - Backend/controllers/ChatbotController.js - NEW CODE VERSION! 🔵🔵🔵");
   const { message, userId } = req.body;
   if (!message) return res.status(400).json({ reply: 'Thiếu message!' });
 
@@ -190,9 +325,36 @@ Hãy trả lời ngắn gọn, thân thiện, tối đa 100 từ. Tập trung v�
           }
         }
 
+        // Trả về full product data - objects, không phải strings
+        const productsData = topProducts
+          .filter((p) => p && p.metadata && p.metadata._id)
+          .map((p) => {
+            const product = p.metadata;
+            return {
+              _id: product._id.toString(),
+              name: product.name || "N/A",
+              price: product.price || 0,
+              salePrice: product.salePrice || null,
+              images: Array.isArray(product.images) ? product.images : [],
+              rating: product.rating || 0,
+              reviewsCount: product.reviewsCount || 0,
+              soldCount: product.soldCount || 0,
+              brand: product.brand || null,
+              category: product.category || null,
+              description: product.description || null,
+              store: product.store ? {
+                name: product.store.name || "N/A",
+                logoUrl: product.store.logoUrl || null
+              } : null
+            };
+          })
+          .filter((p) => p && p._id);
+
+        console.log("Backend: Returning products as objects:", productsData.length);
+
         return res.json({
           reply,
-          products: topProducts.map(p => p.metadata.name)
+          products: productsData || []
         });
       }
 

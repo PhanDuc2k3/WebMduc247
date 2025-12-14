@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import userApi from "../../api/userApi";
-import { User, Phone, Mail, Lock, CheckCircle } from "lucide-react";
+import { User, Phone, Mail, Lock, CheckCircle, ShoppingCart } from "lucide-react";
 
 const Register: React.FC = () => {
   const [activeTab, setActiveTab] = useState("register");
@@ -21,15 +20,21 @@ const handleRegister = async (e: React.FormEvent) => {
   e.preventDefault();
 
   if (!acceptTerms) {
-    toast.error("Bạn phải đồng ý với điều khoản sử dụng và chính sách bảo mật");
+    toast.error("Bạn phải đồng ý với điều khoản sử dụng và chính sách bảo mật", {
+      containerId: "general-toast",
+    });
     return;
   }
   if (!fullName || !phone || !email || !password || !confirmPassword) {
-    toast.error("Vui lòng nhập đầy đủ thông tin");
+    toast.error("Vui lòng nhập đầy đủ thông tin", {
+      containerId: "general-toast",
+    });
     return;
   }
   if (password !== confirmPassword) {
-    toast.error("Mật khẩu xác nhận không khớp");
+    toast.error("Mật khẩu xác nhận không khớp", {
+      containerId: "general-toast",
+    });
     return;
   }
 
@@ -44,6 +49,7 @@ const handleRegister = async (e: React.FormEvent) => {
 
     // Hiển thị toast và chuyển đến trang xác thực email
     toast.success(res.data.message || "Đăng ký thành công! Vui lòng kiểm tra email.", {
+      containerId: "general-toast",
       autoClose: 2000,
       onClose: () => {
         // Chuyển đến trang xác thực email với email trong state
@@ -54,7 +60,9 @@ const handleRegister = async (e: React.FormEvent) => {
     });
 
   } catch (err: any) {
-    toast.error(err.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại");
+    toast.error(err.response?.data?.message || "Đăng ký thất bại, vui lòng thử lại", {
+      containerId: "general-toast",
+    });
   } finally {
     setLoading(false);
   }
@@ -69,7 +77,7 @@ const handleRegister = async (e: React.FormEvent) => {
           <div className="relative mb-3 sm:mb-4">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full blur-lg opacity-50 animate-pulse"></div>
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
-              <span className="text-white text-2xl sm:text-3xl font-bold">🛒</span>
+              <ShoppingCart className="text-white w-8 h-8 sm:w-10 sm:h-10" />
             </div>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 gradient-text mb-2">
@@ -253,15 +261,6 @@ const handleRegister = async (e: React.FormEvent) => {
           </form>
         </div>
       </div>
-
-      <ToastContainer
-        position="top-center"
-        autoClose={2500}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        pauseOnHover
-      />
     </>
   );
 };

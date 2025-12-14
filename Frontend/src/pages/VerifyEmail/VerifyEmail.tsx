@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import React, { useState, useEffect, useRef } from "react";
+import { toast } from "react-toastify";
 import { useNavigate, useLocation } from "react-router-dom";
 import userApi from "../../api/userApi";
-import { Mail, CheckCircle, RefreshCw, ArrowLeft } from "lucide-react";
+import { Mail, CheckCircle, RefreshCw, ArrowLeft, ShoppingCart } from "lucide-react";
 
 const VerifyEmail: React.FC = () => {
   const navigate = useNavigate();
@@ -13,34 +12,106 @@ const VerifyEmail: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const hasAutoResentRef = useRef(false); // Dùng useRef để không bị reset khi re-render
 
   useEffect(() => {
     // Lấy email từ location state hoặc query params
     const emailFromState = location.state?.email;
     const emailFromQuery = new URLSearchParams(location.search).get("email");
     const emailToUse = emailFromState || emailFromQuery || "";
+    // Kiểm tra fromLogin từ cả state và query params
+    const fromLoginState = location.state?.fromLogin || false;
+    const fromLoginQuery = new URLSearchParams(location.search).get("fromLogin") === "true";
+    const fromLogin = fromLoginState || fromLoginQuery;
 
     if (emailToUse) {
       setEmail(emailToUse);
+      
+      // Nếu đến từ trang đăng nhập, tự động gửi mã xác nhận mới ngay lập tức
+      if (fromLogin) {
+        const autoResentKey = `autoResent_${emailToUse}`;
+        const hasAutoResent = sessionStorage.getItem(autoResentKey);
+        const countdownKey = `countdown_${emailToUse}`;
+        const savedCountdown = sessionStorage.getItem(countdownKey);
+        
+        // Chỉ gửi nếu:
+        // 1. Chưa gửi (không có trong sessionStorage)
+        // 2. useRef chưa được set
+        // 3. Không có countdown đang chạy (countdown = 0 hoặc không có trong sessionStorage)
+        if (!hasAutoResent && !hasAutoResentRef.current && (!savedCountdown || parseInt(savedCountdown) <= 0)) {
+          // Đánh dấu đã gửi TRƯỚC khi gọi API để tránh gửi lại (do StrictMode có thể chạy 2 lần)
+          sessionStorage.setItem(autoResentKey, "true");
+          sessionStorage.setItem(countdownKey, "60"); // Lưu countdown vào sessionStorage
+          hasAutoResentRef.current = true;
+          setCountdown(60); // Set countdown ngay để tránh gửi lại
+          
+          // Gửi mã ngay lập tức
+          (async () => {
+            try {
+              const res = await userApi.resendVerificationCode({ email: emailToUse });
+              toast.success(res.data.message || "Đã gửi mã xác thực mới. Vui lòng kiểm tra email.", {
+                containerId: "general-toast",
+              });
+            } catch (err: any) {
+              // Interceptor đã tự động hiển thị toast cho các lỗi
+              // Xóa flag và reset countdown nếu gửi thất bại để có thể thử lại
+              sessionStorage.removeItem(autoResentKey);
+              sessionStorage.removeItem(countdownKey);
+              hasAutoResentRef.current = false;
+              setCountdown(0);
+            }
+          })();
+        } else if (savedCountdown && parseInt(savedCountdown) > 0) {
+          // Nếu có countdown đang chạy, khôi phục lại
+          setCountdown(parseInt(savedCountdown));
+        }
+      }
     } else {
-      // Nếu không có email, chuyển về trang đăng ký
-      navigate("/register");
+      // Nếu không có email và không phải từ login, chuyển về trang đăng ký
+      // Nếu từ login thì đợi một chút vì có thể email đang được load từ query params
+      if (!fromLogin) {
+        navigate("/register");
+      } else {
+        // Đợi một chút để query params được load (nếu có delay)
+        const timer = setTimeout(() => {
+          const emailAfterDelay = new URLSearchParams(location.search).get("email");
+          if (!emailAfterDelay) {
+            // Nếu vẫn không có email sau khi đợi, chuyển về login
+            navigate("/login");
+          }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
     }
   }, [location, navigate]);
 
   // Countdown timer
   useEffect(() => {
     if (countdown > 0) {
+      // Lưu countdown vào sessionStorage để tránh mất khi reload
+      const countdownKey = `countdown_${email}`;
+      sessionStorage.setItem(countdownKey, countdown.toString());
+      
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
+    } else if (email) {
+      // Xóa countdown khỏi sessionStorage khi hết thời gian
+      const countdownKey = `countdown_${email}`;
+      sessionStorage.removeItem(countdownKey);
+      // Xóa flag autoResent để có thể gửi lại
+      const autoResentKey = `autoResent_${email}`;
+      sessionStorage.removeItem(autoResentKey);
+      hasAutoResentRef.current = false;
     }
-  }, [countdown]);
+  }, [countdown, email]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!verificationCode || verificationCode.length !== 6) {
-      toast.error("Vui lòng nhập mã xác thực 6 chữ số");
+      toast.error("Vui lòng nhập mã xác thực 6 chữ số", {
+        containerId: "general-toast",
+      });
       return;
     }
 
@@ -52,15 +123,15 @@ const VerifyEmail: React.FC = () => {
       });
 
       toast.success(res.data.message || "Xác thực thành công!", {
+        containerId: "general-toast",
         autoClose: 2000,
         onClose: () => {
           navigate("/login");
         },
       });
     } catch (err: any) {
-      toast.error(
-        err.response?.data?.message || "Xác thực thất bại, vui lòng thử lại"
-      );
+      // Interceptor đã tự động hiển thị toast cho các lỗi
+      // Không cần hiển thị lại toast ở đây để tránh trùng lặp
     } finally {
       setLoading(false);
     }
@@ -68,20 +139,25 @@ const VerifyEmail: React.FC = () => {
 
   const handleResendCode = async () => {
     if (countdown > 0) {
-      toast.warning(`Vui lòng đợi ${countdown} giây trước khi gửi lại`);
+      toast.warning(`Vui lòng đợi ${countdown} giây trước khi gửi lại`, {
+        containerId: "general-toast",
+      });
       return;
     }
 
     setResendLoading(true);
     try {
       const res = await userApi.resendVerificationCode({ email });
-      toast.success(res.data.message || "Đã gửi lại mã xác thực");
+      toast.success(res.data.message || "Đã gửi lại mã xác thực", {
+        containerId: "general-toast",
+      });
+      // Lưu countdown vào sessionStorage
+      const countdownKey = `countdown_${email}`;
+      sessionStorage.setItem(countdownKey, "60");
       setCountdown(60); // 60 giây countdown
     } catch (err: any) {
-      toast.error(
-        err.response?.data?.message ||
-          "Không thể gửi lại mã. Vui lòng thử lại sau"
-      );
+      // Interceptor đã tự động hiển thị toast cho các lỗi
+      // Không cần hiển thị lại toast ở đây
     } finally {
       setResendLoading(false);
     }
@@ -100,7 +176,7 @@ const VerifyEmail: React.FC = () => {
           <div className="relative mb-3 sm:mb-4">
             <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full blur-lg opacity-50 animate-pulse"></div>
             <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
-              <span className="text-white text-2xl sm:text-3xl font-bold">🛒</span>
+              <ShoppingCart className="text-white w-8 h-8 sm:w-10 sm:h-10" />
             </div>
           </div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 gradient-text mb-2">
@@ -214,15 +290,6 @@ const VerifyEmail: React.FC = () => {
           </div>
         </div>
       </div>
-
-      <ToastContainer
-        position="top-center"
-        autoClose={2500}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        pauseOnHover
-      />
     </>
   );
 };
