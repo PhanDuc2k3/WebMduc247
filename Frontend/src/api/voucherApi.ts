@@ -69,6 +69,7 @@
   export interface AvailableVouchersResponse {
     productVouchers: AvailableVoucher[];
     freeshipVouchers: AvailableVoucher[];
+    storeVouchers: AvailableVoucher[];
     subtotal: number;
   }
 
@@ -78,6 +79,9 @@
 
     // Lấy tất cả voucher cho admin (bao gồm cả đã khóa)
     getAllVouchers: () => axiosClient.get<VoucherType[]>("/api/vouchers/all"),
+
+    // Lấy voucher của cửa hàng của seller
+    getVouchersBySellerStore: () => axiosClient.get<VoucherType[]>("/api/vouchers/my-store"),
 
     // Lấy danh sách voucher khả dụng cho checkout (dựa trên selectedItems)
     getAvailableVouchersForCheckout: (data: { subtotal?: number; selectedItems?: string[] }) =>

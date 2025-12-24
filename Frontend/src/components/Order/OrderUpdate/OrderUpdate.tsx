@@ -77,8 +77,8 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 sm:p-6 border-b-2 border-gray-200">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+      <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
           Cập nhật đơn hàng
         </h2>
         <p className="text-gray-600 text-xs sm:text-sm mt-1">Chỉnh sửa trạng thái đơn hàng</p>
@@ -92,7 +92,7 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300"
+            className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] transition-all duration-300"
           >
             {statusOptions.map((s) => (
               <option key={s.value} value={s.value}>
@@ -112,7 +112,7 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
             onChange={(e) => setNote(e.target.value)}
             rows={4}
             placeholder="Nhập ghi chú cho khách hàng..."
-            className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300 resize-none"
+            className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] transition-all duration-300 resize-none"
           />
         </div>
 
@@ -124,7 +124,7 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
             className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 text-white text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
               loading
                 ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
+                : "bg-[#2F5FEB] hover:bg-[#244ACC]"
             }`}
           >
             {loading ? (

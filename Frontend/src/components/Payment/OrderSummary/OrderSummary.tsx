@@ -240,6 +240,7 @@ const orderPayload: CreateOrderData = {
       address: `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`,
     },
     paymentMethod,
+    shippingFee: shippingFee, // Thêm phí vận chuyển vào payload
     productVoucherCode: productVoucherCode || undefined,
     freeshipVoucherCode: freeshipVoucherCode || undefined,
   };
@@ -367,35 +368,19 @@ const orderPayload: CreateOrderData = {
     }
 
     if (paymentMethod === "wallet") {
-      try {
-        const totalAmount = orderData.order.total;
-        
-        // Thanh toán bằng ví (đã kiểm tra số dư ở trên)
-        const payRes = await walletApi.payWithWallet({
-          orderCode: orderData.order.orderCode,
-          amount: totalAmount,
-        });
-        
-        console.log("=== Response Wallet Payment ===", payRes.data);
-        
-        // Chỉ xóa checkoutItems khi thanh toán thành công
-        localStorage.removeItem("checkoutItems");
-        
-        toast.success(
-          "Thanh toán thành công!",
-          { containerId: "general-toast" }
-        );
-        navigate(`/order/${orderData.order._id}`);
-        return;
-      } catch (err: any) {
-        console.error("=== Lỗi thanh toán bằng ví ===", err);
-        toast.error(
-          "Không thể thanh toán bằng ví. Vui lòng thử lại sau.",
-          { containerId: "general-toast" }
-        );
-        // Không xóa checkoutItems, giữ lại để người dùng có thể thử lại
-        return; // Dừng lại, không điều hướng
-      }
+      // Với ví, tạo order và chuyển sang trang order để nhập mã xác thực
+      // Không thanh toán ngay, để người dùng nhập mã trên trang order
+      localStorage.removeItem("checkoutItems");
+      
+      toast.success(
+        "Đơn hàng đã được tạo! Vui lòng nhập mã xác thực để thanh toán.",
+        { containerId: "general-toast" }
+      );
+      
+      // Chuyển sang trang order
+      navigate(`/order/${orderData.order._id}`);
+      setIsProcessing(false);
+      return;
     }
 
     // COD - không cần thanh toán ngay, xóa checkoutItems ngay
@@ -422,6 +407,7 @@ const orderPayload: CreateOrderData = {
 };
 
 
+
   if (loading) {
     return (
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 p-4 sm:p-6 text-center animate-fade-in">
@@ -440,7 +426,7 @@ const orderPayload: CreateOrderData = {
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl border-2 border-gray-200 overflow-hidden lg:sticky lg:top-6">
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-4 sm:p-6 border-b-2 border-gray-200">
+      <div className="bg-[#2F5FEB] p-4 sm:p-6 border-b-2 border-gray-200">
         <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
           Tóm tắt đơn hàng
         </h2>
@@ -460,7 +446,7 @@ const orderPayload: CreateOrderData = {
           className={`w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg lg:text-xl transition-all duration-300 shadow-lg flex items-center justify-center gap-2 ${
             isProcessing
               ? "bg-gray-400 text-white cursor-not-allowed"
-              : "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 hover:shadow-2xl transform hover:scale-105"
+              : "bg-[#2F5FEB] text-white hover:bg-[#244ACC] hover:shadow-2xl transform hover:scale-105"
           }`}
         >
           {isProcessing ? (

@@ -12,6 +12,7 @@ export interface CreateOrderData {
     address: string;
   };
   paymentMethod: "cod" | "momo" | "vietqr" | "wallet";
+  shippingFee?: number; // Phí vận chuyển
   voucherCode?: string; // Giữ lại cho tương thích ngược
   productVoucherCode?: string; // Voucher giảm giá sản phẩm
   freeshipVoucherCode?: string; // Voucher miễn phí ship
@@ -54,6 +55,10 @@ const orderApi = {
 
   // Cập nhật đơn hàng (admin)
   updateOrder: (orderId: string, data: any) => axiosClient.put(`/api/orders/${orderId}`, data),
+
+  // Cập nhật phương thức thanh toán
+  updatePaymentMethod: (orderId: string, paymentMethod: "COD" | "MOMO" | "VIETQR" | "WALLET") =>
+    axiosClient.put(`/api/orders/${orderId}/payment-method`, { paymentMethod }),
 
   // Buyer xác nhận đã nhận hàng
   confirmDelivery: (orderId: string) => axiosClient.post(`/api/orders/${orderId}/confirm-delivery`),

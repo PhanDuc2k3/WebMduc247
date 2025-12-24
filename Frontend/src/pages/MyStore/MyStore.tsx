@@ -54,9 +54,11 @@ const MyStore: React.FC = () => {
   if (loading) {
     return (
       <div className="w-full py-16 flex items-center justify-center animate-fade-in">
-        <div className="text-center">
-          <div className="text-6xl mb-4 animate-pulse">🏪</div>
-          <p className="text-gray-600 text-lg font-medium">Đang tải...</p>
+        <div className="text-center text-[#2F5FEB]">
+          <div className="flex justify-center mb-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#2F5FEB]" />
+          </div>
+          <p className="text-lg font-medium">Đang tải...</p>
         </div>
       </div>
     );
@@ -66,8 +68,8 @@ const MyStore: React.FC = () => {
     return (
       <div className="w-full py-8 md:py-12">
         <div className="mb-8 animate-fade-in-down">
-          <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-            <span>🏪</span> {sellerRequestStatus === "rejected" ? "Đăng ký lại mở cửa hàng" : "Đăng ký mở cửa hàng"}
+          <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-[#2F5FEB] flex items-center gap-3">
+            {sellerRequestStatus === "rejected" ? "Đăng ký lại mở cửa hàng" : "Đăng ký mở cửa hàng"}
           </h1>
           <p className="text-gray-600 text-lg">
             {sellerRequestStatus === "rejected" 
@@ -98,12 +100,14 @@ const MyStore: React.FC = () => {
     return (
       <div className="w-full py-16 flex items-center justify-center animate-fade-in">
         <div className="text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
-          <div className="text-6xl mb-4 animate-pulse">⏳</div>
-          <h2 className="text-2xl font-bold mb-2 text-gray-900">Yêu cầu đang chờ duyệt</h2>
+          <div className="flex justify-center mb-4">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#2F5FEB]" />
+          </div>
+          <h2 className="text-2xl font-bold mb-2 text-[#2F5FEB]">Yêu cầu đang chờ duyệt</h2>
           <p className="text-gray-600 mb-4">Vui lòng chờ admin phê duyệt yêu cầu của bạn</p>
-          <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-            <p className="text-sm text-blue-800">
-              ⏰ Chúng tôi sẽ xem xét và liên hệ với bạn trong vòng 24 giờ
+          <div className="mt-6 p-4 bg-[#2F5FEB]/5 border border-[#2F5FEB]/30 rounded-xl">
+            <p className="text-sm text-[#2F5FEB]">
+              Chúng tôi sẽ xem xét và liên hệ với bạn trong vòng 24 giờ
             </p>
           </div>
         </div>
@@ -115,7 +119,7 @@ const MyStore: React.FC = () => {
     return (
       <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6">
         <div className="mb-6 md:mb-8 animate-fade-in-down">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-gray-900 gradient-text">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-[#2F5FEB]">
             Quản lý cửa hàng
           </h1>
           <p className="text-gray-600 text-sm sm:text-base md:text-lg">Dashboard người bán - Quản lý cửa hàng và sản phẩm</p>
@@ -123,7 +127,7 @@ const MyStore: React.FC = () => {
 
         <div className="mb-4 sm:mb-6 animate-fade-in-up delay-200">
           {/* Mobile: Horizontal scroll, Desktop: Wrap */}
-          <div className="bg-gray-100 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl shadow-inner border border-gray-200 overflow-x-auto no-scrollbar md:overflow-x-visible scroll-smooth -mx-4 sm:mx-0 px-4 sm:px-0">
+          <div className="bg-[#2F5FEB]/5 p-1 sm:p-1.5 rounded-xl sm:rounded-2xl shadow-inner border border-[#2F5FEB]/20 overflow-x-auto no-scrollbar md:overflow-x-visible scroll-smooth -mx-4 sm:mx-0 px-4 sm:px-0">
             <div className="flex md:flex-wrap gap-2 sm:gap-2.5 min-w-max md:min-w-0 pb-1 md:pb-0">
               {tabs.map((tab, index) => (
                 <button
@@ -131,11 +135,11 @@ const MyStore: React.FC = () => {
                   className={`px-3 py-2 sm:px-4 sm:py-2.5 md:px-5 md:py-3 rounded-lg sm:rounded-xl font-semibold transition-all duration-300 flex items-center justify-center relative flex-shrink-0 whitespace-nowrap touch-manipulation ${
                     activeTab === tab.key
                       ? tab.key === "manageStore"
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md scale-[1.02] min-w-[140px] sm:min-w-[160px] md:min-w-[190px] font-bold"
-                        : "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md scale-[1.02]"
+                        ? "bg-[#2F5FEB] text-white shadow-md scale-[1.02] min-w-[140px] sm:min-w-[160px] md:min-w-[190px] font-bold"
+                        : "bg-[#2F5FEB] text-white shadow-md scale-[1.02]"
                       : tab.key === "manageStore"
-                      ? "bg-white text-gray-800 hover:bg-gray-50 active:bg-gray-100 hover:text-blue-700 min-w-[140px] sm:min-w-[160px] md:min-w-[190px] border border-gray-200"
-                      : "bg-white text-gray-700 hover:bg-gray-50 active:bg-gray-100 hover:text-gray-900 border border-gray-200"
+                      ? "bg-white text-gray-800 hover:bg-[#2F5FEB]/5 active:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] min-w-[140px] sm:min-w-[160px] md:min-w-[190px] border border-[#2F5FEB]/30"
+                      : "bg-white text-gray-700 hover:bg-[#2F5FEB]/5 active:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] border border-gray-200"
                   } animate-fade-in-up`}
                   style={{ animationDelay: `${index * 0.1}s` }}
                   onClick={() => setActiveTab(tab.key)}

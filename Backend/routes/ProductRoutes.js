@@ -19,33 +19,37 @@ const {
 
 const { upload } = require('../middlewares/upload');
 const auth = require("../middlewares/authMiddleware");
+const optionalAuth = require("../middlewares/optionalAuthMiddleware");
 const authorize = require("../middlewares/roleMiddleware");
 
 router.post(
   "/",
   auth,
-  authorize("seller", "admin"),
+  authorize("seller"), // ✅ Chỉ seller mới có thể tạo sản phẩm
   upload.fields([
     { name: "mainImage", maxCount: 1 },
     { name: "subImages", maxCount: 5 },
   ]),
   createProduct
 );
-router.get("/count-by-category",getProductCountByCategory);
 
-router.get("/views-stats", getViewsStats);
+// Các route GET public: cho phép khách truy cập,
+// nếu có token thì dùng optionalAuth để có req.user (phục vụ cá nhân hóa sau này)
+router.get("/count-by-category", optionalAuth, getProductCountByCategory);
+
+router.get("/views-stats", auth, authorize("admin"), getViewsStats);
 router.patch("/:id/view", increaseView);
-router.get("/featured", getFeaturedProducts);
-router.get("/search", searchProducts);
+router.get("/featured", optionalAuth, getFeaturedProducts);
+router.get("/search", optionalAuth, searchProducts);
 router.get("/my-products", auth, authorize("seller", "admin"), getMyProducts); 
-router.get("/store/:storeId/products", getProductsByStore);
-router.get("/", getProducts);
-router.get("/:id", getProductById); 
+router.get("/store/:storeId/products", optionalAuth, getProductsByStore);
+router.get("/", optionalAuth, getProducts);
+router.get("/:id", optionalAuth, getProductById); 
 
 router.put(
   "/:id",
   auth,
-  authorize("seller", "admin"),
+  authorize("seller"), // ✅ Chỉ seller mới có thể cập nhật sản phẩm
   upload.fields([
     { name: "mainImage", maxCount: 1 },
     { name: "subImages", maxCount: 5 },
@@ -60,7 +64,7 @@ router.put(
   updateProduct
 );
 
-router.delete("/:id", auth, authorize("seller", "admin"), deleteProduct);
-router.patch("/:id/restore", auth, authorize("seller", "admin"), restoreProduct);
+router.delete("/:id", auth, authorize("seller"), deleteProduct); // ✅ Chỉ seller mới có thể xóa sản phẩm
+router.patch("/:id/restore", auth, authorize("seller"), restoreProduct); // ✅ Chỉ seller mới có thể khôi phục sản phẩm
 
 module.exports = router;

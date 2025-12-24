@@ -126,7 +126,8 @@ class ProductRepository {
         { keywords: { $in: [searchRegex] } }
       ]
     })
-    .populate('store', 'name logoUrl')
+    // Cần địa chỉ cửa hàng để filter location (Hà Nội, TP.HCM, ...)
+    .populate('store', 'name logoUrl storeAddress address')
     .limit(limit)
     .select('name description price salePrice brand category images rating reviewsCount soldCount store _id')
     .lean();

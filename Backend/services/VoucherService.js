@@ -131,6 +131,11 @@ class VoucherService {
 
     const voucher = await voucherRepository.create(data);
     
+    // Log để debug
+    if (userRole === "seller") {
+      console.log(`✅ Seller ${userId} đã tạo voucher ${voucher.code} cho store ${data.store}`);
+    }
+    
     // Tạo notification cho voucher global
     try {
       if (voucher.global && voucher.isActive) {
@@ -165,7 +170,35 @@ class VoucherService {
   }
 
   // Cập nhật voucher
-  async updateVoucher(voucherId, updateData) {
+  async updateVoucher(voucherId, updateData, userId = null, userRole = null) {
+    // Tìm voucher trước
+    const existingVoucher = await voucherRepository.findById(voucherId, true);
+    if (!existingVoucher) {
+      throw new Error("Không tìm thấy voucher");
+    }
+
+    // Kiểm tra quyền: nếu là seller, chỉ được sửa voucher của cửa hàng mình
+    if (userRole === "seller" && userId) {
+      const sellerStore = await Store.findOne({ owner: userId });
+      if (!sellerStore) {
+        throw new Error("Bạn chưa có cửa hàng");
+      }
+      
+      // Kiểm tra voucher có thuộc về cửa hàng của seller không
+      const voucherStoreId = existingVoucher.store?._id 
+        ? existingVoucher.store._id.toString() 
+        : (existingVoucher.store?.toString ? existingVoucher.store.toString() : null);
+      
+      if (voucherStoreId !== sellerStore._id.toString()) {
+        throw new Error("Bạn chỉ có thể sửa voucher của cửa hàng mình");
+      }
+
+      // Seller không được thay đổi store của voucher
+      if (updateData.store || updateData.stores || updateData.global || updateData.categories) {
+        throw new Error("Bạn không thể thay đổi phạm vi áp dụng của voucher");
+      }
+    }
+
     const voucher = await voucherRepository.update(voucherId, updateData);
     if (!voucher) {
       throw new Error("Không tìm thấy voucher");
@@ -174,7 +207,30 @@ class VoucherService {
   }
 
   // Xóa voucher
-  async deleteVoucher(voucherId) {
+  async deleteVoucher(voucherId, userId = null, userRole = null) {
+    // Tìm voucher trước
+    const existingVoucher = await voucherRepository.findById(voucherId, true);
+    if (!existingVoucher) {
+      throw new Error("Không tìm thấy voucher");
+    }
+
+    // Kiểm tra quyền: nếu là seller, chỉ được xóa voucher của cửa hàng mình
+    if (userRole === "seller" && userId) {
+      const sellerStore = await Store.findOne({ owner: userId });
+      if (!sellerStore) {
+        throw new Error("Bạn chưa có cửa hàng");
+      }
+      
+      // Kiểm tra voucher có thuộc về cửa hàng của seller không
+      const voucherStoreId = existingVoucher.store?._id 
+        ? existingVoucher.store._id.toString() 
+        : (existingVoucher.store?.toString ? existingVoucher.store.toString() : null);
+      
+      if (voucherStoreId !== sellerStore._id.toString()) {
+        throw new Error("Bạn chỉ có thể xóa voucher của cửa hàng mình");
+      }
+    }
+
     const voucher = await voucherRepository.delete(voucherId);
     if (!voucher) {
       throw new Error("Không tìm thấy voucher");
@@ -244,6 +300,32 @@ class VoucherService {
   // Lấy tất cả vouchers
   async getAllVouchers() {
     const vouchers = await voucherRepository.findAll(true);
+    return vouchers.map(v => this.cleanVoucherData(v));
+  }
+
+  // Lấy vouchers của cửa hàng của seller
+  async getVouchersBySellerStore(userId) {
+    if (!userId) {
+      throw new Error("Cần đăng nhập để xem voucher");
+    }
+    
+    const sellerStore = await Store.findOne({ owner: userId });
+    if (!sellerStore) {
+      console.log(`⚠️ Seller ${userId} chưa có cửa hàng`);
+      return []; // Seller chưa có cửa hàng thì trả về mảng rỗng
+    }
+
+    console.log(`🔍 Tìm voucher cho store: ${sellerStore._id} (${sellerStore.name})`);
+
+    // Lấy tất cả voucher của cửa hàng này (không filter theo thời gian để seller có thể xem cả voucher đã hết hạn)
+    // Sử dụng sellerStore._id trực tiếp (Mongoose sẽ tự convert)
+    const vouchers = await voucherRepository.findByQuery(
+      { store: sellerStore._id },
+      true
+    );
+    
+    console.log(`✅ Tìm thấy ${vouchers.length} voucher cho store ${sellerStore._id}`);
+    
     return vouchers.map(v => this.cleanVoucherData(v));
   }
 
@@ -569,10 +651,14 @@ class VoucherService {
 
     const productVouchers = availableVouchers.filter(v => v.voucherType === "product");
     const freeshipVouchers = availableVouchers.filter(v => v.voucherType === "freeship");
+    
+    // Lọc voucher của cửa hàng (không phải global) - có thể là product hoặc freeship
+    const storeVouchers = availableVouchers.filter(v => !v.isGlobal && (v.voucherType === "product" || v.voucherType === "freeship"));
 
     return {
       productVouchers,
       freeshipVouchers,
+      storeVouchers,
       subtotal: subtotalToUse,
     };
   }

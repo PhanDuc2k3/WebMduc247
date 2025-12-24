@@ -1,4 +1,5 @@
 import React, { type ChangeEvent } from "react";
+import { Image, Camera, ChevronLeft, ChevronRight, X } from "lucide-react";
 import type { FormDataType } from "../../../../types/product";
 
 interface Props {
@@ -61,16 +62,16 @@ const Step2Images: React.FC<Props> = ({
   return (
     <div className="animate-fade-in-up">
       <h2 className="text-2xl font-bold mb-6 gradient-text flex items-center gap-2">
-        <span>🖼️</span> Ảnh sản phẩm
+        <Image className="w-6 h-6 text-[#2F5EE9]" /> Ảnh sản phẩm
       </h2>
 
       <div className="space-y-8">
         {/* Ảnh chính */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-3">
-            <span>📸</span> Ảnh chính <span className="text-red-500">*</span>
+          <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+            <Camera className="w-5 h-5 text-[#2F5EE9]" /> Ảnh chính <span className="text-red-500">*</span>
           </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-purple-500 transition-all duration-300 bg-gray-50">
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-[#2F5EE9] transition-all duration-300 bg-gray-50">
             <input
               type="file"
               accept="image/*"
@@ -95,7 +96,9 @@ const Step2Images: React.FC<Props> = ({
                 </div>
               ) : (
                 <div className="text-center">
-                  <div className="text-6xl mb-4">📷</div>
+                  <div className="flex justify-center mb-4">
+                    <Camera className="w-16 h-16 text-gray-400" />
+                  </div>
                   <p className="text-gray-600 font-medium">Nhấn để chọn ảnh chính</p>
                   <p className="text-xs text-gray-400 mt-2">PNG, JPG, GIF tối đa 10MB</p>
                 </div>
@@ -106,10 +109,10 @@ const Step2Images: React.FC<Props> = ({
 
         {/* Ảnh phụ */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-3">
-            <span>🖼️</span> Ảnh phụ (tối đa 10 ảnh)
+          <label className="block text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+            <Image className="w-5 h-5 text-[#2F5EE9]" /> Ảnh phụ (tối đa 10 ảnh)
           </label>
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-purple-500 transition-all duration-300 bg-gray-50 mb-4">
+          <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-[#2F5EE9] transition-all duration-300 bg-gray-50 mb-4">
             <input
               type="file"
               accept="image/*"
@@ -122,7 +125,9 @@ const Step2Images: React.FC<Props> = ({
               htmlFor="sub-images"
               className="cursor-pointer flex flex-col items-center justify-center py-4"
             >
-              <div className="text-4xl mb-2">🖼️</div>
+              <div className="mb-2">
+                <Image className="w-12 h-12 text-gray-400" />
+              </div>
               <p className="text-gray-600 font-medium">Nhấn để chọn nhiều ảnh phụ</p>
               <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF tối đa 10MB mỗi ảnh</p>
             </label>
@@ -140,14 +145,14 @@ const Step2Images: React.FC<Props> = ({
                   <img
                     src={src}
                     alt={`sub-${i}`}
-                    className="w-full h-32 object-cover rounded-xl shadow-lg border-2 border-gray-200 hover:border-purple-500 transition-all duration-300"
+                    className="w-full h-32 object-cover rounded-xl shadow-lg border-2 border-gray-200 hover:border-[#2F5EE9] transition-all duration-300"
                   />
                   <button
                     type="button"
                     onClick={() => handleRemoveSubImage(i)}
-                    className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-lg font-bold shadow-lg hover:scale-110 transform transition-all duration-300 opacity-0 group-hover:opacity-100"
+                    className="absolute -top-2 -right-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center shadow-lg hover:scale-110 transform transition-all duration-300 opacity-0 group-hover:opacity-100"
                   >
-                    ×
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
               ))}
@@ -162,13 +167,13 @@ const Step2Images: React.FC<Props> = ({
           className="bg-gradient-to-r from-gray-400 to-gray-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           onClick={() => setStep(1)}
         >
-          <span>⬅️</span> Quay lại
+          <ChevronLeft className="w-5 h-5" /> Quay lại
         </button>
         <button
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+          className="bg-[#2F5EE9] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-[#244ACC]"
           onClick={() => setStep(3)}
         >
-          Tiếp tục <span>➡️</span>
+          Tiếp tục <ChevronRight className="w-5 h-5" />
         </button>
       </div>
     </div>

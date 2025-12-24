@@ -114,6 +114,25 @@ const userSchema = new mongoose.Schema({
   withdrawalCodeExpires: {
     type: Date,
     default: null
+  },
+  // Payment code for wallet payment verification
+  paymentCode: {
+    type: String,
+    default: null
+  },
+  paymentCodeExpires: {
+    type: Date,
+    default: null
+  },
+
+  // Refresh token for JWT authentication
+  refreshToken: {
+    type: String,
+    default: null
+  },
+  refreshTokenExpires: {
+    type: Date,
+    default: null
   }
 
 }, { timestamps: true });

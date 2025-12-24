@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useRef } from "react";
-import { PhotoIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, X, Package, Send, MessageCircle } from "lucide-react";
 import messageApi from "../../../api/messageApi";
 import { useChat } from "../../../context/chatContext";
 import { useLocation } from "react-router-dom";
 import { getSocket } from "../../../socket";
 import OrderMessageCard from "../OrderMessageCard/OrderMessageCard";
+import { toast } from "react-toastify";
 
 interface ChatWindowProps {
   conversationId: string;
@@ -102,6 +102,34 @@ useEffect(() => {
 
   const handleReceive = (msg: Message) => {
     if (msg.conversationId !== conversationId) return;
+    
+    // Kiểm tra xem có phải là order share không
+    const isOrderShare = msg.text?.includes("Thông tin đơn hàng") || /#ORD-/.test(msg.text || "");
+    if (isOrderShare && msg.sender !== currentUserId) {
+      // Hiển thị thông báo đặc biệt khi nhận order share
+      toast.info(
+        <div className="flex items-center gap-2">
+          <Package className="w-5 h-5 text-[#2F5FEB]" />
+          <div>
+            <strong className="block">Đã nhận đơn hàng mới</strong>
+            <span className="text-sm opacity-90">Từ {chatUser.name}</span>
+          </div>
+        </div>,
+        {
+          position: "top-right",
+          containerId: "general-toast",
+          autoClose: 5000,
+          style: {
+            background: "#1d4ed8",
+            color: "white",
+            borderRadius: "10px",
+            padding: "12px",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+          }
+        }
+      );
+    }
+    
     setMessages((prev) => {
       if (msg.tempId) {
         return prev.map((m) => (m._id === msg.tempId ? msg : m));
@@ -188,7 +216,7 @@ useEffect(() => {
   return (
     <div className="flex flex-col h-full overflow-hidden w-full bg-white">
       {/* Header */}
-      <div className="flex-none p-3 md:p-4 lg:p-5 border-b-2 border-gray-200 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center gap-2 md:gap-3 shadow-md flex-shrink-0">
+      <div className="flex-none p-3 md:p-4 lg:p-5 border-b-2 border-gray-200 bg-[#2F5FEB] flex items-center gap-2 md:gap-3 shadow-md flex-shrink-0">
         {/* Back button - only on mobile */}
         {onBack && (
           <button
@@ -218,7 +246,7 @@ useEffect(() => {
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 px-4">
-            <div className="text-4xl md:text-6xl mb-3 md:mb-4">💬</div>
+            <MessageCircle className="w-10 h-10 md:w-14 md:h-14 mb-3 md:mb-4 text-[#2F5FEB]" />
             <p className="text-sm sm:text-base md:text-lg font-medium text-center">Chưa có tin nhắn nào.</p>
             <p className="text-xs sm:text-sm md:text-sm mt-2 text-center">Bắt đầu trò chuyện ngay bây giờ!</p>
           </div>
@@ -265,7 +293,7 @@ useEffect(() => {
                   <div
                     className={`p-3 md:p-4 lg:p-4 rounded-xl md:rounded-2xl w-fit max-w-full break-words shadow-md md:shadow-lg animate-fade-in-up ${
                       isMine 
-                        ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-tr-none" 
+                        ? "bg-[#2F5FEB] text-white rounded-tr-none" 
                         : "bg-white text-gray-900 rounded-tl-none border-2 border-gray-200"
                     }`}
                   >
@@ -319,11 +347,11 @@ useEffect(() => {
         <div className="flex items-center gap-2 md:gap-3">
           <button
             type="button"
-            className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-110 flex items-center justify-center flex-shrink-0"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-[#2F5FEB] text-white hover:bg-[#244ACC] transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-110 flex items-center justify-center flex-shrink-0"
             onClick={handleOpenFileDialog}
             disabled={disabled || isSending}
           >
-            <PhotoIcon className="h-5 w-5 md:h-6 md:w-6" />
+            <ImageIcon className="h-5 w-5 md:h-6 md:w-6" />
           </button>
           <input
             type="file"
@@ -338,7 +366,7 @@ useEffect(() => {
             placeholder={
               disabled ? "Bạn cần đăng nhập để chat..." : "Nhập tin nhắn..."
             }
-            className="flex-1 p-2.5 md:p-4 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-xs sm:text-sm md:text-base"
+            className="flex-1 p-2.5 md:p-4 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none transition-all duration-300 text-xs sm:text-sm md:text-base"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -346,38 +374,19 @@ useEffect(() => {
           />
           <button
             onClick={handleSend}
-            className={`w-16 sm:w-20 md:w-28 h-10 md:h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg md:rounded-xl hover:from-blue-600 hover:to-purple-700 flex items-center justify-center gap-1 md:gap-2 font-bold text-xs md:text-sm transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-105 flex-shrink-0 ${
+            className={`w-16 sm:w-20 md:w-28 h-10 md:h-12 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl hover:bg-[#244ACC] flex items-center justify-center gap-1 md:gap-2 font-bold text-xs md:text-sm transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-105 flex-shrink-0 ${
               (disabled || isSending) && "opacity-50 cursor-not-allowed"
             }`}
             disabled={disabled || isSending}
           >
             {isSending ? (
               <>
-                <svg
-                  className="animate-spin h-4 w-4 md:h-5 md:w-5 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8H4z"
-                  ></path>
-                </svg>
+                <Send className="animate-spin h-4 w-4 md:h-5 md:w-5 text-white" />
                 <span className="hidden sm:inline text-xs md:text-sm">Gửi...</span>
               </>
             ) : (
               <>
-                <span className="text-xs md:text-base">🚀</span>
+                <Send className="w-4 h-4 md:w-5 md:h-5" />
                 <span className="hidden sm:inline">Gửi</span>
               </>
             )}

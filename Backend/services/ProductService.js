@@ -1,5 +1,6 @@
 const productRepository = require('../repositories/ProductRepository');
 const Store = require('../models/Store');
+const Product = require('../models/Product');
 const Fuse = require("fuse.js");
 
 class ProductService {
@@ -72,7 +73,8 @@ class ProductService {
       name, description, price, salePrice, brand, category, subCategory,
       quantity: totalQuantity, model, sku: finalSKU, variations: parsedVariations,
       specifications: parsedSpecifications, seoTitle, seoDescription,
-      keywords: parsedKeywords, tags: parsedTags, store: store._id, images
+      keywords: parsedKeywords, tags: parsedTags, store: store._id, images,
+      isActive: true // ✅ Đảm bảo sản phẩm mới được active để hiển thị trong danh sách công khai
     });
 
     return product;
@@ -164,56 +166,121 @@ class ProductService {
 
   // Cập nhật sản phẩm
   async updateProduct(userId, productId, updateData, files) {
-    const store = await Store.findOne({ owner: userId });
-    if (!store) {
-      throw new Error("Bạn chưa có cửa hàng");
-    }
+    try {
+      console.log("[updateProduct] 📥 Received updateData:", {
+        keys: Object.keys(updateData),
+        tags: updateData.tags,
+        tagsType: typeof updateData.tags,
+        variations: updateData.variations,
+        variationsType: typeof updateData.variations,
+      });
 
-    if (!require('mongoose').Types.ObjectId.isValid(productId)) {
-      throw new Error("Invalid product ID");
-    }
-
-    const jsonFields = ["variations", "specifications", "tags", "features", "keywords"];
-    jsonFields.forEach(f => {
-      if (updateData[f]) {
-        if (typeof updateData[f] === "string") {
-          try {
-            updateData[f] = JSON.parse(updateData[f]);
-          } catch {
-            updateData[f] = [];
-          }
-        }
-      } else {
-        updateData[f] = [];
+      const store = await Store.findOne({ owner: userId });
+      if (!store) {
+        throw new Error("Bạn chưa có cửa hàng");
       }
-    });
 
-    // Xử lý hình ảnh
-    let images = [];
-    if (files?.mainImage?.length) {
-      images.push(files.mainImage[0].path);
-    } else if (updateData.existingMainImage) {
-      images.push(updateData.existingMainImage);
-    }
-    
-    if (files?.subImages?.length) {
-      images.push(...files.subImages.map(f => f.path));
-    }
-    
-    if (updateData.existingSubImages) {
-      images.push(...(Array.isArray(updateData.existingSubImages)
-        ? updateData.existingSubImages
-        : [updateData.existingSubImages]));
-    }
+      if (!require('mongoose').Types.ObjectId.isValid(productId)) {
+        throw new Error("Invalid product ID");
+      }
 
-    if (images.length) updateData.images = images;
+      // Xử lý các trường JSON từ form data (bao gồm tags, variations, specifications, features, keywords)
+      const jsonFields = ["variations", "specifications", "features", "tags", "keywords"];
+      jsonFields.forEach(f => {
+        if (updateData[f] !== undefined && updateData[f] !== null) {
+          console.log(`[updateProduct] 🔹 Processing ${f}:`, {
+            value: updateData[f],
+            type: typeof updateData[f],
+            isArray: Array.isArray(updateData[f])
+          });
 
-    const product = await productRepository.update(productId, store._id, updateData);
-    if (!product) {
-      throw new Error("Không tìm thấy sản phẩm của bạn");
+          if (typeof updateData[f] === "string") {
+            try {
+              updateData[f] = JSON.parse(updateData[f]);
+              console.log(`[updateProduct] ✅ Parsed ${f} from JSON string:`, updateData[f]);
+            } catch (err) {
+              console.error(`[updateProduct] ❌ Error parsing ${f} as JSON:`, err);
+              // Nếu không parse được JSON và là tags/keywords, coi như single value
+              if (f === "tags" || f === "keywords") {
+                updateData[f] = updateData[f].trim() ? [updateData[f].trim()] : [];
+              } else {
+                updateData[f] = [];
+              }
+            }
+          }
+          
+          // Đảm bảo tags và keywords là array và clean data
+          if ((f === "tags" || f === "keywords") && Array.isArray(updateData[f])) {
+            updateData[f] = updateData[f]
+              .filter(v => v != null && v !== '')
+              .map(v => typeof v === 'string' ? v.trim() : v)
+              .filter(v => v); // Loại bỏ các giá trị rỗng sau khi trim
+          }
+          
+          console.log(`[updateProduct] ✅ ${f} final value:`, updateData[f]);
+        }
+        // Nếu không có trong updateData, không set (giữ nguyên giá trị hiện có)
+      });
+
+      // ✅ Tính lại số lượng tồn kho từ variations nếu có variations trong update
+      if (updateData.variations && Array.isArray(updateData.variations)) {
+        let totalQuantity = 0;
+        updateData.variations.forEach(v => {
+          if (v.options && Array.isArray(v.options)) {
+            v.options.forEach(opt => {
+              opt.stock = Number(opt.stock) || 0;
+              opt.additionalPrice = Number(opt.additionalPrice) || 0;
+              totalQuantity += opt.stock;
+            });
+          }
+        });
+        updateData.quantity = totalQuantity;
+        console.log(`[updateProduct] ✅ Calculated total quantity from variations: ${totalQuantity}`);
+      }
+
+      // Xử lý hình ảnh
+      let images = [];
+      if (files?.mainImage?.length) {
+        images.push(files.mainImage[0].path);
+      } else if (updateData.existingMainImage) {
+        images.push(updateData.existingMainImage);
+      }
+      
+      if (files?.subImages?.length) {
+        images.push(...files.subImages.map(f => f.path));
+      }
+      
+      if (updateData.existingSubImages) {
+        images.push(...(Array.isArray(updateData.existingSubImages)
+          ? updateData.existingSubImages
+          : [updateData.existingSubImages]));
+      }
+
+      if (images.length) updateData.images = images;
+
+      // Loại bỏ các field không cần update vào DB
+      delete updateData.existingMainImage;
+      delete updateData.existingSubImages;
+
+      console.log("[updateProduct] 📤 Final updateData:", {
+        keys: Object.keys(updateData),
+        tags: updateData.tags,
+        variationsCount: updateData.variations?.length,
+        imagesCount: updateData.images?.length,
+      });
+
+      const product = await productRepository.update(productId, store._id, updateData);
+      if (!product) {
+        throw new Error("Không tìm thấy sản phẩm của bạn");
+      }
+
+      console.log("[updateProduct] ✅ Product updated successfully:", product._id);
+      return product;
+    } catch (error) {
+      console.error("[updateProduct] ❌ Error:", error);
+      console.error("[updateProduct] ❌ Error stack:", error.stack);
+      throw error;
     }
-
-    return product;
   }
 
   // Xóa sản phẩm
@@ -258,14 +325,15 @@ class ProductService {
     );
   }
 
-  // Lấy sản phẩm của tôi
+  // Lấy sản phẩm của tôi (lấy tất cả, bao gồm cả isActive = false để seller quản lý)
   async getMyProducts(userId) {
     const store = await Store.findOne({ owner: userId });
     if (!store) {
       throw new Error("Bạn chưa có cửa hàng");
     }
 
-    return await productRepository.findByStore(store._id);
+    // ✅ Lấy tất cả sản phẩm của store, không filter isActive để seller có thể quản lý cả sản phẩm đã xóa/ngừng bán
+    return await Product.find({ store: store._id }).populate("store", "name logoUrl").sort({ createdAt: -1 });
   }
 
   // Lấy sản phẩm theo store

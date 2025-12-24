@@ -41,9 +41,15 @@ export interface SendWithdrawalCodeData {
   accountNumber: string;
 }
 
+export interface SendPaymentCodeData {
+  orderCode: string;
+  amount: number;
+}
+
 export interface PayWithWalletData {
   orderCode: string;
   amount: number;
+  emailCode: string;
 }
 
 const walletApi = {
@@ -74,6 +80,13 @@ const walletApi = {
   withdraw: (data: WithdrawData) =>
     axiosClient.post<{ message: string; wallet: { balance: number; transaction: Transaction } }>(
       "/api/wallet/withdraw",
+      data
+    ),
+
+  // Gửi mã xác thực email cho thanh toán bằng ví
+  sendPaymentCode: (data: SendPaymentCodeData) =>
+    axiosClient.post<{ message: string }>(
+      "/api/wallet/pay/send-code",
       data
     ),
 

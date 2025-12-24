@@ -38,7 +38,7 @@ const ProfileFavorites: React.FC = () => {
     return (
       <div className="bg-white rounded-xl md:rounded-2xl shadow p-4 md:p-6 lg:p-8">
         <div className="text-center py-8 md:py-12 lg:py-16">
-          <Clock size={40} className="mx-auto mb-3 md:mb-4 animate-pulse text-gray-400" />
+          <Clock size={40} className="mx-auto mb-3 md:mb-4 animate-pulse text-[#2F5FEB]" />
           <p className="text-gray-500 text-sm md:text-base font-medium">Đang tải yêu thích...</p>
         </div>
       </div>
@@ -53,28 +53,28 @@ const ProfileFavorites: React.FC = () => {
           onClick={() => setActiveTab("products")}
           className={`pb-2 md:pb-3 px-3 md:px-4 font-bold transition-all duration-300 relative flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm md:text-base ${
             activeTab === "products"
-              ? "text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
+              ? "text-[#2F5FEB]"
+              : "text-gray-500 hover:text-[#2F5FEB]"
           }`}
         >
-          <ShoppingBag size={16} className="md:w-[18px] md:h-[18px]" />
+          <ShoppingBag size={16} className="md:w-[18px] md:h-[18px] text-[#2F5FEB]" />
           Sản phẩm ({products.length})
           {activeTab === "products" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 md:h-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"></span>
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 md:h-1 bg-[#2F5FEB] rounded-full"></span>
           )}
         </button>
         <button
           onClick={() => setActiveTab("stores")}
           className={`pb-2 md:pb-3 px-3 md:px-4 font-bold transition-all duration-300 relative flex items-center gap-1.5 md:gap-2 text-xs sm:text-sm md:text-base ${
             activeTab === "stores"
-              ? "text-blue-600"
-              : "text-gray-500 hover:text-gray-700"
+              ? "text-[#2F5FEB]"
+              : "text-gray-500 hover:text-[#2F5FEB]"
           }`}
         >
-          <Store size={16} className="md:w-[18px] md:h-[18px]" />
+          <Store size={16} className="md:w-[18px] md:h-[18px] text-[#2F5FEB]" />
           Cửa hàng ({stores.length})
           {activeTab === "stores" && (
-            <span className="absolute bottom-0 left-0 right-0 h-0.5 md:h-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"></span>
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 md:h-1 bg-[#2F5FEB] rounded-full"></span>
           )}
         </button>
       </div>
@@ -109,7 +109,7 @@ const ProfileFavorites: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-8 md:py-12 lg:py-16">
-              <Heart size={48} className="mx-auto mb-3 md:mb-4 text-gray-300" />
+              <Heart size={48} className="mx-auto mb-3 md:mb-4 text-[#2F5FEB]" />
               <p className="text-gray-500 text-sm sm:text-base md:text-lg font-medium mb-2">
                 Chưa có sản phẩm yêu thích nào
               </p>
@@ -155,7 +155,7 @@ const ProfileFavorites: React.FC = () => {
             </div>
           ) : (
             <div className="text-center py-8 md:py-12 lg:py-16">
-              <Store size={48} className="mx-auto mb-3 md:mb-4 text-gray-300" />
+              <Store size={48} className="mx-auto mb-3 md:mb-4 text-[#2F5FEB]" />
               <p className="text-gray-500 text-sm sm:text-base md:text-lg font-medium mb-2">
                 Chưa có cửa hàng yêu thích nào
               </p>

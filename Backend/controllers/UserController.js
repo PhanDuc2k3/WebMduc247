@@ -45,6 +45,7 @@ exports.login = async (req, res) => {
     res.status(200).json({
       message: 'Đăng nhập thành công',
       token: result.token,
+      refreshToken: result.refreshToken,
       user: result.user
     });
   } catch (error) {
@@ -73,6 +74,31 @@ exports.logout = async (req, res) => {
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({ message: 'Lỗi máy chủ', error: error.message });
+  }
+};
+
+// ==========================
+// REFRESH ACCESS TOKEN
+// ==========================
+exports.refreshToken = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    
+    if (!refreshToken) {
+      return res.status(400).json({ message: 'Refresh token là bắt buộc' });
+    }
+
+    const result = await userService.refreshAccessToken(refreshToken);
+    
+    res.status(200).json({
+      message: 'Làm mới token thành công',
+      token: result.token
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error);
+    const statusCode = error.message.includes('không hợp lệ') || 
+                       error.message.includes('hết hạn') ? 401 : 400;
+    res.status(statusCode).json({ message: error.message || 'Lỗi máy chủ' });
   }
 };
 
@@ -116,6 +142,18 @@ exports.updateProfile = async (req, res) => {
 // ==========================
 // QUẢN LÝ NGƯỜI DÙNG (ADMIN)
 // ==========================
+// Lấy thông tin user theo ID (public endpoint - chỉ trả về thông tin cơ bản)
+exports.getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await userService.getUserById(id);
+    res.status(200).json({ user });
+  } catch (error) {
+    const statusCode = error.message.includes('không tồn tại') ? 404 : 500;
+    res.status(statusCode).json({ message: error.message || 'Lỗi server' });
+  }
+};
+
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await userService.getAllUsers();

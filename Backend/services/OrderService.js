@@ -933,6 +933,32 @@ class OrderService {
     };
   }
 
+  // Cập nhật phương thức thanh toán (chỉ đổi phương thức, không đánh dấu đã thanh toán)
+  async updatePaymentMethod(orderId, userId, paymentMethod) {
+    const order = await orderRepository.findById(orderId);
+    if (!order) throw new Error("Không tìm thấy đơn hàng");
+
+    // Kiểm tra quyền sở hữu
+    const orderUserId = order.userId?._id || order.userId;
+    if (orderUserId.toString() !== userId.toString()) {
+      throw new Error("Bạn không có quyền cập nhật đơn hàng này");
+    }
+
+    // Kiểm tra trạng thái thanh toán - chỉ cho phép đổi nếu chưa thanh toán
+    if (order.paymentInfo.status === "paid") {
+      throw new Error("Không thể đổi phương thức thanh toán khi đơn hàng đã được thanh toán");
+    }
+
+    // Cập nhật payment method
+    await orderRepository.updatePaymentMethod(orderId, paymentMethod);
+
+    const updatedOrder = await orderRepository.findById(orderId);
+    return {
+      orderId: updatedOrder._id,
+      paymentInfo: updatedOrder.paymentInfo
+    };
+  }
+
   // Yêu cầu trả lại hàng
   async requestReturn(orderId, userId, reason) {
     const order = await orderRepository.findById(orderId, true);

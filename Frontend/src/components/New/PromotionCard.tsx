@@ -49,7 +49,7 @@ const PromotionCard: React.FC<PromotionCardProps> = ({
             {tags.map((tag, i) => (
               <span
                 key={i}
-                className="text-xs font-black px-3 py-1.5 rounded-full bg-gradient-to-r from-red-500 to-pink-600 text-white shadow-lg animate-pulse"
+                className="text-xs font-black px-3 py-1.5 rounded-full bg-[#2F5FEB] text-white shadow-md"
               >
                 {tag}
               </span>
@@ -58,25 +58,25 @@ const PromotionCard: React.FC<PromotionCardProps> = ({
         )}
 
         {/* Tiêu đề */}
-        <h2 className="text-xl font-black text-gray-900 mb-3 leading-tight">{title}</h2>
+        <h2 className="text-xl font-black text-gray-900 mb-3 leading-tight group-hover:text-[#2F5FEB] transition-colors duration-300">{title}</h2>
 
         {/* Mô tả */}
         <p className="text-sm text-gray-700 mb-4 leading-relaxed font-medium line-clamp-3">{description}</p>
 
         {/* Thời gian & lượt xem */}
-        <div className="flex items-center justify-between text-sm mb-4 p-3 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl">
+        <div className="flex items-center justify-between text-sm mb-4 p-3 bg-gradient-to-r from-gray-50 to-[#2F5FEB]/10 rounded-xl">
           <div className="flex items-center gap-2 text-gray-700 font-bold">
-            <CalendarDays size={18} className="text-blue-600" />
+            <CalendarDays size={18} className="text-[#2F5FEB]" />
             <span>{date}</span>
           </div>
           <div className="flex items-center gap-2 text-gray-700 font-bold">
-            <Eye size={18} className="text-purple-600" />
+            <Eye size={18} className="text-[#2F5FEB]" />
             <span>{views.toLocaleString()} lượt xem</span>
           </div>
         </div>
 
         {/* Nút xem chi tiết */}
-        <button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-black shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 group-hover:from-blue-700 group-hover:to-purple-700">
+        <button className="w-full bg-[#2F5FEB] text-white py-3 rounded-xl font-black shadow-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300 hover:bg-[#244ACC]">
           Xem chi tiết →
         </button>
       </div>

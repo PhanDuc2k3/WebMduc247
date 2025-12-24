@@ -1,5 +1,6 @@
 // VoucherDashboard.tsx
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import ConfirmDialog from "../../ui/ConfirmDialog";
 import {
   Percent,
@@ -8,7 +9,6 @@ import {
   ShoppingCart,
   Plus,
   Pencil,
-  Eye,
   Trash2,
   Search,
 } from "lucide-react";
@@ -26,11 +26,13 @@ const VoucherDashboard: React.FC = () => {
   const [vouchers, setVouchers] = useState<Voucher[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [editingVoucher, setEditingVoucher] = useState<Voucher | null>(null);
 
   const fetchVouchers = async () => {
     try {
       setLoading(true);
-      const res = await voucherApi.getAvailableVouchers();
+      // Dùng API mới để chỉ lấy voucher của cửa hàng của seller
+      const res = await voucherApi.getVouchersBySellerStore();
       // Map từ VoucherType sang Voucher để có đầy đủ title & condition
       const mapped: Voucher[] = (res.data || []).map((v) => ({
         ...v,
@@ -70,35 +72,48 @@ const VoucherDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="p-4 sm:p-8 text-center animate-fade-in">
-        <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-4 border-b-4 border-blue-600 mx-auto mb-4"></div>
-        <p className="text-gray-600 text-sm sm:text-lg font-medium">Đang tải voucher...</p>
+        <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-4 border-b-4 border-[#2F5FEB] mx-auto mb-4"></div>
+        <p className="text-[#2F5FEB] text-sm sm:text-lg font-medium">Đang tải voucher...</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in-up">
-      {showForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4 animate-fade-in">
-          <div className="relative w-full max-w-2xl bg-white rounded-xl sm:rounded-2xl shadow-2xl animate-scale-in">
-            <div className="absolute -top-10 sm:-top-12 right-0">
-              <button
-                onClick={() => setShowForm(false)}
-                className="text-white bg-gray-800 hover:bg-gray-700 px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-colors touch-manipulation"
-              >
-                ✕ Đóng
-              </button>
+      {showForm &&
+        createPortal(
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 sm:p-6 animate-fade-in"
+            onClick={() => setShowForm(false)}
+          >
+            <div
+              className="relative bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute -top-10 sm:-top-12 right-0">
+                <button
+                  onClick={() => setShowForm(false)}
+                  className="text-white bg-[#2F5FEB] hover:bg-[#244ACC] px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-colors touch-manipulation shadow-lg"
+                >
+                  ✕ Đóng
+                </button>
+              </div>
+              <VoucherForm
+                voucher={editingVoucher || undefined}
+                onSuccess={() => {
+                  fetchVouchers();
+                  setShowForm(false);
+                  setEditingVoucher(null);
+                }}
+                onClose={() => {
+                  setShowForm(false);
+                  setEditingVoucher(null);
+                }}
+              />
             </div>
-            <VoucherForm
-              onSuccess={() => {
-                fetchVouchers();
-                setShowForm(false);
-              }}
-              onClose={() => setShowForm(false)}
-            />
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         <StatBox
@@ -140,22 +155,25 @@ const VoucherDashboard: React.FC = () => {
           <input
             type="text"
             placeholder="Tìm kiếm voucher..."
-            className="w-full px-4 sm:px-5 py-2.5 sm:py-3 pl-10 sm:pl-12 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300"
+            className="w-full px-4 sm:px-5 py-2.5 sm:py-3 pl-10 sm:pl-12 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300"
           />
           <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
         </div>
         <button
-          onClick={() => setShowForm(true)}
-          className="w-full sm:w-auto px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-2 hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 touch-manipulation whitespace-nowrap"
+          onClick={() => {
+            setEditingVoucher(null);
+            setShowForm(true);
+          }}
+          className="w-full sm:w-auto px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 touch-manipulation whitespace-nowrap"
         >
           <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> <span>Tạo voucher mới</span>
         </button>
       </div>
 
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
-        <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 sm:p-6 border-b-2 border-gray-200">
-          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-            <BadgeDollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+        <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-[#2F5FEB]/30">
+          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+            <BadgeDollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-[#2F5FEB]" />
             <span>Danh sách voucher</span>
           </h3>
           <p className="text-gray-600 text-xs sm:text-sm mt-1">{vouchers.length} voucher</p>
@@ -180,11 +198,11 @@ const VoucherDashboard: React.FC = () => {
                     <td className="px-3 sm:px-4 py-3 font-semibold text-xs sm:text-sm text-gray-900">{v.code}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-900 truncate max-w-[150px] sm:max-w-none">{v.title}</td>
                     <td className="px-3 sm:px-4 py-3 text-xs sm:text-sm text-gray-700">
-                      {v.discountType === "percentage" ? "Phần trăm" : "Số tiền"}
+                      {v.discountType === "percent" ? "Phần trăm" : "Số tiền"}
                     </td>
                     <td className="px-3 sm:px-4 py-3">
-                      <span className="font-bold text-xs sm:text-sm text-green-600">
-                        {v.discountType === "percentage"
+                      <span className="font-bold text-xs sm:text-sm text-[#2F5FEB]">
+                        {v.discountType === "percent"
                           ? `${v.discountValue}%`
                           : `${v.discountValue.toLocaleString("vi-VN")}₫`}
                       </span>
@@ -200,7 +218,7 @@ const VoucherDashboard: React.FC = () => {
                       <span
                         className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold border-2 whitespace-nowrap ${
                           v.isActive
-                            ? "bg-green-100 text-green-700 border-green-300"
+                            ? "bg-[#2F5FEB]/10 text-[#2F5FEB] border-[#2F5FEB]/40"
                             : "bg-gray-100 text-gray-700 border-gray-300"
                         }`}
                       >
@@ -211,15 +229,13 @@ const VoucherDashboard: React.FC = () => {
                       <div className="flex items-center justify-center gap-1 sm:gap-2">
                         <button 
                           title="Chỉnh sửa"
-                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-blue-100 text-blue-600 hover:bg-blue-200 hover:text-blue-700 active:scale-95 sm:hover:scale-110 flex items-center justify-center transition-all duration-300 touch-manipulation"
+                          onClick={() => {
+                            setEditingVoucher(v);
+                            setShowForm(true);
+                          }}
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#2F5FEB]/10 text-[#2F5FEB] hover:bg-[#2F5FEB]/20 hover:text-[#244ACC] active:scale-95 sm:hover:scale-110 flex items-center justify-center transition-all duration-300 touch-manipulation"
                         >
                           <Pencil className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-                        </button>
-                        <button 
-                          title="Xem chi tiết"
-                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-700 active:scale-95 sm:hover:scale-110 flex items-center justify-center transition-all duration-300 touch-manipulation"
-                        >
-                          <Eye className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                         </button>
                         <button
                           title="Xóa voucher"

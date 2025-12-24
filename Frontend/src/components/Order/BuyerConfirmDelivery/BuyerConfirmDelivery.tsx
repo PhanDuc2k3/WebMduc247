@@ -47,9 +47,9 @@ const BuyerConfirmDelivery: React.FC<BuyerConfirmDeliveryProps> = ({ orderId, on
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-      <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-6 border-b-2 border-gray-200">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-          <Package size={20} className="sm:w-6 sm:h-6 text-green-600" />
+      <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+          <Package size={20} className="sm:w-6 sm:h-6 text-[#2F5FEB]" />
           Xác nhận nhận hàng
         </h2>
         <p className="text-gray-600 text-xs sm:text-sm mt-1">Đơn hàng đã được giao, vui lòng xác nhận bạn đã nhận được hàng</p>
@@ -61,7 +61,7 @@ const BuyerConfirmDelivery: React.FC<BuyerConfirmDeliveryProps> = ({ orderId, on
           className={`w-full px-4 sm:px-6 py-2.5 sm:py-3 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 ${
             loading
               ? "bg-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+              : "bg-[#2F5FEB] hover:bg-[#244ACC]"
           }`}
         >
           {loading ? (

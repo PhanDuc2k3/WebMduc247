@@ -84,8 +84,8 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ customer }) => {
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 sm:p-6 border-b-2 border-gray-200">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+      <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
           <User className="w-5 h-5 sm:w-6 sm:h-6" />
           Thông tin {customer.role === "Khách hàng" ? "khách hàng" : "cửa hàng"}
         </h2>
@@ -98,7 +98,7 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ customer }) => {
             <img
               src={customer.avatarUrl || "/avatar.png"}
               alt="Avatar"
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-3 sm:border-4 border-blue-300 shadow-lg"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-3 sm:border-4 border-[#2F5FEB] shadow-lg"
             />
             <span className="absolute bottom-0 right-0 w-4 h-4 sm:w-5 sm:h-5 bg-green-500 rounded-full border-2 border-white"></span>
           </div>
@@ -106,7 +106,7 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ customer }) => {
           {/* Customer details */}
           <div className="flex-1 min-w-0">
             <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-1 break-words">{customer.fullName}</h3>
-            <p className="text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded-full inline-block mb-2 sm:mb-3">
+            <p className="text-xs sm:text-sm font-semibold px-2 sm:px-3 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full inline-block mb-2 sm:mb-3">
               {customer.role}
             </p>
             <div className="space-y-1.5 sm:space-y-2">
@@ -130,7 +130,7 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ customer }) => {
         <div className="flex flex-col space-y-2">
           <button
             onClick={handleMessage}
-            className="w-full px-4 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+            className="w-full px-4 py-2.5 sm:py-3 bg-[#2F5FEB] text-white text-xs sm:text-sm font-bold rounded-lg sm:rounded-xl hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
           >
             <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5" />
             Nhắn tin

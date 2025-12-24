@@ -55,5 +55,15 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => console.log("❌ Socket disconnected:", socket.id));
 });
 
-const PORT = process.env.WS_PORT || 5050;
-server.listen(PORT, () => console.log(`WebSocket service running on port ${PORT}`));
+// Parse PORT từ environment variable, đảm bảo là số
+const PORT = parseInt(process.env.WS_PORT) || 5050;
+
+// Validate PORT là số hợp lệ
+if (isNaN(PORT) || PORT < 1 || PORT > 65535) {
+  console.error('❌ Invalid PORT:', process.env.WS_PORT);
+  console.error('Using default port 5050');
+  const defaultPort = 5050;
+  server.listen(defaultPort, () => console.log(`WebSocket service running on port ${defaultPort}`));
+} else {
+  server.listen(PORT, () => console.log(`WebSocket service running on port ${PORT}`));
+}

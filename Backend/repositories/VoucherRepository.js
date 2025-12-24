@@ -55,7 +55,7 @@ class VoucherRepository {
     if (populate) {
       dbQuery = dbQuery.populate("store", "name category");
     }
-    return await dbQuery;
+    return await dbQuery.sort({ createdAt: -1 }); // Sort theo createdAt mới nhất trước
   }
 
   // Cập nhật voucher

@@ -1,14 +1,17 @@
 // Step3Details.tsx
 import React from "react";
+import { Plus, Trash2, ChevronLeft, CheckCircle, Save } from "lucide-react";
 import type { FormDataType, VariationOption } from "../../../../types/product";
 
 interface Props {
   formData: FormDataType;
   handleChange: (field: keyof FormDataType, value: any) => void;
   setStep: React.Dispatch<React.SetStateAction<number>>;
+  handleSubmit: (e?: React.FormEvent) => void | Promise<void>;
+  isEdit?: boolean;
 }
 
-const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
+const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep, handleSubmit, isEdit = false }) => {
   const addVariation = () => {
     handleChange("variations", [
       ...formData.variations,
@@ -65,7 +68,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
             type="button"
             className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           >
-            Thêm biến thể
+            <Plus className="w-5 h-5" /> Thêm biến thể
           </button>
         </div>
 
@@ -79,7 +82,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
             {formData.variations.map((v, i) => (
               <div
                 key={i}
-                className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6 shadow-lg animate-fade-in-up"
+                className="bg-[#2F5EE9]/10 border-2 border-[#2F5EE9]/30 rounded-xl p-6 shadow-lg animate-fade-in-up"
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
                 {/* 🔸 Tên màu */}
@@ -90,7 +93,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                     </label>
                     <input
                       placeholder="VD: Màu sắc, chất liệu, kích thước..."
-                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium"
                       value={v.color}
                       onChange={(e) => updateVariationColor(i, e.target.value)}
                     />
@@ -100,7 +103,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                     type="button"
                     className="ml-4 bg-gradient-to-r from-red-500 to-red-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
                   >
-                    Xóa
+                    <Trash2 className="w-5 h-5" /> Xóa
                   </button>
                 </div>
 
@@ -123,7 +126,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                             </label>
                             <input
                               placeholder="VD: 128GB, XL, 500g"
-                              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium text-sm"
+                              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium text-sm"
                               value={opt.name}
                               onChange={(e) =>
                                 updateOption(i, j, "name", e.target.value)
@@ -138,7 +141,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                             <input
                               type="number"
                               placeholder="0"
-                              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium text-sm"
+                              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium text-sm"
                               value={opt.additionalPrice}
                               onChange={(e) =>
                                 updateOption(
@@ -158,7 +161,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                             <input
                               type="number"
                               placeholder="0"
-                              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium text-sm"
+                              className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium text-sm"
                               value={opt.stock}
                               onChange={(e) =>
                                 updateOption(i, j, "stock", Number(e.target.value))
@@ -174,14 +177,21 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
                 <button
                   type="button"
                   onClick={() => addOption(i)}
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm"
+                  className="bg-[#2F5EE9] text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm hover:bg-[#244ACC]"
                 >
-                  Thêm tùy chọn
+                  <Plus className="w-4 h-4" /> Thêm tùy chọn
                 </button>
               </div>
             ))}
           </div>
         )}
+      </div>
+
+      {/* Success Message */}
+      <div className="mt-8 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl">
+        <p className="text-green-700 font-medium flex items-center gap-2">
+          <CheckCircle className="w-5 h-5" /> Bạn đã hoàn thành tất cả các bước! Nhấn nút bên dưới để {isEdit ? "cập nhật" : "tạo"} sản phẩm.
+        </p>
       </div>
 
       {/* 🔹 Nút điều hướng */}
@@ -191,14 +201,26 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep }) => {
           className="bg-gradient-to-r from-gray-400 to-gray-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           onClick={() => setStep(2)}
         >
-          Quay lại
+          <ChevronLeft className="w-5 h-5" /> Quay lại
         </button>
         <button
           type="button"
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
-          onClick={() => setStep(4)}
+          className={`${
+            isEdit
+              ? "bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700"
+              : "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700"
+          } text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2`}
+          onClick={handleSubmit}
         >
-          Tiếp tục
+          {isEdit ? (
+            <>
+              <Save className="w-5 h-5" /> Cập nhật sản phẩm
+            </>
+          ) : (
+            <>
+              <CheckCircle className="w-5 h-5" /> Tạo sản phẩm
+            </>
+          )}
         </button>
       </div>
     </div>

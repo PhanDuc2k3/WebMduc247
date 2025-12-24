@@ -18,8 +18,29 @@ exports.getAvailableVouchers = async (req, res) => {
 exports.createVoucher = async (req, res) => {
   try {
     const userId = req.user?.userId;
-    const userRole = req.user?.role || "admin";
-    const voucher = await voucherService.createVoucher(userId, userRole, req.body);
+    const userRole = req.user?.role;
+    
+    // Log để debug
+    console.log(`📝 Tạo voucher - userId: ${userId}, role: ${userRole}`);
+    console.log(`📝 Request body:`, JSON.stringify(req.body, null, 2));
+    
+    // Nếu không có userRole, kiểm tra xem có phải seller không (dựa vào có store)
+    let finalRole = userRole;
+    if (!finalRole && userId) {
+      const Store = require('../models/Store');
+      const sellerStore = await Store.findOne({ owner: userId });
+      if (sellerStore) {
+        finalRole = "seller";
+        console.log(`🔍 Tự động detect role: seller (có cửa hàng)`);
+      } else {
+        finalRole = "admin";
+        console.log(`🔍 Tự động detect role: admin (không có cửa hàng)`);
+      }
+    } else if (!finalRole) {
+      finalRole = "admin";
+    }
+    
+    const voucher = await voucherService.createVoucher(userId, finalRole, req.body);
     res.status(201).json(voucher);
   } catch (error) {
     console.error("Create voucher error:", error);
@@ -36,10 +57,13 @@ exports.createVoucher = async (req, res) => {
 exports.updateVoucher = async (req, res) => {
   try {
     const { id } = req.params;
-    const voucher = await voucherService.updateVoucher(id, req.body);
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    const voucher = await voucherService.updateVoucher(id, req.body, userId, userRole);
     res.status(200).json(voucher);
   } catch (error) {
-    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 500;
+    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 
+                      error.message.includes("chỉ có thể") ? 403 : 500;
     res.status(statusCode).json({ message: error.message || "Lỗi server" });
   }
 };
@@ -47,10 +71,13 @@ exports.updateVoucher = async (req, res) => {
 exports.deleteVoucher = async (req, res) => {
   try {
     const { id } = req.params;
-    await voucherService.deleteVoucher(id);
+    const userId = req.user?.userId;
+    const userRole = req.user?.role;
+    await voucherService.deleteVoucher(id, userId, userRole);
     res.status(200).json({ message: "Xóa voucher thành công" });
   } catch (error) {
-    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 500;
+    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 
+                      error.message.includes("chỉ có thể") ? 403 : 500;
     res.status(statusCode).json({ message: error.message || "Lỗi server" });
   }
 };
@@ -148,5 +175,19 @@ exports.getAvailableVouchersForCheckout = async (req, res) => {
   } catch (error) {
     console.error("Get available vouchers for checkout error:", error);
     res.status(500).json({ message: "Lỗi server", error: error.message });
+  }
+};
+
+exports.getVouchersBySellerStore = async (req, res) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Cần đăng nhập để xem voucher" });
+    }
+    const vouchers = await voucherService.getVouchersBySellerStore(userId);
+    res.status(200).json(vouchers);
+  } catch (error) {
+    console.error("Get vouchers by seller store error:", error);
+    res.status(500).json({ message: error.message || "Lỗi server" });
   }
 };

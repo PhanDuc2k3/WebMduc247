@@ -1,9 +1,10 @@
-import axios, { type AxiosInstance, type AxiosError } from "axios";
+import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { toast } from "react-toastify";
+import userApi from "./userApi";
 
 const API_BASE_URL =
-  // import.meta.env.VITE_API_BASE_URL;
-  "http://localhost:5000";
+  import.meta.env.VITE_API_BASE_URL;
+  // "http://localhost:5000";
 
 const axiosClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -12,6 +13,25 @@ const axiosClient: AxiosInstance = axios.create({
 
 // Flag để chỉ log 1 lần
 let hasLoggedBaseURL = false;
+
+// Flag để tránh refresh token loop
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value?: any) => void;
+  reject: (reason?: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  
+  failedQueue = [];
+};
 
 axiosClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
@@ -77,31 +97,123 @@ axiosClient.interceptors.response.use(
 
         case 401:
           // Unauthorized - Chưa đăng nhập hoặc token hết hạn
+          const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+          
+          // Nếu không có token, yêu cầu đăng nhập
           if (!localStorage.getItem("token")) {
             toast.warning("Vui lòng đăng nhập để tiếp tục", {
               position: "top-right",
               autoClose: 3000,
               containerId: "general-toast",
-              toastId: "auth-required", // Cùng ID để chỉ hiển thị 1 toast
+              toastId: "auth-required",
             });
-          } else {
-            // Token hết hạn
+            break;
+          }
+
+          // Nếu là request refresh token, không retry
+          if (originalRequest.url?.includes("/refresh-token")) {
+            // Refresh token cũng hết hạn, cần đăng nhập lại
             localStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
             localStorage.removeItem("user");
             toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại", {
               position: "top-right",
               autoClose: 3000,
               containerId: "general-toast",
-              toastId: "session-expired", // Cùng ID để chỉ hiển thị 1 toast
+              toastId: "session-expired",
             });
-            // Redirect to login nếu không phải đang ở trang login
             if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
               setTimeout(() => {
                 window.location.href = "/login";
               }, 1000);
             }
+            break;
           }
-          break;
+
+          // Nếu đang refresh token, đợi
+          if (isRefreshing) {
+            return new Promise((resolve, reject) => {
+              failedQueue.push({ resolve, reject });
+            })
+              .then((token) => {
+                if (originalRequest.headers) {
+                  originalRequest.headers.Authorization = `Bearer ${token}`;
+                }
+                return axiosClient(originalRequest);
+              })
+              .catch((err) => {
+                return Promise.reject(err);
+              });
+          }
+
+          // Bắt đầu refresh token
+          originalRequest._retry = true;
+          isRefreshing = true;
+          
+          const refreshToken = localStorage.getItem("refreshToken");
+          
+          if (!refreshToken) {
+            // Không có refresh token, cần đăng nhập lại
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            isRefreshing = false;
+            processQueue(new Error("Không có refresh token"), null);
+            toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại", {
+              position: "top-right",
+              autoClose: 3000,
+              containerId: "general-toast",
+              toastId: "session-expired",
+            });
+            if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+              setTimeout(() => {
+                window.location.href = "/login";
+              }, 1000);
+            }
+            break;
+          }
+
+          // Gọi API refresh token
+          return userApi
+            .refreshToken({ refreshToken })
+            .then((res) => {
+              const { token } = res.data;
+              localStorage.setItem("token", token);
+              
+              // Cập nhật header cho request gốc
+              if (originalRequest.headers) {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+              }
+              
+              // Process queue thành công
+              processQueue(null, token);
+              isRefreshing = false;
+              
+              // Retry request gốc
+              return axiosClient(originalRequest);
+            })
+            .catch((err) => {
+              // Refresh token thất bại
+              localStorage.removeItem("token");
+              localStorage.removeItem("refreshToken");
+              localStorage.removeItem("user");
+              processQueue(err, null);
+              isRefreshing = false;
+              
+              toast.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại", {
+                position: "top-right",
+                autoClose: 3000,
+                containerId: "general-toast",
+                toastId: "session-expired",
+              });
+              
+              if (window.location.pathname !== "/login" && window.location.pathname !== "/register") {
+                setTimeout(() => {
+                  window.location.href = "/login";
+                }, 1000);
+              }
+              
+              return Promise.reject(err);
+            });
 
         case 403:
           // Forbidden - Không có quyền, tài khoản chưa xác thực, hoặc tài khoản bị ban
@@ -115,6 +227,7 @@ axiosClient.interceptors.response.use(
               onClose: () => {
                 // Xóa token và user khỏi localStorage
                 localStorage.removeItem("token");
+                localStorage.removeItem("refreshToken");
                 localStorage.removeItem("user");
                 // Chuyển đến trang đăng nhập
                 if (window.location.pathname !== "/login") {
@@ -124,6 +237,7 @@ axiosClient.interceptors.response.use(
             });
             // Đăng xuất ngay lập tức
             localStorage.removeItem("token");
+            localStorage.removeItem("refreshToken");
             localStorage.removeItem("user");
             setTimeout(() => {
               if (window.location.pathname !== "/login") {

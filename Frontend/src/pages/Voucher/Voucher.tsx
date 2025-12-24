@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { XCircle } from "lucide-react";
+import { XCircle, Gift } from "lucide-react";
 import voucherApi, { type VoucherType } from "../../api/voucherApi";
 import { toast } from "react-toastify";
 
@@ -166,10 +166,13 @@ export default function VoucherPage() {
   return (
     <div className="w-full p-3 md:p-4 lg:p-6 xl:p-8">
       <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-gray-900 gradient-text flex items-center gap-2 md:gap-3">
-          🎁 Kho Voucher
+        <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-[#2F5FEB] flex items-center gap-2 md:gap-3">
+          <Gift className="w-7 h-7" />
+          <span>Kho Voucher</span>
         </h1>
-        <p className="text-gray-600 text-sm sm:text-base md:text-lg">Tận hưởng ưu đãi tốt nhất từ các cửa hàng</p>
+        <p className="text-gray-600 text-sm sm:text-base md:text-lg">
+          Tận hưởng <span className="text-[#2F5FEB] font-semibold">ưu đãi tốt nhất</span> từ các cửa hàng
+        </p>
       </div>
 
       {/* Category Tabs */}
@@ -180,8 +183,8 @@ export default function VoucherPage() {
             onClick={() => setActiveCategory(cat.name)}
             className={`px-4 py-2 md:px-5 md:py-2.5 rounded-lg md:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 transform hover:scale-105 whitespace-nowrap flex-shrink-0 ${
               activeCategory === cat.name
-                ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105"
-                : "bg-white text-gray-600 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
+                ? "bg-[#2F5FEB] text-white shadow-lg scale-105"
+                : "bg-white text-gray-600 border-2 border-gray-200 hover:border-[#2F5FEB] hover:bg-[#2F5FEB]/5"
             } animate-fade-in-up`}
             style={{ animationDelay: `${index * 0.05}s` }}
           >
@@ -197,7 +200,7 @@ export default function VoucherPage() {
             placeholder="Tìm kiếm voucher..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2.5 md:px-5 md:py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300 text-sm md:text-base"
+            className="w-full px-4 py-2.5 md:px-5 md:py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none transition-all duration-300 text-sm md:text-base"
           />
         </div>
       </div>
@@ -208,7 +211,9 @@ export default function VoucherPage() {
         </div>
       ) : filteredVouchers.length === 0 ? (
         <div className="p-6 md:p-8 text-center animate-fade-in">
-          <div className="text-4xl md:text-5xl lg:text-6xl mb-3 md:mb-4">🎁</div>
+          <div className="flex justify-center mb-3 md:mb-4">
+            <Gift className="w-10 h-10 md:w-12 md:h-12 text-gray-300" />
+          </div>
           <p className="text-gray-500 text-base md:text-lg font-medium mb-2">Không tìm thấy voucher nào</p>
           <p className="text-gray-400 text-xs md:text-sm">Thử lại với từ khóa khác hoặc chọn danh mục khác</p>
         </div>
@@ -221,7 +226,7 @@ export default function VoucherPage() {
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="flex justify-between items-start mb-3 md:mb-4 gap-2">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-700 flex items-center gap-1 md:gap-2 flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#2F5FEB] flex items-center gap-1 md:gap-2 flex-1 min-w-0">
                   <span className="truncate">{v.title}</span>
                 </h2>
                 <span className="px-2 py-1 md:px-4 md:py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg md:rounded-xl font-bold text-[10px] sm:text-xs md:text-sm shadow-lg flex-shrink-0">
@@ -229,7 +234,7 @@ export default function VoucherPage() {
                 </span>
               </div>
               
-              <p className="text-xs sm:text-sm text-gray-700 mb-3 md:mb-4 bg-blue-50 p-2 md:p-3 rounded-lg md:rounded-xl line-clamp-2">{v.description}</p>
+                <p className="text-xs sm:text-sm text-gray-700 mb-3 md:mb-4 bg-[#2F5FEB]/5 p-2 md:p-3 rounded-lg md:rounded-xl line-clamp-2">{v.description}</p>
               
               <div className="text-xs sm:text-sm text-gray-700 space-y-1.5 md:space-y-2 mb-3 md:mb-4">
                 <p className="flex items-center gap-1 md:gap-2 flex-wrap">
@@ -263,7 +268,7 @@ export default function VoucherPage() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 md:h-3 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 h-2 md:h-3 rounded-full transition-all duration-1000"
+                      className="bg-[#2F5FEB] h-2 md:h-3 rounded-full transition-all duration-1000"
                       style={{ width: `${v.usagePercent}%` }}
                     />
                   </div>

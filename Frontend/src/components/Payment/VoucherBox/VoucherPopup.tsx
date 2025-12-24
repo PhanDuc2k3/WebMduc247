@@ -10,10 +10,12 @@ interface VoucherPopupProps {
   subtotal: number;
   shippingFee: number;
   selectedItems?: string[];
-  selectedProductVoucher: AvailableVoucher | null;
-  selectedFreeshipVoucher: AvailableVoucher | null;
-  onSelectProduct: (voucher: AvailableVoucher | null) => void;
+  selectedSystemVoucher: AvailableVoucher | null; // Voucher hệ thống
+  selectedFreeshipVoucher: AvailableVoucher | null; // Voucher freeship
+  selectedStoreVoucher: AvailableVoucher | null; // Voucher cửa hàng
+  onSelectSystem: (voucher: AvailableVoucher | null) => void;
   onSelectFreeship: (voucher: AvailableVoucher | null) => void;
+  onSelectStore: (voucher: AvailableVoucher | null) => void;
 }
 
 const VoucherPopup: React.FC<VoucherPopupProps> = ({
@@ -22,15 +24,19 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
   subtotal,
   shippingFee,
   selectedItems = [],
-  selectedProductVoucher,
+  selectedSystemVoucher,
   selectedFreeshipVoucher,
-  onSelectProduct,
+  selectedStoreVoucher,
+  onSelectSystem,
   onSelectFreeship,
+  onSelectStore,
 }) => {
   const [productVouchers, setProductVouchers] = useState<AvailableVoucher[]>([]);
   const [freeshipVouchers, setFreeshipVouchers] = useState<AvailableVoucher[]>([]);
+  const [storeVouchers, setStoreVouchers] = useState<AvailableVoucher[]>([]);
+  const [systemVouchers, setSystemVouchers] = useState<AvailableVoucher[]>([]); // Voucher hệ thống (global)
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"product" | "freeship">("product");
+  const [activeTab, setActiveTab] = useState<"system" | "freeship" | "store">("system");
 
   useEffect(() => {
     if (isOpen) {
@@ -49,8 +55,16 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
       console.log("✅ Available vouchers response:", data);
       console.log("Product vouchers:", data.productVouchers);
       console.log("Freeship vouchers:", data.freeshipVouchers);
+      console.log("Store vouchers:", data.storeVouchers);
+      
+      // Phân loại voucher hệ thống (global = true) từ tất cả voucher
+      const allVouchers = [...(data.productVouchers || []), ...(data.freeshipVouchers || [])];
+      const system = allVouchers.filter((v: AvailableVoucher) => v.isGlobal);
+      
       setProductVouchers(data.productVouchers || []);
       setFreeshipVouchers(data.freeshipVouchers || []);
+      setStoreVouchers(data.storeVouchers || []);
+      setSystemVouchers(system);
     } catch (error: any) {
       console.error("Lỗi lấy danh sách voucher:", error);
       toast.error(
@@ -62,11 +76,11 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
     }
   };
 
-  const handleSelectProductVoucher = (voucher: AvailableVoucher) => {
-    if (selectedProductVoucher?.code === voucher.code) {
-      onSelectProduct(null);
+  const handleSelectSystemVoucher = (voucher: AvailableVoucher) => {
+    if (selectedSystemVoucher?.code === voucher.code) {
+      onSelectSystem(null);
     } else {
-      onSelectProduct(voucher);
+      onSelectSystem(voucher);
     }
   };
 
@@ -75,6 +89,14 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
       onSelectFreeship(null);
     } else {
       onSelectFreeship(voucher);
+    }
+  };
+
+  const handleSelectStoreVoucher = (voucher: AvailableVoucher) => {
+    if (selectedStoreVoucher?.code === voucher.code) {
+      onSelectStore(null);
+    } else {
+      onSelectStore(voucher);
     }
   };
 
@@ -95,7 +117,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-4 sm:p-6 flex items-center justify-between flex-shrink-0">
+        <div className="bg-[#2F5FEB] text-white p-4 sm:p-6 flex items-center justify-between flex-shrink-0">
           <h2 className="text-xl sm:text-2xl font-bold">Chọn voucher</h2>
           <button
             onClick={onClose}
@@ -108,24 +130,34 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
         {/* Tabs */}
         <div className="flex border-b-2 border-gray-200 flex-shrink-0">
           <button
-            onClick={() => setActiveTab("product")}
+            onClick={() => setActiveTab("system")}
             className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 font-semibold text-sm sm:text-base transition-colors ${
-              activeTab === "product"
-                ? "bg-green-50 text-green-600 border-b-2 border-green-600"
+              activeTab === "system"
+                ? "bg-[#2F5FEB]/8 text-[#2F5FEB] border-b-2 border-[#2F5FEB]"
                 : "text-gray-600 hover:bg-gray-50"
             }`}
           >
-            Giảm giá sản phẩm ({productVouchers.length})
+            Voucher hệ thống ({systemVouchers.length})
           </button>
           <button
             onClick={() => setActiveTab("freeship")}
             className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 font-semibold text-sm sm:text-base transition-colors ${
               activeTab === "freeship"
-                ? "bg-blue-50 text-blue-600 border-b-2 border-blue-600"
+                ? "bg-[#2F5FEB]/8 text-[#2F5FEB] border-b-2 border-[#2F5FEB]"
                 : "text-gray-600 hover:bg-gray-50"
             }`}
           >
-            Miễn phí vận chuyển ({freeshipVouchers.length})
+            Voucher freeship ({freeshipVouchers.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("store")}
+            className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 font-semibold text-sm sm:text-base transition-colors ${
+              activeTab === "store"
+                ? "bg-[#2F5FEB]/8 text-[#2F5FEB] border-b-2 border-[#2F5FEB]"
+                : "text-gray-600 hover:bg-gray-50"
+            }`}
+          >
+            Voucher cửa hàng ({storeVouchers.length})
           </button>
         </div>
 
@@ -133,35 +165,52 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
         <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {loading ? (
             <div className="text-center py-8 sm:py-12 text-gray-500 text-sm sm:text-base">Đang tải...</div>
-          ) : activeTab === "product" ? (
-            productVouchers.length === 0 ? (
+          ) : activeTab === "system" ? (
+            systemVouchers.length === 0 ? (
               <div className="text-center py-8 sm:py-12 text-gray-500 text-sm sm:text-base">
-                Không có voucher giảm giá sản phẩm khả dụng
+                Không có voucher hệ thống khả dụng
               </div>
             ) : (
               <div className="grid gap-3 sm:gap-4">
-                {productVouchers.map((voucher) => {
-                  const isSelected = selectedProductVoucher?.code === voucher.code;
+                {systemVouchers.map((voucher) => {
+                  const isSelected = selectedSystemVoucher?.code === voucher.code;
+                  // Tính discount dựa trên voucherType
+                  let discount = voucher.discount;
+                  if (voucher.voucherType === "freeship") {
+                    if (voucher.discountType === "fixed") {
+                      discount = Math.min(voucher.discountValue, shippingFee);
+                    } else {
+                      discount = Math.min(
+                        (shippingFee * voucher.discountValue) / 100,
+                        voucher.maxDiscount || shippingFee,
+                        shippingFee
+                      );
+                    }
+                  }
+                  
                   return (
                     <div
                       key={voucher.id}
-                      onClick={() => handleSelectProductVoucher(voucher)}
+                      onClick={() => handleSelectSystemVoucher(voucher)}
                       className={`border-2 rounded-lg sm:rounded-xl p-4 sm:p-5 cursor-pointer transition-all ${
                         isSelected
-                          ? "border-green-500 bg-green-50 shadow-lg"
-                          : "border-gray-200 hover:border-green-300 hover:shadow-md"
+                          ? "border-[#2F5FEB] bg-[#2F5FEB]/6 shadow-lg"
+                          : "border-gray-200 hover:border-[#2F5FEB] hover:shadow-md"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                             <h3 className="font-bold text-base sm:text-lg break-words">{voucher.title}</h3>
-                            <span className="px-2 sm:px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold whitespace-nowrap">
+                            <span className="px-2 sm:px-3 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs font-semibold whitespace-nowrap">
                               {voucher.code}
                             </span>
-                            {voucher.isGlobal && (
-                              <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs whitespace-nowrap">
-                                Toàn hệ thống
+                            <span className="px-2 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs whitespace-nowrap">
+                              Hệ thống
+                            </span>
+                            {voucher.voucherType === "freeship" && (
+                              <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs whitespace-nowrap">
+                                Freeship
                               </span>
                             )}
                           </div>
@@ -179,7 +228,9 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                           </div>
                           <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0">
                             <span className="text-red-600 font-bold text-lg sm:text-xl">
-                              Giảm {voucher.discount.toLocaleString("vi-VN")}₫
+                              {voucher.voucherType === "freeship" 
+                                ? `Giảm ${discount.toLocaleString("vi-VN")}₫ phí vận chuyển`
+                                : `Giảm ${discount.toLocaleString("vi-VN")}₫`}
                             </span>
                             {voucher.discountType === "percent" && (
                               <span className="text-gray-600 text-xs sm:text-sm sm:ml-2 break-words">
@@ -192,7 +243,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                           <div
                             className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center ${
                               isSelected
-                                ? "border-green-500 bg-green-500"
+                                ? "border-[#2F5FEB] bg-[#2F5FEB]"
                                 : "border-gray-300"
                             }`}
                           >
@@ -207,13 +258,14 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                 })}
               </div>
             )
-          ) : freeshipVouchers.length === 0 ? (
-            <div className="text-center py-8 sm:py-12 text-gray-500 text-sm sm:text-base">
-              Không có voucher miễn phí vận chuyển khả dụng
-            </div>
-          ) : (
-            <div className="grid gap-3 sm:gap-4">
-              {freeshipVouchers.map((voucher) => {
+          ) : activeTab === "freeship" ? (
+            freeshipVouchers.length === 0 ? (
+              <div className="text-center py-8 sm:py-12 text-gray-500 text-sm sm:text-base">
+                Không có voucher miễn phí vận chuyển khả dụng
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:gap-4">
+                {freeshipVouchers.map((voucher) => {
                 const isSelected = selectedFreeshipVoucher?.code === voucher.code;
                 // Tính discount cho freeship với shippingFee hiện tại
                 let freeshipDiscount = 0;
@@ -233,19 +285,19 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                     onClick={() => handleSelectFreeshipVoucher(voucher)}
                     className={`border-2 rounded-lg sm:rounded-xl p-4 sm:p-5 cursor-pointer transition-all ${
                       isSelected
-                        ? "border-blue-500 bg-blue-50 shadow-lg"
-                        : "border-gray-200 hover:border-blue-300 hover:shadow-md"
+                        ? "border-[#2F5FEB] bg-[#2F5FEB]/6 shadow-lg"
+                        : "border-gray-200 hover:border-[#2F5FEB] hover:shadow-md"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                           <h3 className="font-bold text-base sm:text-lg break-words">{voucher.title}</h3>
-                          <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold whitespace-nowrap">
+                          <span className="px-2 sm:px-3 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs font-semibold whitespace-nowrap">
                             {voucher.code}
                           </span>
                           {voucher.isGlobal && (
-                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs whitespace-nowrap">
+                            <span className="px-2 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs whitespace-nowrap">
                               Toàn hệ thống
                             </span>
                           )}
@@ -277,7 +329,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                         <div
                           className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center ${
                             isSelected
-                              ? "border-blue-500 bg-blue-500"
+                              ? "border-[#2F5FEB] bg-[#2F5FEB]"
                               : "border-gray-300"
                           }`}
                         >
@@ -290,8 +342,105 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                   </div>
                 );
               })}
-            </div>
-          )}
+              </div>
+            )
+          ) : activeTab === "store" ? (
+            storeVouchers.length === 0 ? (
+              <div className="text-center py-8 sm:py-12 text-gray-500 text-sm sm:text-base">
+                Không có voucher cửa hàng khả dụng
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:gap-4">
+                {storeVouchers.map((voucher) => {
+                  const isSelected = selectedStoreVoucher?.code === voucher.code;
+                  
+                  // Tính discount
+                  let discount = 0;
+                  if (voucher.voucherType === "freeship") {
+                    if (voucher.discountType === "fixed") {
+                      discount = Math.min(voucher.discountValue, shippingFee);
+                    } else {
+                      discount = Math.min(
+                        (shippingFee * voucher.discountValue) / 100,
+                        voucher.maxDiscount || shippingFee,
+                        shippingFee
+                      );
+                    }
+                  } else {
+                    discount = voucher.discount;
+                  }
+
+                  return (
+                    <div
+                      key={voucher.id}
+                      onClick={() => handleSelectStoreVoucher(voucher)}
+                      className={`border-2 rounded-lg sm:rounded-xl p-4 sm:p-5 cursor-pointer transition-all ${
+                        isSelected
+                          ? "border-[#2F5FEB] bg-[#2F5FEB]/6 shadow-lg"
+                          : "border-gray-200 hover:border-[#2F5FEB] hover:shadow-md"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                            <h3 className="font-bold text-base sm:text-lg break-words">{voucher.title}</h3>
+                            <span className="px-2 sm:px-3 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs font-semibold whitespace-nowrap">
+                              {voucher.code}
+                            </span>
+                            <span className="px-2 py-1 bg-orange-100 text-orange-600 rounded-full text-xs whitespace-nowrap">
+                              Cửa hàng
+                            </span>
+                            {voucher.voucherType === "freeship" && (
+                              <span className="px-2 py-1 bg-blue-100 text-blue-600 rounded-full text-xs whitespace-nowrap">
+                                Freeship
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-gray-600 text-xs sm:text-sm mb-2 break-words">{voucher.description}</p>
+                          <p className="text-gray-500 text-xs mb-2 break-words">{voucher.condition}</p>
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-1 text-xs sm:text-sm">
+                            <span className="text-gray-600 break-words">
+                              Áp dụng cho: {voucher.storeName}
+                            </span>
+                            {voucher.minOrderValue > 0 && (
+                              <span className="text-gray-600 break-words">
+                                Đơn tối thiểu: {voucher.minOrderValue.toLocaleString("vi-VN")}₫
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-0">
+                            <span className="text-red-600 font-bold text-lg sm:text-xl">
+                              {voucher.voucherType === "freeship" 
+                                ? `Giảm ${discount.toLocaleString("vi-VN")}₫ phí vận chuyển`
+                                : `Giảm ${discount.toLocaleString("vi-VN")}₫`}
+                            </span>
+                            {voucher.discountType === "percent" && (
+                              <span className="text-gray-600 text-xs sm:text-sm sm:ml-2 break-words">
+                                ({voucher.discountValue}% tối đa {voucher.maxDiscount?.toLocaleString("vi-VN")}₫)
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="ml-2 sm:ml-4 flex-shrink-0">
+                          <div
+                            className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center ${
+                              isSelected
+                                ? "border-[#2F5FEB] bg-[#2F5FEB]"
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {isSelected && (
+                              <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-white" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )
+          ) : null}
         </div>
 
         {/* Footer */}
@@ -304,7 +453,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
           </button>
           <button
             onClick={onClose}
-            className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg sm:rounded-xl font-semibold hover:from-green-600 hover:to-emerald-700 transition-all shadow-lg hover:shadow-xl text-sm sm:text-base"
+            className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl font-semibold hover:bg-[#244ACC] transition-all shadow-lg hover:shadow-xl text-sm sm:text-base"
           >
             Xác nhận
           </button>

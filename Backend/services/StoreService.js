@@ -47,47 +47,77 @@ class StoreService {
 
   // Cập nhật store
   async updateStore(userId, storeData, files) {
-    const store = await storeRepository.findByOwner(userId);
-    if (!store) {
-      throw new Error('Không tìm thấy cửa hàng');
-    }
+    try {
+      console.log("[updateStore] 📥 Received data:", {
+        userId,
+        storeDataKeys: Object.keys(storeData),
+        hasFiles: !!files,
+        filesKeys: files ? Object.keys(files) : null,
+      });
 
-    const { name, description, storeAddress, category, customCategory, categories,
-      existingLogo, existingBanner } = storeData;
-
-    if (name) store.name = name;
-    if (description) store.description = description;
-    if (storeAddress) store.storeAddress = storeAddress;
-    if (category) store.category = category === 'Other' ? customCategory : category;
-
-    if (categories) {
-      const parsedCategories = this.parseJSONSafe(categories);
-      if (parsedCategories.length > 0 && !parsedCategories.includes(store.category)) {
-        throw new Error("Category chính không có trong danh sách categories");
+      const store = await storeRepository.findByOwner(userId);
+      if (!store) {
+        throw new Error('Không tìm thấy cửa hàng');
       }
-      store.categories = parsedCategories;
-    }
 
-    let images = [];
-    if (files?.logo?.length > 0) {
-      images.push(files.logo[0].path);
-    } else if (existingLogo) {
-      images.push(existingLogo);
-    }
+      const { name, description, storeAddress, category, customCategory, categories,
+        existingLogo, existingBanner } = storeData;
 
-    if (files?.banner?.length > 0) {
-      images.push(...files.banner.map(f => f.path));
-    } else if (existingBanner) {
-      images.push(existingBanner);
-    }
+      if (name) store.name = name;
+      if (description !== undefined) store.description = description || '';
+      if (storeAddress) store.storeAddress = storeAddress;
+      if (category) store.category = category === 'Other' ? customCategory : category;
 
-    if (images.length > 0) {
-      store.logoUrl = images[0] || store.logoUrl;
-      store.bannerUrl = images[1] || store.bannerUrl;
-    }
+      if (categories) {
+        const parsedCategories = this.parseJSONSafe(categories);
+        console.log("[updateStore] 🔹 Parsed categories:", parsedCategories);
+        
+        // Categories là subdocuments với structure { name, products }
+        // Store.category là enum value ('electronics', 'fashion', etc.)
+        // Không cần validate category chính với categories vì chúng là 2 loại khác nhau
+        store.categories = parsedCategories;
+      }
 
-    await store.save();
-    return store;
+      // Xử lý hình ảnh
+      let logoUrl = store.logoUrl;
+      let bannerUrl = store.bannerUrl;
+
+      if (files?.logo && files.logo.length > 0) {
+        logoUrl = files.logo[0].path;
+        console.log("[updateStore] ✅ New logo uploaded:", logoUrl);
+      } else if (existingLogo) {
+        logoUrl = existingLogo;
+        console.log("[updateStore] ✅ Using existing logo:", logoUrl);
+      }
+
+      if (files?.banner && files.banner.length > 0) {
+        bannerUrl = files.banner[0].path; // Banner chỉ có 1 file
+        console.log("[updateStore] ✅ New banner uploaded:", bannerUrl);
+      } else if (existingBanner) {
+        bannerUrl = existingBanner;
+        console.log("[updateStore] ✅ Using existing banner:", bannerUrl);
+      }
+
+      // Chỉ cập nhật nếu có thay đổi
+      if (logoUrl) store.logoUrl = logoUrl;
+      if (bannerUrl) store.bannerUrl = bannerUrl;
+
+      console.log("[updateStore] 📤 Saving store with:", {
+        name: store.name,
+        category: store.category,
+        categoriesCount: store.categories?.length,
+        hasLogo: !!store.logoUrl,
+        hasBanner: !!store.bannerUrl,
+      });
+
+      await store.save();
+      console.log("[updateStore] ✅ Store updated successfully:", store._id);
+      return store;
+    } catch (error) {
+      console.error("[updateStore] ❌ Error:", error);
+      console.error("[updateStore] ❌ Error stack:", error.stack);
+      throw error;
+    }
   }
 
   // Admin: Cập nhật cửa hàng theo ID

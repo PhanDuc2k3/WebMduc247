@@ -115,9 +115,9 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
       pending: {
         message: "Yêu cầu trả lại hàng đang chờ xử lý",
         icon: AlertCircle,
-        color: "text-yellow-600",
-        bgColor: "from-yellow-50 to-amber-50",
-        borderColor: "border-yellow-200",
+        color: "text-[#2F5FEB]",
+        bgColor: "from-[#2F5FEB]/10 to-[#2F5FEB]/5",
+        borderColor: "border-[#2F5FEB]/40",
       },
       approved: {
         message: "Yêu cầu trả lại hàng đã được phê duyệt. Tiền sẽ được hoàn lại trong vòng 5-7 ngày làm việc.",
@@ -136,9 +136,9 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
       completed: {
         message: "Đơn hàng đã được trả lại thành công",
         icon: CheckCircle,
-        color: "text-blue-600",
-        bgColor: "from-blue-50 to-cyan-50",
-        borderColor: "border-blue-200",
+        color: "text-[#2F5FEB]",
+        bgColor: "from-[#2F5FEB]/10 to-[#2F5FEB]/5",
+        borderColor: "border-[#2F5FEB]/40",
       },
     };
 
@@ -180,9 +180,9 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
   return (
     <>
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-        <div className="bg-gradient-to-r from-orange-50 to-red-50 p-4 sm:p-6 border-b-2 border-gray-200">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
-            <RotateCcw size={20} className="sm:w-6 sm:h-6 text-orange-600" />
+        <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+            <RotateCcw size={20} className="sm:w-6 sm:h-6 text-[#2F5FEB]" />
             Trả lại hàng
           </h2>
           <p className="text-gray-600 text-xs sm:text-sm mt-1">
@@ -192,7 +192,7 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
         <div className="p-4 sm:p-6">
           <button
             onClick={() => setShowModal(true)}
-            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-[#2F5FEB] text-white text-sm sm:text-base font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 hover:bg-[#244ACC] flex items-center justify-center gap-2"
           >
             <RotateCcw size={18} className="sm:w-5 sm:h-5" />
             <span>Yêu cầu trả lại hàng</span>
@@ -215,14 +215,14 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Vui lòng nhập lý do trả lại hàng (ví dụ: Sản phẩm không đúng mô tả, bị lỗi, không vừa, v.v.)"
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-orange-500 resize-none"
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-[#2F5FEB] resize-none"
                 rows={4}
                 maxLength={500}
               />
               <div className="mt-1 flex justify-between items-center">
                 <p className="text-xs text-gray-500">
                   {reason.length < 10 ? (
-                    <span className="text-orange-600">Cần ít nhất 10 ký tự (còn {10 - reason.length} ký tự)</span>
+                    <span className="text-[#2F5FEB]">Cần ít nhất 10 ký tự (còn {10 - reason.length} ký tự)</span>
                   ) : (
                     <span className="text-gray-500">Độ dài hợp lệ</span>
                   )}
@@ -249,7 +249,7 @@ const ReturnRequest: React.FC<ReturnRequestProps> = ({ orderId, order, onRequest
                 className={`flex-1 px-4 py-2.5 text-white font-semibold rounded-lg transition-all ${
                   loading || !reason.trim() || reason.trim().length < 10
                     ? "bg-gray-400 cursor-not-allowed"
-                    : "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
+                    : "bg-[#2F5FEB] hover:bg-[#244ACC]"
                 }`}
               >
                 {loading ? (

@@ -59,14 +59,11 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
         <div className="flex items-center gap-3">
           <div className="relative">
             {store.logoUrl && (
-              <>
-                <div className="absolute inset-0 bg-blue-500 rounded-full blur opacity-30 animate-pulse"></div>
-                <img
-                  src={store.logoUrl}
-                  alt={store.name}
-                  className="relative w-12 h-12 rounded-full border-2 border-white shadow-lg object-cover"
-                />
-              </>
+              <img
+                src={store.logoUrl}
+                alt={store.name}
+                className="w-12 h-12 rounded-full border-2 border-white shadow-lg object-cover"
+              />
             )}
           </div>
           <div className="flex flex-col">
@@ -113,6 +110,7 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
               item={item}
               selected={selectedItems.includes(item._id)}
               onSelect={onSelect}
+              onUpdateQty={onUpdateQty}
               onRemove={onRemove}
               disabled={isDisabled}
             />

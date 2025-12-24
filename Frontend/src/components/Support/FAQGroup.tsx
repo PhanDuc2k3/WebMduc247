@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 interface Question {
   q: string;
@@ -23,10 +24,14 @@ const FAQGroup: React.FC<FAQGroupProps> = ({ category, questions, icon: Icon }) 
         className="w-full flex items-center justify-between p-3 font-medium text-left hover:bg-gray-100 transition-colors"
       >
         <div className="flex items-center space-x-2">
-          {Icon && <Icon className="text-blue-600" size={20} />}
+          {Icon && <Icon className="text-[#2F5FEB]" size={20} />}
           <span>{category}</span>
         </div>
-        <span>{openCategory ? "−" : "+"}</span>
+        <ChevronDown
+          className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${
+            openCategory ? "rotate-180 text-[#2F5FEB]" : ""
+          }`}
+        />
       </button>
 
       {/* Questions list */}
@@ -41,7 +46,11 @@ const FAQGroup: React.FC<FAQGroupProps> = ({ category, questions, icon: Icon }) 
                 className="w-full text-left py-2 flex justify-between items-center hover:bg-gray-100 transition-colors"
               >
                 <span>{qItem.q}</span>
-                <span>{openQuestionIndex === idx ? "−" : "+"}</span>
+                <ChevronDown
+                  className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${
+                    openQuestionIndex === idx ? "rotate-180 text-[#2F5FEB]" : ""
+                  }`}
+                />
               </button>
               {openQuestionIndex === idx && (
                 <p className="pl-2 py-2 text-gray-700">{qItem.a}</p>

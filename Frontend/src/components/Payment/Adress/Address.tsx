@@ -101,8 +101,8 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 sm:p-6 border-b-2 border-gray-200">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+      <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
           <MapPin className="w-5 h-5 sm:w-6 sm:h-6" />
           Địa chỉ giao hàng
         </h2>
@@ -112,7 +112,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
-            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg sm:rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base"
+            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl font-bold hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2 text-sm sm:text-base"
           >
             <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
             Thêm địa chỉ mới
@@ -120,7 +120,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
         )}
 
         {showForm && (
-          <div className="bg-gradient-to-br from-gray-50 to-blue-50 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-blue-200 animate-scale-in">
+          <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-[#2F5FEB]/40 animate-scale-in">
             <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 sm:w-5 sm:h-5 text-gray-400" />
@@ -129,7 +129,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
                   placeholder="Họ tên"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl pl-10 sm:pl-12 pr-4 sm:pr-5 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300"
+                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl pl-10 sm:pl-12 pr-4 sm:pr-5 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none transition-all duration-300"
                   required
                 />
               </div>
@@ -140,7 +140,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
                   placeholder="Số điện thoại"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl pl-10 sm:pl-12 pr-4 sm:pr-5 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300"
+                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl pl-10 sm:pl-12 pr-4 sm:pr-5 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none transition-all duration-300"
                   required
                 />
               </div>
@@ -151,7 +151,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
                   placeholder="Địa chỉ (số nhà, đường)"
                   value={formData.street}
                   onChange={(e) => setFormData({ ...formData, street: e.target.value })}
-                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl pl-10 sm:pl-12 pr-4 sm:pr-5 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300"
+                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl pl-10 sm:pl-12 pr-4 sm:pr-5 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none transition-all duration-300"
                   required
                 />
               </div>
@@ -162,7 +162,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
                   placeholder="Thành phố"
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl pl-10 sm:pl-12 pr-4 sm:pr-5 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all duration-300"
+                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl pl-10 sm:pl-12 pr-4 sm:pr-5 py-2.5 sm:py-3 text-sm sm:text-base focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none transition-all duration-300"
                   required
                 />
               </div>
@@ -170,7 +170,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <button
                   type="submit"
-                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg sm:rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base flex items-center justify-center gap-2"
+                  className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl font-bold hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base flex items-center justify-center gap-2"
                 >
                   <Save className="w-4 h-4 sm:w-5 sm:h-5" />
                   {editingId ? "Cập nhật" : "Lưu"}
@@ -192,7 +192,7 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
         )}
 
         {addresses.length === 0 && !showForm ? (
-          <div className="text-center py-8 sm:py-12 bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl sm:rounded-2xl border-2 border-gray-200">
+          <div className="text-center py-8 sm:py-12 bg-[#2F5FEB]/5 rounded-xl sm:rounded-2xl border-2 border-gray-200">
             <MapPin className="w-16 h-16 sm:w-24 sm:h-24 mx-auto mb-3 sm:mb-4 text-gray-400" />
             <p className="text-gray-500 text-base sm:text-lg font-medium mb-2">Chưa có địa chỉ nào</p>
             <p className="text-gray-400 text-xs sm:text-sm">Vui lòng thêm địa chỉ để nhận hàng</p>
@@ -204,8 +204,8 @@ const Address: React.FC<AddressProps> = ({ onSelect }) => {
               onClick={() => handleSelect(addr._id!)}
               className={`p-4 sm:p-6 space-y-2 sm:space-y-3 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-105 animate-fade-in-up ${
                 selectedId === addr._id 
-                  ? "border-blue-500 bg-gradient-to-br from-blue-50 to-purple-50 shadow-lg" 
-                  : "border-gray-300 hover:border-blue-300 bg-white"
+                  ? "border-[#2F5FEB] bg-[#2F5FEB]/5 shadow-lg" 
+                  : "border-gray-300 hover:border-[#2F5FEB]/60 bg-white"
               }`}
               style={{ animationDelay: `${index * 0.1}s` }}
             >

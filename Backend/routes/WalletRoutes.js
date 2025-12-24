@@ -7,6 +7,7 @@ const {
   deposit,
   sendWithdrawalCode,
   withdraw,
+  sendPaymentCode,
   payWithWallet
 } = require('../controllers/WalletController');
 
@@ -24,6 +25,8 @@ router.post('/withdraw/send-code', auth, sendWithdrawalCode);
 // Rút tiền
 router.post('/withdraw', auth, withdraw);
 
+// Gửi mã xác thực email cho thanh toán bằng ví
+router.post('/pay/send-code', auth, sendPaymentCode);
 // Thanh toán bằng ví
 router.post('/pay', auth, payWithWallet);
 

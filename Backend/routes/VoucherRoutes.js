@@ -11,6 +11,7 @@ const {
   previewVoucher,
   applyVoucher,
   cleanupVoucherUsersUsed,
+  getVouchersBySellerStore,
 } = require("../controllers/VoucherController");
 
 const auth = require("../middlewares/authMiddleware");
@@ -19,11 +20,12 @@ const optionalAuth = require("../middlewares/optionalAuthMiddleware");
 // Tạm thời bỏ auth để ai cũng có thể truy cập
 router.get("/", getAvailableVouchers);
 router.get("/all", getAllVouchers); // Endpoint lấy tất cả voucher (tạm thời không cần auth)
+router.get("/my-store", auth, getVouchersBySellerStore); // Endpoint lấy voucher của cửa hàng của seller (cần auth)
 router.post("/checkout", optionalAuth, getAvailableVouchersForCheckout); // ✅ Dùng optionalAuth để lấy userId nếu có token
 router.post("/preview", previewVoucher);
 router.post("/apply", applyVoucher);
 
-router.post("/", createVoucher);
+router.post("/", auth, createVoucher); // Cần auth để biết user và role
 router.put("/:id", updateVoucher);
 router.put("/:id/toggle-status", toggleVoucherStatus); // Endpoint để bật/tắt khóa voucher
 router.delete("/:id", deleteVoucher);

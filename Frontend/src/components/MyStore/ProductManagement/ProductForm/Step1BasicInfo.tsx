@@ -21,7 +21,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
             Tên sản phẩm <span className="text-red-500">*</span>
           </label>
           <input
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium"
             placeholder="Nhập tên sản phẩm..."
             value={formData.name}
             onChange={(e) => handleChange("name", e.target.value)}
@@ -34,7 +34,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
               Thương hiệu
             </label>
             <input
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium"
               value={formData.brand}
               placeholder="VD: Apple, Samsung..."
               onChange={(e) => handleChange("brand", e.target.value)}
@@ -45,7 +45,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
               Model
             </label>
             <input
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium"
               value={formData.model}
               placeholder="VD: iPhone 15 Pro Max"
               onChange={(e) => handleChange("model", e.target.value)}
@@ -59,7 +59,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
               Danh mục
             </label>
             <input
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium"
               placeholder="VD: Điện thoại"
               value={formData.category}
               onChange={(e) => handleChange("category", e.target.value)}
@@ -70,7 +70,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
               Danh mục con
             </label>
             <input
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium"
               placeholder="VD: Smartphone"
               value={formData.subCategory}
               onChange={(e) => handleChange("subCategory", e.target.value)}
@@ -85,7 +85,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
             </label>
             <input
               type="number"
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium"
               placeholder="VD: 15000000"
               value={formData.price}
               onChange={(e) => handleChange("price", e.target.value)}
@@ -97,7 +97,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
             </label>
             <input
               type="number"
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium"
               placeholder="VD: 12000000"
               value={formData.originalPrice}
               onChange={(e) => handleChange("originalPrice", e.target.value)}
@@ -121,7 +121,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
 
       <div className="flex justify-end mt-8">
         <button
-          className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
+          className="bg-[#2F5EE9] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-[#244ACC]"
           onClick={() => setStep(2)}
         >
           Tiếp tục

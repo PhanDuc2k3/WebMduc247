@@ -11,13 +11,15 @@ const {
   getAllSellerRequests,
   handleSellerRequest,
   logout,
+  refreshToken,
   verifyEmail,
   resendVerificationCode,
   forgotPassword,
   verifyResetCode,
   resetPassword,
   changePassword,
-  updateEmailNotifications
+  updateEmailNotifications,
+  getUserById
 } = require('../controllers/UserController');
 
 const authMiddleware = require('../middlewares/authMiddleware');
@@ -28,7 +30,8 @@ const router = express.Router();
 // Auth
 router.post('/register', register);
 router.post('/login', login);
-router.post('/logout', authMiddleware,logout);
+router.post('/refresh-token', refreshToken);
+router.post('/logout', authMiddleware, logout);
 router.post('/verify-email', verifyEmail);
 router.post('/resend-verification', resendVerificationCode);
 // Forgot password
@@ -59,8 +62,14 @@ router.get('/seller-requests', authMiddleware, getAllSellerRequests);
 // Admin: phê duyệt hoặc từ chối yêu cầu
 router.post('/seller-requests/handle', authMiddleware, handleSellerRequest);
 
-// Admin routes (quản lý user)
+// Admin routes (quản lý user) - phải đặt trước /:id
 router.get('/all', authMiddleware, getAllUsers);
+
+// Lấy thông tin user theo ID (public endpoint - chỉ trả về thông tin cơ bản)
+// Phải đặt sau các route cụ thể như /all, /seller-requests để tránh conflict
+router.get('/:id', getUserById);
+
+// Admin: xóa và cập nhật user (phải đặt sau /:id để không conflict)
 router.delete('/:id', authMiddleware, deleteUser);
 router.put('/:id', authMiddleware, updateUser);
 

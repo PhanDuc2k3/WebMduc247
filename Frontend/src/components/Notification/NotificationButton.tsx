@@ -9,6 +9,17 @@ interface NotificationButtonProps {
   userId?: string;
 }
 
+// Loại bỏ emoji khỏi tiêu đề (tránh emoji từ BE)
+const cleanTitle = (title: string) => {
+  try {
+    // Loại bỏ các ký tự emoji (Extended_Pictographic)
+    return title.replace(/[\p{Extended_Pictographic}]/gu, "").trim();
+  } catch {
+    // Fallback nếu môi trường không hỗ trợ Unicode property escapes
+    return title.replace(/[^\p{L}\p{N}\p{P}\p{Z}]/gu, "").trim();
+  }
+};
+
 const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -154,11 +165,11 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
   const getIcon = (type: string) => {
     switch (type) {
       case "order":
-        return <Package size={20} className="text-blue-600" />;
+        return <Package size={20} className="text-[#2F5FEB]" />;
       case "voucher":
-        return <Gift size={20} className="text-purple-600" />;
+        return <Gift size={20} className="text-[#2F5FEB]" />;
       case "news":
-        return <Newspaper size={20} className="text-green-600" />;
+        return <Newspaper size={20} className="text-[#2F5FEB]" />;
       case "system":
         return <Info size={20} className="text-gray-600" />;
       default:
@@ -235,7 +246,7 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
         onClick={(e) => e.stopPropagation()}
       >
           {/* Header */}
-          <div className="bg-gradient-to-br from-purple-600 via-pink-600 to-purple-700 p-4 sm:p-5 flex items-center justify-between relative overflow-hidden">
+          <div className="bg-[#2F5FEB] p-4 sm:p-5 flex items-center justify-between relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent"></div>
             <div className="relative z-10 flex items-center gap-3">
               <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
@@ -267,10 +278,10 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
           </div>
 
           {/* Notifications List */}
-          <div className="overflow-y-auto flex-1 h-0 sm:max-h-[500px] scrollbar-thin scrollbar-thumb-purple-200 scrollbar-track-transparent">
+          <div className="overflow-y-auto flex-1 h-0 sm:max-h-[500px] scrollbar-thin scrollbar-thumb-[#2F5FEB]/30 scrollbar-track-transparent">
             {loading ? (
               <div className="p-8 sm:p-12 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-4 border-purple-100 border-t-purple-600 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 sm:h-10 sm:w-10 border-4 border-[#2F5FEB]/20 border-t-[#2F5FEB] mx-auto"></div>
                 <p className="text-gray-500 mt-4 text-sm sm:text-base font-medium">Đang tải thông báo...</p>
               </div>
             ) : notifications.length === 0 ? (
@@ -287,8 +298,8 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
                   <div
                     key={notification._id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`p-4 sm:p-5 hover:bg-gradient-to-r hover:from-purple-50/50 hover:to-pink-50/50 transition-all duration-200 cursor-pointer relative group ${
-                      !notification.isRead ? "bg-gradient-to-r from-blue-50/80 to-purple-50/50" : "bg-white"
+                    className={`p-4 sm:p-5 hover:bg-[#2F5FEB]/5 transition-all duration-200 cursor-pointer relative group ${
+                      !notification.isRead ? "bg-[#2F5FEB]/5" : "bg-white"
                     }`}
                     style={{ animationDelay: `${index * 50}ms` }}
                   >
@@ -296,16 +307,12 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
                       <div className="flex-shrink-0 mt-0.5">
                         <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center ${
                           !notification.isRead 
-                            ? "bg-gradient-to-br from-blue-100 to-purple-100 ring-2 ring-blue-200" 
+                            ? "bg-[#2F5FEB]/10 ring-2 ring-[#2F5FEB]/40" 
                             : "bg-gray-100"
                         }`}>
-                          {notification.icon ? (
-                            <span className="text-xl sm:text-2xl">{notification.icon}</span>
-                          ) : (
-                            <div className="scale-110">
-                              {getIcon(notification.type)}
-                            </div>
-                          )}
+                          <div className="scale-110">
+                            {getIcon(notification.type)}
+                          </div>
                         </div>
                       </div>
                       <div className="flex-1 min-w-0">
@@ -317,10 +324,10 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
                                   !notification.isRead ? "text-gray-900" : "text-gray-700"
                                 }`}
                               >
-                                {notification.title}
+                                {cleanTitle(notification.title)}
                               </p>
                               {!notification.isRead && (
-                                <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 animate-pulse"></div>
+                                <div className="w-2 h-2 bg-[#2F5FEB] rounded-full flex-shrink-0 animate-pulse"></div>
                               )}
                             </div>
                             <p className="text-sm sm:text-base text-gray-600 line-clamp-2 sm:line-clamp-3 break-words leading-relaxed mb-2">
@@ -347,13 +354,13 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
 
           {/* Footer */}
           {notifications.length > 0 && (
-            <div className="p-3 sm:p-4 bg-gradient-to-r from-gray-50 to-purple-50/30 border-t border-gray-100">
+            <div className="p-3 sm:p-4 bg-[#2F5FEB]/5 border-t border-gray-100">
               <button
                 onClick={() => {
                   navigate("/notifications");
                   setShowDropdown(false);
                 }}
-                className="w-full text-center text-purple-600 font-bold hover:text-purple-700 transition-all duration-200 text-sm sm:text-base py-2.5 sm:py-3 rounded-lg hover:bg-purple-100 active:scale-95 flex items-center justify-center gap-2"
+                className="w-full text-center text-[#2F5FEB] font-bold hover:text-[#244ACC] transition-all duration-200 text-sm sm:text-base py-2.5 sm:py-3 rounded-lg hover:bg-[#2F5FEB]/10 active:scale-95 flex items-center justify-center gap-2"
               >
                 <span>Xem tất cả thông báo</span>
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -371,10 +378,10 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="relative flex items-center gap-1 hover:text-purple-600 transition-all duration-300 group p-1 sm:p-1.5 rounded-lg hover:bg-purple-50 active:scale-95"
+          className="relative flex items-center gap-1 hover:text-[#2F5FEB] transition-all duration-300 group p-1 sm:p-1.5 rounded-lg hover:bg-[#2F5FEB]/5 active:scale-95"
         >
           <div className="relative">
-            <div className="absolute inset-0 bg-purple-200/30 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="absolute inset-0 bg-[#2F5FEB]/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             <Bell size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] relative z-10 group-hover:scale-110 transition-transform duration-300" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 bg-gradient-to-r from-red-500 to-pink-600 text-white text-[10px] sm:text-xs w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center rounded-full font-black animate-pulse">

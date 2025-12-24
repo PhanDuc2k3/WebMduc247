@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { ChevronDown, ChevronLeft, ChevronRight, Filter, X, Package } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, Filter, X, Package, DollarSign, Frown } from "lucide-react";
 import ProductLoading from "../../components/ProductList/ProductLoading";
 import ProductCard from "../../components/Home/FeaturedProducts/ProductCard";
 import PriceFilter from "../../components/ProductList/PriceFilter";
@@ -92,13 +92,18 @@ const ProductList: React.FC = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    let isCancelled = false;
+
     const fetchProducts = async () => {
       try {
         setLoading(true);
         // Nếu có search keyword, tìm kiếm sản phẩm
         let res;
         if (searchTerm && searchTerm.trim()) {
-          res = await productApi.searchProducts(searchTerm.trim(), 100);
+          const keyword = searchTerm.trim();
+          res = await productApi.searchProducts(keyword, 100);
+          if (isCancelled) return;
+
           const products = res.data.products || [];
           const mapped: ProductType[] = products.map((p: any) => ({
             _id: p._id,
@@ -118,7 +123,14 @@ const ProductList: React.FC = () => {
             reviewsCount: p.reviewsCount || 0,
             viewsCount: p.viewsCount || 0,
             isActive: p.isActive ?? true,
-            store: p.store || null,
+            store: typeof p.store === 'object' && p.store
+              ? {
+                  _id: p.store._id || p.store,
+                  name: p.store.name,
+                  logoUrl: p.store.logoUrl,
+                  storeAddress: p.store.storeAddress || p.store.address || ""
+                }
+              : p.store || "",
             tags: p.tags || [],
             keywords: p.keywords || [],
             createdAt: p.createdAt,
@@ -130,12 +142,17 @@ const ProductList: React.FC = () => {
         }
         
         // Nếu có category, filter theo category
-        const params: any = {};
+        const params: any = {
+          limit: 100, // ✅ Tăng limit để hiển thị nhiều sản phẩm hơn
+          page: 1,
+        };
         if (selectedCategory && selectedCategory.trim()) {
           params.category = selectedCategory.trim();
         }
         
         res = await productApi.getProducts(params);
+        if (isCancelled) return;
+
         const list = res.data.data || res.data.products || [];
 
         const mapped: ProductType[] = list.map((p: any) => ({
@@ -174,13 +191,21 @@ const ProductList: React.FC = () => {
 
         setProducts(mapped);
       } catch (err) {
-        console.error("Lỗi khi fetch products:", err);
+        if (!isCancelled) {
+          console.error("Lỗi khi fetch products:", err);
+        }
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchProducts();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [searchTerm, selectedCategory]);
 
   // Đóng dropdown khi click ra ngoài
@@ -300,8 +325,8 @@ const ProductList: React.FC = () => {
       {/* Header */}
       <div className="pb-4 md:pb-6 animate-fade-in-down">
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold pb-2 md:pb-3 text-gray-900 flex items-center gap-2">
-          <Package className="w-6 h-6 md:w-7 md:h-7 text-blue-600" />
-          <span>
+          <Package className="w-6 h-6 md:w-7 md:h-7 text-[#2F5FEB]" />
+          <span className="text-[#2F5FEB]">
             {searchTerm 
               ? `Kết quả tìm kiếm: "${searchTerm}"`
               : selectedCategory
@@ -311,9 +336,18 @@ const ProductList: React.FC = () => {
         </h1>
         <p className="text-gray-600 text-sm md:text-base lg:text-lg">
           {searchTerm 
-            ? `Tìm thấy ${filteredProducts.length} sản phẩm phù hợp`
+            ? <>
+                Tìm thấy{" "}
+                <span className="text-[#2F5FEB] font-semibold">{filteredProducts.length}</span>
+                {" "}sản phẩm phù hợp
+              </>
             : selectedCategory
-            ? `Tìm thấy ${filteredProducts.length} sản phẩm trong danh mục ${selectedCategory}`
+            ? <>
+                Tìm thấy{" "}
+                <span className="text-[#2F5FEB] font-semibold">{filteredProducts.length}</span>
+                {" "}sản phẩm trong danh mục{" "}
+                <span className="text-[#2F5FEB] font-semibold">{selectedCategory}</span>
+              </>
             : "Khám phá các sản phẩm nổi bật được nhiều người yêu thích"}
         </p>
       </div>
@@ -322,7 +356,7 @@ const ProductList: React.FC = () => {
         {/* Bộ lọc giá - Desktop */}
         <div className="hidden lg:block lg:w-1/5 bg-white p-6 rounded-2xl shadow-md border border-gray-100 h-fit sticky top-[180px] animate-fade-in-left delay-300">
           <div className="flex items-center gap-2 mb-4">
-            <span className="text-2xl">💰</span>
+            <DollarSign className="w-6 h-6 text-[#2F5FEB]" />
             <h2 className="text-xl font-bold text-gray-900">Lọc theo giá</h2>
           </div>
           <PriceFilter selectedPrice={selectedPrice} setSelectedPrice={setSelectedPrice} />
@@ -333,7 +367,7 @@ const ProductList: React.FC = () => {
           {/* Mobile Filter Button */}
           <button
             onClick={() => setIsMobileFilterOpen(true)}
-            className="lg:hidden pb-3 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300"
+            className="lg:hidden pb-3 w-full flex items-center justify-center gap-2 bg-[#2F5FEB] text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:bg-[#244ACC] transition-all duration-300"
           >
             <Filter size={20} />
             <span>Lọc sản phẩm</span>
@@ -350,7 +384,7 @@ const ProductList: React.FC = () => {
                     onClick={() => setSortBy("relevant")}
                     className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
                       sortBy === "relevant"
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                        ? "bg-[#2F5FEB] text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -360,7 +394,7 @@ const ProductList: React.FC = () => {
                   onClick={() => setSortBy("newest")}
                   className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
                     sortBy === "newest"
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                      ? "bg-[#2F5FEB] text-white shadow-md"
                       : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                   }`}
                 >
@@ -370,7 +404,7 @@ const ProductList: React.FC = () => {
                   onClick={() => setSortBy("bestselling")}
                   className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
                     sortBy === "bestselling"
-                      ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                      ? "bg-[#2F5FEB] text-white shadow-md"
                       : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                   }`}
                 >
@@ -382,7 +416,7 @@ const ProductList: React.FC = () => {
                     onClick={() => setShowRatingDropdown(!showRatingDropdown)}
                     className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       ratingFilter
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                        ? "bg-[#2F5FEB] text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -401,7 +435,7 @@ const ProductList: React.FC = () => {
                           }}
                           className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
                             ratingFilter === option.value
-                              ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium"
+                              ? "bg-[#2F5FEB]/10 text-[#2F5FEB] font-medium"
                               : "text-gray-700"
                           } ${option.value ? "border-t border-gray-100" : ""}`}
                         >
@@ -417,7 +451,7 @@ const ProductList: React.FC = () => {
                     onClick={() => setShowLocationDropdown(!showLocationDropdown)}
                     className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       locationFilter
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                        ? "bg-[#2F5FEB] text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -435,7 +469,7 @@ const ProductList: React.FC = () => {
                           }}
                           className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
                             locationFilter === option.value
-                              ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium"
+                              ? "bg-[#2F5FEB]/10 text-[#2F5FEB] font-medium"
                               : "text-gray-700"
                           } ${option.value ? "border-t border-gray-100" : ""}`}
                         >
@@ -456,7 +490,7 @@ const ProductList: React.FC = () => {
                     }}
                     className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       sortBy === "price"
-                        ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md"
+                        ? "bg-[#2F5FEB] text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -471,7 +505,7 @@ const ProductList: React.FC = () => {
                           setShowPriceDropdown(false);
                         }}
                         className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
-                          priceSort === "low" ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium" : "text-gray-700"
+                          priceSort === "low" ? "bg-[#2F5FEB]/10 text-[#2F5FEB] font-medium" : "text-gray-700"
                         }`}
                       >
                         Thấp đến cao
@@ -482,7 +516,7 @@ const ProductList: React.FC = () => {
                           setShowPriceDropdown(false);
                         }}
                         className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors border-t border-gray-100 ${
-                          priceSort === "high" ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600 font-medium" : "text-gray-700"
+                          priceSort === "high" ? "bg-[#2F5FEB]/10 text-[#2F5FEB] font-medium" : "text-gray-700"
                         }`}
                       >
                         Cao đến thấp
@@ -496,7 +530,7 @@ const ProductList: React.FC = () => {
               {/* Pagination */}
               <div className="flex items-center justify-between md:justify-end gap-2 md:gap-4 w-full md:w-auto pt-2 md:pt-0">
                 <span className="text-gray-700 text-xs md:text-sm">
-                  <span className="text-red-500 font-bold">{currentPage}</span>/{totalPages}
+                  <span className="text-[#2F5FEB] font-bold">{currentPage}</span>/{totalPages}
                 </span>
                 <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
                   <button
@@ -505,7 +539,7 @@ const ProductList: React.FC = () => {
                     className={`px-2 py-1.5 md:px-3 md:py-2 border-r border-gray-200 transition-colors ${
                       currentPage === 1
                         ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-600 hover:bg-gray-50"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-[#2F5FEB]"
                     }`}
                   >
                     <ChevronLeft size={16} />
@@ -516,7 +550,7 @@ const ProductList: React.FC = () => {
                     className={`px-2 py-1.5 md:px-3 md:py-2 transition-colors ${
                       currentPage === totalPages
                         ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-600 hover:bg-gray-50"
+                        : "text-gray-600 hover:bg-gray-50 hover:text-[#2F5FEB]"
                     }`}
                   >
                     <ChevronRight size={16} />
@@ -557,7 +591,9 @@ const ProductList: React.FC = () => {
               })
             ) : (
               <div className="col-span-full text-center py-16 animate-fade-in">
-                <div className="text-6xl mb-4">😔</div>
+                <div className="flex justify-center mb-4">
+                  <Frown className="w-12 h-12 text-gray-300" />
+                </div>
                 <p className="text-gray-500 text-lg font-medium mb-2">
                   Không có sản phẩm nào để hiển thị
                 </p>
@@ -593,7 +629,7 @@ const ProductList: React.FC = () => {
         >
           <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between z-10">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <span>💰</span>
+              <DollarSign className="w-6 h-6 text-[#2F5FEB]" />
               Lọc theo giá
             </h2>
             <button

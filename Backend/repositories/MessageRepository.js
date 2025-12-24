@@ -32,7 +32,8 @@ class MessageRepository {
   async findConversationsByUserId(userId, populate = false) {
     let query = Conversation.find({ participants: userId }).sort({ updatedAt: -1 });
     if (populate) {
-      query = query.populate("participants", "fullName avatarUrl _id");
+      // Populate đầy đủ thông tin user bao gồm role để frontend có thể xác định owner
+      query = query.populate("participants", "fullName avatarUrl _id role");
     }
     return await query.lean();
   }

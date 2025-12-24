@@ -48,11 +48,16 @@ const ProductManagement: React.FC = () => {
       setLoading(true);
       const res = await productApi.getMyProducts();
 
-      const productsArray: any[] = Array.isArray(res.data)
+      console.log("[fetchProducts] 📥 Response:", res.data);
+
+      const productsArray: any[] = Array.isArray(res.data) 
         ? res.data
-        : Array.isArray(res.data.data)
+        : Array.isArray(res.data?.data)
         ? res.data.data
         : [];
+
+      console.log("[fetchProducts] 📦 Products array:", productsArray.length, "items");
+      console.log("[fetchProducts] 📦 Product names:", productsArray.map((p: any) => p.name));
 
       const mapped: ProductType[] = productsArray.map((p: any) => ({
         ...p,
@@ -62,9 +67,11 @@ const ProductManagement: React.FC = () => {
         ),
       }));
 
+      console.log("[fetchProducts] ✅ Mapped products:", mapped.length);
       setProducts(mapped);
     } catch (err) {
       console.error("❌ Lỗi fetch sản phẩm:", err);
+      toast.error("Không thể tải danh sách sản phẩm", { containerId: "general-toast" });
     } finally {
       setLoading(false);
     }
@@ -75,18 +82,9 @@ const ProductManagement: React.FC = () => {
   }, []);
 
   // 🔹 Thêm / sửa sản phẩm
-  const handleAddOrUpdateProduct = (newProduct: ProductType, isEdit: boolean) => {
-    const mapped: ProductType = {
-      ...newProduct,
-      images: (newProduct.images || []).map((img: string) =>
-        img.startsWith("http") ? img : `${BASE_URL}${img.startsWith("/") ? img : "/" + img}`
-      ),
-    };
-    if (isEdit) {
-      setProducts((prev) => prev.map((p) => (p._id === mapped._id ? mapped : p)));
-    } else {
-      setProducts((prev) => [mapped, ...prev]);
-    }
+  const handleAddOrUpdateProduct = async (newProduct: ProductType, isEdit: boolean) => {
+    // ✅ Tự động refresh danh sách sau khi thêm/sửa thành công
+    await fetchProducts();
   };
 
   // 🔹 Mở popup sửa
@@ -170,9 +168,9 @@ const ProductManagement: React.FC = () => {
             setShowPopup(false);
             setEditProduct(null);
           }}
-          onSubmit={(newProduct) => {
+          onSubmit={async (newProduct) => {
             const isEdit = Boolean(editProduct?._id);
-            handleAddOrUpdateProduct(newProduct, isEdit);
+            await handleAddOrUpdateProduct(newProduct, isEdit);
             setShowPopup(false);
             setEditProduct(null);
           }}
@@ -240,7 +238,7 @@ const ProductManagement: React.FC = () => {
             setEditProduct(null);
             setShowPopup(true);
           }}
-          className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-2 hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 whitespace-nowrap touch-manipulation"
+          className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-[#2F5EE9] text-white rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 whitespace-nowrap touch-manipulation"
         >
           <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> <span>Thêm sản phẩm mới</span>
         </button>
@@ -271,17 +269,17 @@ const ProductManagement: React.FC = () => {
             <tbody>
               {products.length > 0 ? (
                 products.map((p, index) => (
-                  <tr key={p._id} className="border-b border-gray-100 hover:bg-blue-50 transition-all duration-200 animate-fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
+                  <tr key={p._id || `product-${index}`} className="border-b border-gray-100 hover:bg-blue-50 transition-all duration-200 animate-fade-in-up" style={{ animationDelay: `${index * 0.05}s` }}>
                     <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <div className="flex items-center gap-2 sm:gap-3">
                         <div className="relative flex-shrink-0">
                           <img
-                            src={p.images[0] || "/placeholder.png"}
-                            alt={p.name}
+                            src={(p.images && p.images.length > 0) ? p.images[0] : "/placeholder.png"}
+                            alt={p.name || "Sản phẩm"}
                             className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg sm:rounded-xl object-cover border-2 border-gray-200 shadow-md"
                             loading="lazy"
                           />
-                          {p.quantity < 15 && (
+                          {(p.quantity || 0) < 15 && (
                             <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-0.5 border-2 border-white">
                               <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                             </div>
@@ -289,16 +287,20 @@ const ProductManagement: React.FC = () => {
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="font-bold text-xs sm:text-sm text-gray-900 line-clamp-2">{p.name}</div>
-                          <div className="text-xs text-gray-500 mt-1 hidden sm:block">{p._id.slice(-8).toUpperCase()}</div>
+                          <div className="text-xs text-gray-500 mt-1 hidden sm:block">
+                            {p._id ? p._id.slice(-8).toUpperCase() : "N/A"}
+                          </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <span className="font-bold text-xs sm:text-sm text-green-600">{p.price.toLocaleString("vi-VN")}₫</span>
+                      <span className="font-bold text-xs sm:text-sm text-green-600">
+                        {(p.price || p.salePrice || 0).toLocaleString("vi-VN")}₫
+                      </span>
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4">
-                      <span className={`font-bold text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-lg ${p.quantity < 15 ? "bg-red-100 text-red-700 border-2 border-red-300" : "text-gray-700"}`}>
-                        {p.quantity}
+                      <span className={`font-bold text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-lg ${(p.quantity || 0) < 15 ? "bg-red-100 text-red-700 border-2 border-red-300" : "text-gray-700"}`}>
+                        {p.quantity || 0}
                       </span>
                     </td>
                     <td className="px-3 sm:px-6 py-3 sm:py-4">

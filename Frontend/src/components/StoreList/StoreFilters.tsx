@@ -68,14 +68,14 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
               setRegionOpen(false);
               setCategoryOpen(false);
             }}
-            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-lg md:rounded-xl px-3 py-2 md:px-4 md:py-3 bg-white text-xs md:text-sm text-gray-700 hover:border-blue-400 hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm touch-manipulation"
+            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-lg md:rounded-xl px-3 py-2 md:px-4 md:py-3 bg-white text-xs md:text-sm text-gray-700 hover:border-[#2F5FEB] hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm touch-manipulation"
           >
             <span className="font-medium truncate flex items-center gap-1.5 sm:gap-2">
               <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 fill-yellow-500 flex-shrink-0" />
               <span>{rating}</span>
             </span>
             <ChevronDown
-              className={`w-3 h-3 md:w-4 md:h-4 text-gray-400 transition-transform duration-300 flex-shrink-0 ml-2 ${ratingOpen ? "rotate-180 text-blue-500" : ""}`}
+              className={`w-3 h-3 md:w-4 md:h-4 text-gray-400 transition-transform duration-300 flex-shrink-0 ml-2 ${ratingOpen ? "rotate-180 text-[#2F5FEB]" : ""}`}
             />
           </button>
           {ratingOpen && (
@@ -90,7 +90,7 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
                     setRating(opt);
                     setRatingOpen(false);
                   }}
-                  className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-600 cursor-pointer transition-all duration-200 font-medium"
+                  className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-gray-700 hover:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] cursor-pointer transition-all duration-200 font-medium"
                 >
                   {opt}
                 </div>
@@ -111,14 +111,14 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
               setRatingOpen(false);
               setCategoryOpen(false);
             }}
-            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-lg md:rounded-xl px-3 py-2 md:px-4 md:py-3 bg-white text-xs md:text-sm text-gray-700 hover:border-blue-400 hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm touch-manipulation"
+            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-lg md:rounded-xl px-3 py-2 md:px-4 md:py-3 bg-white text-xs md:text-sm text-gray-700 hover:border-[#2F5FEB] hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm touch-manipulation"
           >
             <span className="font-medium truncate flex items-center gap-1.5 sm:gap-2">
               <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-red-500 flex-shrink-0" />
               <span>{region}</span>
             </span>
             <ChevronDown
-              className={`w-3 h-3 md:w-4 md:h-4 text-gray-400 transition-transform duration-300 flex-shrink-0 ml-2 ${regionOpen ? "rotate-180 text-blue-500" : ""}`}
+              className={`w-3 h-3 md:w-4 md:h-4 text-gray-400 transition-transform duration-300 flex-shrink-0 ml-2 ${regionOpen ? "rotate-180 text-[#2F5FEB]" : ""}`}
             />
           </button>
           {regionOpen && (
@@ -133,7 +133,7 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
                     setRegion(opt);
                     setRegionOpen(false);
                   }}
-                  className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-600 cursor-pointer transition-all duration-200 font-medium"
+                  className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-gray-700 hover:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] cursor-pointer transition-all duration-200 font-medium"
                 >
                   {opt}
                 </div>
@@ -154,14 +154,14 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
               setRegionOpen(false);
               setRatingOpen(false);
             }}
-            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-lg md:rounded-xl px-3 py-2 md:px-4 md:py-3 bg-white text-xs md:text-sm text-gray-700 hover:border-blue-400 hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm touch-manipulation"
+            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-lg md:rounded-xl px-3 py-2 md:px-4 md:py-3 bg-white text-xs md:text-sm text-gray-700 hover:border-[#2F5FEB] hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm touch-manipulation"
           >
             <span className="font-medium truncate flex items-center gap-1.5 sm:gap-2">
               <Tag className="w-3 h-3 sm:w-4 sm:h-4 text-purple-500 flex-shrink-0" />
               <span>{category}</span>
             </span>
             <ChevronDown
-              className={`w-3 h-3 md:w-4 md:h-4 text-gray-400 transition-transform duration-300 flex-shrink-0 ml-2 ${categoryOpen ? "rotate-180 text-blue-500" : ""}`}
+              className={`w-3 h-3 md:w-4 md:h-4 text-gray-400 transition-transform duration-300 flex-shrink-0 ml-2 ${categoryOpen ? "rotate-180 text-[#2F5FEB]" : ""}`}
             />
           </button>
           {categoryOpen && (
@@ -176,7 +176,7 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
                     setCategory(opt);
                     setCategoryOpen(false);
                   }}
-                  className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:text-blue-600 cursor-pointer transition-all duration-200 font-medium"
+                  className="px-3 py-2 md:px-4 md:py-3 text-xs md:text-sm text-gray-700 hover:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] cursor-pointer transition-all duration-200 font-medium"
                 >
                   {opt}
                 </div>

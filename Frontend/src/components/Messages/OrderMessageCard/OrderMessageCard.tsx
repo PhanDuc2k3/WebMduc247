@@ -158,14 +158,14 @@ const OrderMessageCard: React.FC<OrderMessageCardProps> = ({ message, isMine = f
       {/* Order Card */}
       <div className={`rounded sm:rounded-md overflow-hidden border shadow-sm transition-all duration-300 hover:shadow ${
         isMine
-          ? "bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200"
-          : "bg-white border-green-300"
+          ? "bg-[#2F5FEB]/5 border-[#2F5FEB]/40"
+          : "bg-white border-gray-200"
       }`}>
         {/* Header */}
         <div className={`px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 md:py-1.5 flex items-center justify-between ${
           isMine
-            ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white"
-            : "bg-gradient-to-r from-green-500 to-emerald-500 text-white"
+            ? "bg-[#2F5FEB] text-white"
+            : "bg-[#2F5FEB]/90 text-white"
         }`}>
           <div className="flex items-center gap-1 min-w-0">
             <Package className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 flex-shrink-0" />
@@ -195,7 +195,7 @@ const OrderMessageCard: React.FC<OrderMessageCardProps> = ({ message, isMine = f
                         x{product.quantity}
                       </p>
                     </div>
-                    <p className="font-semibold text-blue-600 text-[9px] sm:text-[10px] md:text-base whitespace-nowrap flex-shrink-0">
+                    <p className="font-semibold text-[#2F5FEB] text-[9px] sm:text-[10px] md:text-base whitespace-nowrap flex-shrink-0">
                       {product.price}
                     </p>
                   </div>
@@ -232,7 +232,7 @@ const OrderMessageCard: React.FC<OrderMessageCardProps> = ({ message, isMine = f
               {orderInfo.total && (
                 <div className="flex justify-between pt-0.5 md:pt-1 border-t border-gray-300 mt-0.5 md:mt-1">
                   <span className="font-bold text-[9px] sm:text-[10px] md:text-base text-gray-900">Tổng:</span>
-                  <span className="font-bold text-[9px] sm:text-[10px] md:text-base text-blue-600">{orderInfo.total}</span>
+                  <span className="font-bold text-[9px] sm:text-[10px] md:text-base text-red-600">{orderInfo.total}</span>
                 </div>
               )}
             </div>
@@ -278,11 +278,11 @@ const OrderMessageCard: React.FC<OrderMessageCardProps> = ({ message, isMine = f
             </div>
           )}
 
-          {/* Xem chi tiết Button */}
+      {/* Xem chi tiết Button */}
           {orderInfo.orderLink && (
             <button
               onClick={handleViewOrder}
-              className="w-full py-0.5 sm:py-1 md:py-1.5 px-1.5 sm:px-2 md:px-3 rounded font-semibold text-white text-[9px] sm:text-[10px] md:text-base transition-all duration-300 shadow-sm hover:shadow md:hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-0.5 md:gap-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+          className="w-full py-0.5 sm:py-1 md:py-1.5 px-1.5 sm:px-2 md:px-3 rounded font-semibold text-white text-[9px] sm:text-[10px] md:text-base transition-all duration-300 shadow-sm hover:shadow md:hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-0.5 md:gap-1 bg-[#2F5FEB] hover:bg-[#244ACC]"
             >
               <ExternalLink className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 flex-shrink-0" />
               <span>Xem chi tiết</span>

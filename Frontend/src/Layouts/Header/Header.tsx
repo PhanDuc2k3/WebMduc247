@@ -166,7 +166,7 @@ const Header: React.FC = () => {
   return (
     <header className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl shadow-xl border-b-2 border-gray-200">
       {/* Top bar */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 text-white hidden md:block">
+      <div className="bg-[#2F5FEB] text-white hidden md:block">
         <div className="flex justify-between items-center px-4 sm:px-8 py-2 text-xs font-semibold">
           <div className="flex items-center gap-2">
             <span>🚚</span>
@@ -186,11 +186,11 @@ const Header: React.FC = () => {
 
           <Link to="/" className="relative group animate-fade-in-left flex-shrink-0">
             <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-lg sm:rounded-xl flex items-center justify-center shadow-xl group-hover:shadow-purple-500/50 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-[#2F5FEB] rounded-lg sm:rounded-xl flex items-center justify-center shadow-xl group-hover:shadow-[#2F5FEB]/50 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
                 <span className="text-lg sm:text-2xl md:text-3xl font-black text-white">MĐ</span>
               </div>
               <div className="hidden xs:block">
-                <h1 className="text-sm sm:text-xl md:text-2xl font-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                <h1 className="text-sm sm:text-xl md:text-2xl font-black text-[#2F5FEB]">
                   ShopMduc247
                 </h1>
                 <p className="text-[10px] sm:text-xs text-gray-500 font-bold">Shopping Mall</p>
@@ -208,8 +208,8 @@ const Header: React.FC = () => {
                 type="button"
                 onClick={() => setShowSearchDropdown(!showSearchDropdown)}
                 className="absolute left-[2px] top-[2px] bottom-[2px] z-20 flex items-center justify-center px-1.5 sm:px-2 py-1.5 
-                           bg-gradient-to-r from-blue-600 to-purple-600 text-white 
-                           rounded-l-md sm:rounded-l-lg hover:from-blue-700 hover:to-purple-700 
+                           bg-[#2F5FEB] text-white 
+                           rounded-l-md sm:rounded-l-lg hover:bg-[#244ACC] 
                            transition-all duration-300 shadow-md hover:shadow-lg 
                            transform hover:scale-[1.02] text-[10px] sm:text-xs font-bold border border-r-0 border-white"
               >
@@ -239,7 +239,7 @@ const Header: React.FC = () => {
                     }}
                     className={`w-full px-3 py-2 text-xs font-medium flex items-center gap-2 transition-all duration-200 
                       ${searchType === "product"
-                        ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600"
+                        ? "bg-[#2F5FEB]/10 text-[#2F5FEB]"
                         : "text-gray-700 hover:bg-gray-50"
                       }`}
                   >
@@ -254,7 +254,7 @@ const Header: React.FC = () => {
                     }}
                     className={`w-full px-3 py-2 text-xs font-medium flex items-center gap-2 transition-all duration-200 border-t border-gray-100 
                       ${searchType === "store"
-                        ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600"
+                        ? "bg-[#2F5FEB]/10 text-[#2F5FEB]"
                         : "text-gray-700 hover:bg-gray-50"
                       }`}
                   >
@@ -276,7 +276,7 @@ const Header: React.FC = () => {
                 }}
                 placeholder={searchType === "product" ? "Tìm sản phẩm..." : "Tìm cửa hàng..."}
                 className="w-full pl-[42px] sm:pl-[50px] pr-8 sm:pr-10 py-1.5 sm:py-2 text-[11px] sm:text-xs border-2 border-gray-300 rounded-md sm:rounded-lg 
-                           shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400 
+                           shadow-md focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] 
                            transition-all duration-200 bg-white/90 backdrop-blur-sm placeholder-gray-400"
               />
 
@@ -313,7 +313,7 @@ const Header: React.FC = () => {
                       {totalSearchResults > 5 && (
                         <button
                           onClick={handleViewMore}
-                          className="w-full px-4 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors border-t border-gray-200"
+                          className="w-full px-4 py-3 text-sm font-semibold text-[#2F5FEB] hover:bg-[#2F5FEB]/5 transition-colors border-t border-gray-200"
                         >
                           Xem thêm {totalSearchResults - 5} kết quả
                         </button>
@@ -329,8 +329,8 @@ const Header: React.FC = () => {
               <button
                 type="submit"
                 className="absolute right-[2px] top-[2px] bottom-[2px] flex items-center justify-center 
-                           bg-gradient-to-r from-purple-600 to-blue-600 text-white 
-                           px-1.5 sm:px-2.5 rounded-r-md sm:rounded-r-lg hover:from-purple-700 hover:to-blue-700 
+                           bg-[#2F5FEB] text-white 
+                           px-1.5 sm:px-2.5 rounded-r-md sm:rounded-r-lg hover:bg-[#244ACC] 
                            transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 <Search size={12} className="sm:w-3.5 sm:h-3.5" />
@@ -348,8 +348,8 @@ const Header: React.FC = () => {
                 type="button"
                 onClick={() => setShowSearchDropdown(!showSearchDropdown)}
                 className="absolute left-[2px] top-[2px] bottom-[2px] z-20 flex items-center justify-center gap-1 px-3 py-2.5 
-                           bg-gradient-to-r from-blue-600 to-purple-600 text-white 
-                           rounded-l-xl hover:from-blue-700 hover:to-purple-700 
+                           bg-[#2F5FEB] text-white 
+                           rounded-l-xl hover:bg-[#244ACC] 
                            transition-all duration-300 shadow-md hover:shadow-lg 
                            transform hover:scale-[1.02] text-xs sm:text-sm font-bold border-2 border-r-0 border-white"
               >
@@ -385,7 +385,7 @@ const Header: React.FC = () => {
                     }}
                     className={`w-full px-4 py-3 text-sm font-medium flex items-center gap-2 transition-all duration-200 
                       ${searchType === "product"
-                        ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600"
+                        ? "bg-[#2F5FEB]/10 text-[#2F5FEB]"
                         : "text-gray-700 hover:bg-gray-50"
                       }`}
                   >
@@ -400,7 +400,7 @@ const Header: React.FC = () => {
                     }}
                     className={`w-full px-4 py-3 text-sm font-medium flex items-center gap-2 transition-all duration-200 border-t border-gray-100 
                       ${searchType === "store"
-                        ? "bg-gradient-to-r from-blue-50 to-purple-50 text-blue-600"
+                        ? "bg-[#2F5FEB]/10 text-[#2F5FEB]"
                         : "text-gray-700 hover:bg-gray-50"
                       }`}
                   >
@@ -422,7 +422,7 @@ const Header: React.FC = () => {
                 }}
                 placeholder={searchType === "product" ? "Tìm kiếm sản phẩm..." : "Tìm kiếm cửa hàng..."}
                 className="w-full pl-[130px] pr-12 py-2.5 text-sm border-2 border-gray-300 rounded-xl 
-                           shadow-md focus:outline-none focus:ring-2 focus:ring-purple-400 
+                           shadow-md focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] 
                            transition-all duration-200 bg-white/90 backdrop-blur-sm placeholder-gray-400"
               />
 
@@ -447,7 +447,7 @@ const Header: React.FC = () => {
                               {item.logoUrl ? (
                                 <img src={item.logoUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
                               ) : (
-                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-lg bg-[#2F5FEB] flex items-center justify-center">
                                   <Store size={24} className="text-white" />
                                 </div>
                               )}
@@ -477,7 +477,7 @@ const Header: React.FC = () => {
                                 <div className="font-semibold text-sm text-gray-900">{item.name}</div>
                                 <div className="text-xs text-gray-500 line-clamp-1 mt-1">{item.brand || item.category}</div>
                                 <div className="flex items-center gap-3 mt-1">
-                                  <div className="text-xs font-semibold text-blue-600">
+                                  <div className="text-xs font-semibold text-[#2F5FEB]">
                                     {item.salePrice ? (
                                       <>
                                         <span className="line-through text-gray-400 mr-2">{item.price?.toLocaleString()}đ</span>
@@ -500,7 +500,7 @@ const Header: React.FC = () => {
                       {totalSearchResults > 5 && (
                         <button
                           onClick={handleViewMore}
-                          className="w-full px-4 py-3 text-sm font-semibold text-blue-600 hover:bg-blue-50 transition-colors border-t border-gray-200"
+                          className="w-full px-4 py-3 text-sm font-semibold text-[#2F5FEB] hover:bg-[#2F5FEB]/5 transition-colors border-t border-gray-200"
                         >
                           Xem thêm {totalSearchResults - 5} kết quả
                         </button>
@@ -518,8 +518,8 @@ const Header: React.FC = () => {
               <button
                 type="submit"
                 className="absolute right-[2px] top-[2px] bottom-[2px] flex items-center justify-center 
-                           bg-gradient-to-r from-purple-600 to-blue-600 text-white 
-                           px-3 rounded-r-xl hover:from-purple-700 hover:to-blue-700 
+                           bg-[#2F5FEB] text-white 
+                           px-3 rounded-r-xl hover:bg-[#244ACC] 
                            transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 <Search size={18} />
@@ -541,11 +541,11 @@ const Header: React.FC = () => {
                     onClick={() => setShowDropdown((v) => !v)}
                     title={user.fullName}
                   >
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden shadow-xl ring-2 ring-purple-500/20 group-hover:ring-purple-500/40 transition-all duration-300 transform group-hover:scale-110">
+                          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden shadow-xl ring-2 ring-[#2F5FEB]/20 group-hover:ring-[#2F5FEB]/40 transition-all duration-300 transform group-hover:scale-110">
                       {user.avatarUrl ? (
                         <img src={user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                        <div className="w-full h-full bg-[#2F5FEB] flex items-center justify-center">
                           <User size={14} className="sm:w-4 sm:h-4 text-white" />
                         </div>
                       )}
@@ -568,7 +568,7 @@ const Header: React.FC = () => {
               ) : (
                 <button
                   onClick={handleLoginClick}
-                  className="p-1.5 sm:p-2 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
+                  className="p-1.5 sm:p-2 bg-[#2F5FEB] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:bg-[#244ACC]"
                   title="Đăng nhập"
                 >
                   <User size={14} className="sm:w-4 sm:h-4" />
@@ -588,11 +588,11 @@ const Header: React.FC = () => {
                     onClick={() => setShowDropdown((v) => !v)}
                     title={user.fullName}
                   >
-                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden shadow-xl ring-2 md:ring-3 ring-purple-500/20 group-hover:ring-purple-500/40 transition-all duration-300 transform group-hover:scale-110">
+                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden shadow-xl ring-2 md:ring-3 ring-[#2F5FEB]/20 group-hover:ring-[#2F5FEB]/40 transition-all duration-300 transform group-hover:scale-110">
                       {user.avatarUrl ? (
                         <img src={user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                        <div className="w-full h-full bg-[#2F5FEB] flex items-center justify-center">
                           <User size={20} className="text-white" />
                         </div>
                       )}
@@ -615,7 +615,7 @@ const Header: React.FC = () => {
               ) : (
                 <button
                   onClick={handleLoginClick}
-                  className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 md:px-6 md:py-2.5 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm md:text-base"
+                  className="hidden sm:flex items-center gap-2 bg-[#2F5FEB] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm md:text-base hover:bg-[#244ACC]"
                   title="Đăng nhập"
                 >
                   <User size={18} className="group-hover:scale-125 transition-transform" />
@@ -636,11 +636,11 @@ const Header: React.FC = () => {
           <Link
             key={`${label}-${index}`}
             to={to}
-            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 hover:text-purple-600 transition-all duration-300 relative group rounded-lg hover:bg-transparent whitespace-nowrap flex-shrink-0"
+            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 hover:text-[#2F5FEB] transition-all duration-300 relative group rounded-lg hover:bg-transparent whitespace-nowrap flex-shrink-0"
           >
             <Icon size={16} className="sm:w-5 sm:h-5 md:hidden" />
             <span>{label}</span>
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 group-hover:w-full transition-all duration-300 rounded-full hidden md:block"></span>
+            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#2F5FEB] group-hover:w-full transition-all duration-300 rounded-full hidden md:block"></span>
           </Link>
         ))}
       </nav>

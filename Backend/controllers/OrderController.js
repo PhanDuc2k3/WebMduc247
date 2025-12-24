@@ -206,3 +206,27 @@ exports.cancelOrder = async (req, res) => {
     res.status(statusCode).json({ message: error.message || "Lỗi server" });
   }
 };
+
+exports.updatePaymentMethod = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.userId;
+    const { paymentMethod } = req.body;
+    
+    if (!paymentMethod || !["COD", "MOMO", "VIETQR", "WALLET"].includes(paymentMethod)) {
+      return res.status(400).json({ message: "Phương thức thanh toán không hợp lệ" });
+    }
+
+    const result = await orderService.updatePaymentMethod(id, userId, paymentMethod);
+    res.status(200).json({ 
+      message: "Đã cập nhật phương thức thanh toán thành công", 
+      ...result 
+    });
+  } catch (error) {
+    console.error("Lỗi updatePaymentMethod:", error);
+    const statusCode = error.message.includes("Không tìm thấy") ? 404 : 
+                      error.message.includes("quyền") ? 403 :
+                      error.message.includes("Không thể đổi") ? 400 : 500;
+    res.status(statusCode).json({ message: error.message || "Lỗi server" });
+  }
+};

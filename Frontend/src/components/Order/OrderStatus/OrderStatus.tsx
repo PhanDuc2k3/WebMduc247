@@ -92,12 +92,12 @@ export default function OrderStatus({ statusHistory }: OrderStatusProps) {
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-      <div className="bg-gradient-to-r from-gray-50 to-blue-50 p-4 sm:p-6 border-b-2 border-gray-200">
+      <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
             Trạng thái đơn hàng
           </h2>
-          <span className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-full bg-gradient-to-r from-orange-100 to-yellow-100 border-2 border-orange-300 text-orange-700 w-fit">
+          <span className="px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold rounded-full bg-[#2F5FEB]/10 border-2 border-[#2F5FEB]/40 text-[#2F5FEB] w-fit">
             {steps.find((s) => !s.done)?.title || "Hoàn tất"}
           </span>
         </div>
@@ -108,7 +108,7 @@ export default function OrderStatus({ statusHistory }: OrderStatusProps) {
             className={`h-2.5 sm:h-3 rounded-full transition-all duration-1000 ${
               currentStatus === "cancelled" 
                 ? "bg-gradient-to-r from-red-500 to-red-600" 
-                : "bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"
+                : "bg-[#2F5FEB]"
             }`}
             style={{ width: `${progress}%` }}
           ></div>
@@ -116,7 +116,7 @@ export default function OrderStatus({ statusHistory }: OrderStatusProps) {
         <div className="flex justify-between items-center">
           <p className="text-xs sm:text-sm font-semibold text-gray-600">Tiến trình đơn hàng</p>
           <p className={`text-base sm:text-lg font-bold ${
-            currentStatus === "cancelled" ? "text-red-600" : "text-blue-600"
+            currentStatus === "cancelled" ? "text-red-600" : "text-[#2F5FEB]"
           }`}>
             {progress}%
           </p>

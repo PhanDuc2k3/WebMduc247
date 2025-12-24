@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { MessageCircle } from "lucide-react";
 import messageApi from "../../../api/messageApi";
 import { useChat } from "../../../context/chatContext";
+import axiosClient from "../../../api/axiosClient";
 
 interface Chat {
   conversationId: string;
@@ -72,8 +74,23 @@ export default function ChatList({
         const res = await messageApi.getUserConversations(currentUserId);
         console.log("[ChatList] API response:", res.data);
 
-const mappedChats: Chat[] = (res.data as any[])
-  .map((conv) => {
+// Helper function để fetch thông tin user từ API
+const fetchUserInfo = async (participantId: string): Promise<{ name: string; avatarUrl: string } | null> => {
+  try {
+    const userRes = await axiosClient.get(`/api/users/${participantId}`);
+    const user = userRes.data?.user || userRes.data;
+    return {
+      name: user?.fullName || user?.name || "",
+      avatarUrl: user?.avatarUrl || "",
+    };
+  } catch (err) {
+    console.warn("[ChatList] Không thể fetch thông tin user:", err);
+    return null;
+  }
+};
+
+const mappedChats: Chat[] = await Promise.all(
+  (res.data as any[]).map(async (conv) => {
     console.log("[ChatList] Raw conversation:", conv);
 
     const participants = conv.participants || [];
@@ -94,10 +111,25 @@ const mappedChats: Chat[] = (res.data as any[])
       conv.lastMessage ||
       "";
 
+    // Fetch thông tin user từ API để đảm bảo lấy đúng fullName và avatarUrl (đặc biệt cho seller/owner)
+    let displayName = participant.fullName || participant.name || "Người dùng ẩn danh";
+    let displayAvatar = participant.avatarUrl || "/default-avatar.png";
+
+    // Fetch từ API để đảm bảo có thông tin mới nhất (quan trọng cho seller để hiển thị tên owner thay vì tên store)
+    const userInfo = await fetchUserInfo(participant._id);
+    if (userInfo) {
+      if (userInfo.name) {
+        displayName = userInfo.name;
+      }
+      if (userInfo.avatarUrl) {
+        displayAvatar = userInfo.avatarUrl;
+      }
+    }
+
     const chat: Chat = {
       conversationId: conv._id?.toString() || conv.conversationId,
-      name: participant.fullName || participant.name || "Người dùng ẩn danh",
-      avatarUrl: participant.avatarUrl || "/default-avatar.png",
+      name: displayName,
+      avatarUrl: displayAvatar,
       lastMessage: lastMsg,
       lastMessageTime: conv.lastMessageTime,
       participantId: participant._id,
@@ -108,15 +140,16 @@ const mappedChats: Chat[] = (res.data as any[])
 
     return chat;
   })
-  .filter((c): c is Chat => Boolean(c?.conversationId));
+);
+const filteredChats = mappedChats.filter((c): c is Chat => Boolean(c?.conversationId));
 
 
-        console.log("[ChatList] Mapped chats:", mappedChats);
+        console.log("[ChatList] Mapped chats:", filteredChats);
 
         // ✅ Giữ lại trạng thái online từ danh sách cũ
         setChats((prev) => {
           const prevMap = new Map(prev.map((c) => [c.conversationId, c]));
-          const merged = mappedChats.map((chat) => {
+          const merged = filteredChats.map((chat) => {
             const old = prevMap.get(chat.conversationId);
             return old ? { ...chat, online: old.online } : chat;
           });
@@ -174,9 +207,9 @@ const mappedChats: Chat[] = (res.data as any[])
   return (
     <div className="w-full h-full bg-white border-r-0 md:border-r-2 border-gray-200 overflow-hidden flex flex-col shadow-lg md:shadow-xl">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-500 p-3 sm:p-4 md:p-5 lg:p-6 border-b-2 border-gray-200 flex-shrink-0">
+      <div className="bg-[#2F5FEB] p-3 sm:p-4 md:p-5 lg:p-6 border-b-2 border-gray-200 flex-shrink-0">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 md:gap-3">
-          <span>💬</span> Tin nhắn
+          <MessageCircle className="w-5 h-5 md:w-6 md:h-6" /> Tin nhắn
         </h2>
         <p className="text-white/90 text-xs md:text-sm mt-1">{chats.length} cuộc trò chuyện</p>
       </div>
@@ -185,12 +218,12 @@ const mappedChats: Chat[] = (res.data as any[])
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {loading ? (
           <div className="p-4 sm:p-6 md:p-8 text-center animate-fade-in">
-            <div className="text-3xl md:text-4xl mb-3 md:mb-4 animate-pulse">💬</div>
+            <MessageCircle className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 md:mb-4 text-[#2F5FEB] animate-pulse" />
             <p className="text-gray-600 text-sm sm:text-base md:text-lg font-medium">Đang tải...</p>
           </div>
         ) : chats.length === 0 ? (
           <div className="p-4 sm:p-6 md:p-8 text-center animate-fade-in">
-            <div className="text-4xl sm:text-5xl md:text-6xl mb-3 md:mb-4">💬</div>
+            <MessageCircle className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4 text-[#2F5FEB]" />
             <p className="text-gray-500 text-sm sm:text-base md:text-lg font-medium mb-2">Chưa có cuộc trò chuyện</p>
             <p className="text-gray-400 text-xs md:text-sm">Bắt đầu cuộc trò chuyện mới</p>
           </div>
@@ -201,8 +234,8 @@ const mappedChats: Chat[] = (res.data as any[])
               onClick={() => !disabled && handleSelectChat(chat)}
               className={`flex items-center gap-2 sm:gap-3 md:gap-4 p-3 sm:p-4 md:p-4 lg:p-5 cursor-pointer transition-all duration-300 animate-fade-in-up border-b border-gray-100 ${
                 selectedChat?.conversationId === chat.conversationId
-                  ? "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500 shadow-md"
-                  : "hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50 active:bg-blue-50"
+                  ? "bg-[#2F5FEB]/5 border-l-4 border-[#2F5FEB] shadow-md"
+                  : "hover:bg-[#2F5FEB]/5 active:bg-[#2F5FEB]/10"
               } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
               style={{ animationDelay: `${index * 0.05}s` }}
             >

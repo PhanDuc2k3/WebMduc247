@@ -21,7 +21,7 @@ const ContactInfoCard: React.FC<Props> = ({ title, content, note, icon, iconBgCo
       </div>
 
       <h3 className="text-lg font-black text-gray-900">{title}</h3>
-      <p className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{content}</p>
+      <p className="text-lg font-bold text-[#2F5FEB]">{content}</p>
       {note && <p className="text-sm text-gray-600 font-semibold">{note}</p>}
     </div>
   );

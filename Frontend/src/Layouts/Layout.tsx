@@ -1,9 +1,18 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Header from "./Header/Header";
 import Footer from "./Footer/Footer";
 import ChatWidget from "./Chatbot/ChatBot";
+import { setGlobalNavigate } from "../context/chatContext";
 
 const Layout = () => {
+  const navigate = useNavigate();
+
+  // Set global navigate helper để toast có thể navigate
+  useEffect(() => {
+    setGlobalNavigate(navigate);
+  }, [navigate]);
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Header sticky */}

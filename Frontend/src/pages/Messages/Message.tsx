@@ -1,7 +1,7 @@
 // src/pages/Messages/Message.tsx
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
-import { Clock } from "lucide-react";
+import { Clock, MessageCircle } from "lucide-react";
 import ChatList from "../../components/Messages/ChatList/ChatList";
 import ChatWindow from "../../components/Messages/ChatWindow/ChatWindow";
 import messageApi from "../../api/messageApi";
@@ -17,9 +17,14 @@ interface Chat {
 export default function ChatInterface() {
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null);
-  const { conversationId } = useParams();
+  const { id: conversationId } = useParams<{ id?: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Debug: Log conversationId changes
+  useEffect(() => {
+    console.log("[ChatInterface] 🔄 conversationId changed:", conversationId, "pathname:", location.pathname);
+  }, [conversationId, location.pathname]);
 
   // ✅ Scroll to top when component mounts or route changes
   useEffect(() => {
@@ -39,13 +44,18 @@ export default function ChatInterface() {
 
   // ✅ Tự động set chat khi có conversationId trong URL
   useEffect(() => {
-    // Nếu đã có selectedChat với conversationId đúng, không cần làm gì
-    if (selectedChat?.conversationId === conversationId) {
+    console.log("[ChatInterface] 🎯 useEffect triggered - conversationId:", conversationId, "currentUserId:", currentUserId, "selectedChat:", selectedChat);
+    
+    // Nếu không có conversationId, reset selectedChat
+    if (!conversationId) {
+      console.log("[ChatInterface] ⚠️ No conversationId, resetting selectedChat");
+      setSelectedChat(null);
       return;
     }
 
-    // Nếu không có conversationId, không làm gì
-    if (!conversationId) {
+    // Nếu đã có selectedChat với conversationId đúng, không cần làm gì
+    if (selectedChat?.conversationId === conversationId) {
+      console.log("[ChatInterface] ✅ Already have correct selectedChat");
       return;
     }
 
@@ -65,33 +75,49 @@ export default function ChatInterface() {
 
     // Nếu chưa có currentUserId, đợi
     if (!currentUserId) {
+      console.log("[ChatInterface] ⏳ Đợi currentUserId...");
       return;
     }
+
+    // Reset selectedChat trước khi fetch để đảm bảo load lại
+    setSelectedChat(null);
 
     // Fetch từ API
     const fetchChat = async () => {
       try {
-        console.log("[ChatInterface] 🔍 Fetching chat for conversationId:", conversationId);
+        console.log("[ChatInterface] 🔍 Fetching chat for conversationId:", conversationId, "currentUserId:", currentUserId);
         const convList = await messageApi.getUserConversations(currentUserId);
+        console.log("[ChatInterface] 📋 Conversation list:", convList.data);
+        
         const conv = convList.data.find(
           (c: any) =>
-            c.conversationId === conversationId || c._id === conversationId
+            String(c.conversationId) === String(conversationId) || 
+            String(c._id) === String(conversationId)
         );
+
+        console.log("[ChatInterface] 🎯 Found conversation:", conv);
 
         if (conv) {
           const partner = conv.participants?.find(
             (p: any) => String(p._id) !== String(currentUserId)
           );
+          
+          console.log("[ChatInterface] 👤 Partner:", partner);
+          
           if (partner) {
             console.log("[ChatInterface] ✅ Fetch và set chat từ URL:", conversationId);
             setSelectedChat({
-              conversationId,
+              conversationId: String(conversationId),
               userId: partner._id,
               name: partner.fullName || partner.name || "Người dùng",
               avatarUrl: partner.avatarUrl || "/default-avatar.png",
               lastMessage: conv.lastMessage?.text || conv.lastMessage || "",
             });
+          } else {
+            console.warn("[ChatInterface] ⚠️ Không tìm thấy partner trong conversation");
           }
+        } else {
+          console.warn("[ChatInterface] ⚠️ Không tìm thấy conversation với ID:", conversationId);
         }
       } catch (err) {
         console.error("[ChatInterface] ❌ Lỗi fetch chat:", err);
@@ -150,13 +176,13 @@ export default function ChatInterface() {
             />
           ) : conversationId ? (
             // Show loading or placeholder when conversationId exists but selectedChat is not loaded yet
-            <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in px-4">
-              <div className="text-4xl md:text-8xl mb-3 sm:mb-4 md:mb-6 animate-pulse">💬</div>
+            <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-[#2F5FEB]/10 animate-fade-in px-4">
+              <MessageCircle className="w-14 h-14 md:w-24 md:h-24 mb-3 sm:mb-4 md:mb-6 text-[#2F5FEB] animate-pulse" />
               <p className="text-base sm:text-lg md:text-2xl font-bold text-gray-700 mb-2">Đang tải...</p>
             </div>
           ) : (
-            <div className="hidden md:flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-blue-50 animate-fade-in">
-              <div className="text-8xl mb-6 animate-bounce">💬</div>
+            <div className="hidden md:flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-[#2F5FEB]/10 animate-fade-in">
+              <MessageCircle className="w-20 h-20 md:w-28 md:h-28 mb-6 text-[#2F5FEB] animate-bounce" />
               <p className="text-2xl font-bold text-gray-700 mb-2">Chào mừng đến với Tin nhắn</p>
               <p className="text-lg text-gray-500 flex items-center gap-2">
                 <Clock className="w-5 h-5" />

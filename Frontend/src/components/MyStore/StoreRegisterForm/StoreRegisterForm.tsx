@@ -83,7 +83,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg max-w-xl mx-auto p-4 sm:p-6 md:p-8">
       <div className="flex flex-col items-center mb-4 sm:mb-6">
-        <div className="bg-gradient-to-br from-blue-400 to-purple-500 rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-2">
+        <div className="bg-[#2F5FEB] rounded-full w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center mb-2">
           <svg width="24" height="24" className="sm:w-8 sm:h-8" fill="none" viewBox="0 0 24 24">
             <rect
               x="4"
@@ -115,7 +115,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] focus:border-transparent"
               placeholder="VD: Thời trang ABC Store"
               required
             />
@@ -129,7 +129,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
               name="category"
               value={formData.category}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] focus:border-transparent"
               required
             >
               <option value="">Chọn danh mục chính</option>
@@ -166,7 +166,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
             name="storeAddress"
             value={formData.storeAddress}
             onChange={handleChange}
-            className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] focus:border-transparent"
             placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố"
             required
           />
@@ -182,7 +182,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
               name="contactPhone"
               value={formData.contactPhone}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] focus:border-transparent"
               required
             />
           </div>
@@ -196,7 +196,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
               name="contactEmail"
               value={formData.contactEmail}
               onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full border rounded-lg px-3 py-2 text-sm sm:text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] focus:border-transparent"
               required
             />
           </div>
@@ -266,7 +266,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
         </div>
 
         {/* Ghi chú */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 text-xs sm:text-sm text-gray-700 mb-4 sm:mb-6">
+        <div className="bg-[#2F5FEB]/10 border border-[#2F5FEB]/40 rounded-lg p-3 sm:p-4 text-xs sm:text-sm text-gray-700 mb-4 sm:mb-6">
           <div className="font-semibold mb-2">Lưu ý quan trọng:</div>
           <ul className="list-disc ml-4 sm:ml-5 space-y-1">
             <li>Thông tin cửa hàng sẽ được hiển thị công khai với khách hàng</li>
@@ -284,7 +284,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
           <button
             type="submit"
-            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold py-2.5 sm:py-3 rounded-lg hover:opacity-90 transition text-sm sm:text-base"
+            className="flex-1 bg-[#2F5FEB] text-white font-semibold py-2.5 sm:py-3 rounded-lg hover:bg-[#244ACC] transition text-sm sm:text-base"
           >
             <span className="inline-block align-middle mr-2">+</span> Tạo cửa
             hàng

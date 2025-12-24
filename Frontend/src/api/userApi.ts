@@ -9,6 +9,10 @@ const userApi = {
   login: (data: { email: string; password: string }) =>
     axiosClient.post("/api/users/login", data),
 
+  // Refresh access token
+  refreshToken: (data: { refreshToken: string }) =>
+    axiosClient.post("/api/users/refresh-token", data),
+
   // Lấy thông tin cá nhân
   getProfile: () => axiosClient.get("/api/users/profile"),
 

@@ -66,9 +66,9 @@ const ContactForm = () => {
 
         <button
           type="submit"
-          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300 font-black text-lg shadow-xl hover:shadow-2xl transform hover:scale-105"
+          className="w-full bg-[#2F5FEB] text-white px-8 py-4 rounded-xl hover:bg-[#244ACC] transition-all duration-300 font-black text-lg shadow-xl hover:shadow-2xl transform hover:scale-105"
         >
-          Gửi yêu cầu →
+          Gửi yêu cầu
         </button>
       </form>
     </section>

@@ -20,12 +20,21 @@ class UserService {
     return await bcrypt.compare(password, hashedPassword);
   }
 
-  // Tạo JWT token
+  // Tạo JWT access token (ngắn hạn)
   generateToken(userId, role) {
     return jwt.sign(
       { userId, role },
       process.env.JWT_SECRET || 'secret123',
-      { expiresIn: '7d' }
+      { expiresIn: '15m' } // Access token hết hạn sau 15 phút
+    );
+  }
+
+  // Tạo JWT refresh token (dài hạn)
+  generateRefreshToken(userId) {
+    return jwt.sign(
+      { userId, type: 'refresh' },
+      process.env.JWT_REFRESH_SECRET || 'refresh_secret123',
+      { expiresIn: '30d' } // Refresh token hết hạn sau 30 ngày
     );
   }
 
@@ -95,11 +104,22 @@ class UserService {
       await user.save();
     }
 
+    // Tạo access token và refresh token
     const token = this.generateToken(user._id, user.role);
-    await userRepository.updateOnlineStatus(user._id, true, new Date());
+    const refreshToken = this.generateRefreshToken(user._id);
+    
+    // Lưu refresh token vào database (hết hạn sau 30 ngày)
+    const refreshTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 ngày
+    await userRepository.update(user._id, {
+      refreshToken,
+      refreshTokenExpires,
+      online: true,
+      lastSeen: new Date()
+    });
 
     return {
       token,
+      refreshToken,
       user: {
         id: user._id,
         email: user.email,
@@ -116,7 +136,63 @@ class UserService {
 
   // Đăng xuất
   async logout(userId) {
-    await userRepository.updateOnlineStatus(userId, false, new Date());
+    // Xóa refresh token và cập nhật online status
+    await userRepository.update(userId, {
+      refreshToken: null,
+      refreshTokenExpires: null,
+      online: false,
+      lastSeen: new Date()
+    });
+  }
+
+  // Refresh access token
+  async refreshAccessToken(refreshToken) {
+    try {
+      // Verify refresh token
+      const decoded = jwt.verify(
+        refreshToken,
+        process.env.JWT_REFRESH_SECRET || 'refresh_secret123'
+      );
+
+      if (decoded.type !== 'refresh') {
+        throw new Error('Token không phải là refresh token');
+      }
+
+      const userId = decoded.userId;
+
+      // Kiểm tra user tồn tại và refresh token trong database khớp
+      const user = await userRepository.findByIdWithPassword(userId);
+      if (!user) {
+        throw new Error('Người dùng không tồn tại');
+      }
+
+      // Kiểm tra tài khoản có bị ban không
+      if (user.status === 'banned') {
+        throw new Error('Tài khoản của bạn đã bị khóa');
+      }
+
+      // Kiểm tra refresh token trong database
+      if (!user.refreshToken || user.refreshToken !== refreshToken) {
+        throw new Error('Refresh token không hợp lệ');
+      }
+
+      // Kiểm tra refresh token chưa hết hạn
+      if (!user.refreshTokenExpires || new Date() > user.refreshTokenExpires) {
+        throw new Error('Refresh token đã hết hạn');
+      }
+
+      // Tạo access token mới
+      const newAccessToken = this.generateToken(user._id, user.role);
+
+      return {
+        token: newAccessToken
+      };
+    } catch (error) {
+      if (error.name === 'JsonWebTokenError' || error.name === 'TokenExpiredError') {
+        throw new Error('Refresh token không hợp lệ hoặc đã hết hạn');
+      }
+      throw error;
+    }
   }
 
   // Lấy profile
@@ -137,6 +213,24 @@ class UserService {
     }
 
     return { user, store };
+  }
+
+  // Lấy thông tin user theo ID (public - chỉ trả về thông tin cơ bản)
+  async getUserById(userId) {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new Error('Người dùng không tồn tại');
+    }
+    // Chỉ trả về thông tin cơ bản, không bao gồm password và thông tin nhạy cảm
+    return {
+      _id: user._id,
+      fullName: user.fullName,
+      name: user.fullName, // Alias
+      avatarUrl: user.avatarUrl,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+    };
   }
 
   // Cập nhật profile

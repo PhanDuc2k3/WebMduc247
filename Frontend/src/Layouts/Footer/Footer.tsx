@@ -9,7 +9,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <span className="bg-gradient-to-r from-[#3a5ef7] to-[#a259f7] text-white text-xl font-bold rounded-xl px-6 py-2 inline-block mb-4 shadow-lg">
+            <span className="bg-[#2F5FEB] text-white text-xl font-bold rounded-xl px-6 py-2 inline-block mb-4 shadow-lg">
               ShopMduc247
             </span>
             <p className="text-gray-300 text-sm mb-4 leading-relaxed">
@@ -51,12 +51,12 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="text-white font-bold text-lg mb-4 relative pb-2">
               Chăm sóc khách hàng
-              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-[#3a5ef7] to-[#a259f7]"></span>
+              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-[#2F5FEB]"></span>
             </h4>
             <ul className="space-y-2 text-gray-300 text-sm">
               {['Trung tâm trợ giúp', 'Hướng dẫn mua hàng', 'Hướng dẫn bán hàng', 'Thanh toán', 'Vận chuyển', 'Trả hàng & Hoàn tiền'].map((item, idx) => (
                 <li key={idx}>
-                  <a href="#" className="hover:text-[#a259f7] transition-colors duration-300 flex items-center gap-2">
+                  <a href="#" className="hover:text-[#2F5FEB] transition-colors duration-300 flex items-center gap-2">
                     <span>•</span>
                     <span>{item}</span>
                   </a>
@@ -68,12 +68,12 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="text-white font-bold text-lg mb-4 relative pb-2">
               Về ShopMduc247
-              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-[#3a5ef7] to-[#a259f7]"></span>
+              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-[#2F5FEB]"></span>
             </h4>
             <ul className="space-y-2 text-gray-300 text-sm">
               {['Giới thiệu', 'Tuyển dụng', 'Điều khoản', 'Chính sách bảo mật', 'Chính hãng', 'Kênh người bán'].map((item, idx) => (
                 <li key={idx}>
-                  <a href="#" className="hover:text-[#a259f7] transition-colors duration-300 flex items-center gap-2">
+                  <a href="#" className="hover:text-[#2F5FEB] transition-colors duration-300 flex items-center gap-2">
                     <span>•</span>
                     <span>{item}</span>
                   </a>
@@ -85,20 +85,20 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="text-white font-bold text-lg mb-4 relative pb-2">
               Liên hệ
-              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-gradient-to-r from-[#3a5ef7] to-[#a259f7]"></span>
+              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-[#2F5FEB]"></span>
             </h4>
             <ul className="space-y-3 text-gray-300 text-sm">
               <li className="flex items-start gap-2">
                 <span className="text-lg mt-0.5">📞</span>
-                <span className="hover:text-[#a259f7] transition-colors duration-300">Hotline: 1800 1234</span>
+                <span className="hover:text-[#2F5FEB] transition-colors duration-300">Hotline: 1800 1234</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-lg mt-0.5">✉️</span>
-                <span className="hover:text-[#a259f7] transition-colors duration-300">support@shopmduc247.vn</span>
+                <span className="hover:text-[#2F5FEB] transition-colors duration-300">support@shopmduc247.vn</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-lg mt-0.5">📍</span>
-                <span className="hover:text-[#a259f7] transition-colors duration-300">Tầng 4-5-6, Tòa nhà Capital Place, số 29 Liễu Giai, Ba Đình, Hà Nội</span>
+                <span className="hover:text-[#2F5FEB] transition-colors duration-300">Tầng 4-5-6, Tòa nhà Capital Place, số 29 Liễu Giai, Ba Đình, Hà Nội</span>
               </li>
             </ul>
           </div>

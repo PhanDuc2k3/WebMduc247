@@ -52,8 +52,8 @@ const ManageStore: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-        <p className="text-gray-600 text-lg font-medium">Đang tải thông tin cửa hàng...</p>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#2F5FEB] mb-4"></div>
+        <p className="text-[#2F5FEB] text-lg font-medium">Đang tải thông tin cửa hàng...</p>
       </div>
     );
   }
@@ -61,8 +61,8 @@ const ManageStore: React.FC = () => {
   if (!store) {
     return (
       <div className="text-center py-20 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 max-w-md mx-auto">
-          <p className="text-gray-600 text-lg font-medium">Chưa có cửa hàng.</p>
+        <div className="bg-white rounded-2xl shadow-lg border border-[#2F5FEB]/30 p-12 max-w-md mx-auto">
+          <p className="text-[#2F5FEB] text-lg font-medium">Chưa có cửa hàng.</p>
         </div>
       </div>
     );
@@ -86,10 +86,15 @@ const ManageStore: React.FC = () => {
       setStore(res.data.store);
       setLogoFile(null);
       setBannerFile(null);
-      toast.success("Cập nhật cửa hàng thành công!");
-    } catch (err) {
+      toast.success(res.data.message || "Cập nhật cửa hàng thành công!", {
+        containerId: "general-toast",
+      });
+    } catch (err: any) {
       console.error("Update store error:", err);
-      toast.error("Cập nhật cửa hàng thất bại!");
+      const errorMessage = err?.response?.data?.message || "Cập nhật cửa hàng thất bại!";
+      toast.error(errorMessage, {
+        containerId: "general-toast",
+      });
     }
   };
 

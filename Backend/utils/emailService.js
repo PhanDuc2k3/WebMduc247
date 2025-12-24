@@ -2086,11 +2086,223 @@ const sendSellerRequestEmail = async (user, action, storeName, retries = 2) => {
   return false;
 };
 
+// Gửi email xác thực thanh toán bằng ví
+const sendPaymentEmail = async (email, paymentCode, fullName, orderCode, amount, retries = 2) => {
+  // Kiểm tra nếu không có cấu hình email
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('⚠️ RESEND_API_KEY chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  if (!FROM_EMAIL) {
+    console.warn('⚠️ RESEND_FROM_EMAIL chưa được cấu hình. Bỏ qua gửi email.');
+    return false;
+  }
+
+  // Format số tiền
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
+  };
+
+  // SVG Icons từ Lucide
+  const iconShoppingCart = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>';
+  const iconWallet = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg>';
+  const iconShield = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>';
+
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <style>
+        body {
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          max-width: 600px;
+          margin: 0 auto;
+          padding: 10px;
+          background-color: #f5f5f5;
+        }
+        .email-container {
+          background: white;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+          background: linear-gradient(135deg, #2F5FEB 0%, #244ACC 100%);
+          padding: 20px;
+          text-align: center;
+          color: white;
+        }
+        .header h1 {
+          margin: 0;
+          font-size: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        .content {
+          padding: 20px;
+        }
+        .code-box {
+          background: #f0f9ff;
+          border: 2px dashed #2F5FEB;
+          padding: 20px;
+          text-align: center;
+          margin: 20px 0;
+          border-radius: 8px;
+        }
+        .payment-code {
+          font-size: 28px;
+          font-weight: bold;
+          color: #2F5FEB;
+          letter-spacing: 8px;
+          font-family: 'Courier New', monospace;
+        }
+        .info-section {
+          background: #f9fafb;
+          padding: 15px;
+          border-radius: 8px;
+          margin: 15px 0;
+          border-left: 4px solid #2F5FEB;
+        }
+        .info-section h3 {
+          margin-top: 0;
+          color: #2F5FEB;
+          font-size: 16px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .info-row {
+          display: flex;
+          justify-content: space-between;
+          margin: 8px 0;
+        }
+        .info-label {
+          font-weight: 600;
+          color: #666;
+          margin-right: 10px;
+        }
+        .info-value {
+          font-weight: 600;
+          color: #2F5FEB;
+        }
+        .footer {
+          background: #f9fafb;
+          padding: 15px;
+          text-align: center;
+          font-size: 12px;
+          color: #666;
+          border-top: 1px solid #e5e7eb;
+        }
+        .icon-inline {
+          display: inline-block;
+          vertical-align: middle;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header">
+          <h1>
+            <span class="icon-inline">${iconShoppingCart}</span>
+            ShopMDuc247
+          </h1>
+        </div>
+        <div class="content">
+          <h2 style="margin-top: 0; color: #2F5FEB; display: flex; align-items: center; gap: 8px;">
+            <span class="icon-inline">${iconWallet}</span>
+            Xin chào ${fullName}!
+          </h2>
+          <p>Bạn đang thực hiện thanh toán đơn hàng bằng ví tại <strong>ShopMDuc247</strong>.</p>
+          
+          <div class="info-section">
+            <h3>
+              <span class="icon-inline">${iconShoppingCart}</span>
+              Thông tin đơn hàng
+            </h3>
+            <div class="info-row">
+              <span class="info-label">Mã đơn hàng:</span>
+              <span class="info-value">${orderCode}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Số tiền thanh toán:</span>
+              <span class="info-value">${formatCurrency(amount)}</span>
+            </div>
+          </div>
+
+          <p>Vui lòng sử dụng mã xác thực sau để hoàn tất thanh toán:</p>
+          
+          <div class="code-box">
+            <div class="payment-code">${paymentCode}</div>
+          </div>
+          
+          <div class="info-section">
+            <p style="margin-top: 0; font-weight: 600; color: #2F5FEB; display: flex; align-items: center; gap: 6px;">
+              <span class="icon-inline">${iconShield}</span>
+              <strong>Lưu ý:</strong>
+            </p>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+              <li>Mã xác thực có hiệu lực trong <strong>15 phút</strong></li>
+              <li>Nếu bạn không thực hiện thanh toán, vui lòng bỏ qua email này</li>
+              <li>Không chia sẻ mã này với bất kỳ ai</li>
+            </ul>
+          </div>
+          
+          <p>Nhập mã này vào form thanh toán để xác nhận giao dịch của bạn.</p>
+        </div>
+        <div class="footer">
+          <p>Email này được gửi tự động từ hệ thống ShopMDuc247. Vui lòng không trả lời email này.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const { data, error } = await resend.emails.send({
+        from: FROM_EMAIL,
+        to: email,
+        subject: `Mã xác thực thanh toán đơn hàng ${orderCode} - ShopMDuc247`,
+        html: htmlContent,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log(`✅ [EmailService] Đã gửi email xác thực thanh toán đến ${email} (attempt ${attempt + 1})`);
+      return true;
+    } catch (error) {
+      console.error(`❌ [EmailService] Lỗi gửi email xác thực thanh toán (attempt ${attempt + 1}):`, error);
+      
+      if (attempt === retries) {
+        console.error(`❌ [EmailService] Không thể gửi email xác thực thanh toán sau ${retries + 1} lần thử`);
+        return false;
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2000 * (attempt + 1)));
+    }
+  }
+  
+  return false;
+};
+
 module.exports = {
   sendVerificationEmail,
   sendOrderConfirmationEmail,
   sendOrderDeliveredEmail,
   sendResetPasswordEmail,
   sendWithdrawalEmail,
+  sendPaymentEmail,
   sendSellerRequestEmail,
 };

@@ -26,6 +26,8 @@ import SupportPage from "./pages/Support/SupportPage"
 import Whitelist from "./pages/Whitelist/Whitelist"
 import WalletPage from "./pages/Wallet/Wallet"
 import Notifications from "./pages/Notifications/Notifications"
+import Privacy from "./pages/Privacy/Privacy"
+import Terms from "./pages/Terms/Terms"
 
 const AppRouter = () => (
   <Routes>
@@ -56,6 +58,8 @@ const AppRouter = () => (
       <Route path="/whitelist" element={<Whitelist />} />
       <Route path="/wallet" element={<WalletPage />} />
       <Route path="/notifications" element={<Notifications />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
     </Route>
 
     <Route path="/s" element={<Navigate to="/login" />} />

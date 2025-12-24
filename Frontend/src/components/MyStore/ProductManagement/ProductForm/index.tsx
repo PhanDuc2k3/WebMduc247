@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { Check } from "lucide-react";
 import Step1BasicInfo from "./Step1BasicInfo";
 import Step2Images from "./Step2Images";
 import Step3Variations from "./Step3Details";
-import Step4SEO from "./Step4SEO";
 import type { FormDataType, ProductType } from "../../../../types/product";
 import axiosClient from "../../../../api/axiosClient";
 import { toast } from "react-hot-toast";
@@ -122,11 +122,8 @@ const handleSubmit = async (e?: React.FormEvent) => {
     formDataToSend.append("seoDescription", formData.seoDescription || "");
     formDataToSend.append("store", formData.storeId || "");
 
-    // ✅ tags
-    if (Array.isArray(formData.tags)) {
-      console.log("[handleSubmit] 🔹 Tags array:", formData.tags);
-      formData.tags.forEach((tag) => tag && formDataToSend.append("tags[]", tag));
-    }
+    // ✅ tags - gửi dưới dạng JSON string để đảm bảo parse đúng
+    formDataToSend.append("tags", JSON.stringify(formData.tags || []));
 
     // ✅ JSON fields
     formDataToSend.append("features", JSON.stringify(formData.features || []));
@@ -240,21 +237,21 @@ const handleSubmit = async (e?: React.FormEvent) => {
     <>
       {/* 🧭 Header Steps */}
       <div className="flex items-center mb-8 animate-fade-in-down">
-        {[1, 2, 3, 4].map((s) => (
+        {[1, 2, 3].map((s) => (
           <div key={s} className="flex items-center">
             <div
               className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg transition-all duration-300 shadow-lg ${
                 step >= s
-                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white transform scale-110"
+                  ? "bg-[#2F5EE9] text-white transform scale-110"
                   : "bg-gray-200 text-gray-400"
               }`}
             >
-              {step > s ? "✓" : s}
+              {step > s ? <Check className="w-6 h-6" /> : s}
             </div>
-            {s < 4 && (
+            {s < 3 && (
               <div className="w-16 h-2 bg-gray-200 mx-3 rounded-full overflow-hidden">
                 <div
-                  className={`h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-500 ${
+                  className={`h-full rounded-full bg-[#2F5EE9] transition-all duration-500 ${
                     step > s ? "w-full" : "w-0"
                   }`}
                 ></div>
@@ -262,7 +259,7 @@ const handleSubmit = async (e?: React.FormEvent) => {
             )}
           </div>
         ))}
-        <span className="ml-6 text-gray-600 font-bold text-lg">Bước {step}/4</span>
+        <span className="ml-6 text-gray-600 font-bold text-lg">Bước {step}/3</span>
       </div>
 
       {/* 🧩 Step Components */}
@@ -278,11 +275,10 @@ const handleSubmit = async (e?: React.FormEvent) => {
           setExistingSubImages={setExistingSubImages}
         />
       )}
-      {step === 3 && <Step3Variations formData={formData} handleChange={handleChange} setStep={setStep} />}
-      {step === 4 && (
-        <Step4SEO
-          formData={formData}
-          handleChange={handleChange}
+      {step === 3 && (
+        <Step3Variations 
+          formData={formData} 
+          handleChange={handleChange} 
           setStep={setStep}
           handleSubmit={handleSubmit}
           isEdit={isEditing}

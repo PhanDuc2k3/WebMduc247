@@ -67,6 +67,8 @@ const OrderManagement: React.FC = () => {
       "delivered": "Đã giao hàng",
       "cancelled": "Đã hủy",
       "completed": "Hoàn thành",
+      "return_requested": "Chờ hoàn trả",
+      "returned": "Đã hoàn trả",
     };
     return statusMap[status.toLowerCase()] || status;
   };

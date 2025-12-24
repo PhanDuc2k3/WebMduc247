@@ -80,8 +80,8 @@ const StorePage: React.FC = () => {
               onClick={() => setActiveTab(tab.id)}
               className={`px-3 py-2 sm:px-4 sm:py-2.5 md:px-8 md:py-3 text-xs sm:text-sm md:text-base font-bold rounded-lg md:rounded-xl border-2 transition-all duration-300 transform hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 touch-manipulation ${
                 activeTab === tab.id
-                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-blue-600 shadow-lg scale-105"
-                  : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-400"
+                  ? "bg-[#2F5FEB] text-white border-[#2F5FEB] shadow-lg scale-105"
+                  : "bg-white text-gray-600 border-gray-300 hover:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] hover:border-[#2F5FEB]"
               }`}
             >
               {tab.label}

@@ -5,6 +5,15 @@ import notificationApi from "../../api/notificationApi";
 import type { Notification } from "../../api/notificationApi";
 import { toast } from "react-toastify";
 
+// Loại bỏ emoji khỏi tiêu đề thông báo (emoji được backend gửi trong text)
+const cleanTitle = (title: string) => {
+  try {
+    return title.replace(/[\p{Extended_Pictographic}]/gu, "").trim();
+  } catch {
+    return title.replace(/[^\p{L}\p{N}\p{P}\p{Z}]/gu, "").trim();
+  }
+};
+
 const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -99,11 +108,11 @@ const Notifications: React.FC = () => {
   const getIcon = (type: string) => {
     switch (type) {
       case "order":
-        return <Package size={20} className="text-blue-600" />;
+        return <Package size={20} className="text-[#2F5FEB]" />;
       case "voucher":
-        return <Gift size={20} className="text-purple-600" />;
+        return <Gift size={20} className="text-[#2F5FEB]" />;
       case "news":
-        return <Newspaper size={20} className="text-green-600" />;
+        return <Newspaper size={20} className="text-[#2F5FEB]" />;
       case "system":
         return <Info size={20} className="text-gray-600" />;
       default:
@@ -147,8 +156,8 @@ const Notifications: React.FC = () => {
       <div className="mb-4 sm:mb-6 animate-fade-in-down">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
-              <Bell size={24} className="text-purple-600" />
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+              <Bell size={24} className="text-[#2F5FEB]" />
               Thông báo
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">
@@ -159,7 +168,7 @@ const Notifications: React.FC = () => {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="px-3 py-2 sm:px-4 sm:py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg sm:rounded-xl hover:from-blue-600 hover:to-purple-600 text-xs sm:text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-1.5 sm:gap-2"
+                className="px-3 py-2 sm:px-4 sm:py-2.5 bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl hover:bg-[#244ACC] text-xs sm:text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-1.5 sm:gap-2"
               >
                 <Check size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Đánh dấu tất cả đã đọc</span>
@@ -178,7 +187,7 @@ const Notifications: React.FC = () => {
             onClick={() => setFilter("all")}
             className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 ${
               filter === "all"
-                ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
+                ? "bg-[#2F5FEB] text-white shadow-lg"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -188,7 +197,7 @@ const Notifications: React.FC = () => {
             onClick={() => setFilter("unread")}
             className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 relative ${
               filter === "unread"
-                ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg"
+                ? "bg-[#2F5FEB] text-white shadow-lg"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -206,7 +215,7 @@ const Notifications: React.FC = () => {
       <div className="animate-fade-in-up delay-200">
         {loading ? (
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200 p-8 sm:p-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-t-2 border-b-2 border-purple-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-t-2 border-b-2 border-[#2F5FEB] mx-auto"></div>
             <p className="text-gray-500 mt-4 text-sm sm:text-base">Đang tải thông báo...</p>
           </div>
         ) : notifications.length === 0 ? (
@@ -229,13 +238,9 @@ const Notifications: React.FC = () => {
                   !notification.isRead ? "bg-blue-50/50 border-blue-300" : ""
                 }`}
               >
-                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="flex items-start gap-3 sm:gap-4">
                   <div className="flex-shrink-0 mt-0.5">
-                    {notification.icon ? (
-                      <span className="text-2xl sm:text-3xl">{notification.icon}</span>
-                    ) : (
-                      getIcon(notification.type)
-                    )}
+                    {getIcon(notification.type)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 sm:gap-4">
@@ -246,7 +251,7 @@ const Notifications: React.FC = () => {
                               !notification.isRead ? "text-gray-900" : "text-gray-700"
                             }`}
                           >
-                            {notification.title}
+                            {cleanTitle(notification.title)}
                           </p>
                           {!notification.isRead && (
                             <div className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-blue-600 rounded-full flex-shrink-0"></div>

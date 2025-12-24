@@ -52,6 +52,7 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
       // Kiểm tra nếu tài khoản bị ban
       if (profile.status === 'banned') {
         localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
         setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
         setOnline(false);
@@ -131,6 +132,7 @@ export const UserProvider: React.FC<Props> = ({ children }) => {
     setTimeout(() => socket.disconnect(), 300);
 
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
 
     setUser({ fullName: "Khách", avatarUrl: "", role: undefined });

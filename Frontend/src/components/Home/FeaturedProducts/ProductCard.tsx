@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import FavoriteButton from "../../Favorite/FavoriteButton";
+import { Flame, Star, Store as StoreIcon, MapPin } from "lucide-react";
 
 interface Product {
   _id: string;
@@ -53,7 +54,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div 
       onClick={handleCardClick}
-      className="group bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl shadow-md p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl hover:border-blue-400 w-full flex flex-col animate-scale-in cursor-pointer sm:cursor-default active:scale-[0.98] sm:active:scale-100 touch-manipulation"
+      className="group bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl shadow-md p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl hover:border-[#2F5FEB] w-full flex flex-col animate-scale-in cursor-pointer sm:cursor-default active:scale-[0.98] sm:active:scale-100 touch-manipulation"
     >
       <div className="relative overflow-hidden rounded-md sm:rounded-lg pb-1 sm:pb-2">
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
@@ -65,14 +66,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         />
 
         {product.salePrice && (
-          <>
-            <span className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5 md:top-3 md:left-3 bg-gradient-to-r from-red-600 to-red-500 text-white text-[9px] sm:text-[10px] md:text-xs font-bold px-1 sm:px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-full shadow-lg transform group-hover:scale-110 transition-transform duration-300 z-20">
+          <div className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5 md:top-3 md:left-3 flex items-center gap-1 sm:gap-1.5 md:gap-2 z-20">
+            <span className="bg-gradient-to-r from-red-600 to-red-500 text-white text-[9px] sm:text-[10px] md:text-xs font-bold px-1 sm:px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-full shadow-lg transform group-hover:scale-110 transition-transform duration-300">
               -{Math.round((1 - product.salePrice / product.price) * 100)}%
             </span>
-            <span className="absolute top-5 sm:top-6 left-1 sm:left-1.5 md:top-14 md:left-3 bg-gradient-to-r from-orange-500 to-orange-400 text-white text-[7px] sm:text-[8px] md:text-xs font-bold px-1 sm:px-1.5 md:px-3 py-0.5 md:py-1 rounded-full shadow-lg animate-pulse z-20">
-              🔥 HOT
+            <span className="flex items-center gap-0.5 bg-gradient-to-r from-orange-500 to-orange-400 text-white text-[7px] sm:text-[8px] md:text-xs font-bold px-1 sm:px-1.5 md:px-3 py-0.5 md:py-1 rounded-full shadow-lg animate-pulse">
+              <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5" />
+              <span>HOT</span>
             </span>
-          </>
+          </div>
         )}
 
         <div 
@@ -98,7 +100,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </a>
       </div>
 
-      <div className="pt-0.5 sm:pt-1 text-[10px] sm:text-xs font-bold text-gray-800 overflow-hidden truncate group-hover:text-blue-600 transition-colors duration-300">
+      <div className="pt-0.5 sm:pt-1 text-[10px] sm:text-xs font-bold text-gray-800 overflow-hidden truncate group-hover:text-[#2F5FEB] transition-colors duration-300">
         {product.name}
       </div>
 
@@ -115,7 +117,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       <div className="flex justify-between items-center pt-1.5 sm:pt-2 text-gray-600 text-[9px] sm:text-[10px] bg-gray-50 rounded-md sm:rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1">
         <div className="flex items-center gap-0.5">
-          <span className="text-yellow-500 text-[10px] sm:text-xs">⭐</span>
+          <Star className="text-yellow-500 fill-yellow-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
           <span className="font-semibold">{product.rating?.toFixed(1) || "0"}</span>
           <span className="text-gray-500">({product.reviewsCount ?? 0})</span>
         </div>
@@ -123,10 +125,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
 
       <div className="flex justify-between items-center pt-1.5 sm:pt-2 text-gray-500 text-[9px] sm:text-[10px] border-t">
-        <div className="truncate flex-1 font-medium">
-          🏪 {typeof product.store === "string" ? product.store : product.store?.name || "N/A"}
+        <div className="truncate flex-1 font-medium flex items-center gap-1">
+          <StoreIcon className="w-3 h-3 flex-shrink-0" />
+          <span className="truncate">
+            {typeof product.store === "string" ? product.store : product.store?.name || "N/A"}
+          </span>
         </div>
-        <div className="ml-1 sm:ml-2 hidden md:block whitespace-nowrap">📍 {product.location || "VN"}</div>
+        <div className="ml-1 sm:ml-2 hidden md:flex items-center gap-1 whitespace-nowrap">
+          <MapPin className="w-3 h-3 flex-shrink-0" />
+          <span>{product.location || "VN"}</span>
+        </div>
       </div>
     </div>
   );

@@ -190,7 +190,7 @@ export default function CartPage() {
       <div className="w-full py-16 flex items-center justify-center animate-fade-in">
         <div className="text-center">
           <div className="flex justify-center mb-4">
-            <Loader2 className="w-16 h-16 sm:w-20 sm:h-20 text-blue-600 animate-spin" />
+            <Loader2 className="w-16 h-16 sm:w-20 sm:h-20 text-[#2F5FEB] animate-spin" />
           </div>
           <p className="text-gray-600 text-base sm:text-lg font-medium">Đang tải giỏ hàng...</p>
         </div>
@@ -201,8 +201,8 @@ export default function CartPage() {
   return (
     <div className="w-full py-6 sm:py-8 md:py-12 px-4 sm:px-6">
       <div className="mb-6 sm:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
-          <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+          <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
           <span>Giỏ hàng của tôi</span>
         </h1>
         <p className="text-gray-600 text-sm sm:text-base md:text-lg">
@@ -222,7 +222,7 @@ export default function CartPage() {
               <p className="text-gray-500 text-sm sm:text-base mb-6 sm:mb-8">Hãy thêm sản phẩm vào giỏ hàng của bạn</p>
               <button
                 onClick={() => navigate("/products")}
-                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold text-sm sm:text-base hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 touch-manipulation flex items-center gap-2 mx-auto"
+                className="px-6 sm:px-8 py-2.5 sm:py-3 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl font-bold text-sm sm:text-base hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 touch-manipulation flex items-center gap-2 mx-auto"
               >
                 <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
                 <span>Mua sắm ngay</span>

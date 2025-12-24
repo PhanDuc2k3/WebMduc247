@@ -144,7 +144,8 @@ class StoreRepository {
       ]
     })
     .limit(limit)
-    .select('name description logoUrl category _id')
+    // Trả về đầy đủ thông tin để dùng chung StoreCard với danh sách cửa hàng
+    .select('name description logoUrl bannerUrl category customCategory storeAddress createdAt isActive owner _id')
     .lean();
   }
 }

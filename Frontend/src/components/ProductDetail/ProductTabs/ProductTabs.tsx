@@ -84,8 +84,8 @@ const ProductTabs: React.FC<{ productId: string }> = ({ productId }) => {
             className={`px-8 py-3 text-base font-bold rounded-xl border-2 transition-all duration-300 transform hover:scale-105
               ${
                 active === tab.id
-                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white border-blue-600 shadow-lg scale-105"
-                  : "bg-white text-gray-600 border-gray-300 hover:bg-blue-50 hover:text-blue-600 hover:border-blue-400"
+                  ? "bg-[#2F5FEB] text-white border-[#2F5FEB] shadow-lg scale-105"
+                  : "bg-white text-gray-600 border-gray-300 hover:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] hover:border-[#2F5FEB]"
               }`}
           >
             {tab.label}

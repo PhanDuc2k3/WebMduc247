@@ -15,6 +15,7 @@ const {
   processReturn,
   rejectReturn,
   cancelOrder,
+  updatePaymentMethod,
 } = require("../controllers/OrderController");
 const auth = require("../middlewares/authMiddleware");
 
@@ -33,6 +34,7 @@ router.post("/:id/confirm-return-received", auth, confirmReturnReceived); // Sel
 router.post("/:id/reject-return", auth, rejectReturn); // Seller từ chối yêu cầu trả lại hàng
 router.post("/:id/process-return", auth, processReturn); // Admin xử lý yêu cầu trả lại (tương thích ngược)
 router.post("/:id/cancel", auth, cancelOrder); // Buyer hủy đơn hàng
+router.put("/:id/payment-method", auth, updatePaymentMethod); // Cập nhật phương thức thanh toán
 router.get("/:id", auth, getOrderById);
 
 module.exports = router;

@@ -33,8 +33,8 @@ const ProfileTabs: React.FC<{
               key={tab.key}
               className={`px-3 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base font-bold transition-all duration-300 transform hover:scale-105 flex items-center gap-1.5 md:gap-2 whitespace-nowrap flex-shrink-0 ${
                 activeTab === tab.key
-                  ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105"
-                  : "bg-white text-gray-600 hover:bg-blue-50 hover:text-blue-600 border-2 border-gray-200 hover:border-blue-400"
+                  ? "bg-[#2F5FEB] text-white shadow-lg scale-105"
+                  : "bg-white text-gray-600 hover:bg-[#2F5FEB]/5 hover:text-[#2F5FEB] border-2 border-gray-200 hover:border-[#2F5FEB]"
               } animate-fade-in-up`}
               style={{ animationDelay: `${index * 0.1}s` }}
               onClick={() => setActiveTab(tab.key)}

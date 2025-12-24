@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Search, FileText, ChevronLeft, CheckCircle, Save } from "lucide-react";
 import type { FormDataType } from "../../../../types/product";
 
 interface Props {
@@ -44,17 +45,17 @@ const Step4SEO: React.FC<Props> = ({
   return (
     <div className="animate-fade-in-up">
       <h2 className="text-2xl font-bold mb-6 gradient-text flex items-center gap-2">
-        SEO & Hoàn tất
+        <Search className="w-6 h-6 text-[#2F5EE9]" /> SEO & Hoàn tất
       </h2>
 
       <div className="space-y-6">
         {/* Tags */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
-            Từ khóa tìm kiếm
+          <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+            <Search className="w-4 h-4 text-[#2F5EE9]" /> Từ khóa tìm kiếm
           </label>
           <input
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium bg-gray-50"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium bg-gray-50"
             placeholder="Nhập các từ khóa (phân tách bằng dấu phẩy): iPhone, smartphone, Apple..."
             value={tagsInput}
             onChange={(e) => setTagsInput(e.target.value)}
@@ -65,11 +66,11 @@ const Step4SEO: React.FC<Props> = ({
 
         {/* SEO Title */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
-            Tiêu đề SEO
+          <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#2F5EE9]" /> Tiêu đề SEO
           </label>
           <input
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium bg-gray-50"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium bg-gray-50"
             placeholder="Tiêu đề hiển thị trên kết quả tìm kiếm (tối đa 60 ký tự)"
             value={seoTitleInput}
             onChange={(e) => setSeoTitleInput(e.target.value)}
@@ -81,12 +82,12 @@ const Step4SEO: React.FC<Props> = ({
 
         {/* SEO Description */}
         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-2">
-            Mô tả SEO
+          <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#2F5EE9]" /> Mô tả SEO
           </label>
           <textarea
             rows={4}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium bg-gray-50 resize-none"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-[#2F5EE9] focus:border-transparent transition-all duration-300 font-medium bg-gray-50 resize-none"
             placeholder="Mô tả ngắn hiển thị trên kết quả tìm kiếm (tối đa 160 ký tự)"
             value={seoDescInput}
             onChange={(e) => setSeoDescInput(e.target.value)}
@@ -100,7 +101,7 @@ const Step4SEO: React.FC<Props> = ({
       {/* Success Message */}
       <div className="mt-8 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl">
         <p className="text-green-700 font-medium flex items-center gap-2">
-          Bạn đã hoàn thành tất cả các bước! Nhấn nút bên dưới để {isEdit ? "cập nhật" : "tạo"} sản phẩm.
+          <CheckCircle className="w-5 h-5" /> Bạn đã hoàn thành tất cả các bước! Nhấn nút bên dưới để {isEdit ? "cập nhật" : "tạo"} sản phẩm.
         </p>
       </div>
 
@@ -109,7 +110,7 @@ const Step4SEO: React.FC<Props> = ({
           className="bg-gradient-to-r from-gray-400 to-gray-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2"
           onClick={() => setStep(3)}
         >
-          Quay lại
+          <ChevronLeft className="w-5 h-5" /> Quay lại
         </button>
         <button
           className={`${
@@ -121,11 +122,11 @@ const Step4SEO: React.FC<Props> = ({
         >
           {isEdit ? (
             <>
-              Cập nhật sản phẩm
+              <Save className="w-5 h-5" /> Cập nhật sản phẩm
             </>
           ) : (
             <>
-              Tạo sản phẩm
+              <CheckCircle className="w-5 h-5" /> Tạo sản phẩm
             </>
           )}
         </button>

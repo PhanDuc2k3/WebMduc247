@@ -74,6 +74,17 @@ class OrderRepository {
     );
   }
 
+  // Cập nhật payment method (chỉ đổi phương thức, không đánh dấu đã thanh toán)
+  async updatePaymentMethod(orderId, paymentMethod) {
+    return await Order.findByIdAndUpdate(
+      orderId,
+      { 
+        $set: { "paymentInfo.method": paymentMethod }
+      },
+      { new: true }
+    );
+  }
+
   // Tìm order theo orderCode
   async findByOrderCode(orderCode) {
     return await Order.findOne({ orderCode }).populate('items.productId');

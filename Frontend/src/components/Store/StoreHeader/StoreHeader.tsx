@@ -183,7 +183,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
             {/* Store info */}
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full lg:w-auto items-center sm:items-start">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full blur opacity-50 animate-pulse"></div>
+                <div className="absolute inset-0 bg-[#2F5FEB] rounded-full blur opacity-40"></div>
                 <img
                   src={store.logoUrl || "/default-store.png"}
                   alt={store.name}
@@ -198,7 +198,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                     {store.name}
                   </h2>
-                  <span className="text-[10px] md:text-xs bg-gradient-to-r from-blue-100 to-purple-100 text-blue-600 px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm flex items-center gap-1">
+                  <span className="text-[10px] md:text-xs bg-[#2F5FEB]/10 text-[#2F5FEB] px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm flex items-center gap-1">
                     <Store className="w-2.5 h-2.5 md:w-3 md:h-3" />
                     <span>Mall</span>
                   </span>
@@ -216,7 +216,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
               <button
                 onClick={handleChat}
                 disabled={isLoadingChat}
-                className="px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none touch-manipulation flex items-center gap-1.5 sm:gap-2"
+                className="px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl font-bold hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none touch-manipulation flex items-center gap-1.5 sm:gap-2"
               >
                 {isLoadingChat ? (
                   <>
@@ -236,7 +236,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
                 className={`px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 border-2 rounded-lg md:rounded-xl font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-1.5 sm:gap-2 touch-manipulation ${
                   isFavorite
                     ? "bg-gradient-to-r from-red-50 to-pink-50 border-red-400 text-red-600 hover:border-red-500"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-blue-400 hover:text-blue-600"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-[#2F5FEB] hover:text-[#2F5FEB]"
                 }`}
               >
                 <Heart

@@ -72,13 +72,12 @@ const handleUpdate = async () => {
       </div>
 
       {isEditing && (
-        <div className="flex flex-col items-center mb-6 md:mb-8 p-4 md:p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg md:rounded-xl border border-blue-200">
+        <div className="flex flex-col items-center mb-6 md:mb-8 p-4 md:p-6 bg-[#F3F6FF] rounded-lg md:rounded-xl border border-[#E5E7EB]">
           <div className="relative mb-3 md:mb-4">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full blur opacity-50 animate-pulse"></div>
             <img
               src={previewAvatar || "/default-avatar.png"}
               alt="avatar"
-              className="relative w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full object-cover border-3 md:border-4 border-white shadow-2xl mb-2 md:mb-3"
+              className="w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full object-cover border-2 md:border-4 border-white shadow-2xl mb-2 md:mb-3"
             />
           </div>
           <input
@@ -90,7 +89,7 @@ const handleUpdate = async () => {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 md:px-6 md:py-2.5 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl hover:from-blue-600 hover:to-purple-600 text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-1.5 md:gap-2"
+            className="px-4 py-2 md:px-6 md:py-2.5 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl hover:bg-[#244ACC] text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-1.5 md:gap-2"
           >
             <Camera size={14} /> Chọn ảnh đại diện
           </button>
@@ -180,7 +179,7 @@ const handleUpdate = async () => {
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center sm:justify-start">
           <button
             onClick={handleUpdate}
-            className="px-6 md:px-8 py-2.5 md:py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl hover:from-blue-600 hover:to-purple-600 text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+            className="px-6 md:px-8 py-2.5 md:py-3 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl hover:bg-[#244ACC] text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
           >
             <Check size={14} className="md:w-4 md:h-4" /> Cập nhật
           </button>

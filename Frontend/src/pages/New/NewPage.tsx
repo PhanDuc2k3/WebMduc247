@@ -54,11 +54,11 @@ const PromotionPage: React.FC = () => {
     <div className="w-full py-8 md:py-12">
       {/* Header */}
       <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text">
+        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-[#2F5FEB]">
           Tin tức & Khuyến mãi
         </h1>
         <p className="text-gray-600 text-lg">
-          Những chương trình hấp dẫn đang chờ đón bạn!
+          Những chương trình <span className="text-[#2F5FEB] font-semibold">khuyến mãi hấp dẫn</span> đang chờ đón bạn!
         </p>
       </div>
 

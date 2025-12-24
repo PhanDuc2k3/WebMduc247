@@ -1,6 +1,6 @@
 const walletRepository = require('../repositories/WalletRepository');
 const User = require('../models/Users');
-const { sendWithdrawalEmail } = require('../utils/emailService');
+const { sendWithdrawalEmail, sendPaymentEmail } = require('../utils/emailService');
 
 class WalletService {
   // Lấy wallet của user
@@ -173,8 +173,8 @@ class WalletService {
     };
   }
 
-  // Thanh toán bằng ví
-  async payWithWallet(userId, orderCode, amount) {
+  // Gửi mã xác thực thanh toán bằng ví
+  async sendPaymentCode(userId, orderCode, amount) {
     if (!orderCode || !amount) {
       throw new Error('Thiếu thông tin đơn hàng');
     }
@@ -192,6 +192,72 @@ class WalletService {
     if (!wallet || wallet.balance < amount) {
       throw new Error('Số dư ví không đủ');
     }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('Không tìm thấy người dùng');
+    }
+
+    const paymentCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const paymentCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
+
+    user.paymentCode = paymentCode;
+    user.paymentCodeExpires = paymentCodeExpires;
+    await user.save();
+
+    await sendPaymentEmail(
+      user.email,
+      paymentCode,
+      user.fullName,
+      orderCode,
+      amount
+    );
+
+    return { message: 'Đã gửi mã xác thực đến email của bạn. Vui lòng kiểm tra email và nhập mã để hoàn tất thanh toán.' };
+  }
+
+  // Thanh toán bằng ví
+  async payWithWallet(userId, orderCode, amount, emailCode) {
+    if (!orderCode || !amount) {
+      throw new Error('Thiếu thông tin đơn hàng');
+    }
+
+    if (!emailCode) {
+      throw new Error('Vui lòng nhập mã xác thực từ email');
+    }
+
+    const order = await walletRepository.findOrderByCodeAndUser(orderCode, userId);
+    if (!order) {
+      throw new Error('Đơn hàng không tồn tại');
+    }
+
+    if (order.paymentInfo.status === 'paid') {
+      throw new Error('Đơn hàng đã được thanh toán');
+    }
+
+    const wallet = await walletRepository.findByUserId(userId);
+    if (!wallet || wallet.balance < amount) {
+      throw new Error('Số dư ví không đủ');
+    }
+
+    // Xác thực mã email
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('Không tìm thấy người dùng');
+    }
+
+    if (!user.paymentCode || user.paymentCode !== emailCode) {
+      throw new Error('Mã xác thực không đúng');
+    }
+
+    if (!user.paymentCodeExpires || new Date() > user.paymentCodeExpires) {
+      throw new Error('Mã xác thực đã hết hạn. Vui lòng yêu cầu mã mới');
+    }
+
+    // Xóa mã sau khi xác thực thành công
+    user.paymentCode = null;
+    user.paymentCodeExpires = null;
+    await user.save();
 
     const transaction = {
       type: 'payment',

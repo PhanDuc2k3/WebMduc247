@@ -74,11 +74,27 @@ exports.withdraw = async (req, res) => {
   }
 };
 
-exports.payWithWallet = async (req, res) => {
+exports.sendPaymentCode = async (req, res) => {
   try {
     const userId = req.user.userId;
     const { orderCode, amount } = req.body;
-    const result = await walletService.payWithWallet(userId, orderCode, amount);
+    const result = await walletService.sendPaymentCode(userId, orderCode, amount);
+    res.status(200).json(result);
+  } catch (err) {
+    console.error('Lỗi sendPaymentCode:', err);
+    const statusCode = err.message.includes("Thiếu thông tin") ? 400 : 
+                      err.message.includes("không tồn tại") ? 404 :
+                      err.message.includes("đã được thanh toán") ? 400 :
+                      err.message.includes("không đủ") ? 400 : 500;
+    res.status(statusCode).json({ message: err.message || 'Lỗi server' });
+  }
+};
+
+exports.payWithWallet = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { orderCode, amount, emailCode } = req.body;
+    const result = await walletService.payWithWallet(userId, orderCode, amount, emailCode);
     res.json({
       message: 'Thanh toán thành công',
       ...result
@@ -88,7 +104,10 @@ exports.payWithWallet = async (req, res) => {
     const statusCode = err.message.includes("Thiếu thông tin") ? 400 : 
                       err.message.includes("không tồn tại") ? 404 :
                       err.message.includes("đã được thanh toán") ? 400 :
-                      err.message.includes("không đủ") ? 400 : 500;
+                      err.message.includes("không đủ") ? 400 :
+                      err.message.includes("không đúng") ? 400 :
+                      err.message.includes("hết hạn") ? 400 :
+                      err.message.includes("nhập mã") ? 400 : 500;
     res.status(statusCode).json({ message: err.message || 'Lỗi server' });
   }
 };

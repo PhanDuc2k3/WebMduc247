@@ -1,7 +1,63 @@
 // src/context/chatContext.tsx
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { getSocket } from "../socket";
 import { toast } from "react-toastify";
+
+// Global navigate helper - sẽ được set từ component có useNavigate
+let globalNavigate: ((path: string) => void) | null = null;
+
+export const setGlobalNavigate = (navigate: (path: string) => void) => {
+  globalNavigate = navigate;
+};
+
+// Component cho toast content có thể click
+const MessageToastContent: React.FC<{
+  conversationId: string;
+  senderName: string;
+  text: string;
+  avatarUrl?: string;
+}> = ({ conversationId, senderName, text, avatarUrl }) => {
+  const handleClick = () => {
+    console.log("[MessageToastContent] 🖱️ Clicked toast, conversationId:", conversationId);
+    // Dùng globalNavigate nếu có, nếu không thì fallback về window.location
+    if (globalNavigate) {
+      console.log("[MessageToastContent] 🚀 Navigating using globalNavigate to:", `/messages/${conversationId}`);
+      globalNavigate(`/messages/${conversationId}`);
+    } else {
+      console.log("[MessageToastContent] ⚠️ globalNavigate not available, using window.location");
+      // Fallback: dùng window.location nhưng đảm bảo không reload nếu đã ở đúng route
+      if (window.location.pathname !== `/messages/${conversationId}`) {
+        window.location.href = `/messages/${conversationId}`;
+      }
+    }
+  };
+
+  return (
+    <div 
+      onClick={handleClick}
+      style={{ 
+        display: "flex", 
+        alignItems: "center", 
+        gap: "10px",
+        cursor: "pointer"
+      }}
+    >
+      <img
+        src={avatarUrl || "/default-avatar.png"}
+        alt={senderName}
+        style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", border: "2px solid white", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", flexShrink: 0 }}
+      />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <strong style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "white", marginBottom: "3px" }}>
+          {senderName}
+        </strong>
+        <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.9)", lineHeight: "1.4", wordBreak: "break-word" }}>
+          {text.length > 50 ? text.slice(0, 50) + "..." : text}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface ChatContextType {
   unreadMessages: Record<string, number>;
@@ -154,27 +210,24 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           audio.play().catch(() => {});
         }
 
-        toast.info(
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <img
-              src={avatarUrl || "/default-avatar.png"}
-              alt={senderName}
-              style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", border: "2px solid white", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", flexShrink: 0 }}
-            />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <strong style={{ display: "block", fontSize: "13px", fontWeight: 600, color: "white", marginBottom: "3px" }}>
-                {senderName}
-              </strong>
-              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.9)", lineHeight: "1.4", wordBreak: "break-word" }}>
-                {text.length > 50 ? text.slice(0, 50) + "..." : text}
-              </div>
-            </div>
-          </div>,
-          { 
-            position: "bottom-right", 
-            toastId: conversationId,
-            containerId: "message-toast",
-            style: {
+        // Kiểm tra xem có phải là order share không (message chứa "Thông tin đơn hàng" hoặc pattern orderCode)
+        const isOrderShare = text.includes("Thông tin đơn hàng") || /#ORD-/.test(text) || /orderCode/.test(text);
+        
+        // Toast style khác nhau cho order share
+        const toastStyle = isOrderShare 
+          ? {
+              background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+              color: "white",
+              borderRadius: "10px",
+              padding: "12px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              minWidth: "280px",
+              maxWidth: "350px",
+              fontSize: "14px",
+              cursor: "pointer",
+              border: "2px solid #fbbf24",
+            }
+          : {
               background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               color: "white",
               borderRadius: "10px",
@@ -183,10 +236,22 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
               minWidth: "280px",
               maxWidth: "350px",
               fontSize: "14px",
-            },
-            bodyStyle: {
-              color: "white",
-            }
+              cursor: "pointer",
+            };
+
+        toast.info(
+          <MessageToastContent
+            conversationId={conversationId}
+            senderName={senderName}
+            text={isOrderShare ? "📦 Đã chia sẻ đơn hàng mới" : text}
+            avatarUrl={avatarUrl}
+          />,
+          { 
+            position: "bottom-right", 
+            toastId: conversationId + (isOrderShare ? "-order" : ""),
+            containerId: "message-toast",
+            style: toastStyle,
+            autoClose: isOrderShare ? 6000 : 4000, // Order share hiển thị lâu hơn
           }
         );
       }

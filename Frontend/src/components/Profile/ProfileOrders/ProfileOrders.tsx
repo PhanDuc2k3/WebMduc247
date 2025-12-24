@@ -282,7 +282,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
   if (loading) {
     return (
       <div className="p-6 md:p-8 text-center animate-fade-in">
-        <Package size={40} className="mx-auto mb-3 md:mb-4 animate-pulse text-gray-400" />
+        <Package size={40} className="mx-auto mb-3 md:mb-4 animate-pulse text-[#2F5FEB]" />
         <p className="text-gray-600 text-sm md:text-base lg:text-lg font-medium">Đang tải đơn hàng...</p>
       </div>
     );
@@ -291,7 +291,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
   if (!orders || orders.length === 0) {
     return (
       <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border-2 border-gray-200 p-6 md:p-8 lg:p-12 text-center animate-fade-in">
-        <Package size={48} className="mx-auto mb-3 md:mb-4 text-gray-300" />
+        <Package size={48} className="mx-auto mb-3 md:mb-4 text-[#2F5FEB]" />
         <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-2">Chưa có đơn hàng nào</h3>
         <p className="text-gray-500 text-sm md:text-base mb-4 md:mb-6">Bắt đầu mua sắm ngay hôm nay!</p>
         <button
@@ -307,8 +307,8 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border-2 border-gray-200 p-4 md:p-6 lg:p-8 animate-fade-in-up">
-        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 gradient-text flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
-          <span>📦</span> Lịch sử đơn hàng
+        <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 md:gap-3 mb-4 md:mb-6">
+          <Package size={20} className="text-[#2F5FEB]" /> Lịch sử đơn hàng
         </h3>
 
         {orders.map((order, index) => (
@@ -332,7 +332,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                 {/* Danh sách sản phẩm */}
                 <div className="space-y-2 md:space-y-4">
                   {order.items.map((item, idx) => (
-                    <div key={`${item.productId}-${idx}`} className="flex items-center gap-2 md:gap-4 p-3 md:p-4 bg-white rounded-lg md:rounded-xl border border-gray-200 hover:border-blue-300 transition-all duration-300">
+                    <div key={`${item.productId}-${idx}`} className="flex items-center gap-2 md:gap-4 p-3 md:p-4 bg-white rounded-lg md:rounded-xl border border-gray-200 hover:border-[#2F5FEB] transition-all duration-300">
                       <div className="relative flex-shrink-0">
                         <img
                           src={item.imgUrl || "/default-avatar.png"}
@@ -344,7 +344,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-1 line-clamp-2">{item.name}</div>
                         <div className="text-[10px] sm:text-xs md:text-sm text-gray-600">
-                          Số lượng: <span className="font-bold text-blue-600">{item.qty}</span> x <span className="font-bold">{item.price}</span>
+                          Số lượng: <span className="font-bold text-[#2F5FEB]">{item.qty}</span> x <span className="font-bold">{item.price}</span>
                         </div>
                       </div>
                     </div>
@@ -354,10 +354,10 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
 
               {/* Bên phải */}
               <div className="flex flex-col sm:flex-row md:flex-col items-start sm:items-end md:items-end gap-3 md:gap-4 sm:min-w-[200px] md:min-w-[250px]">
-                <div className="text-xl sm:text-2xl font-extrabold text-blue-600 mb-1 md:mb-2">
+                <div className="text-xl sm:text-2xl font-extrabold text-[#2F5FEB] mb-1 md:mb-2">
                   {order.total}
                 </div>
-                <span className="px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 rounded-full text-xs md:text-sm font-bold border-2 border-green-300 whitespace-nowrap">
+                <span className="px-3 md:px-4 py-1.5 md:py-2 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs md:text-sm font-bold border-2 border-[#2F5FEB]/40 whitespace-nowrap">
                   ✓ {getShippingStatus(order.statusHistory)}
                 </span>
 
@@ -368,7 +368,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                         <button
                           key={item.productId}
                           onClick={() => onReview(item.productId, order._id)}
-                          className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+                          className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-[#244ACC] transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
                         >
                           <Star size={14} className="md:w-4 md:h-4" /> Đánh giá
                         </button>
@@ -376,7 +376,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                       {canRequestReturn(order) && (
                         <button
                           onClick={() => setShowReturnModal(order._id)}
-                          className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-orange-600 hover:to-red-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+                          className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-[#244ACC] transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
                         >
                           <RotateCcw size={14} className="md:w-4 md:h-4" /> Yêu cầu trả lại hàng
                         </button>
@@ -393,7 +393,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                   ) : getShippingStatus(order.statusHistory) === "Đã giao hàng" ? (
                     <button
                       onClick={() => setReceiveConfirm({ open: true, orderId: order._id })}
-                      className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+                      className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-[#244ACC] transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
                     >
                       <CheckCircle size={14} className="md:w-4 md:h-4" /> Đã nhận hàng
                     </button>
@@ -401,7 +401,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                     <>
                       <button
                         onClick={() => handleCancelOrderClick(order._id)}
-                        className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:from-red-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+                        className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-[#244ACC] transition-all duration-300 transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
                       >
                         <XCircle size={14} className="md:w-4 md:h-4" /> Hủy đơn hàng
                       </button>
@@ -426,7 +426,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                       onClick={() =>
                         navigate(`/products/${order.items[0].productId}`)
                       }
-                      className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-white border-2 border-blue-300 text-blue-600 rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-blue-50 transition-all duration-300 transform hover:scale-105"
+                      className="w-full px-3 md:px-4 py-1.5 md:py-2 bg-white border-2 border-[#2F5FEB]/60 text-[#2F5FEB] rounded-lg md:rounded-xl text-xs md:text-sm font-bold hover:bg-[#2F5FEB]/5 transition-all duration-300 transform hover:scale-105"
                     >
                       🛒 Mua lại
                     </button>

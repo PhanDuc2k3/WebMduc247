@@ -203,7 +203,7 @@ const StoreList: React.FC = () => {
       {/* Header */}
       <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
         <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
-          <Store className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
+          <Store className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-[#2F5FEB]" />
           <span>
             {searchKeyword ? `Kết quả tìm kiếm: "${searchKeyword}"` : "Danh sách cửa hàng"}
           </span>
@@ -225,7 +225,7 @@ const StoreList: React.FC = () => {
         {filteredStores.length > 0 && (
           <div className="mb-4 md:mb-6 animate-fade-in-up delay-300">
             <p className="text-gray-600 font-medium text-sm md:text-base">
-              Tìm thấy <span className="text-blue-600 font-bold">{filteredStores.length}</span> cửa hàng
+              Tìm thấy <span className="text-[#2F5FEB] font-bold">{filteredStores.length}</span> cửa hàng
             </p>
           </div>
         )}
@@ -239,16 +239,16 @@ const StoreList: React.FC = () => {
               {totalPages > 1 && (
                 <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in-up delay-400">
                   <div className="text-gray-600 text-sm md:text-base">
-                    Hiển thị <span className="font-bold text-blue-600">{startIndex + 1}</span> -{" "}
-                    <span className="font-bold text-blue-600">
+                    Hiển thị <span className="font-bold text-[#2F5FEB]">{startIndex + 1}</span> -{" "}
+                    <span className="font-bold text-[#2F5FEB]">
                       {Math.min(endIndex, filteredStores.length)}
                     </span>{" "}
-                    trong tổng số <span className="font-bold text-blue-600">{filteredStores.length}</span> cửa hàng
+                    trong tổng số <span className="font-bold text-[#2F5FEB]">{filteredStores.length}</span> cửa hàng
                   </div>
                   
                   <div className="flex items-center gap-2 md:gap-4">
                     <span className="text-gray-700 text-xs md:text-sm">
-                      Trang <span className="text-blue-600 font-bold">{currentPage}</span> /{" "}
+                      Trang <span className="text-[#2F5FEB] font-bold">{currentPage}</span> /{" "}
                       <span className="text-gray-600">{totalPages}</span>
                     </span>
                     
@@ -259,7 +259,7 @@ const StoreList: React.FC = () => {
                         className={`px-3 py-2 md:px-4 md:py-2.5 border-r border-gray-200 transition-colors ${
                           currentPage === 1
                             ? "text-gray-300 cursor-not-allowed bg-gray-50"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-[#2F5FEB]"
                         }`}
                         aria-label="Trang trước"
                       >
@@ -289,8 +289,8 @@ const StoreList: React.FC = () => {
                                   onClick={() => handlePageChange(page)}
                                   className={`px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-medium transition-colors ${
                                     currentPage === page
-                                      ? "bg-blue-600 text-white"
-                                      : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                                      ? "bg-[#2F5FEB] text-white"
+                                      : "text-gray-600 hover:bg-gray-50 hover:text-[#2F5FEB]"
                                   }`}
                                 >
                                   {page}
@@ -306,7 +306,7 @@ const StoreList: React.FC = () => {
                         className={`px-3 py-2 md:px-4 md:py-2.5 border-l border-gray-200 transition-colors ${
                           currentPage === totalPages
                             ? "text-gray-300 cursor-not-allowed bg-gray-50"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-blue-600"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-[#2F5FEB]"
                         }`}
                         aria-label="Trang sau"
                       >

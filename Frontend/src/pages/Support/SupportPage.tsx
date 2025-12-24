@@ -4,8 +4,9 @@ import QuickGuideCard from '../../components/Support/QuickGuideCard';
 import FAQGroup from '../../components/Support/FAQGroup';
 import SupportForm from '../../components/Support/SupportForm';
 import AdditionalInfoCard from '../../components/Support/AdditionalInfoCard';
-import { Phone, Mail, MessageSquare, MapPin, ShoppingCart, Eye, CreditCard, Gift, Truck, HelpCircle } from 'lucide-react';
-  const faqCategories = [
+import { Phone, Mail, MessageSquare, MapPin, ShoppingCart, Eye, CreditCard, Gift, Truck, HelpCircle, Headset, Zap, Edit3, ChevronDown } from 'lucide-react';
+
+const faqCategories = [
     {
       id: "order",
       title: "Đặt hàng & Thanh toán",
@@ -122,6 +123,7 @@ import { Phone, Mail, MessageSquare, MapPin, ShoppingCart, Eye, CreditCard, Gift
       ]
     }
   ];
+
 const SupportPage = () => {
   const [selectedTab, setSelectedTab] = React.useState(faqCategories[0].id);
   const [openAnswers, setOpenAnswers] = React.useState<{ [key: string]: number[] }>({});
@@ -140,8 +142,9 @@ const SupportPage = () => {
     <div className="w-full py-8 md:py-12">
       {/* Header Section */}
       <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text">
-          💬 Trung tâm hỗ trợ
+        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-[#2F5FEB] flex items-center gap-3">
+          <Headset className="w-8 h-8" />
+          <span>Trung tâm hỗ trợ</span>
         </h1>
         <p className="text-gray-600 text-lg">
           Chúng tôi luôn sẵn sàng giúp đỡ bạn!
@@ -165,7 +168,8 @@ const SupportPage = () => {
         {/* Quick Guide */}
         <section className="animate-fade-in-up delay-200">
           <h2 className="text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900">
-            <span>⚡</span> <span className="gradient-text">Hướng dẫn nhanh</span>
+            <Zap className="w-6 h-6 text-[#2F5FEB]" /> 
+            <span className="text-[#2F5FEB]">Hướng dẫn nhanh</span>
           </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
@@ -182,7 +186,8 @@ const SupportPage = () => {
         {/* FAQ Section */}
         <section className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 p-8 animate-fade-in-up delay-300">
           <h2 className="text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900">
-            <span>❓</span> <span className="gradient-text">Câu hỏi thường gặp</span>
+            <HelpCircle className="w-6 h-6 text-[#2F5FEB]" /> 
+            <span className="text-[#2F5FEB]">Câu hỏi thường gặp</span>
           </h2>
 
           {/* Tabs ngang */}
@@ -192,8 +197,8 @@ const SupportPage = () => {
                 key={group.id}
                 className={`px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 ${
                   selectedTab === group.id
-                    ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg scale-105"
-                    : "bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50"
+                    ? "bg-[#2F5FEB] text-white shadow-lg scale-105"
+                    : "bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border-2 border-gray-200 hover:border-[#2F5FEB] hover:bg-[#2F5FEB]/5"
                 }`}
                 onClick={() => setSelectedTab(group.id)}
               >
@@ -211,14 +216,16 @@ const SupportPage = () => {
           key={idx}
           className={`p-6 cursor-pointer transition-all duration-300 ${
             idx !== faqCategories.find((group) => group.id === selectedTab)?.questions.length! - 1 ? "border-b-2 border-gray-200" : ""
-          } ${openAnswers[selectedTab]?.includes(idx) ? "bg-gradient-to-r from-blue-50 to-purple-50" : "hover:bg-gradient-to-r hover:from-gray-50 hover:to-blue-50"}`}
+          } ${openAnswers[selectedTab]?.includes(idx) ? "bg-[#2F5FEB]/10" : "hover:bg-[#2F5FEB]/5"}`}
           onClick={() => toggleAnswer(selectedTab, idx)}
         >
           <div className="flex justify-between items-center">
             <p className="font-bold text-gray-900 text-lg">{item.q}</p>
-            <span className="text-2xl font-bold text-gray-500 hover:text-purple-600 transition-colors">
-              {openAnswers[selectedTab]?.includes(idx) ? "−" : "+"}
-            </span>
+            <ChevronDown
+              className={`w-5 h-5 text-gray-500 transition-transform duration-300 ${
+                openAnswers[selectedTab]?.includes(idx) ? "rotate-180 text-[#2F5FEB]" : ""
+              }`}
+            />
           </div>
           {openAnswers[selectedTab]?.includes(idx) && (
             <p className="mt-4 text-gray-700 leading-relaxed animate-fade-in">{item.a}</p>
@@ -232,7 +239,8 @@ const SupportPage = () => {
         {/* Support Form */}
         <section className="animate-fade-in-up delay-400">
           <h2 className="text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900">
-            <span>📝</span> <span className="gradient-text">Gửi yêu cầu hỗ trợ</span>
+            <Edit3 className="w-6 h-6 text-[#2F5FEB]" />
+            <span className="text-[#2F5FEB]">Gửi yêu cầu hỗ trợ</span>
           </h2>
           <SupportForm />
         </section>

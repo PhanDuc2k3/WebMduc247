@@ -52,10 +52,10 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     return (
       <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border-2 border-gray-100 p-4 md:p-6 lg:p-8">
         <div className="flex items-center justify-between mb-4 md:mb-6">
-          <h3 className="font-semibold text-lg sm:text-xl">Quản lý địa chỉ</h3>
+          <h3 className="font-semibold text-lg sm:text-xl text-[#2F5FEB]">Quản lý địa chỉ</h3>
           <button
             onClick={() => setShowAddressManagement(false)}
-            className="text-gray-500 hover:text-gray-700 transition-colors"
+            className="text-gray-400 hover:text-[#2F5FEB] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -67,13 +67,13 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   return (
     <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border-2 border-gray-100 p-4 md:p-6 lg:p-8">
-      <h3 className="font-semibold text-lg sm:text-xl mb-4 md:mb-6">Cài đặt tài khoản</h3>
+      <h3 className="font-semibold text-lg sm:text-xl mb-4 md:mb-6 text-[#2F5FEB]">Cài đặt tài khoản</h3>
       <div className="space-y-3 md:space-y-4 lg:space-y-6">
         {/* Email Notifications */}
-        <div className="border-2 border-gray-200 rounded-lg md:rounded-xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
+        <div className="border-2 border-[#2F5FEB]/15 rounded-lg md:rounded-xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
           <div className="flex-1 min-w-0">
             <div className="text-sm sm:text-base md:text-lg font-medium mb-1 flex items-center gap-2">
-              <Mail className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Mail className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F5FEB]" />
               Thông báo email
             </div>
             <div className="text-xs sm:text-sm md:text-base text-gray-500">
@@ -83,7 +83,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           <button
             onClick={handleToggleEmailNotifications}
             disabled={loadingEmailNotif}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${emailNotifications ? "bg-blue-500" : "bg-gray-300"
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ${emailNotifications ? "bg-[#2F5FEB]" : "bg-gray-300"
               } ${loadingEmailNotif ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
           >
             <span
@@ -94,10 +94,10 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         </div>
 
         {/* Change Password */}
-        <div className="border-2 border-gray-200 rounded-lg md:rounded-xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
+        <div className="border-2 border-[#2F5FEB]/15 rounded-lg md:rounded-xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
           <div className="flex-1 min-w-0">
             <div className="text-sm sm:text-base md:text-lg font-medium mb-1 flex items-center gap-2">
-              <Lock className="w-4 h-4 sm:w-5 sm:h-5" />
+              <Lock className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F5FEB]" />
               Đổi mật khẩu
             </div>
             <div className="text-xs sm:text-sm md:text-base text-gray-500">
@@ -106,17 +106,17 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           </div>
           <button
             onClick={onChangePassword}
-            className="bg-gray-100 px-4 py-2 md:px-6 md:py-2.5 rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base font-medium hover:bg-gray-200 transition-all duration-300 flex-shrink-0 w-full sm:w-auto"
+            className="bg-[#2F5FEB] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base font-semibold hover:bg-[#244ACC] transition-all duration-300 shadow-md hover:shadow-lg flex-shrink-0 w-full sm:w-auto"
           >
             Đổi mật khẩu
           </button>
         </div>
 
         {/* Address Management */}
-        <div className="border-2 border-gray-200 rounded-lg md:rounded-xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
+        <div className="border-2 border-[#2F5FEB]/15 rounded-lg md:rounded-xl p-4 md:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 md:gap-4">
           <div className="flex-1 min-w-0">
             <div className="text-sm sm:text-base md:text-lg font-medium mb-1 flex items-center gap-2">
-              <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5 text-[#2F5FEB]" />
               Địa chỉ giao hàng
             </div>
             <div className="text-xs sm:text-sm md:text-base text-gray-500">
@@ -125,7 +125,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
           </div>
           <button
             onClick={() => setShowAddressManagement(true)}
-            className="bg-gray-100 px-4 py-2 md:px-6 md:py-2.5 rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base font-medium hover:bg-gray-200 transition-all duration-300 flex-shrink-0 w-full sm:w-auto"
+            className="px-4 py-2 md:px-6 md:py-2.5 rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base font-semibold border-2 border-[#2F5FEB]/60 text-[#2F5FEB] bg-white hover:bg-[#2F5FEB]/5 transition-all duration-300 flex-shrink-0 w-full sm:w-auto"
           >
             Quản lý
           </button>

@@ -12,42 +12,37 @@ interface OrderSummaryProps {
 const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
   const navigate = useNavigate();
 
-  // ✅ Bảo vệ cart luôn là mảng
-  const safeCart = Array.isArray(cart?.items) ? cart.items : [];
-
-  // ✅ Lọc ra sản phẩm được chọn
-  const selectedProducts = safeCart.filter((item: any) =>
-    selectedItems.includes(item._id)
-  );
-
   // ✅ Kiểm tra xem có nhiều cửa hàng được chọn không
   const getStoreId = (item: any): string => {
     return typeof item.storeId === "string" ? item.storeId : item.storeId?._id || "";
   };
 
-  const storeIds = useMemo(() => {
-    const ids = new Set(selectedProducts.map((item: any) => getStoreId(item)));
-    return Array.from(ids);
-  }, [selectedProducts]);
-
-  const hasMultipleStores = storeIds.length > 1;
-
-  // ✅ Tính toán giá trị đơn hàng
-  const { subtotal, total } = useMemo(() => {
-    const subtotal = selectedProducts.reduce((sum, item) => {
-      // Sử dụng subtotal từ item nếu có, nếu không thì tính toán
-      if (item.subtotal) {
-        return sum + item.subtotal;
-      }
-      const price = item.salePrice ?? item.price ?? 0;
-      const extra = item.variation?.additionalPrice ?? 0;
-      const qty = item.quantity ?? 0;
-      return sum + (price + extra) * qty;
+  // ✅ Tính toán trực tiếp từ cart.items và selectedItems để đảm bảo luôn có dữ liệu mới nhất
+  const { selectedProducts, storeIds, subtotal, total } = useMemo(() => {
+    const safeCart = Array.isArray(cart?.items) ? cart.items : [];
+    const filtered = safeCart.filter((item: any) => selectedItems.includes(item._id));
+    
+    // Tính tổng tiền trực tiếp - luôn tính lại từ quantity để đảm bảo chính xác
+    const calculatedSubtotal = filtered.reduce((sum, item) => {
+      const price = Number(item.salePrice ?? item.price ?? 0);
+      const extra = Number(item.variation?.additionalPrice ?? 0);
+      const qty = Number(item.quantity) || 0;
+      const itemSubtotal = (price + extra) * qty;
+      return sum + itemSubtotal;
     }, 0);
 
-    const total = subtotal;
-    return { subtotal, total };
-  }, [selectedProducts]);
+    // Tính storeIds
+    const ids = new Set(filtered.map((item: any) => getStoreId(item)));
+    
+    return {
+      selectedProducts: filtered,
+      storeIds: Array.from(ids),
+      subtotal: calculatedSubtotal,
+      total: calculatedSubtotal
+    };
+  }, [cart?.items, selectedItems]); // ✅ Tính toán trực tiếp từ cart.items và selectedItems
+
+  const hasMultipleStores = storeIds.length > 1;
 
   // ✅ Thanh toán
   const handleCheckout = () => {
@@ -87,7 +82,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl border-2 border-gray-200 p-6 lg:p-8 animate-fade-in-right">
       <div className="flex items-center gap-3 mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 gradient-text">Tóm tắt đơn hàng</h2>
+        <h2 className="text-2xl font-bold text-[#2F5FEB]">Tóm tắt đơn hàng</h2>
       </div>
 
       {/* ✅ Cảnh báo nếu có nhiều cửa hàng */}
@@ -104,7 +99,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
 
       {/* Total */}
       <div className="mb-6">
-        <div className="flex justify-between items-center p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border-2 border-blue-300">
+        <div className="flex justify-between items-center p-4 bg-[#2F5FEB]/5 rounded-xl border-2 border-[#2F5FEB]/40">
           <span className="text-xl font-bold text-gray-900">Tổng cộng</span>
           <span className="text-2xl font-extrabold text-red-600">
             {formatPrice(total)}
@@ -118,7 +113,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
         disabled={!selectedProducts || selectedProducts.length === 0 || hasMultipleStores}
         className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform ${
           selectedProducts && selectedProducts.length > 0 && !hasMultipleStores
-            ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 hover:scale-105 active:scale-95"
+            ? "bg-[#2F5FEB] text-white hover:bg-[#244ACC] hover:scale-105 active:scale-95"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"
         }`}
       >

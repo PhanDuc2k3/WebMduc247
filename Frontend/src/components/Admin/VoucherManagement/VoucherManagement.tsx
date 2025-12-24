@@ -133,28 +133,36 @@ const VoucherManagement: React.FC = () => {
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const submitData: any = {
-        ...formData,
-        startDate: new Date(formData.startDate).toISOString(),
-        endDate: new Date(formData.endDate).toISOString(),
-      };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const submitData: any = {
+        ...formData,
+        startDate: new Date(formData.startDate).toISOString(),
+        endDate: new Date(formData.endDate).toISOString(),
+      };
 
-      // Admin: thêm categories hoặc global
-      if (isGlobal) {
-        submitData.global = true;
-        submitData.categories = [];
-      } else if (selectedCategories.length > 0) {
-        submitData.global = false;
-        submitData.categories = selectedCategories;
-      } else {
-        // Nếu không chọn global và không chọn category nào, mặc định là global
-        submitData.global = true;
-        submitData.categories = [];
-      }
+      // Chỉ gửi maxDiscount khi discountType là "percent"
+      if (submitData.discountType === "percent") {
+        // Giữ nguyên maxDiscount
+      } else {
+        // Không gửi maxDiscount khi là fixed
+        delete submitData.maxDiscount;
+      }
+
+      // Admin: thêm categories hoặc global
+      if (isGlobal) {
+        submitData.global = true;
+        submitData.categories = [];
+      } else if (selectedCategories.length > 0) {
+        submitData.global = false;
+        submitData.categories = selectedCategories;
+      } else {
+        // Nếu không chọn global và không chọn category nào, mặc định là global
+        submitData.global = true;
+        submitData.categories = [];
+      }
 
       if (editingVoucher?._id) {
         await voucherApi.updateVoucher(editingVoucher._id, submitData);
@@ -568,8 +576,8 @@ const VoucherManagement: React.FC = () => {
                 />
               </div>
 
-              {/* Loại voucher, Loại giảm giá, Giá trị giảm */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
+              {/* Loại voucher & Loại giảm giá */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div>
                   <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Loại voucher *</label>
                   <select
@@ -594,8 +602,12 @@ const VoucherManagement: React.FC = () => {
                     <option value="fixed">Số tiền cố định</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Hiển thị trường dựa trên loại giảm giá */}
+              {formData.discountType === "fixed" ? (
                 <div>
-                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Giá trị giảm *</label>
+                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Giá trị giảm (₫) *</label>
                   <input
                     type="number"
                     required
@@ -603,35 +615,50 @@ const VoucherManagement: React.FC = () => {
                     value={formData.discountValue}
                     onChange={(e) => setFormData({ ...formData, discountValue: Number(e.target.value) })}
                     className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                    placeholder="VD: 50000"
                   />
                 </div>
-              </div>
-
-              {/* Đơn tối thiểu & Giảm tối đa */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <div>
-                  <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Đơn hàng tối thiểu</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.minOrderValue}
-                    onChange={(e) => setFormData({ ...formData, minOrderValue: Number(e.target.value) })}
-                    className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
-                  />
-                </div>
-
-                {formData.discountType === 'percent' && (
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div>
-                    <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Giảm tối đa</label>
+                    <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Giảm theo % *</label>
                     <input
                       type="number"
+                      required
+                      min="0"
+                      max="100"
+                      value={formData.discountValue}
+                      onChange={(e) => setFormData({ ...formData, discountValue: Number(e.target.value) })}
+                      className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                      placeholder="VD: 10"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Giảm tối đa (₫) *</label>
+                    <input
+                      type="number"
+                      required
                       min="0"
                       value={formData.maxDiscount}
                       onChange={(e) => setFormData({ ...formData, maxDiscount: Number(e.target.value) })}
                       className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                      placeholder="VD: 100000"
                     />
                   </div>
-                )}
+                </div>
+              )}
+
+              {/* Đơn hàng tối thiểu */}
+              <div>
+                <label className="block text-xs md:text-sm font-bold text-gray-700 mb-1 md:mb-2">Đơn hàng tối thiểu (₫)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.minOrderValue}
+                  onChange={(e) => setFormData({ ...formData, minOrderValue: Number(e.target.value) })}
+                  className="w-full px-3 md:px-4 py-2 md:py-3 text-sm md:text-base border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+                  placeholder="VD: 100000"
+                />
               </div>
 
               {/* Ngày bắt đầu & Ngày kết thúc */}

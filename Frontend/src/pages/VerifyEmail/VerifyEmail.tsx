@@ -170,16 +170,16 @@ const VerifyEmail: React.FC = () => {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 py-4 sm:py-8 px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#2F5FEB]/10 via-white to-[#2F5FEB]/20 py-4 sm:py-8 px-4">
         {/* Logo và Header */}
         <div className="flex flex-col items-center mb-4 sm:mb-8 animate-fade-in-down">
           <div className="relative mb-3 sm:mb-4">
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full blur-lg opacity-50 animate-pulse"></div>
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
+            <div className="absolute inset-0 bg-[#2F5FEB] rounded-full blur-lg opacity-50 animate-pulse"></div>
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#2F5FEB] flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
               <ShoppingCart className="text-white w-8 h-8 sm:w-10 sm:h-10" />
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-gray-900 gradient-text mb-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#2F5FEB] mb-2">
             ShopMDuc247
           </h1>
           <p className="text-gray-600 text-center text-sm sm:text-base lg:text-lg">
@@ -189,20 +189,20 @@ const VerifyEmail: React.FC = () => {
 
         {/* Form Card */}
         <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-gray-100 p-4 sm:p-6 md:p-8 lg:p-10 relative animate-fade-in-up">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-3xl"></div>
+          <div className="absolute inset-0 bg-[#2F5FEB]/5 rounded-3xl"></div>
 
           <div className="relative">
             <button
               onClick={() => navigate("/register")}
-              className="mb-4 flex items-center gap-2 text-gray-600 hover:text-blue-600 transition-colors"
+              className="mb-4 flex items-center gap-2 text-gray-600 hover:text-[#2F5FEB] transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm font-medium">Quay lại đăng ký</span>
             </button>
 
             <div className="text-center mb-4 sm:mb-6">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-                <Mail className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-[#2F5FEB]/10 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                <Mail className="w-6 h-6 sm:w-8 sm:h-8 text-[#2F5FEB]" />
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                 Kiểm tra email của bạn
@@ -210,7 +210,7 @@ const VerifyEmail: React.FC = () => {
               <p className="text-gray-600 text-xs sm:text-sm">
                 Chúng tôi đã gửi mã xác thực 6 chữ số đến
               </p>
-              <p className="text-blue-600 font-semibold mt-1 text-sm sm:text-base break-all px-2">{email}</p>
+              <p className="text-[#2F5FEB] font-semibold mt-1 text-sm sm:text-base break-all px-2">{email}</p>
             </div>
 
             <form className="space-y-4 sm:space-y-5" onSubmit={handleVerify}>
@@ -221,7 +221,7 @@ const VerifyEmail: React.FC = () => {
                 <div className="relative">
                   <input
                     type="text"
-                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-center text-xl sm:text-2xl font-bold tracking-widest border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300"
+                    className="w-full px-3 sm:px-4 py-2.5 sm:py-3 text-center text-xl sm:text-2xl font-bold tracking-widest border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300"
                     placeholder="000000"
                     value={verificationCode}
                     onChange={handleCodeChange}
@@ -237,7 +237,7 @@ const VerifyEmail: React.FC = () => {
               <button
                 type="submit"
                 disabled={loading || verificationCode.length !== 6}
-                className="relative w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="relative w-full bg-[#2F5FEB] text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:bg-[#244ACC] transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -260,11 +260,11 @@ const VerifyEmail: React.FC = () => {
               <button
                 onClick={handleResendCode}
                 disabled={resendLoading || countdown > 0}
-                className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-blue-600 border-2 border-blue-600 rounded-lg sm:rounded-xl hover:bg-blue-50 transition-all duration-300 font-semibold text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-[#2F5FEB] border-2 border-[#2F5FEB] rounded-lg sm:rounded-xl hover:bg-[#2F5FEB]/10 transition-all duration-300 font-semibold text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {resendLoading ? (
                   <>
-                    <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+                    <span className="w-3.5 h-3.5 sm:w-4 sm:h-4 border-2 border-[#2F5FEB] border-t-transparent rounded-full animate-spin"></span>
                     <span>Đang gửi...</span>
                   </>
                 ) : countdown > 0 ? (

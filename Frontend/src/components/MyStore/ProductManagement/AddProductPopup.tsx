@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 import ProductForm from "./ProductForm/index";
 import type { FormDataType, ProductType } from "../../../types/product";
 
@@ -69,26 +71,24 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[95vh] overflow-y-auto animate-scale-in">
-        {/* Header */}
-        <div className="sticky top-0 bg-gradient-to-r from-blue-600 to-purple-600 p-6 rounded-t-2xl z-10">
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              {editProduct ? "✏️ Sửa sản phẩm" : "➕ Thêm sản phẩm mới"}
-            </h2>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white/20 p-2 rounded-full transition-all duration-300 text-2xl font-bold hover:scale-110"
-            >
-              ×
-            </button>
-          </div>
+  return createPortal(
+    <div
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 sm:p-6 animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="relative bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="absolute -top-10 sm:-top-12 right-0">
+          <button
+            onClick={onClose}
+            className="text-white bg-[#2F5EE9] hover:bg-[#244ACC] px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-colors touch-manipulation shadow-lg flex items-center gap-2"
+          >
+            <X className="w-4 h-4" /> Đóng
+          </button>
         </div>
-
-        {/* Form */}
-        <div className="p-6">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 md:p-8">
           <ProductForm
             step={step}
             setStep={setStep}
@@ -100,7 +100,8 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({
           />
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

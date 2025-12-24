@@ -24,9 +24,9 @@ const StoreInfo: React.FC<Props> = ({
   const bannerInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 p-4 sm:p-6 lg:p-8 animate-fade-in-up">
+    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-[#2F5FEB]/30 p-4 sm:p-6 lg:p-8 animate-fade-in-up">
       <div className="mb-4 sm:mb-6">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">Thông tin cửa hàng</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] mb-1">Thông tin cửa hàng</h2>
         <p className="text-gray-600 text-xs sm:text-sm">Cập nhật thông tin và hình ảnh cửa hàng của bạn</p>
       </div>
 
@@ -36,7 +36,7 @@ const StoreInfo: React.FC<Props> = ({
           <div className="w-full">
             <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Banner cửa hàng</label>
             <div
-              className="w-full h-32 sm:h-40 lg:h-48 rounded-lg sm:rounded-xl overflow-hidden cursor-pointer border-2 border-dashed border-gray-300 hover:border-blue-500 active:border-blue-600 transition-all duration-300 group relative touch-manipulation"
+              className="w-full h-32 sm:h-40 lg:h-48 rounded-lg sm:rounded-xl overflow-hidden cursor-pointer border-2 border-dashed border-[#2F5FEB]/40 hover:border-[#2F5FEB] active:border-[#244ACC] transition-all duration-300 group relative touch-manipulation"
               onClick={() => bannerInputRef.current?.click()}
             >
               <img
@@ -60,7 +60,7 @@ const StoreInfo: React.FC<Props> = ({
           <div className="w-full flex flex-col items-center">
             <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-2">Logo cửa hàng</label>
             <div
-              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden cursor-pointer border-4 border-gray-200 hover:border-blue-500 active:border-blue-600 transition-all duration-300 shadow-lg group relative touch-manipulation"
+              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden cursor-pointer border-4 border-[#2F5FEB]/40 hover:border-[#2F5FEB] active:border-[#244ACC] transition-all duration-300 shadow-lg group relative touch-manipulation"
               onClick={() => logoInputRef.current?.click()}
             >
               <img
@@ -123,7 +123,7 @@ const StoreInfo: React.FC<Props> = ({
 
           <div className="pt-1 sm:pt-2">
             <button
-              className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 touch-manipulation"
+              className="w-full sm:w-auto px-5 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl hover:bg-[#244ACC] active:scale-95 sm:hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2 touch-manipulation"
               onClick={handleStoreUpdate}
             >
               <span>Cập nhật cửa hàng</span>

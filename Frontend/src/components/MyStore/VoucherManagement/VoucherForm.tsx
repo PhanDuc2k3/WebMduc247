@@ -1,40 +1,122 @@
-import React, { useState } from "react";
-import { X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Store } from "lucide-react";
 import type { VoucherType } from "../../../api/voucherApi";
 import voucherApi from "../../../api/voucherApi";
+import storeApi from "../../../api/storeApi";
 
 interface VoucherFormProps {
   onClose?: () => void;
   onSuccess?: () => void;
+  voucher?: VoucherType & { title?: string; condition?: string }; // Voucher để edit (nếu có)
 }
 
 // Mở rộng VoucherType để dùng trong form
 interface VoucherFormData extends VoucherType {
   title?: string;
   condition?: string;
-  categories: string[]; // dùng array
-  global: boolean;      // dùng trong form, không gửi lên API
 }
 
-const VoucherForm: React.FC<VoucherFormProps> = ({ onClose, onSuccess }) => {
-  const [formData, setFormData] = useState<VoucherFormData>({
-    code: "",
-    title: "",
-    description: "",
-    condition: "",
-    discountType: "fixed",
-    discountValue: 0,
-    minOrderValue: 0,
-    maxDiscount: 0,
-    global: false,
-    startDate: "",
-    endDate: "",
-    usageLimit: 100,
-    categories: [],
-  });
+const VoucherForm: React.FC<VoucherFormProps> = ({ onClose, onSuccess, voucher }) => {
+  // Khởi tạo form data từ voucher (nếu edit) hoặc giá trị mặc định (nếu tạo mới)
+  const initializeFormData = (): VoucherFormData => {
+    if (voucher) {
+      // Format dates cho input type="date" (YYYY-MM-DD)
+      const formatDate = (dateString: string) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        return date.toISOString().split("T")[0];
+      };
+
+      return {
+        code: voucher.code || "",
+        title: (voucher as any).title || "",
+        description: voucher.description || "",
+        condition: (voucher as any).condition || "",
+        discountType: voucher.discountType || "fixed",
+        discountValue: voucher.discountValue || 0,
+        minOrderValue: voucher.minOrderValue || 0,
+        maxDiscount: voucher.maxDiscount || 0,
+        startDate: formatDate(voucher.startDate),
+        endDate: formatDate(voucher.endDate),
+        usageLimit: voucher.usageLimit || 100,
+      };
+    }
+    return {
+      code: "",
+      title: "",
+      description: "",
+      condition: "",
+      discountType: "fixed" as "fixed" | "percent",
+      discountValue: 0,
+      minOrderValue: 0,
+      maxDiscount: 0,
+      startDate: "",
+      endDate: "",
+      usageLimit: 100,
+    };
+  };
+
+  const [formData, setFormData] = useState<VoucherFormData>(initializeFormData());
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [storeName, setStoreName] = useState<string>("");
+
+  // Lấy thông tin cửa hàng của seller
+  useEffect(() => {
+    const fetchStoreInfo = async () => {
+      try {
+        const res = await storeApi.getMyStore();
+        const store = res.data.store || res.data;
+        if (store?.name) {
+          setStoreName(store.name);
+        }
+      } catch (err) {
+        console.error("Lỗi khi lấy thông tin cửa hàng:", err);
+      }
+    };
+    fetchStoreInfo();
+  }, []);
+
+  // Cập nhật form data khi voucher prop thay đổi
+  useEffect(() => {
+    if (voucher) {
+      const formatDate = (dateString: string) => {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        return date.toISOString().split("T")[0];
+      };
+
+      setFormData({
+        code: voucher.code || "",
+        title: (voucher as any).title || "",
+        description: voucher.description || "",
+        condition: (voucher as any).condition || "",
+        discountType: voucher.discountType || "fixed",
+        discountValue: voucher.discountValue || 0,
+        minOrderValue: voucher.minOrderValue || 0,
+        maxDiscount: voucher.maxDiscount || 0,
+        startDate: formatDate(voucher.startDate),
+        endDate: formatDate(voucher.endDate),
+        usageLimit: voucher.usageLimit || 100,
+      });
+    } else {
+      // Reset về giá trị mặc định khi không có voucher (tạo mới)
+      setFormData({
+        code: "",
+        title: "",
+        description: "",
+        condition: "",
+        discountType: "fixed" as "fixed" | "percent",
+        discountValue: 0,
+        minOrderValue: 0,
+        maxDiscount: 0,
+        startDate: "",
+        endDate: "",
+        usageLimit: 100,
+      });
+    }
+  }, [voucher]);
 
   // Xử lý input
 const handleChange = (
@@ -50,15 +132,7 @@ const handleChange = (
   } else if (type === "number") {
     newValue = Number(value);
   } else if (name === "discountType") {
-    newValue = value === "percentage" ? "percentage" : "fixed";
-  } else if (name === "categories") {
-    // Chuyển string input thành array
-    const val = value as string;
-    setFormData((prev) => ({
-      ...prev,
-      categories: val.split(",").map((c) => c.trim()),
-    }));
-    return; // return để tránh gán sai type
+    newValue = value === "percent" ? "percent" : "fixed";
   } else {
     newValue = value;
   }
@@ -78,53 +152,61 @@ const handleChange = (
 
     try {
       // Chuẩn hóa data gửi lên API
+      // Lưu ý: Seller không được gửi global, categories, stores
+      // Backend sẽ tự động gán voucher cho cửa hàng của seller
       const dataToSend: VoucherType = {
         code: formData.code,
+        title: formData.title || "",
         description: formData.description,
+        condition: formData.condition || "",
         discountType: formData.discountType,
         discountValue: formData.discountValue,
         minOrderValue: formData.minOrderValue,
-        maxDiscount: formData.maxDiscount,
         startDate: formData.startDate,
         endDate: formData.endDate,
         usageLimit: formData.usageLimit,
       };
 
-      // Nếu backend hỗ trợ categories
-      if (formData.categories.length > 0) {
-        (dataToSend as any).categories = formData.categories;
+      // Chỉ gửi maxDiscount khi discountType là "percent"
+      if (formData.discountType === "percent") {
+        dataToSend.maxDiscount = formData.maxDiscount;
       }
 
-      await voucherApi.createVoucher(dataToSend);
-
-      setMessage("✅ Tạo voucher thành công!");
-      setFormData({
-        code: "",
-        title: "",
-        description: "",
-        condition: "",
-        discountType: "fixed",
-        discountValue: 0,
-        minOrderValue: 0,
-        maxDiscount: 0,
-        global: false,
-        startDate: "",
-        endDate: "",
-        usageLimit: 100,
-        categories: [],
-      });
+      if (voucher?._id) {
+        // Cập nhật voucher
+        await voucherApi.updateVoucher(voucher._id, dataToSend);
+        setMessage("✅ Cập nhật voucher thành công!");
+      } else {
+        // Tạo voucher mới
+        await voucherApi.createVoucher(dataToSend);
+        setMessage("✅ Tạo voucher thành công!");
+        // Reset form chỉ khi tạo mới thành công
+        setFormData({
+          code: "",
+          title: "",
+          description: "",
+          condition: "",
+          discountType: "fixed" as "fixed" | "percent",
+          discountValue: 0,
+          minOrderValue: 0,
+          maxDiscount: 0,
+          startDate: "",
+          endDate: "",
+          usageLimit: 100,
+        });
+      }
 
       onSuccess?.();
     } catch (err) {
       console.error(err);
-      setMessage("❌ Lỗi khi tạo voucher");
+      setMessage(voucher ? "❌ Lỗi khi cập nhật voucher" : "❌ Lỗi khi tạo voucher");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="relative max-w-lg mx-auto bg-white shadow-xl rounded-xl p-5 mt-6 h-[600px] overflow-y-auto">
+    <div className="relative w-full h-full sm:h-auto sm:max-h-[90vh] bg-white p-5 sm:p-6 md:p-8 overflow-y-auto">
       {/* Nút đóng */}
       {onClose && (
         <button
@@ -136,7 +218,27 @@ const handleChange = (
         </button>
       )}
 
-      <h2 className="text-2xl font-bold mb-4 text-center">Tạo Voucher Mới</h2>
+      <h2 className="text-2xl font-bold mb-4 text-center">
+        {voucher ? "Chỉnh sửa Voucher" : "Tạo Voucher Mới"}
+      </h2>
+
+      {/* Thông báo về phạm vi áp dụng voucher */}
+      {storeName && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <Store className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div className="text-sm text-blue-800">
+              <p className="font-semibold mb-1">Voucher sẽ chỉ áp dụng cho cửa hàng của bạn</p>
+              <p className="text-blue-700">
+                <span className="font-medium">Cửa hàng:</span> {storeName}
+              </p>
+              <p className="text-blue-600 text-xs mt-1">
+                Số tiền giảm giá sẽ được trừ từ doanh thu của cửa hàng bạn.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {message && <div className="mb-3 text-center text-sm font-medium">{message}</div>}
 
@@ -189,74 +291,77 @@ const handleChange = (
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block font-semibold mb-1">Loại giảm giá</label>
+          <select
+            name="discountType"
+            value={formData.discountType}
+            onChange={handleChange}
+            className="w-full border rounded-lg p-2"
+          >
+            <option value="fixed">Giảm cố định</option>
+            <option value="percent">Giảm theo %</option>
+          </select>
+        </div>
+
+        {/* Hiển thị trường dựa trên loại giảm giá */}
+        {formData.discountType === "fixed" ? (
           <div>
-            <label className="block font-semibold mb-1">Loại giảm giá</label>
-            <select
-              name="discountType"
-              value={formData.discountType}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-2"
-            >
-              <option value="fixed">Giảm cố định</option>
-              <option value="percentage">Giảm theo %</option>
-            </select>
-          </div>
-          <div>
-            <label className="block font-semibold mb-1">Giá trị giảm</label>
+            <label className="block font-semibold mb-1">Giá trị giảm (₫)</label>
             <input
               type="number"
               name="discountValue"
               value={formData.discountValue}
               onChange={handleChange}
+              min="0"
+              required
               className="w-full border rounded-lg p-2"
+              placeholder="VD: 50000"
             />
           </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block font-semibold mb-1">Đơn hàng tối thiểu</label>
-            <input
-              type="number"
-              name="minOrderValue"
-              value={formData.minOrderValue}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-2"
-            />
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block font-semibold mb-1">Giảm theo %</label>
+              <input
+                type="number"
+                name="discountValue"
+                value={formData.discountValue}
+                onChange={handleChange}
+                min="0"
+                max="100"
+                required
+                className="w-full border rounded-lg p-2"
+                placeholder="VD: 10"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1">Giảm tối đa (₫)</label>
+              <input
+                type="number"
+                name="maxDiscount"
+                value={formData.maxDiscount}
+                onChange={handleChange}
+                min="0"
+                required
+                className="w-full border rounded-lg p-2"
+                placeholder="VD: 100000"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block font-semibold mb-1">Giảm tối đa (nếu %)</label>
-            <input
-              type="number"
-              name="maxDiscount"
-              value={formData.maxDiscount}
-              onChange={handleChange}
-              className="w-full border rounded-lg p-2"
-            />
-          </div>
-        </div>
+        )}
 
         <div>
-          <label className="block font-semibold mb-1">Danh mục áp dụng</label>
+          <label className="block font-semibold mb-1">Đơn hàng tối thiểu (₫)</label>
           <input
-            type="text"
-            name="categories"
-            value={formData.categories.join(", ")}
+            type="number"
+            name="minOrderValue"
+            value={formData.minOrderValue}
             onChange={handleChange}
+            min="0"
             className="w-full border rounded-lg p-2"
-            placeholder="VD: Mỹ phẩm, Thời trang"
+            placeholder="VD: 100000"
           />
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <input
-            type="checkbox"
-            name="global"
-            checked={formData.global}
-            onChange={handleChange}
-          />
-          <label className="font-semibold">Áp dụng toàn hệ thống</label>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -298,7 +403,7 @@ const handleChange = (
           disabled={loading}
           className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
         >
-          {loading ? "Đang tạo..." : "Tạo voucher"}
+          {loading ? (voucher ? "Đang cập nhật..." : "Đang tạo...") : (voucher ? "Cập nhật voucher" : "Tạo voucher")}
         </button>
       </form>
     </div>

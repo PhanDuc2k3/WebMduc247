@@ -31,8 +31,8 @@ interface ChatResponse {
 }
 
 const BASE_URL =
-  // import.meta.env.VITE_CHATBOT_API_URL
-  "http://localhost:5001/api/chatbot/chat"
+  import.meta.env.VITE_CHATBOT_API_URL
+  // "http://localhost:5001/api/chatbot/chat"
   ;
 
 const chatbotApi = {

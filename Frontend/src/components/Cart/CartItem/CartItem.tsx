@@ -25,7 +25,7 @@ interface CartItemProps {
   item: CartItemType;
   selected: boolean;
   onSelect: (id: string) => void;
-  // onUpdateQty đã bị loại bỏ
+  onUpdateQty?: (itemId: string, newQty: number) => void; // ✅ Thêm lại để đồng bộ với Cart.tsx
   onRemove: (id: string) => void;
   disabled?: boolean; // ✅ Disable checkbox nếu có cửa hàng khác được chọn
 }
@@ -34,6 +34,7 @@ const CartItem: React.FC<CartItemProps> = ({
   item,
   selected,
   onSelect,
+  onUpdateQty,
   onRemove,
   disabled = false,
 }) => {
@@ -67,8 +68,13 @@ const handleUpdateQuantity = async (newQuantity: number) => {
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    // ✅ Đồng bộ lại từ server (nếu cần, đảm bảo chính xác)
+    // ✅ Đồng bộ lại từ server (CartContext)
     fetchCart();
+    
+    // ✅ Gọi callback từ Cart.tsx để cập nhật cart state trong Cart.tsx
+    if (onUpdateQty) {
+      onUpdateQty(item._id, newQuantity);
+    }
   } catch (error) {
     console.error(error);
     toast.error("Cập nhật số lượng thất bại.");
@@ -129,7 +135,7 @@ const handleUpdateQuantity = async (newQuantity: number) => {
           </h3>
           
           {/* Variations */}
-          {(item.variation?.color || item.variation?.size) && (
+          {(item.variation?.color || item.variation?.size || item.variation?.additionalPrice !== undefined) && (
             <div className="flex flex-wrap gap-2">
               {item.variation?.color && (
                 <span className="inline-flex items-center text-xs sm:text-sm bg-blue-100 text-blue-700 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold border border-blue-200">
@@ -141,9 +147,9 @@ const handleUpdateQuantity = async (newQuantity: number) => {
                   {item.variation.size}
                 </span>
               )}
-              {item.variation?.additionalPrice && item.variation.additionalPrice > 0 && (
+              {item.variation && item.variation.additionalPrice !== undefined && (
                 <span className="inline-flex items-center text-xs sm:text-sm bg-green-100 text-green-700 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full font-semibold border border-green-200">
-                  +{item.variation.additionalPrice.toLocaleString("vi-VN")}₫
+                  +{(item.variation.additionalPrice || 0).toLocaleString("vi-VN")}₫
                 </span>
               )}
             </div>
