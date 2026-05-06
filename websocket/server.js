@@ -13,9 +13,9 @@ app.use(cors({
   origin: [
   'https://shopmduc247.online',
   'http://localhost:5173',
-  'https://webmduc247.onrender.com',
+  'https://api.shopmduc247.online',
   'https://web-mduc247.vercel.app',
-  'https://webmduc247-websocket.onrender.com',
+  'https://ws.shopmduc247.online',
   ],
   credentials: true,
 }));
@@ -27,9 +27,9 @@ const io = new Server(server, {
     origin: [
   'https://shopmduc247.online',
   'http://localhost:5173',
-  'https://webmduc247.onrender.com',
+  'https://api.shopmduc247.online',
   'https://web-mduc247.vercel.app',
-  'https://webmduc247-websocket.onrender.com',
+  'https://ws.shopmduc247.online',
     ],
     methods: ["GET", "POST"],
     credentials: true,

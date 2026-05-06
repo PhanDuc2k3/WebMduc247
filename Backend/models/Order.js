@@ -29,7 +29,7 @@ const OrderSchema = new mongoose.Schema(
     },
 
     paymentInfo: {
-      method: { type: String, enum: ["COD", "MOMO", "VIETQR", "WALLET"], default: "COD" },
+      method: { type: String, enum: ["COD", "MOMO", "VIETQR", "WALLET", "VNPAY"], default: "COD" },
       status: { type: String, enum: ["pending", "paid", "failed"], default: "pending" },
       paymentId: { type: String, default: "" }, // THÊM: lưu paymentId từ MoMo/VietQR/Wallet
     },

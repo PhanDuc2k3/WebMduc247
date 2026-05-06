@@ -16,9 +16,9 @@ app.use(cors({
   origin: [
   'https://shopmduc247.online',
   'http://localhost:5173',
-  'https://webmduc247.onrender.com',
+  'https://api.shopmduc247.online',
   'https://web-mduc247.vercel.app',
-  'https://webmduc247-websocket.onrender.com',
+  'https://ws.shopmduc247.online',
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
@@ -34,11 +34,22 @@ mongoose.connect(process.env.MONGO_URI, {
 
 // ===== Redis (Upstash) =====
 const redis = new Redis(process.env.REDIS_URL, {
-  password: process.env.UPSTASH_REDIS_REST_TOKEN,
-  tls: { rejectUnauthorized: false },
+  maxRetriesPerRequest: 0,
+  retryStrategy() {
+    return null;
+  },
+  lazyConnect: true,
+  enableReadyCheck: false,
 });
-redis.on("connect", () => console.log("Redis connected"));
-redis.on("error", err => console.error(" Redis error:", err));
+redis.connect().catch(() => {
+  // silent fail - service runs without cache
+});
+redis.on("ready", () => console.log("[Redis] connected"));
+redis.on("error", err => {
+  if (err.code !== "ECONNREFUSED" && err.code !== "ENOTFOUND") {
+    console.error("[Redis] error:", err.message);
+  }
+});
 
 // ===== Groq API =====
 // Groq đã được khởi tạo trong ChatbotController
