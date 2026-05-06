@@ -2,8 +2,8 @@ import { io, type Socket } from "socket.io-client";
 
 // Luôn dùng localhost khi development
 const SOCKET_URL =
-  //"http://localhost:5050"
-  import.meta.env.VITE_SOCKET_URL;
+  "http://localhost:5050"
+  // import.meta.env.VITE_SOCKET_URL;
 
 
 let socket: Socket;

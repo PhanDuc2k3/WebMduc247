@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { X, CreditCard, Mail, RefreshCw, ArrowRight } from "lucide-react";
 import { toast } from "react-toastify";
 import walletApi from "../../../api/walletApi";
@@ -25,6 +26,7 @@ export default function PaymentModal({
   currentPaymentMethod,
   onPaymentSuccess,
 }: PaymentModalProps) {
+  const navigate = useNavigate();
   const [selectedMethod, setSelectedMethod] = useState<"wallet" | "momo" | "vietqr" | "cod">(
     currentPaymentMethod === "WALLET" ? "wallet" :
     currentPaymentMethod === "MOMO" ? "momo" :
@@ -46,28 +48,34 @@ export default function PaymentModal({
         currentPaymentMethod === "VIETQR" ? "vietqr" : "cod";
       setSelectedMethod(method);
       
-      // Tự động gửi mã nếu phương thức là ví và chưa gửi
-      if (method === "wallet" && hasSentCodeForWalletRef.current !== orderCode) {
-        // Delay nhỏ để đảm bảo state đã được set
-        setTimeout(() => {
-          handleSendCode();
-        }, 100);
+      // ✅ Tự động gửi mã khi modal mở với method = "wallet" (chỉ gửi một lần)
+      if (method === "wallet" && hasSentCodeForWalletRef.current !== orderCode && !sendingCode) {
+        // Delay nhỏ để đảm bảo state đã được set và tránh gửi trùng
+        const timeoutId = setTimeout(() => {
+          if (hasSentCodeForWalletRef.current !== orderCode && !sendingCode) {
+            handleSendCode();
+          }
+        }, 200);
+        
+        return () => clearTimeout(timeoutId);
       }
     } else {
       // Reset khi modal đóng
       hasSentCodeForWalletRef.current = null;
     }
-  }, [isOpen]); // Chỉ phụ thuộc vào isOpen để tránh gửi lại khi currentPaymentMethod thay đổi
+  }, [isOpen, orderCode]); // Thêm orderCode vào dependency để theo dõi đúng order
 
   // Handler gửi mã xác thực
   const handleSendCode = async () => {
-    // Kiểm tra xem đã gửi mã cho orderCode này chưa
+    // ✅ Kiểm tra xem đã gửi mã cho orderCode này chưa hoặc đang gửi
     if (hasSentCodeForWalletRef.current === orderCode || sendingCode) {
       return;
     }
 
+    // ✅ Đánh dấu đã gửi ngay để tránh gửi trùng
     hasSentCodeForWalletRef.current = orderCode;
     setSendingCode(true);
+    
     try {
       await walletApi.sendPaymentCode({
         orderCode,
@@ -79,7 +87,9 @@ export default function PaymentModal({
       });
     } catch (err: any) {
       console.error("Lỗi gửi mã xác thực:", err);
-      hasSentCodeForWalletRef.current = null; // Reset nếu lỗi
+      // ✅ Reset nếu lỗi để có thể gửi lại
+      hasSentCodeForWalletRef.current = null;
+      setCodeSent(false);
       toast.error(
         err?.response?.data?.message || "Không thể gửi mã xác thực. Vui lòng thử lại.",
         { containerId: "general-toast" }
@@ -89,13 +99,16 @@ export default function PaymentModal({
     }
   };
 
-  // Handler khi chọn phương thức ví - tự động gửi mã
+  // Handler khi chọn phương thức ví - tự động gửi mã và chuyển sang trang order
   const handleSelectWallet = () => {
     setSelectedMethod("wallet");
-    // Chỉ gửi mã nếu chưa gửi cho orderCode này
+    // ✅ Gửi mã khi user chọn ví (chỉ gửi một lần)
     if (hasSentCodeForWalletRef.current !== orderCode && !codeSent && !sendingCode) {
       handleSendCode();
     }
+    // ✅ Chuyển sang trang order khi chọn ví
+    onClose();
+    navigate(`/order/${orderId}`);
   };
 
   // Handler thanh toán bằng ví
@@ -120,12 +133,26 @@ export default function PaymentModal({
         emailCode: paymentCode,
       });
 
+      // ✅ Lưu thông tin thanh toán vào localStorage để hiển thị popup trên trang order
+      const paymentInfo = {
+        orderCode: payRes.data.order?.orderCode || orderCode,
+        amount: total,
+        paymentMethod: "Ví của tôi",
+        paymentStatus: payRes.data.order?.paymentStatus || "paid",
+        balance: payRes.data.wallet?.balance || 0,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem("walletPaymentSuccess", JSON.stringify(paymentInfo));
+
       toast.success("Thanh toán thành công!", {
         containerId: "general-toast",
       });
 
       onPaymentSuccess();
       onClose();
+      
+      // ✅ Chuyển sang trang order để hiển thị popup
+      navigate(`/order/${orderId}`);
     } catch (err: any) {
       console.error("=== Lỗi thanh toán bằng ví ===", err);
       toast.error(

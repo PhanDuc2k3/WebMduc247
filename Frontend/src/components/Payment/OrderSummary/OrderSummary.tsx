@@ -14,6 +14,7 @@ import orderApi from "../../../api/orderApi";
 import type { CreateOrderData } from "../../../api/orderApi";
 import paymentApi from "../../../api/paymentApi";
 import walletApi from "../../../api/walletApi";
+import productApi from "../../../api/productApi";
 import { toast } from "react-toastify";
 
 interface OrderSummaryProps {
@@ -256,6 +257,102 @@ const orderPayload: CreateOrderData = {
     console.log("=== Shipping Address ===");
     console.log(selectedAddress);
 
+    // ✅ Kiểm tra stock TRƯỚC KHI tạo đơn hàng
+    try {
+      const stockErrors: string[] = [];
+      
+      for (const item of itemsForOrder) {
+        try {
+          const productRes = await productApi.getProductById(item.productId);
+          const product = productRes.data.data || productRes.data;
+          
+          if (!product) {
+            stockErrors.push(`Không tìm thấy sản phẩm với ID: ${item.productId}`);
+            continue;
+          }
+
+          // Kiểm tra sản phẩm có đang active không
+          if (!product.isActive) {
+            stockErrors.push(`Sản phẩm "${product.name}" đã ngừng bán`);
+            continue;
+          }
+
+          // Kiểm tra stock cho sản phẩm có variation
+          if (item.variation?.variationId && item.variation?.optionId) {
+            const variationId = typeof item.variation.variationId === 'string' 
+              ? item.variation.variationId 
+              : item.variation.variationId.toString();
+            const optionId = typeof item.variation.optionId === 'string'
+              ? item.variation.optionId
+              : item.variation.optionId.toString();
+
+            const variation = product.variations?.find((v: any) => 
+              v._id && v._id.toString() === variationId
+            );
+
+            if (!variation) {
+              stockErrors.push(`Không tìm thấy biến thể cho sản phẩm "${product.name}"`);
+              continue;
+            }
+
+            const option = variation.options?.find((o: any) => 
+              o._id && o._id.toString() === optionId
+            );
+
+            if (!option) {
+              stockErrors.push(`Không tìm thấy tùy chọn cho sản phẩm "${product.name}"`);
+              continue;
+            }
+
+            const currentStock = option.stock || 0;
+            if (currentStock < item.quantity) {
+              stockErrors.push(
+                `Sản phẩm "${product.name}" (${variation.color || ''} - ${option.name || ''}) chỉ còn ${currentStock} sản phẩm trong kho. Bạn yêu cầu ${item.quantity} sản phẩm.`
+              );
+            }
+          } else {
+            // Kiểm tra stock cho sản phẩm không có variation
+            const currentStock = product.quantity || 0;
+            if (currentStock < item.quantity) {
+              stockErrors.push(
+                `Sản phẩm "${product.name}" chỉ còn ${currentStock} sản phẩm trong kho. Bạn yêu cầu ${item.quantity} sản phẩm.`
+              );
+            }
+          }
+        } catch (err: any) {
+          console.error(`Lỗi kiểm tra stock cho sản phẩm ${item.productId}:`, err);
+          stockErrors.push(`Không thể kiểm tra tồn kho cho sản phẩm. Vui lòng thử lại.`);
+        }
+      }
+
+      // Nếu có lỗi stock, hiển thị và không cho tạo đơn
+      if (stockErrors.length > 0) {
+        toast.error(
+          <div className="space-y-2">
+            <div className="font-bold text-red-600">Không đủ số lượng sản phẩm trong kho:</div>
+            {stockErrors.map((error, index) => (
+              <div key={index} className="text-sm">• {error}</div>
+            ))}
+            <div className="text-sm mt-2">Vui lòng cập nhật giỏ hàng và thử lại.</div>
+          </div>,
+          {
+            containerId: "general-toast",
+            autoClose: 5000,
+          }
+        );
+        setIsProcessing(false);
+        return; // Dừng lại, không tạo đơn hàng
+      }
+    } catch (err: any) {
+      console.error("=== Lỗi kiểm tra stock ===", err);
+      toast.error(
+        "Không thể kiểm tra tồn kho. Vui lòng thử lại sau.",
+        { containerId: "general-toast" }
+      );
+      setIsProcessing(false);
+      return; // Dừng lại, không tạo đơn hàng
+    }
+
     // Kiểm tra số dư ví TRƯỚC KHI tạo đơn hàng (nếu thanh toán bằng ví)
     if (paymentMethod === "wallet") {
       try {
@@ -269,6 +366,7 @@ const orderPayload: CreateOrderData = {
             { containerId: "general-toast" }
           );
           navigate('/wallet');
+          setIsProcessing(false);
           return; // Dừng lại, không tạo đơn hàng
         }
       } catch (err: any) {
@@ -277,6 +375,7 @@ const orderPayload: CreateOrderData = {
           "Không thể kiểm tra số dư ví. Vui lòng thử lại sau.",
           { containerId: "general-toast" }
         );
+        setIsProcessing(false);
         return; // Dừng lại, không tạo đơn hàng
       }
     }
@@ -371,6 +470,13 @@ const orderPayload: CreateOrderData = {
       // Với ví, tạo order và chuyển sang trang order để nhập mã xác thực
       // Không thanh toán ngay, để người dùng nhập mã trên trang order
       localStorage.removeItem("checkoutItems");
+      
+      // ✅ Lưu flag để tự động mở PaymentModal trên trang order
+      localStorage.setItem("openWalletPayment", JSON.stringify({
+        orderId: orderData.order._id,
+        orderCode: orderData.order.orderCode,
+        timestamp: Date.now(),
+      }));
       
       toast.success(
         "Đơn hàng đã được tạo! Vui lòng nhập mã xác thực để thanh toán.",

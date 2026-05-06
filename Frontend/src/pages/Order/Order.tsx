@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useParams } from "react-router-dom";
-import { Star, Package, FileText, X, XCircle } from "lucide-react";
+import { Star, Package, FileText, X, XCircle, CheckCircle, ArrowRight } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import OrderStatus from "../../components/Order/OrderStatus/OrderStatus";
@@ -95,6 +96,8 @@ export default function OrderPage() {
   const [reviewProductId, setReviewProductId] = useState<string | null>(null);
   const [reviewOrderId, setReviewOrderId] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showPaymentSuccess, setShowPaymentSuccess] = useState(false); // ✅ Popup thông tin thanh toán
+  const [paymentInfo, setPaymentInfo] = useState<any>(null); // ✅ Thông tin thanh toán
 
   // Fetch user profile từ API để lấy role và store info chính xác
   useEffect(() => {
@@ -183,6 +186,32 @@ export default function OrderPage() {
     };
     fetchOrder();
   }, [orderId, isSeller, myStoreId]);
+
+  // ✅ Kiểm tra và hiển thị popup thông tin thanh toán tự động
+  useEffect(() => {
+    if (!orderId || loading || !order) return;
+    
+    const paymentSuccessData = localStorage.getItem("walletPaymentSuccess");
+    if (paymentSuccessData) {
+      try {
+        const paymentData = JSON.parse(paymentSuccessData);
+        // Kiểm tra xem có phải đơn hàng này không và thời gian không quá 5 phút
+        const timeDiff = Date.now() - (paymentData.timestamp || 0);
+        if (paymentData.orderCode === order.orderCode && timeDiff < 5 * 60 * 1000) {
+          setPaymentInfo(paymentData);
+          setShowPaymentSuccess(true);
+          // Xóa localStorage sau khi hiển thị
+          localStorage.removeItem("walletPaymentSuccess");
+        } else {
+          // Xóa nếu không khớp hoặc quá cũ
+          localStorage.removeItem("walletPaymentSuccess");
+        }
+      } catch (err) {
+        console.error("Lỗi parse payment success data:", err);
+        localStorage.removeItem("walletPaymentSuccess");
+      }
+    }
+  }, [orderId, order, loading]);
 
   if (loading) {
     return (
@@ -500,6 +529,78 @@ export default function OrderPage() {
         type="danger"
         confirmText="Hủy đơn hàng"
       />
+
+      {/* ✅ Popup thông tin thanh toán thành công */}
+      {showPaymentSuccess && paymentInfo && createPortal(
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-[10000] p-4 animate-fade-in"
+          onClick={() => {
+            setShowPaymentSuccess(false);
+            setPaymentInfo(null);
+          }}
+        >
+          <div
+            className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-md animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-6 rounded-t-xl sm:rounded-t-2xl">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                  <CheckCircle className="w-10 h-10 text-green-500" />
+                </div>
+              </div>
+              <h2 className="text-2xl font-bold text-white text-center">
+                Thanh toán thành công!
+              </h2>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-4">
+              <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Mã đơn hàng:</span>
+                  <span className="font-bold text-gray-900">{paymentInfo.orderCode}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Số tiền thanh toán:</span>
+                  <span className="font-bold text-green-600 text-lg">
+                    {paymentInfo.amount.toLocaleString("vi-VN")}₫
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Phương thức:</span>
+                  <span className="font-semibold text-gray-900">{paymentInfo.paymentMethod}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Số dư ví còn lại:</span>
+                  <span className="font-semibold text-blue-600">
+                    {paymentInfo.balance.toLocaleString("vi-VN")}₫
+                  </span>
+                </div>
+              </div>
+
+              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-800 text-center">
+                  Đơn hàng của bạn đã được thanh toán thành công. Vui lòng chờ seller xác nhận đơn hàng.
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setShowPaymentSuccess(false);
+                  setPaymentInfo(null);
+                }}
+                className="w-full py-3 px-4 bg-gradient-to-r from-[#2F5FEB] to-[#244ACC] text-white font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+              >
+                <span>Đã hiểu</span>
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

@@ -718,6 +718,15 @@ class OrderService {
       }
     }
 
+    // ✅ Bổ sung: Khi đơn hàng COD đã giao hàng (delivered), tự động chuyển thành đã thanh toán
+    if (status === "delivered" && previousStatus !== "delivered" && order.paymentInfo.method === "COD") {
+      // Kiểm tra xem đã set paid chưa (tránh set 2 lần)
+      if (order.paymentInfo.status !== "paid") {
+        order.paymentInfo.status = "paid";
+        console.log(`[OrderService] ✅ Đã tự động chuyển đơn hàng COD ${order.orderCode} sang trạng thái đã thanh toán khi giao hàng`);
+      }
+    }
+
     order.statusHistory.push({ status, note, timestamp: new Date() });
     await order.save();
 
@@ -1196,7 +1205,8 @@ class OrderService {
       timestamp: new Date(),
     });
 
-    // Nếu đã thanh toán, hoàn lại tiền và stock
+    // ✅ Sửa: Chỉ hoàn tiền nếu đã thanh toán (paid)
+    // Nếu chưa thanh toán (pending) → vẫn cho hủy nhưng số tiền hoàn về là 0
     if (order.paymentInfo.status === "paid") {
       // Hoàn lại stock
       try {
@@ -1217,8 +1227,8 @@ class OrderService {
         // Không throw error, vì đơn hàng vẫn cần được hủy
       }
     } else {
-      // Nếu chưa thanh toán (COD pending), chỉ cần hoàn lại stock nếu đã trừ
-      // Kiểm tra xem đã trừ stock chưa (có thể đã trừ khi confirmed cho COD)
+      // ✅ Chưa thanh toán (pending) → không hoàn tiền (số tiền hoàn về là 0)
+      // Chỉ hoàn lại stock nếu đã trừ (có thể đã trừ khi confirmed cho COD)
       const hasConfirmedStatus = order.statusHistory.some(h => h.status === "confirmed");
       if (hasConfirmedStatus && order.paymentInfo.method === "COD") {
         try {
@@ -1228,6 +1238,7 @@ class OrderService {
           console.error(`[OrderService] ❌ Lỗi khi hoàn lại stock:`, restoreError);
         }
       }
+      console.log(`[OrderService] ℹ️ Đơn hàng ${order.orderCode} chưa thanh toán, không hoàn tiền (số tiền hoàn về: 0)`);
     }
 
     await order.save();

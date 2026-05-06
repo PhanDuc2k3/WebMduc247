@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PaymentModal from "../PaymentModal/PaymentModal";
 
 interface PaymentInfoProps {
@@ -19,6 +19,32 @@ interface PaymentInfoProps {
 
 export default function PaymentInfo({ order, onPaymentSuccess }: PaymentInfoProps) {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+
+  // ✅ Tự động mở PaymentModal khi vào trang order sau khi checkout với ví
+  useEffect(() => {
+    if (order.paymentInfo.status === "paid") return; // Đã thanh toán rồi thì không mở
+    
+    const openWalletPayment = localStorage.getItem("openWalletPayment");
+    if (openWalletPayment) {
+      try {
+        const data = JSON.parse(openWalletPayment);
+        // Kiểm tra xem có phải đơn hàng này không và thời gian không quá 5 phút
+        const timeDiff = Date.now() - (data.timestamp || 0);
+        if (data.orderId === order._id && timeDiff < 5 * 60 * 1000) {
+          // Tự động mở PaymentModal
+          setShowPaymentModal(true);
+          // Xóa flag sau khi mở
+          localStorage.removeItem("openWalletPayment");
+        } else {
+          // Xóa nếu không khớp hoặc quá cũ
+          localStorage.removeItem("openWalletPayment");
+        }
+      } catch (err) {
+        console.error("Lỗi parse openWalletPayment:", err);
+        localStorage.removeItem("openWalletPayment");
+      }
+    }
+  }, [order._id, order.paymentInfo.status]);
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
       <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">

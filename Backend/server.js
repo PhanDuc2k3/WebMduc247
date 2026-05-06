@@ -26,6 +26,10 @@ const chatbotRoutes = require("./routes/ChatbotRoutes"); // 👈 chatbot
 dotenv.config();
 connectDB();
 
+// ✅ Bổ sung: Khởi động Order Scheduler
+const { startOrderScheduler } = require('./utils/orderScheduler');
+startOrderScheduler();
+
 const app = express();
 
 // 🛡️ CORS
