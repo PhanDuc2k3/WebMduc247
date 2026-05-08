@@ -18,7 +18,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
   };
 
   return (
-    <div className="bg-[#F3F6FF] rounded-xl md:rounded-2xl shadow-2xl border-2 border-[#2F5FEB]/20 p-4 md:p-6 lg:p-8">
+    <div className="bg-[#F3F6FF] rounded-xl md:rounded-2xl shadow-2xl border-2 border-[#4B5563]/20 p-4 md:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 md:gap-6">
         {/* Avatar */}
         <div className="relative flex-shrink-0">
@@ -32,11 +32,11 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
         {/* Info */}
         <div className="flex-1 text-center sm:text-left w-full min-w-0">
           <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-2 md:mb-3 justify-center sm:justify-start">
-            <span className="font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#2F5FEB] truncate">
+            <span className="font-bold text-xl sm:text-2xl md:text-3xl lg:text-4xl text-[#4B5563] truncate">
               {user.fullName}
             </span>
             {user.role && (
-              <span className="bg-[#2F5FEB]/10 text-[#2F5FEB] text-xs md:text-sm px-2 md:px-4 py-1 md:py-1.5 rounded-full font-bold border-2 border-[#2F5FEB]/40 shadow-sm flex items-center gap-1 md:gap-2 flex-shrink-0">
+              <span className="bg-[#4B5563]/10 text-[#4B5563] text-xs md:text-sm px-2 md:px-4 py-1 md:py-1.5 rounded-full font-bold border-2 border-[#4B5563]/40 shadow-sm flex items-center gap-1 md:gap-2 flex-shrink-0">
                 {user.role === "buyer" ? (
                   <>
                     <User size={12} /> <span className="hidden sm:inline">Người mua</span>
@@ -56,15 +56,15 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
 
           <div className="flex flex-col sm:flex-row flex-wrap items-center sm:items-center gap-2 md:gap-4 text-gray-600 text-xs sm:text-sm md:text-base mb-3 md:mb-4 justify-center sm:justify-start">
             <span className="flex items-center gap-1.5 md:gap-2 justify-center sm:justify-start">
-              <Mail size={14} className="flex-shrink-0 text-[#2F5FEB]" /> <span className="break-words text-center sm:text-left">{user.email}</span>
+              <Mail size={14} className="flex-shrink-0 text-[#4B5563]" /> <span className="break-words text-center sm:text-left">{user.email}</span>
             </span>
             {user.phone && (
               <span className="flex items-center gap-1.5 md:gap-2 justify-center sm:justify-start">
-                <Phone size={14} className="text-[#2F5FEB]" /> {user.phone}
+                <Phone size={14} className="text-[#4B5563]" /> {user.phone}
               </span>
             )}
             <span className="flex items-center gap-1.5 md:gap-2 justify-center sm:justify-start">
-              <Calendar size={14} className="text-[#2F5FEB]" /> <span className="hidden sm:inline">Tham gia </span>
+              <Calendar size={14} className="text-[#4B5563]" /> <span className="hidden sm:inline">Tham gia </span>
               {new Date(user.createdAt).toLocaleDateString("vi-VN")}
             </span>
           </div>
@@ -72,7 +72,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
           <div className="flex flex-col sm:flex-row gap-2 md:gap-3 justify-center sm:justify-start w-full sm:w-auto">
             <button
               onClick={onEdit}
-              className="px-4 py-2 md:px-6 md:py-2.5 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl hover:bg-[#244ACC] text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+              className="px-4 py-2 md:px-6 md:py-2.5 bg-[#4B5563] text-white rounded-lg md:rounded-xl hover:bg-[#374151] text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
             >
               <Edit size={14} /> Chỉnh sửa
             </button>

@@ -238,7 +238,7 @@ const ProductManagement: React.FC = () => {
             setEditProduct(null);
             setShowPopup(true);
           }}
-          className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-[#2F5EE9] text-white rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 whitespace-nowrap touch-manipulation"
+          className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-[#2F5EE9] text-white rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#374151] transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 whitespace-nowrap touch-manipulation"
         >
           <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> <span>Thêm sản phẩm mới</span>
         </button>

@@ -177,7 +177,7 @@ const Step3Details: React.FC<Props> = ({ formData, handleChange, setStep, handle
                 <button
                   type="button"
                   onClick={() => addOption(i)}
-                  className="bg-[#2F5EE9] text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm hover:bg-[#244ACC]"
+                  className="bg-[#2F5EE9] text-white px-6 py-2 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 text-sm hover:bg-[#374151]"
                 >
                   <Plus className="w-4 h-4" /> Thêm tùy chọn
                 </button>

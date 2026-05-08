@@ -121,7 +121,7 @@ const Step1BasicInfo: React.FC<Props> = ({ formData, handleChange, setStep }) =>
 
       <div className="flex justify-end mt-8">
         <button
-          className="bg-[#2F5EE9] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-[#244ACC]"
+          className="bg-[#2F5EE9] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-[#374151]"
           onClick={() => setStep(2)}
         >
           Tiếp tục

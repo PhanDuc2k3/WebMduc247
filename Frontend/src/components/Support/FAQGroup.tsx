@@ -24,12 +24,12 @@ const FAQGroup: React.FC<FAQGroupProps> = ({ category, questions, icon: Icon }) 
         className="w-full flex items-center justify-between p-3 font-medium text-left hover:bg-gray-100 transition-colors"
       >
         <div className="flex items-center space-x-2">
-          {Icon && <Icon className="text-[#2F5FEB]" size={20} />}
+          {Icon && <Icon className="text-[#4B5563]" size={20} />}
           <span>{category}</span>
         </div>
         <ChevronDown
           className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${
-            openCategory ? "rotate-180 text-[#2F5FEB]" : ""
+            openCategory ? "rotate-180 text-[#4B5563]" : ""
           }`}
         />
       </button>
@@ -48,7 +48,7 @@ const FAQGroup: React.FC<FAQGroupProps> = ({ category, questions, icon: Icon }) 
                 <span>{qItem.q}</span>
                 <ChevronDown
                   className={`w-4 h-4 text-gray-500 transition-transform duration-300 ${
-                    openQuestionIndex === idx ? "rotate-180 text-[#2F5FEB]" : ""
+                    openQuestionIndex === idx ? "rotate-180 text-[#4B5563]" : ""
                   }`}
                 />
               </button>

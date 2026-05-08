@@ -241,27 +241,27 @@ const WalletPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="animate-spin rounded-full h-12 w-12 md:h-16 md:w-16 border-t-4 border-b-4 border-[#2F5FEB]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 md:h-16 md:w-16 border-t-4 border-b-4 border-[#4B5563]"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen py-3 md:py-4 lg:py-8 px-3 md:px-4 bg-gradient-to-br from-[#2F5FEB]/5 via-white to-[#2F5FEB]/5">
+    <div className="min-h-screen py-3 md:py-4 lg:py-8 px-3 md:px-4 bg-gradient-to-br from-[#4B5563]/5 via-white to-[#4B5563]/5">
       <div className="max-w-4xl mx-auto space-y-3 md:space-y-4 lg:space-y-6">
         {/* Header */}
         <div className="bg-white rounded-xl md:rounded-2xl shadow-xl p-4 md:p-6 border-2 border-gray-200">
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 md:mb-2 text-[#2F5FEB] flex items-center gap-2 md:gap-3">
-            <Wallet className="text-[#2F5FEB]" size={20} />
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 md:mb-2 text-[#4B5563] flex items-center gap-2 md:gap-3">
+            <Wallet className="text-[#4B5563]" size={20} />
             Ví của tôi
           </h1>
           <p className="text-gray-600 text-sm md:text-base">
-            Quản lý <span className="text-[#2F5FEB] font-semibold">số dư và giao dịch</span>
+            Quản lý <span className="text-[#4B5563] font-semibold">số dư và giao dịch</span>
           </p>
         </div>
 
         {/* Balance Card */}
-        <div className="bg-[#2F5FEB] rounded-xl md:rounded-2xl shadow-xl p-4 md:p-6 lg:p-8 text-white">
+        <div className="bg-[#4B5563] rounded-xl md:rounded-2xl shadow-xl p-4 md:p-6 lg:p-8 text-white">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div className="flex-1">
               <p className="text-white/80 text-xs sm:text-sm mb-1 md:mb-2">Số dư hiện tại</p>
@@ -273,7 +273,7 @@ const WalletPage: React.FC = () => {
                   setShowDeposit(!showDeposit);
                   setShowWithdraw(false);
                 }}
-                className="flex-1 sm:flex-none bg-white text-[#2F5FEB] px-4 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#e5efff] transition-all flex items-center justify-center gap-1.5 md:gap-2"
+                className="flex-1 sm:flex-none bg-white text-[#4B5563] px-4 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#e5efff] transition-all flex items-center justify-center gap-1.5 md:gap-2"
               >
                 <Plus size={16} />
                 Nạp tiền
@@ -314,7 +314,7 @@ const WalletPage: React.FC = () => {
                   placeholder="Nhập số tiền (tối thiểu 10,000₫)"
                   min="10000"
                   step="1000"
-                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-transparent text-sm md:text-base"
+                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-transparent text-sm md:text-base"
                 />
               </div>
 
@@ -327,8 +327,8 @@ const WalletPage: React.FC = () => {
                     onClick={() => setDepositMethod('momo')}
                     className={`p-3 md:p-4 border-2 rounded-lg md:rounded-xl font-semibold text-xs sm:text-sm md:text-base transition-all ${
                       depositMethod === 'momo'
-                        ? 'border-[#2F5FEB] bg-[#2F5FEB]/10 text-[#2F5FEB]'
-                        : 'border-gray-300 hover:border-[#2F5FEB]/60'
+                        ? 'border-[#4B5563] bg-[#4B5563]/10 text-[#4B5563]'
+                        : 'border-gray-300 hover:border-[#4B5563]/60'
                     }`}
                   >
                     Ví MoMo
@@ -337,8 +337,8 @@ const WalletPage: React.FC = () => {
                     onClick={() => setDepositMethod('vietqr')}
                     className={`p-3 md:p-4 border-2 rounded-lg md:rounded-xl font-semibold text-xs sm:text-sm md:text-base transition-all ${
                       depositMethod === 'vietqr'
-                        ? 'border-[#2F5FEB] bg-[#2F5FEB]/10 text-[#2F5FEB]'
-                        : 'border-gray-300 hover:border-[#2F5FEB]/60'
+                        ? 'border-[#4B5563] bg-[#4B5563]/10 text-[#4B5563]'
+                        : 'border-gray-300 hover:border-[#4B5563]/60'
                     }`}
                   >
                     VietQR
@@ -349,7 +349,7 @@ const WalletPage: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
                 <button
                   onClick={handleDeposit}
-                  className="flex-1 bg-[#2F5FEB] text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#244ACC] transition-all"
+                  className="flex-1 bg-[#4B5563] text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#374151] transition-all"
                 >
                   Xác nhận nạp tiền
                 </button>
@@ -378,7 +378,7 @@ const WalletPage: React.FC = () => {
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
                   disabled={showEmailCodeInput}
-                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-transparent text-sm md:text-base bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-transparent text-sm md:text-base bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
                 >
                   <option value="">-- Chọn ngân hàng --</option>
                   {vietnamBanks.map((bank) => (
@@ -399,7 +399,7 @@ const WalletPage: React.FC = () => {
                   onChange={(e) => setAccountNumber(e.target.value)}
                   placeholder="Nhập số tài khoản ngân hàng"
                   disabled={showEmailCodeInput}
-                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-transparent text-sm md:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-transparent text-sm md:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -416,17 +416,17 @@ const WalletPage: React.FC = () => {
                   max={balance}
                   step="1000"
                   disabled={showEmailCodeInput}
-                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-transparent text-sm md:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="w-full px-3 py-2.5 md:px-4 md:py-3 border-2 border-gray-300 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-transparent text-sm md:text-base disabled:bg-gray-100 disabled:cursor-not-allowed"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Số dư khả dụng: <span className="font-bold text-[#2F5FEB]">{balance.toLocaleString('vi-VN')}₫</span>
+                  Số dư khả dụng: <span className="font-bold text-[#4B5563]">{balance.toLocaleString('vi-VN')}₫</span>
                 </p>
               </div>
 
               {showEmailCodeInput && (
                 <div>
                   <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2 flex items-center gap-1.5">
-                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#2F5FEB]" />
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#4B5563]" />
                     <span>Mã xác thực từ email <span className="text-red-500">*</span></span>
                   </label>
                   <input
@@ -449,7 +449,7 @@ const WalletPage: React.FC = () => {
                     <button
                       onClick={handleSendWithdrawalCode}
                       disabled={sendingCode}
-                      className="flex-1 bg-[#2F5FEB] text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#244ACC] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-[#4B5563] text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#374151] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {sendingCode ? 'Đang gửi mã...' : 'Gửi mã xác thực'}
                     </button>
@@ -472,14 +472,14 @@ const WalletPage: React.FC = () => {
                     <button
                       onClick={handleWithdraw}
                       disabled={withdrawLoading || emailCode.length !== 6}
-                      className="flex-1 bg-[#2F5FEB] text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#244ACC] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex-1 bg-[#4B5563] text-white px-4 py-2.5 md:px-6 md:py-3 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#374151] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {withdrawLoading ? 'Đang xử lý...' : 'Xác nhận rút tiền'}
                     </button>
                     <button
                       onClick={handleSendWithdrawalCode}
                       disabled={sendingCode}
-                      className="px-4 py-2.5 md:px-6 md:py-3 border-2 border-[#2F5FEB]/60 text-[#2F5FEB] rounded-lg md:rounded-xl font-semibold text-xs sm:text-sm md:text-base hover:bg-[#2F5FEB]/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-4 py-2.5 md:px-6 md:py-3 border-2 border-[#4B5563]/60 text-[#4B5563] rounded-lg md:rounded-xl font-semibold text-xs sm:text-sm md:text-base hover:bg-[#4B5563]/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {sendingCode ? 'Đang gửi...' : 'Gửi lại mã'}
                     </button>
@@ -506,8 +506,8 @@ const WalletPage: React.FC = () => {
         {/* Transactions History */}
         <div className="bg-white rounded-xl md:rounded-2xl shadow-xl p-4 md:p-6 border-2 border-gray-200">
           <div className="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
-            <History className="text-[#2F5FEB]" size={20} />
-            <h2 className="text-lg md:text-xl font-bold text-[#2F5FEB]">Lịch sử giao dịch</h2>
+            <History className="text-[#4B5563]" size={20} />
+            <h2 className="text-lg md:text-xl font-bold text-[#4B5563]">Lịch sử giao dịch</h2>
           </div>
 
           {transactions.length === 0 ? (

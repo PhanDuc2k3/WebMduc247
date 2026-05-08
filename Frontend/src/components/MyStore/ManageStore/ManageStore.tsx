@@ -52,8 +52,8 @@ const ManageStore: React.FC = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#2F5FEB] mb-4"></div>
-        <p className="text-[#2F5FEB] text-lg font-medium">Đang tải thông tin cửa hàng...</p>
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#4B5563] mb-4"></div>
+        <p className="text-[#4B5563] text-lg font-medium">Đang tải thông tin cửa hàng...</p>
       </div>
     );
   }
@@ -61,8 +61,8 @@ const ManageStore: React.FC = () => {
   if (!store) {
     return (
       <div className="text-center py-20 animate-fade-in">
-        <div className="bg-white rounded-2xl shadow-lg border border-[#2F5FEB]/30 p-12 max-w-md mx-auto">
-          <p className="text-[#2F5FEB] text-lg font-medium">Chưa có cửa hàng.</p>
+        <div className="bg-white rounded-2xl shadow-lg border border-[#4B5563]/30 p-12 max-w-md mx-auto">
+          <p className="text-[#4B5563] text-lg font-medium">Chưa có cửa hàng.</p>
         </div>
       </div>
     );

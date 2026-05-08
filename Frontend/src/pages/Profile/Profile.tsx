@@ -123,7 +123,7 @@ const Profile: React.FC = () => {
     return (
       <div className="w-full py-8 md:py-16 flex items-center justify-center animate-fade-in p-4">
         <div className="text-center">
-          <User size={48} className="mx-auto mb-3 md:mb-4 animate-pulse text-[#2F5FEB]" />
+          <User size={48} className="mx-auto mb-3 md:mb-4 animate-pulse text-[#4B5563]" />
           <p className="text-gray-600 text-sm md:text-lg font-medium">
             Đang tải thông tin người dùng...
           </p>
@@ -135,12 +135,12 @@ const Profile: React.FC = () => {
   return (
     <div className="w-full p-3 md:p-4 lg:p-6 xl:px-8">
       <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
-        <h1 className="text-xl sm:text-2xl md:text-3xl lg:4xl font-bold mb-2 md:mb-3 text-[#2F5FEB] flex items-center gap-2 md:gap-3">
-          <User size={24} className="text-[#2F5FEB]" />
+        <h1 className="text-xl sm:text-2xl md:text-3xl lg:4xl font-bold mb-2 md:mb-3 text-[#4B5563] flex items-center gap-2 md:gap-3">
+          <User size={24} className="text-[#4B5563]" />
           Trang cá nhân
         </h1>
         <p className="text-gray-600 text-sm md:text-base lg:text-lg">
-          Quản lý <span className="text-[#2F5FEB] font-semibold">thông tin & đơn hàng</span> của bạn
+          Quản lý <span className="text-[#4B5563] font-semibold">thông tin & đơn hàng</span> của bạn
         </p>
       </div>
 
@@ -277,10 +277,10 @@ const Profile: React.FC = () => {
                   Mật khẩu cũ
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                   <input
                     type="password"
-                    className="relative w-full px-3 py-2.5 sm:px-4 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                    className="relative w-full px-3 py-2.5 sm:px-4 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                     placeholder="Nhập mật khẩu cũ"
                     value={oldPassword}
                     onChange={(e) => setOldPassword(e.target.value)}
@@ -296,10 +296,10 @@ const Profile: React.FC = () => {
                   Mật khẩu mới
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                   <input
                     type="password"
-                    className="relative w-full px-3 py-2.5 sm:px-4 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                    className="relative w-full px-3 py-2.5 sm:px-4 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                     placeholder="Nhập mật khẩu mới"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
@@ -316,10 +316,10 @@ const Profile: React.FC = () => {
                   Xác nhận mật khẩu
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-500/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                   <input
                     type="password"
-                    className="relative w-full px-3 py-2.5 sm:px-4 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                    className="relative w-full px-3 py-2.5 sm:px-4 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                     placeholder="Nhập lại mật khẩu mới"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -336,7 +336,7 @@ const Profile: React.FC = () => {
               <button
                 type="submit"
                 disabled={loadingPassword || newPassword !== confirmPassword || newPassword.length < 6}
-                className="relative w-full bg-[#2F5FEB] text-white py-3 sm:py-3.5 rounded-xl hover:bg-[#244ACC] transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                className="relative w-full bg-[#4B5563] text-white py-3 sm:py-3.5 rounded-xl hover:bg-[#374151] transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {loadingPassword ? (
                   <span className="flex items-center justify-center gap-2">

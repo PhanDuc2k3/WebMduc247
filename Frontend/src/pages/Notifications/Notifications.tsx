@@ -108,11 +108,11 @@ const Notifications: React.FC = () => {
   const getIcon = (type: string) => {
     switch (type) {
       case "order":
-        return <Package size={20} className="text-[#2F5FEB]" />;
+        return <Package size={20} className="text-[#4B5563]" />;
       case "voucher":
-        return <Gift size={20} className="text-[#2F5FEB]" />;
+        return <Gift size={20} className="text-[#4B5563]" />;
       case "news":
-        return <Newspaper size={20} className="text-[#2F5FEB]" />;
+        return <Newspaper size={20} className="text-[#4B5563]" />;
       case "system":
         return <Info size={20} className="text-gray-600" />;
       default:
@@ -156,8 +156,8 @@ const Notifications: React.FC = () => {
       <div className="mb-4 sm:mb-6 animate-fade-in-down">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
-              <Bell size={24} className="text-[#2F5FEB]" />
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 text-[#4B5563] flex items-center gap-2 sm:gap-3">
+              <Bell size={24} className="text-[#4B5563]" />
               Thông báo
             </h1>
             <p className="text-gray-600 text-sm sm:text-base">
@@ -168,7 +168,7 @@ const Notifications: React.FC = () => {
             {unreadCount > 0 && (
               <button
                 onClick={handleMarkAllAsRead}
-                className="px-3 py-2 sm:px-4 sm:py-2.5 bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl hover:bg-[#244ACC] text-xs sm:text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-1.5 sm:gap-2"
+                className="px-3 py-2 sm:px-4 sm:py-2.5 bg-[#4B5563] text-white rounded-lg sm:rounded-xl hover:bg-[#374151] text-xs sm:text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-1.5 sm:gap-2"
               >
                 <Check size={14} className="sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Đánh dấu tất cả đã đọc</span>
@@ -187,7 +187,7 @@ const Notifications: React.FC = () => {
             onClick={() => setFilter("all")}
             className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 ${
               filter === "all"
-                ? "bg-[#2F5FEB] text-white shadow-lg"
+                ? "bg-[#4B5563] text-white shadow-lg"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -197,7 +197,7 @@ const Notifications: React.FC = () => {
             onClick={() => setFilter("unread")}
             className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 relative ${
               filter === "unread"
-                ? "bg-[#2F5FEB] text-white shadow-lg"
+                ? "bg-[#4B5563] text-white shadow-lg"
                 : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
@@ -215,7 +215,7 @@ const Notifications: React.FC = () => {
       <div className="animate-fade-in-up delay-200">
         {loading ? (
           <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200 p-8 sm:p-12 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-t-2 border-b-2 border-[#2F5FEB] mx-auto"></div>
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-t-2 border-b-2 border-[#4B5563] mx-auto"></div>
             <p className="text-gray-500 mt-4 text-sm sm:text-base">Đang tải thông báo...</p>
           </div>
         ) : notifications.length === 0 ? (

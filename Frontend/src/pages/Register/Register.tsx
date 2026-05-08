@@ -73,16 +73,16 @@ const handleRegister = async (e: React.FormEvent) => {
 
   return (
     <>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#2F5FEB]/10 via-white to-[#2F5FEB]/20 py-4 sm:py-8 px-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#4B5563]/10 via-white to-[#4B5563]/20 py-4 sm:py-8 px-4">
         {/* Logo và Header */}
         <div className="flex flex-col items-center mb-4 sm:mb-8 animate-fade-in-down">
           <div className="relative mb-3 sm:mb-4">
-            <div className="absolute inset-0 bg-[#2F5FEB] rounded-full blur-lg opacity-50 animate-pulse"></div>
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#2F5FEB] flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
+            <div className="absolute inset-0 bg-[#4B5563] rounded-full blur-lg opacity-50 animate-pulse"></div>
+            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#4B5563] flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
               <ShoppingCart className="text-white w-8 h-8 sm:w-10 sm:h-10" />
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#2F5FEB] mb-2">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#4B5563] mb-2">
             ShopMDuc247
           </h1>
           <p className="text-gray-600 text-center text-sm sm:text-base lg:text-lg">
@@ -92,7 +92,7 @@ const handleRegister = async (e: React.FormEvent) => {
 
         {/* Form Card */}
         <div className="w-full max-w-md bg-white rounded-2xl sm:rounded-3xl shadow-2xl border-2 border-gray-100 p-4 sm:p-6 md:p-8 lg:p-10 relative animate-fade-in-up">
-          <div className="absolute inset-0 bg-[#2F5FEB]/5 rounded-3xl"></div>
+          <div className="absolute inset-0 bg-[#4B5563]/5 rounded-3xl"></div>
           
           {/* Tabs */}
           <div className="relative mb-8">
@@ -100,8 +100,8 @@ const handleRegister = async (e: React.FormEvent) => {
               <button
                 className={`w-1/2 py-3 text-center font-bold rounded-xl transition-all duration-300 ${
                   activeTab === "login" 
-                    ? "bg-[#2F5FEB] text-white shadow-lg scale-105" 
-                    : "bg-transparent text-gray-600 hover:text-[#2F5FEB]"
+                    ? "bg-[#4B5563] text-white shadow-lg scale-105" 
+                    : "bg-transparent text-gray-600 hover:text-[#4B5563]"
                 }`}
                 onClick={() => {
                   setActiveTab("login");
@@ -113,8 +113,8 @@ const handleRegister = async (e: React.FormEvent) => {
               <button
                 className={`w-1/2 py-3 text-center font-bold rounded-xl transition-all duration-300 ${
                   activeTab === "register" 
-                    ? "bg-[#2F5FEB] text-white shadow-lg scale-105" 
-                    : "bg-transparent text-gray-600 hover:text-[#2F5FEB]"
+                    ? "bg-[#4B5563] text-white shadow-lg scale-105" 
+                    : "bg-transparent text-gray-600 hover:text-[#4B5563]"
                 }`}
                 onClick={() => {
                   setActiveTab("register");
@@ -139,7 +139,7 @@ const handleRegister = async (e: React.FormEvent) => {
               <div className="relative">
                 <input
                   type="text"
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                   placeholder="Nhập họ và tên"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
@@ -156,7 +156,7 @@ const handleRegister = async (e: React.FormEvent) => {
               <div className="relative">
                 <input
                   type="text"
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                   placeholder="Nhập số điện thoại"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
@@ -173,7 +173,7 @@ const handleRegister = async (e: React.FormEvent) => {
               <div className="relative">
                 <input
                   type="email"
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                   placeholder="Nhập email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -190,7 +190,7 @@ const handleRegister = async (e: React.FormEvent) => {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 pr-10 sm:pr-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 pr-10 sm:pr-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                   placeholder="Nhập mật khẩu"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -218,7 +218,7 @@ const handleRegister = async (e: React.FormEvent) => {
               <div className="relative">
                 <input
                   type={showConfirmPassword ? "text" : "password"}
-                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 pr-10 sm:pr-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                  className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 pr-10 sm:pr-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                   placeholder="Nhập lại mật khẩu"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -238,7 +238,7 @@ const handleRegister = async (e: React.FormEvent) => {
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-4 bg-[#2F5FEB]/10 border border-[#2F5FEB]/40 rounded-xl cursor-pointer hover:bg-[#2F5FEB]/20 transition-colors"
+            <div className="flex items-start gap-3 p-4 bg-[#4B5563]/10 border border-[#4B5563]/40 rounded-xl cursor-pointer hover:bg-[#4B5563]/20 transition-colors"
                  onClick={() => setAcceptTerms(!acceptTerms)}>
               <input
                 type="checkbox"
@@ -246,7 +246,7 @@ const handleRegister = async (e: React.FormEvent) => {
                 checked={acceptTerms}
                 onChange={(e) => setAcceptTerms(e.target.checked)}
                 onClick={(e) => e.stopPropagation()}
-                className="w-5 h-5 accent-[#2F5FEB] rounded mt-0.5 cursor-pointer flex-shrink-0 relative z-10"
+                className="w-5 h-5 accent-[#4B5563] rounded mt-0.5 cursor-pointer flex-shrink-0 relative z-10"
               />
               <label htmlFor="acceptTerms" className="text-sm text-gray-700 cursor-pointer flex-1">
                 Tôi đồng ý với{" "}
@@ -255,7 +255,7 @@ const handleRegister = async (e: React.FormEvent) => {
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
-                  className="text-[#2F5FEB] hover:text-[#2F5FEB] hover:underline font-semibold relative z-20"
+                  className="text-[#4B5563] hover:text-[#4B5563] hover:underline font-semibold relative z-20"
                 >
                   Điều khoản sử dụng
                 </Link>{" "}
@@ -265,7 +265,7 @@ const handleRegister = async (e: React.FormEvent) => {
                   onClick={(e) => {
                     e.stopPropagation();
                   }}
-                  className="text-[#2F5FEB] hover:text-[#2F5FEB] hover:underline font-semibold relative z-20"
+                  className="text-[#4B5563] hover:text-[#4B5563] hover:underline font-semibold relative z-20"
                 >
                   Chính sách bảo mật
                 </Link>
@@ -275,7 +275,7 @@ const handleRegister = async (e: React.FormEvent) => {
             <button
               type="submit"
               disabled={loading}
-              className="relative w-full bg-[#2F5FEB] text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:bg-[#244ACC] transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="relative w-full bg-[#4B5563] text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:bg-[#374151] transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">

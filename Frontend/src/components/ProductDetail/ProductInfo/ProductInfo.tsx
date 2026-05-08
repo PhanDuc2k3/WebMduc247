@@ -264,7 +264,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
     <div className="max-w-4xl mx-auto space-y-6 bg-white p-6 lg:p-8 rounded-2xl shadow-lg border border-gray-100">
       {/* Tên sản phẩm */}
       <div className="animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold text-[#2F5FEB] mb-3">
+        <h1 className="text-3xl lg:text-4xl font-bold text-[#4B5563] mb-3">
           {product.name}
         </h1>
         <div className="flex items-center gap-3 text-base text-gray-600">
@@ -314,8 +314,8 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
               }}
               className={`px-5 py-2.5 border-2 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
                 selectedColor === color
-                  ? "border-[#2F5FEB] bg-[#2F5FEB]/5 text-[#2F5FEB] shadow-md"
-                  : "border-gray-200 hover:border-[#2F5FEB]/60 hover:bg-gray-50 text-gray-700"
+                  ? "border-[#4B5563] bg-[#4B5563]/5 text-[#4B5563] shadow-md"
+                  : "border-gray-200 hover:border-[#4B5563]/60 hover:bg-gray-50 text-gray-700"
               }`}
             >
               {color}
@@ -342,13 +342,13 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
                   onClick={() => handleSelectStorage(s)}
                   className={`px-5 py-2.5 border-2 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 ${
                     selectedStorage === s
-                      ? "border-[#2F5FEB] bg-[#2F5FEB]/5 text-[#2F5FEB] shadow-md"
-                      : "border-gray-200 hover:border-[#2F5FEB]/60 hover:bg-gray-50 text-gray-700"
+                      ? "border-[#4B5563] bg-[#4B5563]/5 text-[#4B5563] shadow-md"
+                      : "border-gray-200 hover:border-[#4B5563]/60 hover:bg-gray-50 text-gray-700"
                   }`}
                 >
                   {s}
                   {opt?.additionalPrice ? (
-                    <span className="ml-2 text-sm text-[#2F5FEB] font-bold">
+                    <span className="ml-2 text-sm text-[#4B5563] font-bold">
                       (+{opt.additionalPrice.toLocaleString("vi-VN")}₫)
                     </span>
                   ) : null}
@@ -440,7 +440,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <div className="flex items-center gap-2">
               <Store size={16} className="text-gray-700" />
           <span className="font-semibold text-gray-700">Người bán:</span>{" "}
-          <span className="font-bold text-[#2F5FEB]">{product.store?.name || "Không rõ"}</span>
+          <span className="font-bold text-[#4B5563]">{product.store?.name || "Không rõ"}</span>
         </div>
       </div>
     </div>

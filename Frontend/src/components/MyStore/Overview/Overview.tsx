@@ -76,8 +76,8 @@ const Overview: React.FC = () => {
   if (loading) {
     return (
       <div className="p-4 sm:p-8 text-center animate-fade-in">
-        <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-4 border-b-4 border-[#2F5FEB] mx-auto mb-4"></div>
-        <p className="text-[#2F5FEB] text-sm sm:text-lg font-medium">Đang tải tổng quan...</p>
+        <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-4 border-b-4 border-[#4B5563] mx-auto mb-4"></div>
+        <p className="text-[#4B5563] text-sm sm:text-lg font-medium">Đang tải tổng quan...</p>
       </div>
     );
   }
@@ -85,8 +85,8 @@ const Overview: React.FC = () => {
   if (error) {
     return (
       <div className="p-4 sm:p-8 text-center animate-fade-in">
-        <div className="bg-[#2F5FEB]/5 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mx-auto mb-4">
-          <span className="text-[#2F5FEB] text-2xl sm:text-3xl">✕</span>
+        <div className="bg-[#4B5563]/5 rounded-full w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center mx-auto mb-4">
+          <span className="text-[#4B5563] text-2xl sm:text-3xl">✕</span>
         </div>
         <p className="text-red-500 text-sm sm:text-lg font-medium">{error}</p>
       </div>
@@ -119,17 +119,17 @@ const Overview: React.FC = () => {
     <div className="space-y-4 sm:space-y-6">
       {/* Thống kê */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <StatBox title="Doanh thu" value={`${revenue.toLocaleString("vi-VN")}₫`} percent="+12.5%" icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />} color="from-[#2F5FEB] to-[#244ACC]" />
-        <StatBox title="Đơn hàng" value={totalOrders.toString()} percent="+8.2%" icon={<ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />} color="from-[#2F5FEB] to-[#244ACC]" />
-        <StatBox title="Sản phẩm" value={totalProducts.toString()} percent="+5.3%" icon={<Package className="w-5 h-5 sm:w-6 sm:h-6" />} color="from-[#2F5FEB] to-[#244ACC]" />
-        <StatBox title="Lượt xem" value={totalViews.toString()} percent="-2.1%" icon={<Eye className="w-5 h-5 sm:w-6 sm:h-6" />} color="from-[#2F5FEB] to-[#244ACC]" />
+        <StatBox title="Doanh thu" value={`${revenue.toLocaleString("vi-VN")}₫`} percent="+12.5%" icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />} color="from-[#4B5563] to-[#374151]" />
+        <StatBox title="Đơn hàng" value={totalOrders.toString()} percent="+8.2%" icon={<ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />} color="from-[#4B5563] to-[#374151]" />
+        <StatBox title="Sản phẩm" value={totalProducts.toString()} percent="+5.3%" icon={<Package className="w-5 h-5 sm:w-6 sm:h-6" />} color="from-[#4B5563] to-[#374151]" />
+        <StatBox title="Lượt xem" value={totalViews.toString()} percent="-2.1%" icon={<Eye className="w-5 h-5 sm:w-6 sm:h-6" />} color="from-[#4B5563] to-[#374151]" />
       </div>
 
       {/* Đơn hàng gần đây */}
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-        <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-[#2F5FEB]/30">
-          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
-            <Package className="w-5 h-5 sm:w-6 sm:h-6 text-[#2F5FEB]" />
+        <div className="bg-[#4B5563]/5 p-4 sm:p-6 border-b-2 border-[#4B5563]/30">
+          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-[#4B5563] flex items-center gap-2 sm:gap-3">
+            <Package className="w-5 h-5 sm:w-6 sm:h-6 text-[#4B5563]" />
             <span>Đơn hàng gần đây</span>
           </h3>
           <p className="text-gray-600 text-xs sm:text-sm mt-1">Các đơn hàng mới nhất từ cửa hàng của bạn</p>
@@ -155,11 +155,11 @@ const Overview: React.FC = () => {
                     <td className="px-3 sm:px-6 py-3 sm:py-4">
                       <span className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${
                         latestStatus === "delivered" || latestStatus === "completed"
-                          ? "bg-[#2F5FEB]/10 text-[#2F5FEB] border-2 border-[#2F5FEB]/40" 
+                          ? "bg-[#4B5563]/10 text-[#4B5563] border-2 border-[#4B5563]/40" 
                         : latestStatus === "shipped"
-                          ? "bg-[#2F5FEB]/10 text-[#2F5FEB] border-2 border-[#2F5FEB]/40"
+                          ? "bg-[#4B5563]/10 text-[#4B5563] border-2 border-[#4B5563]/40"
                         : latestStatus === "confirmed" || latestStatus === "processing"
-                          ? "bg-[#2F5FEB]/10 text-[#2F5FEB] border-2 border-[#2F5FEB]/40" 
+                          ? "bg-[#4B5563]/10 text-[#4B5563] border-2 border-[#4B5563]/40" 
                         : latestStatus === "cancelled"
                           ? "bg-red-100 text-red-700 border-2 border-red-300"
                         : "bg-gray-100 text-gray-700 border-2 border-gray-300"

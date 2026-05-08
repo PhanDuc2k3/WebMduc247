@@ -216,15 +216,15 @@ export default function ShippingInfo({
   return (
     <>
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-        <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
-          <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+        <div className="bg-[#4B5563]/5 p-4 sm:p-6 border-b-2 border-gray-200">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#4B5563] flex items-center gap-2 sm:gap-3">
             <Truck className="w-5 h-5 sm:w-6 sm:h-6" />
             Thông tin vận chuyển
           </h2>
           <p className="text-gray-600 text-xs sm:text-sm mt-1">Chi tiết địa chỉ và vận đơn</p>
         </div>
         <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
-          <div className="p-3 sm:p-4 bg-[#2F5FEB]/5 border-2 border-[#2F5FEB]/40 rounded-lg sm:rounded-xl">
+          <div className="p-3 sm:p-4 bg-[#4B5563]/5 border-2 border-[#4B5563]/40 rounded-lg sm:rounded-xl">
             <p className="font-bold text-gray-900 mb-2 flex items-center gap-2 text-sm sm:text-base">
               <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
               Địa chỉ giao hàng
@@ -254,12 +254,12 @@ export default function ShippingInfo({
                 <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
                 Mã vận đơn
               </span>
-              <span className="font-bold text-[#2F5FEB] text-xs sm:text-sm break-all">
+              <span className="font-bold text-[#4B5563] text-xs sm:text-sm break-all">
                 {shippingInfo.trackingNumber || orderCode}
               </span>
             </div>
 
-            <div className="flex justify-between items-center p-3 bg-[#2F5FEB]/5 border-2 border-[#2F5FEB]/40 rounded-lg sm:rounded-xl gap-2">
+            <div className="flex justify-between items-center p-3 bg-[#4B5563]/5 border-2 border-[#4B5563]/40 rounded-lg sm:rounded-xl gap-2">
               <span className="font-semibold flex items-center gap-2 text-xs sm:text-sm">
                 <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
                 Dự kiến giao
@@ -274,7 +274,7 @@ export default function ShippingInfo({
             <button
               onClick={handleShareOrder}
               disabled={isSharing}
-              className="w-full py-2.5 sm:py-3 px-4 bg-[#2F5FEB] text-white font-bold rounded-lg sm:rounded-xl hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 mt-3 sm:mt-4 text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-2.5 sm:py-3 px-4 bg-[#4B5563] text-white font-bold rounded-lg sm:rounded-xl hover:bg-[#374151] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 mt-3 sm:mt-4 text-xs sm:text-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSharing ? (
                 <>

@@ -133,7 +133,7 @@ const ChatBot: React.FC = () => {
       {!isOpen && (
         <button
           onClick={handleOpen}
-          className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-[#2F5FEB] hover:bg-[#244ACC] text-white p-2.5 sm:p-3 md:p-4 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 group animate-fade-in touch-manipulation"
+          className="relative w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-[#4B5563] hover:bg-[#374151] text-white p-2.5 sm:p-3 md:p-4 rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-110 active:scale-95 group animate-fade-in touch-manipulation"
           aria-label="Mở chatbot hỗ trợ"
         >
           <MessageCircle size={20} className="sm:w-6 sm:h-6 md:w-7 md:h-7 relative z-10 transform group-hover:rotate-12 transition-transform duration-300" />
@@ -146,7 +146,7 @@ const ChatBot: React.FC = () => {
       {isOpen && (
         <div className="w-[calc(100vw-1rem)] sm:w-[calc(100vw-2rem)] md:w-[400px] lg:w-[420px] h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] md:h-[600px] lg:h-[650px] flex flex-col bg-white shadow-2xl rounded-xl sm:rounded-2xl md:rounded-3xl border-2 border-gray-200 overflow-hidden animate-scale-in max-w-[calc(100vw-1rem)] sm:max-w-none">
           {/* Header */}
-          <div className="bg-[#2F5FEB] text-white p-2.5 sm:p-3 md:p-4 lg:p-5 flex items-center justify-between shadow-lg flex-shrink-0">
+          <div className="bg-[#4B5563] text-white p-2.5 sm:p-3 md:p-4 lg:p-5 flex items-center justify-between shadow-lg flex-shrink-0">
             <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-1 min-w-0">
               <div className="relative flex-shrink-0">
                 <div className="w-7 h-7 sm:w-8 sm:h-8 md:w-10 md:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
@@ -190,7 +190,7 @@ const ChatBot: React.FC = () => {
                   <div
                     className={`px-2.5 py-1.5 sm:px-3 sm:py-2 md:px-4 md:py-3 rounded-lg sm:rounded-xl md:rounded-2xl text-[11px] sm:text-xs md:text-sm shadow-md ${msg.role === "bot" && msg.products && Array.isArray(msg.products) && msg.products.length > 0 ? "w-full" : "max-w-full"} break-words ${
                       msg.role === "user"
-                        ? "bg-[#2F5FEB] text-white ml-auto"
+                        ? "bg-[#4B5563] text-white ml-auto"
                         : "bg-white text-gray-900 border-2 border-gray-200"
                     }`}
                   >
@@ -200,7 +200,7 @@ const ChatBot: React.FC = () => {
                     {msg.role === "bot" && Array.isArray(msg.products) && msg.products.length > 0 && (
                       <div className="mt-2 sm:mt-2.5 md:mt-3 pt-2 sm:pt-2.5 md:pt-3 border-t border-gray-200">
                         <div className="text-[10px] sm:text-xs font-semibold text-gray-700 mb-1.5 sm:mb-2 flex items-center gap-1">
-                          <Package className="w-3 h-3 text-[#2F5FEB]" />
+                          <Package className="w-3 h-3 text-[#4B5563]" />
                           <span>Sản phẩm gợi ý ({msg.products.length})</span>
                         </div>
                         <div className="flex flex-col gap-1.5 sm:gap-2 max-h-[250px] sm:max-h-[300px] md:max-h-[350px] lg:max-h-[400px] overflow-y-auto custom-scrollbar pr-0.5 sm:pr-1">
@@ -268,7 +268,7 @@ const ChatBot: React.FC = () => {
                                         navigate(`/products/${product._id}`);
                                         setIsOpen(false);
                                       }}
-                                      className="mt-1.5 sm:mt-2 w-full bg-[#2F5FEB] hover:bg-[#244ACC] text-white text-[9px] sm:text-[10px] md:text-xs font-bold px-1.5 sm:px-2 py-1 rounded-md transition-all duration-300 flex items-center justify-center gap-1 group-hover:shadow-lg active:scale-95 touch-manipulation"
+                                      className="mt-1.5 sm:mt-2 w-full bg-[#4B5563] hover:bg-[#374151] text-white text-[9px] sm:text-[10px] md:text-xs font-bold px-1.5 sm:px-2 py-1 rounded-md transition-all duration-300 flex items-center justify-center gap-1 group-hover:shadow-lg active:scale-95 touch-manipulation"
                                     >
                                       <span>Xem ngay</span>
                                       <ExternalLink size={10} className="sm:w-3 sm:h-3" />
@@ -322,12 +322,12 @@ const ChatBot: React.FC = () => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Nhập tin nhắn..."
-              className="flex-1 border-2 border-gray-300 rounded-full px-2.5 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 text-[11px] sm:text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] transition-all duration-300 bg-gray-50 hover:bg-white touch-manipulation"
+              className="flex-1 border-2 border-gray-300 rounded-full px-2.5 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 text-[11px] sm:text-xs md:text-sm focus:outline-none focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] transition-all duration-300 bg-gray-50 hover:bg-white touch-manipulation"
             />
             <button
               type="submit"
               disabled={!input.trim()}
-              className="px-2.5 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 bg-[#2F5FEB] text-white rounded-full hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-bold text-xs sm:text-sm md:text-base flex-shrink-0 touch-manipulation"
+              className="px-2.5 sm:px-3 md:px-4 lg:px-5 py-1.5 sm:py-2 md:py-2.5 lg:py-3 bg-[#4B5563] text-white rounded-full hover:bg-[#374151] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none font-bold text-xs sm:text-sm md:text-base flex-shrink-0 touch-manipulation"
               aria-label="Gửi tin nhắn"
             >
               <Send className="w-4 h-4" />

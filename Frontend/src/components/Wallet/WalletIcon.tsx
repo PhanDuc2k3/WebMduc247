@@ -53,7 +53,7 @@ const WalletIcon: React.FC = () => {
   return (
     <Link 
       to="/wallet" 
-      className="flex items-center gap-1 hover:text-[#2F5FEB] transition-all duration-300 group relative"
+      className="flex items-center gap-1 hover:text-[#4B5563] transition-all duration-300 group relative"
       title={`Ví: ${balance.toLocaleString('vi-VN')}₫`}
     >
       <div className="relative">

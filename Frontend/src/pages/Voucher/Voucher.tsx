@@ -166,12 +166,12 @@ export default function VoucherPage() {
   return (
     <div className="w-full p-3 md:p-4 lg:p-6 xl:p-8">
       <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-[#2F5FEB] flex items-center gap-2 md:gap-3">
+        <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-[#4B5563] flex items-center gap-2 md:gap-3">
           <Gift className="w-7 h-7" />
           <span>Kho Voucher</span>
         </h1>
         <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-          Tận hưởng <span className="text-[#2F5FEB] font-semibold">ưu đãi tốt nhất</span> từ các cửa hàng
+          Tận hưởng <span className="text-[#4B5563] font-semibold">ưu đãi tốt nhất</span> từ các cửa hàng
         </p>
       </div>
 
@@ -183,8 +183,8 @@ export default function VoucherPage() {
             onClick={() => setActiveCategory(cat.name)}
             className={`px-4 py-2 md:px-5 md:py-2.5 rounded-lg md:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 transform hover:scale-105 whitespace-nowrap flex-shrink-0 ${
               activeCategory === cat.name
-                ? "bg-[#2F5FEB] text-white shadow-lg scale-105"
-                : "bg-white text-gray-600 border-2 border-gray-200 hover:border-[#2F5FEB] hover:bg-[#2F5FEB]/5"
+                ? "bg-[#4B5563] text-white shadow-lg scale-105"
+                : "bg-white text-gray-600 border-2 border-gray-200 hover:border-[#4B5563] hover:bg-[#4B5563]/5"
             } animate-fade-in-up`}
             style={{ animationDelay: `${index * 0.05}s` }}
           >
@@ -200,7 +200,7 @@ export default function VoucherPage() {
             placeholder="Tìm kiếm voucher..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2.5 md:px-5 md:py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none transition-all duration-300 text-sm md:text-base"
+            className="w-full px-4 py-2.5 md:px-5 md:py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none transition-all duration-300 text-sm md:text-base"
           />
         </div>
       </div>
@@ -226,7 +226,7 @@ export default function VoucherPage() {
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="flex justify-between items-start mb-3 md:mb-4 gap-2">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#2F5FEB] flex items-center gap-1 md:gap-2 flex-1 min-w-0">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#4B5563] flex items-center gap-1 md:gap-2 flex-1 min-w-0">
                   <span className="truncate">{v.title}</span>
                 </h2>
                 <span className="px-2 py-1 md:px-4 md:py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg md:rounded-xl font-bold text-[10px] sm:text-xs md:text-sm shadow-lg flex-shrink-0">
@@ -234,7 +234,7 @@ export default function VoucherPage() {
                 </span>
               </div>
               
-                <p className="text-xs sm:text-sm text-gray-700 mb-3 md:mb-4 bg-[#2F5FEB]/5 p-2 md:p-3 rounded-lg md:rounded-xl line-clamp-2">{v.description}</p>
+                <p className="text-xs sm:text-sm text-gray-700 mb-3 md:mb-4 bg-[#4B5563]/5 p-2 md:p-3 rounded-lg md:rounded-xl line-clamp-2">{v.description}</p>
               
               <div className="text-xs sm:text-sm text-gray-700 space-y-1.5 md:space-y-2 mb-3 md:mb-4">
                 <p className="flex items-center gap-1 md:gap-2 flex-wrap">
@@ -268,7 +268,7 @@ export default function VoucherPage() {
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2 md:h-3 overflow-hidden">
                     <div
-                      className="bg-[#2F5FEB] h-2 md:h-3 rounded-full transition-all duration-1000"
+                      className="bg-[#4B5563] h-2 md:h-3 rounded-full transition-all duration-1000"
                       style={{ width: `${v.usagePercent}%` }}
                     />
                   </div>

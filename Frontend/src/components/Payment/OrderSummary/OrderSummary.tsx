@@ -532,7 +532,7 @@ const orderPayload: CreateOrderData = {
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl border-2 border-gray-200 overflow-hidden lg:sticky lg:top-6">
-      <div className="bg-[#2F5FEB] p-4 sm:p-6 border-b-2 border-gray-200">
+      <div className="bg-[#4B5563] p-4 sm:p-6 border-b-2 border-gray-200">
         <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
           Tóm tắt đơn hàng
         </h2>
@@ -552,7 +552,7 @@ const orderPayload: CreateOrderData = {
           className={`w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg lg:text-xl transition-all duration-300 shadow-lg flex items-center justify-center gap-2 ${
             isProcessing
               ? "bg-gray-400 text-white cursor-not-allowed"
-              : "bg-[#2F5FEB] text-white hover:bg-[#244ACC] hover:shadow-2xl transform hover:scale-105"
+              : "bg-[#4B5563] text-white hover:bg-[#374151] hover:shadow-2xl transform hover:scale-105"
           }`}
         >
           {isProcessing ? (

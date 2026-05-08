@@ -15,6 +15,12 @@ const productApi = {
   // ⭐ Lấy sản phẩm nổi bật
   getFeaturedProducts: () => axiosClient.get("/api/products/featured"),
 
+  // ⚡ Lấy sản phẩm flash sale (hoặc sản phẩm giảm giá)
+  getFlashSaleProducts: () => axiosClient.get("/api/products/sale?limit=5"),
+
+  // 💡 Lấy sản phẩm đề xuất (hoặc tất cả sản phẩm)
+  getRecommendedProducts: () => axiosClient.get("/api/products?limit=10"),
+
   // 🔍 Lấy chi tiết sản phẩm theo ID
   getProductById: (id: string) => axiosClient.get(`/api/products/${id}`),
 

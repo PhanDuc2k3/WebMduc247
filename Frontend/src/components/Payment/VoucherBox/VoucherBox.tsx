@@ -30,8 +30,8 @@ const VoucherBox: React.FC<VoucherBoxProps> = ({
   return (
     <>
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
-        <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
-          <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+        <div className="bg-[#4B5563]/5 p-4 sm:p-6 border-b-2 border-gray-200">
+          <h2 className="text-xl sm:text-2xl font-bold text-[#4B5563] flex items-center gap-2 sm:gap-3">
             Mã giảm giá
           </h2>
           <p className="text-gray-600 text-xs sm:text-sm mt-1">Chọn voucher để áp dụng giảm giá</p>
@@ -44,7 +44,7 @@ const VoucherBox: React.FC<VoucherBoxProps> = ({
               console.log("Selected items:", selectedItems);
               onOpenPopup(); // Gọi callback để mở popup từ parent
             }}
-            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl font-bold hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base"
+            className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-[#4B5563] text-white rounded-lg sm:rounded-xl font-bold hover:bg-[#374151] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base"
           >
             Chọn voucher
           </button>

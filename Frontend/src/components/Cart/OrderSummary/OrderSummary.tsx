@@ -82,7 +82,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
   return (
     <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl border-2 border-gray-200 p-6 lg:p-8 animate-fade-in-right">
       <div className="flex items-center gap-3 mb-6">
-        <h2 className="text-2xl font-bold text-[#2F5FEB]">Tóm tắt đơn hàng</h2>
+        <h2 className="text-2xl font-bold text-[#4B5563]">Tóm tắt đơn hàng</h2>
       </div>
 
       {/* ✅ Cảnh báo nếu có nhiều cửa hàng */}
@@ -99,7 +99,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
 
       {/* Total */}
       <div className="mb-6">
-        <div className="flex justify-between items-center p-4 bg-[#2F5FEB]/5 rounded-xl border-2 border-[#2F5FEB]/40">
+        <div className="flex justify-between items-center p-4 bg-[#4B5563]/5 rounded-xl border-2 border-[#4B5563]/40">
           <span className="text-xl font-bold text-gray-900">Tổng cộng</span>
           <span className="text-2xl font-extrabold text-red-600">
             {formatPrice(total)}
@@ -113,7 +113,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
         disabled={!selectedProducts || selectedProducts.length === 0 || hasMultipleStores}
         className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform ${
           selectedProducts && selectedProducts.length > 0 && !hasMultipleStores
-            ? "bg-[#2F5FEB] text-white hover:bg-[#244ACC] hover:scale-105 active:scale-95"
+            ? "bg-[#4B5563] text-white hover:bg-[#374151] hover:scale-105 active:scale-95"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"
         }`}
       >

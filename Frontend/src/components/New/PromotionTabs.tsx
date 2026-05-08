@@ -21,8 +21,8 @@ const PromotionTabs: React.FC<PromotionTabsProps> = ({ tabs, activeTab, setActiv
           onClick={() => setActiveTab(tab.label)}
           className={`flex items-center gap-2 px-6 py-3 rounded-xl border-2 font-bold transition-all duration-300 transform hover:scale-105 ${
             activeTab === tab.label
-              ? "bg-[#2F5FEB] border-[#2F5FEB] text-white shadow-lg scale-105"
-              : "bg-gradient-to-r from-gray-50 to-white border-gray-200 text-gray-700 hover:border-[#2F5FEB] hover:bg-[#2F5FEB]/5"
+              ? "bg-[#4B5563] border-[#4B5563] text-white shadow-lg scale-105"
+              : "bg-gradient-to-r from-gray-50 to-white border-gray-200 text-gray-700 hover:border-[#4B5563] hover:bg-[#4B5563]/5"
           }`}
           style={{ animationDelay: `${index * 0.05}s` }}
         >

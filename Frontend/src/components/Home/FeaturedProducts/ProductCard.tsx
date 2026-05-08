@@ -54,7 +54,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div 
       onClick={handleCardClick}
-      className="group bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl shadow-md p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl hover:border-[#2F5FEB] w-full flex flex-col animate-scale-in cursor-pointer sm:cursor-default active:scale-[0.98] sm:active:scale-100 touch-manipulation"
+      className="group bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl shadow-md p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl hover:border-[#4B5563] w-full flex flex-col animate-scale-in cursor-pointer sm:cursor-default active:scale-[0.98] sm:active:scale-100 touch-manipulation"
     >
       <div className="relative overflow-hidden rounded-md sm:rounded-lg pb-1 sm:pb-2">
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
@@ -100,7 +100,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </a>
       </div>
 
-      <div className="pt-0.5 sm:pt-1 text-[10px] sm:text-xs font-bold text-gray-800 overflow-hidden truncate group-hover:text-[#2F5FEB] transition-colors duration-300">
+      <div className="pt-0.5 sm:pt-1 text-[10px] sm:text-xs font-bold text-gray-800 overflow-hidden truncate group-hover:text-[#4B5563] transition-colors duration-300">
         {product.name}
       </div>
 

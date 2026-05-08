@@ -109,7 +109,7 @@ useEffect(() => {
       // Hiển thị thông báo đặc biệt khi nhận order share
       toast.info(
         <div className="flex items-center gap-2">
-          <Package className="w-5 h-5 text-[#2F5FEB]" />
+          <Package className="w-5 h-5 text-[#4B5563]" />
           <div>
             <strong className="block">Đã nhận đơn hàng mới</strong>
             <span className="text-sm opacity-90">Từ {chatUser.name}</span>
@@ -216,7 +216,7 @@ useEffect(() => {
   return (
     <div className="flex flex-col h-full overflow-hidden w-full bg-white">
       {/* Header */}
-      <div className="flex-none p-3 md:p-4 lg:p-5 border-b-2 border-gray-200 bg-[#2F5FEB] flex items-center gap-2 md:gap-3 shadow-md flex-shrink-0">
+      <div className="flex-none p-3 md:p-4 lg:p-5 border-b-2 border-gray-200 bg-[#4B5563] flex items-center gap-2 md:gap-3 shadow-md flex-shrink-0">
         {/* Back button - only on mobile */}
         {onBack && (
           <button
@@ -246,7 +246,7 @@ useEffect(() => {
       >
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-gray-400 px-4">
-            <MessageCircle className="w-10 h-10 md:w-14 md:h-14 mb-3 md:mb-4 text-[#2F5FEB]" />
+            <MessageCircle className="w-10 h-10 md:w-14 md:h-14 mb-3 md:mb-4 text-[#4B5563]" />
             <p className="text-sm sm:text-base md:text-lg font-medium text-center">Chưa có tin nhắn nào.</p>
             <p className="text-xs sm:text-sm md:text-sm mt-2 text-center">Bắt đầu trò chuyện ngay bây giờ!</p>
           </div>
@@ -293,7 +293,7 @@ useEffect(() => {
                   <div
                     className={`p-3 md:p-4 lg:p-4 rounded-xl md:rounded-2xl w-fit max-w-full break-words shadow-md md:shadow-lg animate-fade-in-up ${
                       isMine 
-                        ? "bg-[#2F5FEB] text-white rounded-tr-none" 
+                        ? "bg-[#4B5563] text-white rounded-tr-none" 
                         : "bg-white text-gray-900 rounded-tl-none border-2 border-gray-200"
                     }`}
                   >
@@ -347,7 +347,7 @@ useEffect(() => {
         <div className="flex items-center gap-2 md:gap-3">
           <button
             type="button"
-            className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-[#2F5FEB] text-white hover:bg-[#244ACC] transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-110 flex items-center justify-center flex-shrink-0"
+            className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl bg-[#4B5563] text-white hover:bg-[#374151] transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-110 flex items-center justify-center flex-shrink-0"
             onClick={handleOpenFileDialog}
             disabled={disabled || isSending}
           >
@@ -366,7 +366,7 @@ useEffect(() => {
             placeholder={
               disabled ? "Bạn cần đăng nhập để chat..." : "Nhập tin nhắn..."
             }
-            className="flex-1 p-2.5 md:p-4 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none transition-all duration-300 text-xs sm:text-sm md:text-base"
+            className="flex-1 p-2.5 md:p-4 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none transition-all duration-300 text-xs sm:text-sm md:text-base"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -374,7 +374,7 @@ useEffect(() => {
           />
           <button
             onClick={handleSend}
-            className={`w-16 sm:w-20 md:w-28 h-10 md:h-12 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl hover:bg-[#244ACC] flex items-center justify-center gap-1 md:gap-2 font-bold text-xs md:text-sm transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-105 flex-shrink-0 ${
+            className={`w-16 sm:w-20 md:w-28 h-10 md:h-12 bg-[#4B5563] text-white rounded-lg md:rounded-xl hover:bg-[#374151] flex items-center justify-center gap-1 md:gap-2 font-bold text-xs md:text-sm transition-all duration-300 shadow-md md:shadow-lg hover:shadow-xl transform hover:scale-105 flex-shrink-0 ${
               (disabled || isSending) && "opacity-50 cursor-not-allowed"
             }`}
             disabled={disabled || isSending}

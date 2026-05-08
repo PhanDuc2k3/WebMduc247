@@ -18,8 +18,8 @@ const Delivery: React.FC<DeliveryProps> = ({ onChange }) => {
 
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
-      <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+      <div className="bg-[#4B5563]/5 p-4 sm:p-6 border-b-2 border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#4B5563] flex items-center gap-2 sm:gap-3">
           <Truck className="w-5 h-5 sm:w-6 h-6" />
           Phương thức vận chuyển
         </h2>
@@ -30,8 +30,8 @@ const Delivery: React.FC<DeliveryProps> = ({ onChange }) => {
         <label
           className={`flex items-start p-4 sm:p-5 border-2 rounded-xl sm:rounded-2xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
             selected === "standard" 
-              ? "border-[#2F5FEB] bg-[#2F5FEB]/6 shadow-lg" 
-              : "border-gray-300 hover:border-[#2F5FEB] hover:bg-[#2F5FEB]/5"
+              ? "border-[#4B5563] bg-[#4B5563]/6 shadow-lg" 
+              : "border-gray-300 hover:border-[#4B5563] hover:bg-[#4B5563]/5"
           }`}
           onClick={() => handleSelect("standard")}
         >
@@ -48,7 +48,7 @@ const Delivery: React.FC<DeliveryProps> = ({ onChange }) => {
                 <Truck className="w-4 h-4 sm:w-5 sm:h-5" />
                 Giao hàng tiêu chuẩn
               </p>
-              <span className="px-3 sm:px-4 py-1 bg-[#2F5FEB] text-white text-xs sm:text-sm font-bold rounded-full w-fit">
+              <span className="px-3 sm:px-4 py-1 bg-[#4B5563] text-white text-xs sm:text-sm font-bold rounded-full w-fit">
                 30.000₫
               </span>
             </div>
@@ -63,8 +63,8 @@ const Delivery: React.FC<DeliveryProps> = ({ onChange }) => {
         <label
           className={`flex items-start p-4 sm:p-5 border-2 rounded-xl sm:rounded-2xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
             selected === "express" 
-              ? "border-[#2F5FEB] bg-[#2F5FEB]/6 shadow-lg" 
-              : "border-gray-300 hover:border-[#2F5FEB] hover:bg-[#2F5FEB]/5"
+              ? "border-[#4B5563] bg-[#4B5563]/6 shadow-lg" 
+              : "border-gray-300 hover:border-[#4B5563] hover:bg-[#4B5563]/5"
           }`}
           onClick={() => handleSelect("express")}
         >
@@ -81,7 +81,7 @@ const Delivery: React.FC<DeliveryProps> = ({ onChange }) => {
                 <Zap className="w-4 h-4 sm:w-5 sm:h-5" />
                 Giao hàng nhanh
               </p>
-              <span className="px-3 sm:px-4 py-1 bg-[#2F5FEB] text-white text-xs sm:text-sm font-bold rounded-full w-fit">
+              <span className="px-3 sm:px-4 py-1 bg-[#4B5563] text-white text-xs sm:text-sm font-bold rounded-full w-fit">
                 50.000₫
               </span>
             </div>

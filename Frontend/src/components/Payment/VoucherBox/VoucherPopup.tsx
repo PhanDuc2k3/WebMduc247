@@ -117,7 +117,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="bg-[#2F5FEB] text-white p-4 sm:p-6 flex items-center justify-between flex-shrink-0">
+        <div className="bg-[#4B5563] text-white p-4 sm:p-6 flex items-center justify-between flex-shrink-0">
           <h2 className="text-xl sm:text-2xl font-bold">Chọn voucher</h2>
           <button
             onClick={onClose}
@@ -133,7 +133,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
             onClick={() => setActiveTab("system")}
             className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 font-semibold text-sm sm:text-base transition-colors ${
               activeTab === "system"
-                ? "bg-[#2F5FEB]/8 text-[#2F5FEB] border-b-2 border-[#2F5FEB]"
+                ? "bg-[#4B5563]/8 text-[#4B5563] border-b-2 border-[#4B5563]"
                 : "text-gray-600 hover:bg-gray-50"
             }`}
           >
@@ -143,7 +143,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
             onClick={() => setActiveTab("freeship")}
             className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 font-semibold text-sm sm:text-base transition-colors ${
               activeTab === "freeship"
-                ? "bg-[#2F5FEB]/8 text-[#2F5FEB] border-b-2 border-[#2F5FEB]"
+                ? "bg-[#4B5563]/8 text-[#4B5563] border-b-2 border-[#4B5563]"
                 : "text-gray-600 hover:bg-gray-50"
             }`}
           >
@@ -153,7 +153,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
             onClick={() => setActiveTab("store")}
             className={`flex-1 py-3 sm:py-4 px-4 sm:px-6 font-semibold text-sm sm:text-base transition-colors ${
               activeTab === "store"
-                ? "bg-[#2F5FEB]/8 text-[#2F5FEB] border-b-2 border-[#2F5FEB]"
+                ? "bg-[#4B5563]/8 text-[#4B5563] border-b-2 border-[#4B5563]"
                 : "text-gray-600 hover:bg-gray-50"
             }`}
           >
@@ -194,18 +194,18 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                       onClick={() => handleSelectSystemVoucher(voucher)}
                       className={`border-2 rounded-lg sm:rounded-xl p-4 sm:p-5 cursor-pointer transition-all ${
                         isSelected
-                          ? "border-[#2F5FEB] bg-[#2F5FEB]/6 shadow-lg"
-                          : "border-gray-200 hover:border-[#2F5FEB] hover:shadow-md"
+                          ? "border-[#4B5563] bg-[#4B5563]/6 shadow-lg"
+                          : "border-gray-200 hover:border-[#4B5563] hover:shadow-md"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                             <h3 className="font-bold text-base sm:text-lg break-words">{voucher.title}</h3>
-                            <span className="px-2 sm:px-3 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs font-semibold whitespace-nowrap">
+                            <span className="px-2 sm:px-3 py-1 bg-[#4B5563]/10 text-[#4B5563] rounded-full text-xs font-semibold whitespace-nowrap">
                               {voucher.code}
                             </span>
-                            <span className="px-2 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs whitespace-nowrap">
+                            <span className="px-2 py-1 bg-[#4B5563]/10 text-[#4B5563] rounded-full text-xs whitespace-nowrap">
                               Hệ thống
                             </span>
                             {voucher.voucherType === "freeship" && (
@@ -243,7 +243,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                           <div
                             className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center ${
                               isSelected
-                                ? "border-[#2F5FEB] bg-[#2F5FEB]"
+                                ? "border-[#4B5563] bg-[#4B5563]"
                                 : "border-gray-300"
                             }`}
                           >
@@ -285,19 +285,19 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                     onClick={() => handleSelectFreeshipVoucher(voucher)}
                     className={`border-2 rounded-lg sm:rounded-xl p-4 sm:p-5 cursor-pointer transition-all ${
                       isSelected
-                        ? "border-[#2F5FEB] bg-[#2F5FEB]/6 shadow-lg"
-                        : "border-gray-200 hover:border-[#2F5FEB] hover:shadow-md"
+                        ? "border-[#4B5563] bg-[#4B5563]/6 shadow-lg"
+                        : "border-gray-200 hover:border-[#4B5563] hover:shadow-md"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                           <h3 className="font-bold text-base sm:text-lg break-words">{voucher.title}</h3>
-                          <span className="px-2 sm:px-3 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs font-semibold whitespace-nowrap">
+                          <span className="px-2 sm:px-3 py-1 bg-[#4B5563]/10 text-[#4B5563] rounded-full text-xs font-semibold whitespace-nowrap">
                             {voucher.code}
                           </span>
                           {voucher.isGlobal && (
-                            <span className="px-2 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs whitespace-nowrap">
+                            <span className="px-2 py-1 bg-[#4B5563]/10 text-[#4B5563] rounded-full text-xs whitespace-nowrap">
                               Toàn hệ thống
                             </span>
                           )}
@@ -329,7 +329,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                         <div
                           className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center ${
                             isSelected
-                              ? "border-[#2F5FEB] bg-[#2F5FEB]"
+                              ? "border-[#4B5563] bg-[#4B5563]"
                               : "border-gray-300"
                           }`}
                         >
@@ -376,15 +376,15 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                       onClick={() => handleSelectStoreVoucher(voucher)}
                       className={`border-2 rounded-lg sm:rounded-xl p-4 sm:p-5 cursor-pointer transition-all ${
                         isSelected
-                          ? "border-[#2F5FEB] bg-[#2F5FEB]/6 shadow-lg"
-                          : "border-gray-200 hover:border-[#2F5FEB] hover:shadow-md"
+                          ? "border-[#4B5563] bg-[#4B5563]/6 shadow-lg"
+                          : "border-gray-200 hover:border-[#4B5563] hover:shadow-md"
                       }`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                             <h3 className="font-bold text-base sm:text-lg break-words">{voucher.title}</h3>
-                            <span className="px-2 sm:px-3 py-1 bg-[#2F5FEB]/10 text-[#2F5FEB] rounded-full text-xs font-semibold whitespace-nowrap">
+                            <span className="px-2 sm:px-3 py-1 bg-[#4B5563]/10 text-[#4B5563] rounded-full text-xs font-semibold whitespace-nowrap">
                               {voucher.code}
                             </span>
                             <span className="px-2 py-1 bg-orange-100 text-orange-600 rounded-full text-xs whitespace-nowrap">
@@ -425,7 +425,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
                           <div
                             className={`w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 flex items-center justify-center ${
                               isSelected
-                                ? "border-[#2F5FEB] bg-[#2F5FEB]"
+                                ? "border-[#4B5563] bg-[#4B5563]"
                                 : "border-gray-300"
                             }`}
                           >
@@ -453,7 +453,7 @@ const VoucherPopup: React.FC<VoucherPopupProps> = ({
           </button>
           <button
             onClick={onClose}
-            className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl font-semibold hover:bg-[#244ACC] transition-all shadow-lg hover:shadow-xl text-sm sm:text-base"
+            className="w-full sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-[#4B5563] text-white rounded-lg sm:rounded-xl font-semibold hover:bg-[#374151] transition-all shadow-lg hover:shadow-xl text-sm sm:text-base"
           >
             Xác nhận
           </button>

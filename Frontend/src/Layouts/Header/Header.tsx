@@ -16,6 +16,11 @@ import {
   Headset,
   X,
   ChevronRight,
+  Download,
+  Users,
+  Info,
+  ShieldCheck,
+  Bell,
 } from "lucide-react";
 import { useHeader } from "./useHeader";
 import DropdownUser from "./DropdownUser";
@@ -24,6 +29,14 @@ import { useCart } from "../../context/CartContext";
 import { useChat } from "../../context/chatContext";
 import storeApi from "../../api/storeApi";
 import productApi from "../../api/productApi";
+
+// Top bar links configuration
+const topBarLinks = [
+  { label: "Download BeliBeli App", icon: Download, href: "/download-app" },
+  { label: "Mitra BeliBeli", icon: Users, href: "/mitra" },
+  { label: "Tentang BeliBeli", icon: Info, href: "/about" },
+  { label: "BeliBeli Care", icon: ShieldCheck, href: "/care" },
+];
 
 const Header: React.FC = () => {
   const navigate = useNavigate();
@@ -164,36 +177,57 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-[100] bg-white/95 backdrop-blur-xl shadow-xl border-b-2 border-gray-200">
-      {/* Top bar */}
-      <div className="bg-[#2F5FEB] text-white hidden md:block">
-        <div className="flex justify-between items-center px-4 sm:px-8 py-2 text-xs font-semibold">
-          <div className="flex items-center gap-2">
-            <span>🚚</span>
-            <span>Miễn phí vận chuyển đơn từ 300k</span>
+    <header className="sticky top-0 z-[100] bg-[#E5E9EC] shadow-xl border-b-2 border-gray-200">
+      {/* Top bar - BeliBeli Style */}
+      <div className="bg-[#4B5563] text-white hidden md:block">
+        <div className="flex justify-between items-center px-4 sm:px-8 py-2 text-xs">
+          {/* Left links */}
+          <div className="flex items-center gap-1 sm:gap-4">
+            {topBarLinks.map((link, index) => (
+              <a
+                key={index}
+                href={link.href}
+                className="flex items-center gap-1 hover:text-gray-200 transition-colors duration-200 font-medium"
+              >
+                <link.icon size={12} />
+                <span className="hidden lg:inline">{link.label}</span>
+              </a>
+            ))}
           </div>
-          <div className="flex items-center gap-2">
-            <span>📞</span>
-            <span>Hotline: 1800-1234</span>
+          {/* Right links */}
+          <div className="flex items-center gap-4">
+            <a href="/promo" className="flex items-center gap-1 hover:text-gray-200 transition-colors duration-200 font-medium">
+              <Gift size={12} />
+              <span className="hidden lg:inline">Promo</span>
+            </a>
+            <a href="/signup" className="flex items-center gap-1 hover:text-gray-200 transition-colors duration-200 font-medium">
+              <User size={12} />
+              <span className="hidden lg:inline">Sign Up</span>
+            </a>
+            <a href="/login" className="flex items-center gap-1 hover:text-gray-200 transition-colors duration-200 font-medium">
+              <span className="hidden lg:inline">Login</span>
+            </a>
           </div>
         </div>
       </div>
 
       {/* Main header - Row 1: Logo, Search, Icons, Avatar */}
-      <div className="flex items-center justify-between px-2 sm:px-4 md:px-8 py-2 sm:py-3 bg-white gap-1 sm:gap-2">
-        {/* Logo */}
+      <div className="flex items-center justify-between px-2 sm:px-4 md:px-8 py-2 sm:py-3 bg-[#E5E9EC] gap-1 sm:gap-2">
+        {/* Logo - BeliBeli Style */}
         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-
           <Link to="/" className="relative group animate-fade-in-left flex-shrink-0">
             <div className="flex items-center gap-1 sm:gap-2">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-[#2F5FEB] rounded-lg sm:rounded-xl flex items-center justify-center shadow-xl group-hover:shadow-[#2F5FEB]/50 transform group-hover:scale-110 group-hover:rotate-6 transition-all duration-300">
-                <span className="text-lg sm:text-2xl md:text-3xl font-black text-white">MĐ</span>
+              {/* BeliBeli Logo - B Icon with gradient */}
+              <div className="w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-300">
+                <span className="text-lg sm:text-2xl md:text-3xl font-black text-white">B</span>
               </div>
+              {/* Logo Text */}
               <div className="hidden xs:block">
-                <h1 className="text-sm sm:text-xl md:text-2xl font-black text-[#2F5FEB]">
-                  ShopMduc247
+                <h1 className="text-base sm:text-xl md:text-2xl font-black text-gray-900">
+                  <span className="text-[#4B5563]">BeliBeli</span>
+                  <span className="text-gray-700">.com</span>
                 </h1>
-                <p className="text-[10px] sm:text-xs text-gray-500 font-bold">Shopping Mall</p>
+                <p className="text-[10px] sm:text-xs text-gray-500 font-medium -mt-0.5">Shopping Mall</p>
               </div>
             </div>
           </Link>
@@ -208,8 +242,8 @@ const Header: React.FC = () => {
                 type="button"
                 onClick={() => setShowSearchDropdown(!showSearchDropdown)}
                 className="absolute left-[2px] top-[2px] bottom-[2px] z-20 flex items-center justify-center px-1.5 sm:px-2 py-1.5 
-                           bg-[#2F5FEB] text-white 
-                           rounded-l-md sm:rounded-l-lg hover:bg-[#244ACC] 
+                           bg-[#4B5563] text-white 
+                           rounded-l-md sm:rounded-l-lg hover:bg-[#374151] 
                            transition-all duration-300 shadow-md hover:shadow-lg 
                            transform hover:scale-[1.02] text-[10px] sm:text-xs font-bold border border-r-0 border-white"
               >
@@ -239,12 +273,12 @@ const Header: React.FC = () => {
                     }}
                     className={`w-full px-3 py-2 text-xs font-medium flex items-center gap-2 transition-all duration-200 
                       ${searchType === "product"
-                        ? "bg-[#2F5FEB]/10 text-[#2F5FEB]"
+                        ? "bg-[#4B5563]/10 text-[#4B5563]"
                         : "text-gray-700 hover:bg-gray-50"
                       }`}
                   >
                     <Package size={14} />
-                    Tìm sản phẩm
+                    Search Products
                   </button>
                   <button
                     type="button"
@@ -254,12 +288,12 @@ const Header: React.FC = () => {
                     }}
                     className={`w-full px-3 py-2 text-xs font-medium flex items-center gap-2 transition-all duration-200 border-t border-gray-100 
                       ${searchType === "store"
-                        ? "bg-[#2F5FEB]/10 text-[#2F5FEB]"
+                        ? "bg-[#4B5563]/10 text-[#4B5563]"
                         : "text-gray-700 hover:bg-gray-50"
                       }`}
                   >
                     <Store size={14} />
-                    Tìm cửa hàng
+                    Search Stores
                   </button>
                 </div>
               )}
@@ -274,9 +308,9 @@ const Header: React.FC = () => {
                     setShowSearchResults(true);
                   }
                 }}
-                placeholder={searchType === "product" ? "Tìm sản phẩm..." : "Tìm cửa hàng..."}
+                placeholder={searchType === "product" ? "Search product or brand here..." : "Tìm cửa hàng..."}
                 className="w-full pl-[42px] sm:pl-[50px] pr-8 sm:pr-10 py-1.5 sm:py-2 text-[11px] sm:text-xs border-2 border-gray-300 rounded-md sm:rounded-lg 
-                           shadow-md focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] 
+                           shadow-md focus:outline-none focus:ring-2 focus:ring-[#4B5563] 
                            transition-all duration-200 bg-white/90 backdrop-blur-sm placeholder-gray-400"
               />
 
@@ -296,7 +330,7 @@ const Header: React.FC = () => {
                           {store.logoUrl ? (
                             <img src={store.logoUrl} alt={store.name} className="w-10 h-10 rounded-lg object-cover" />
                           ) : (
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
                               <Store size={20} className="text-white" />
                             </div>
                           )}
@@ -313,7 +347,7 @@ const Header: React.FC = () => {
                       {totalSearchResults > 5 && (
                         <button
                           onClick={handleViewMore}
-                          className="w-full px-4 py-3 text-sm font-semibold text-[#2F5FEB] hover:bg-[#2F5FEB]/5 transition-colors border-t border-gray-200"
+                          className="w-full px-4 py-3 text-sm font-semibold text-[#4B5563] hover:bg-[#4B5563]/5 transition-colors border-t border-gray-200"
                         >
                           Xem thêm {totalSearchResults - 5} kết quả
                         </button>
@@ -329,8 +363,8 @@ const Header: React.FC = () => {
               <button
                 type="submit"
                 className="absolute right-[2px] top-[2px] bottom-[2px] flex items-center justify-center 
-                           bg-[#2F5FEB] text-white 
-                           px-1.5 sm:px-2.5 rounded-r-md sm:rounded-r-lg hover:bg-[#244ACC] 
+                           bg-[#4B5563] text-white 
+                           px-1.5 sm:px-2.5 rounded-r-md sm:rounded-r-lg hover:bg-[#374151] 
                            transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 <Search size={12} className="sm:w-3.5 sm:h-3.5" />
@@ -348,8 +382,8 @@ const Header: React.FC = () => {
                 type="button"
                 onClick={() => setShowSearchDropdown(!showSearchDropdown)}
                 className="absolute left-[2px] top-[2px] bottom-[2px] z-20 flex items-center justify-center gap-1 px-3 py-2.5 
-                           bg-[#2F5FEB] text-white 
-                           rounded-l-xl hover:bg-[#244ACC] 
+                           bg-[#4B5563] text-white 
+                           rounded-l-xl hover:bg-[#374151] 
                            transition-all duration-300 shadow-md hover:shadow-lg 
                            transform hover:scale-[1.02] text-xs sm:text-sm font-bold border-2 border-r-0 border-white"
               >
@@ -385,12 +419,12 @@ const Header: React.FC = () => {
                     }}
                     className={`w-full px-4 py-3 text-sm font-medium flex items-center gap-2 transition-all duration-200 
                       ${searchType === "product"
-                        ? "bg-[#2F5FEB]/10 text-[#2F5FEB]"
+                        ? "bg-[#4B5563]/10 text-[#4B5563]"
                         : "text-gray-700 hover:bg-gray-50"
                       }`}
                   >
                     <Package size={16} />
-                    Tìm sản phẩm
+                    Search Products
                   </button>
                   <button
                     type="button"
@@ -400,12 +434,12 @@ const Header: React.FC = () => {
                     }}
                     className={`w-full px-4 py-3 text-sm font-medium flex items-center gap-2 transition-all duration-200 border-t border-gray-100 
                       ${searchType === "store"
-                        ? "bg-[#2F5FEB]/10 text-[#2F5FEB]"
+                        ? "bg-[#4B5563]/10 text-[#4B5563]"
                         : "text-gray-700 hover:bg-gray-50"
                       }`}
                   >
                     <Store size={16} />
-                    Tìm cửa hàng
+                    Search Stores
                   </button>
                 </div>
               )}
@@ -420,9 +454,9 @@ const Header: React.FC = () => {
                     setShowSearchResults(true);
                   }
                 }}
-                placeholder={searchType === "product" ? "Tìm kiếm sản phẩm..." : "Tìm kiếm cửa hàng..."}
+                placeholder={searchType === "product" ? "Search product or brand here..." : "Tìm kiếm cửa hàng..."}
                 className="w-full pl-[130px] pr-12 py-2.5 text-sm border-2 border-gray-300 rounded-xl 
-                           shadow-md focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] 
+                           shadow-md focus:outline-none focus:ring-2 focus:ring-[#4B5563] 
                            transition-all duration-200 bg-white/90 backdrop-blur-sm placeholder-gray-400"
               />
 
@@ -447,7 +481,7 @@ const Header: React.FC = () => {
                               {item.logoUrl ? (
                                 <img src={item.logoUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
                               ) : (
-                                <div className="w-12 h-12 rounded-lg bg-[#2F5FEB] flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-lg bg-[#4B5563] flex items-center justify-center">
                                   <Store size={24} className="text-white" />
                                 </div>
                               )}
@@ -469,7 +503,7 @@ const Header: React.FC = () => {
                               {item.images && item.images.length > 0 ? (
                                 <img src={item.images[0]} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
                               ) : (
-                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
                                   <Package size={24} className="text-white" />
                                 </div>
                               )}
@@ -477,7 +511,7 @@ const Header: React.FC = () => {
                                 <div className="font-semibold text-sm text-gray-900">{item.name}</div>
                                 <div className="text-xs text-gray-500 line-clamp-1 mt-1">{item.brand || item.category}</div>
                                 <div className="flex items-center gap-3 mt-1">
-                                  <div className="text-xs font-semibold text-[#2F5FEB]">
+                                  <div className="text-xs font-semibold text-[#4B5563]">
                                     {item.salePrice ? (
                                       <>
                                         <span className="line-through text-gray-400 mr-2">{item.price?.toLocaleString()}đ</span>
@@ -500,7 +534,7 @@ const Header: React.FC = () => {
                       {totalSearchResults > 5 && (
                         <button
                           onClick={handleViewMore}
-                          className="w-full px-4 py-3 text-sm font-semibold text-[#2F5FEB] hover:bg-[#2F5FEB]/5 transition-colors border-t border-gray-200"
+                          className="w-full px-4 py-3 text-sm font-semibold text-[#4B5563] hover:bg-[#4B5563]/5 transition-colors border-t border-gray-200"
                         >
                           Xem thêm {totalSearchResults - 5} kết quả
                         </button>
@@ -518,8 +552,8 @@ const Header: React.FC = () => {
               <button
                 type="submit"
                 className="absolute right-[2px] top-[2px] bottom-[2px] flex items-center justify-center 
-                           bg-[#2F5FEB] text-white 
-                           px-3 rounded-r-xl hover:bg-[#244ACC] 
+                           bg-[#4B5563] text-white 
+                           px-3 rounded-r-xl hover:bg-[#374151] 
                            transition-all duration-300 shadow-md hover:shadow-lg"
               >
                 <Search size={18} />
@@ -541,11 +575,11 @@ const Header: React.FC = () => {
                     onClick={() => setShowDropdown((v) => !v)}
                     title={user.fullName}
                   >
-                          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden shadow-xl ring-2 ring-[#2F5FEB]/20 group-hover:ring-[#2F5FEB]/40 transition-all duration-300 transform group-hover:scale-110">
+                          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden shadow-xl ring-2 ring-[#4B5563]/20 group-hover:ring-[#4B5563]/40 transition-all duration-300 transform group-hover:scale-110">
                       {user.avatarUrl ? (
                         <img src={user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-[#2F5FEB] flex items-center justify-center">
+                        <div className="w-full h-full bg-[#4B5563] flex items-center justify-center">
                           <User size={14} className="sm:w-4 sm:h-4 text-white" />
                         </div>
                       )}
@@ -568,7 +602,7 @@ const Header: React.FC = () => {
               ) : (
                 <button
                   onClick={handleLoginClick}
-                  className="p-1.5 sm:p-2 bg-[#2F5FEB] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:bg-[#244ACC]"
+                  className="p-1.5 sm:p-2 bg-[#4B5563] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:bg-[#374151]"
                   title="Đăng nhập"
                 >
                   <User size={14} className="sm:w-4 sm:h-4" />
@@ -588,11 +622,11 @@ const Header: React.FC = () => {
                     onClick={() => setShowDropdown((v) => !v)}
                     title={user.fullName}
                   >
-                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden shadow-xl ring-2 md:ring-3 ring-[#2F5FEB]/20 group-hover:ring-[#2F5FEB]/40 transition-all duration-300 transform group-hover:scale-110">
+                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden shadow-xl ring-2 md:ring-3 ring-[#4B5563]/20 group-hover:ring-[#4B5563]/40 transition-all duration-300 transform group-hover:scale-110">
                       {user.avatarUrl ? (
                         <img src={user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full bg-[#2F5FEB] flex items-center justify-center">
+                        <div className="w-full h-full bg-[#4B5563] flex items-center justify-center">
                           <User size={20} className="text-white" />
                         </div>
                       )}
@@ -615,7 +649,7 @@ const Header: React.FC = () => {
               ) : (
                 <button
                   onClick={handleLoginClick}
-                  className="hidden sm:flex items-center gap-2 bg-[#2F5FEB] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm md:text-base hover:bg-[#244ACC]"
+                  className="hidden sm:flex items-center gap-2 bg-[#4B5563] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm md:text-base hover:bg-[#374151]"
                   title="Đăng nhập"
                 >
                   <User size={18} className="group-hover:scale-125 transition-transform" />
@@ -630,17 +664,19 @@ const Header: React.FC = () => {
 
 
 
-      {/* Navigation - Row 2: Horizontal scroll on mobile */}
-      <nav className="flex flex-row gap-2 sm:gap-4 px-2 sm:px-4 md:px-8 py-2 sm:py-3 text-sm sm:text-base font-bold text-gray-700 border-t-2 border-gray-200 bg-white overflow-x-auto no-scrollbar">
+      {/* Navigation - Row 2: BeliBeli Style */}
+      <nav className="flex flex-row gap-1 sm:gap-4 px-2 sm:px-4 md:px-8 py-2 sm:py-3 text-xs sm:text-sm font-bold text-gray-700 border-t border-gray-200 bg-[#E5E9EC] overflow-x-auto no-scrollbar">
         {navLinks.map(({ to, label, icon: Icon }, index) => (
           <Link
             key={`${label}-${index}`}
             to={to}
-            className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 hover:text-[#2F5FEB] transition-all duration-300 relative group rounded-lg hover:bg-transparent whitespace-nowrap flex-shrink-0"
+            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 hover:text-[#4B5563] transition-all duration-300 relative group rounded-lg hover:bg-gray-50 whitespace-nowrap flex-shrink-0"
           >
-            <Icon size={16} className="sm:w-5 sm:h-5 md:hidden" />
+            <Icon size={14} className="sm:w-4 sm:h-4 md:hidden" />
             <span>{label}</span>
-            <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[#2F5FEB] group-hover:w-full transition-all duration-300 rounded-full hidden md:block"></span>
+            {index === 0 && (
+              <span className="absolute bottom-0 left-2 sm:left-4 right-2 sm:right-4 h-0.5 bg-[#4B5563] rounded-full"></span>
+            )}
           </Link>
         ))}
       </nav>

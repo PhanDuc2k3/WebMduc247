@@ -207,7 +207,7 @@ const filteredChats = mappedChats.filter((c): c is Chat => Boolean(c?.conversati
   return (
     <div className="w-full h-full bg-white border-r-0 md:border-r-2 border-gray-200 overflow-hidden flex flex-col shadow-lg md:shadow-xl">
       {/* Header */}
-      <div className="bg-[#2F5FEB] p-3 sm:p-4 md:p-5 lg:p-6 border-b-2 border-gray-200 flex-shrink-0">
+      <div className="bg-[#4B5563] p-3 sm:p-4 md:p-5 lg:p-6 border-b-2 border-gray-200 flex-shrink-0">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 md:gap-3">
           <MessageCircle className="w-5 h-5 md:w-6 md:h-6" /> Tin nhắn
         </h2>
@@ -218,12 +218,12 @@ const filteredChats = mappedChats.filter((c): c is Chat => Boolean(c?.conversati
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {loading ? (
           <div className="p-4 sm:p-6 md:p-8 text-center animate-fade-in">
-            <MessageCircle className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 md:mb-4 text-[#2F5FEB] animate-pulse" />
+            <MessageCircle className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 md:mb-4 text-[#4B5563] animate-pulse" />
             <p className="text-gray-600 text-sm sm:text-base md:text-lg font-medium">Đang tải...</p>
           </div>
         ) : chats.length === 0 ? (
           <div className="p-4 sm:p-6 md:p-8 text-center animate-fade-in">
-            <MessageCircle className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4 text-[#2F5FEB]" />
+            <MessageCircle className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4 text-[#4B5563]" />
             <p className="text-gray-500 text-sm sm:text-base md:text-lg font-medium mb-2">Chưa có cuộc trò chuyện</p>
             <p className="text-gray-400 text-xs md:text-sm">Bắt đầu cuộc trò chuyện mới</p>
           </div>
@@ -234,8 +234,8 @@ const filteredChats = mappedChats.filter((c): c is Chat => Boolean(c?.conversati
               onClick={() => !disabled && handleSelectChat(chat)}
               className={`flex items-center gap-2 sm:gap-3 md:gap-4 p-3 sm:p-4 md:p-4 lg:p-5 cursor-pointer transition-all duration-300 animate-fade-in-up border-b border-gray-100 ${
                 selectedChat?.conversationId === chat.conversationId
-                  ? "bg-[#2F5FEB]/5 border-l-4 border-[#2F5FEB] shadow-md"
-                  : "hover:bg-[#2F5FEB]/5 active:bg-[#2F5FEB]/10"
+                  ? "bg-[#4B5563]/5 border-l-4 border-[#4B5563] shadow-md"
+                  : "hover:bg-[#4B5563]/5 active:bg-[#4B5563]/10"
               } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
               style={{ animationDelay: `${index * 0.05}s` }}
             >

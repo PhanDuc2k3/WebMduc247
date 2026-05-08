@@ -59,14 +59,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               setRegionOpen(false);
               setCategoryOpen(false);
             }}
-            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-sm text-gray-700 hover:border-[#2F5FEB] hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm"
+            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-sm text-gray-700 hover:border-[#4B5563] hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm"
           >
             <span className="font-medium flex items-center gap-2">
               <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
               <span>{rating}</span>
             </span>
             <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${ratingOpen ? "rotate-180 text-[#2F5FEB]" : ""}`}
+              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${ratingOpen ? "rotate-180 text-[#4B5563]" : ""}`}
             />
           </button>
           {ratingOpen && (
@@ -78,7 +78,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                     setRating(opt);
                     setRatingOpen(false);
                   }}
-                  className="px-4 py-3 text-sm text-gray-700 hover:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] cursor-pointer transition-all duration-200 font-medium"
+                  className="px-4 py-3 text-sm text-gray-700 hover:bg-[#4B5563]/10 hover:text-[#4B5563] cursor-pointer transition-all duration-200 font-medium"
                 >
                   {opt}
                 </div>
@@ -95,14 +95,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               setRatingOpen(false);
               setCategoryOpen(false);
             }}
-            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-sm text-gray-700 hover:border-[#2F5FEB] hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm"
+            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-sm text-gray-700 hover:border-[#4B5563] hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm"
           >
             <span className="font-medium flex items-center gap-2">
               <MapPin className="w-4 h-4 text-red-500" />
               <span>{region}</span>
             </span>
             <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${regionOpen ? "rotate-180 text-[#2F5FEB]" : ""}`}
+              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${regionOpen ? "rotate-180 text-[#4B5563]" : ""}`}
             />
           </button>
           {regionOpen && (
@@ -114,7 +114,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                     setRegion(opt);
                     setRegionOpen(false);
                   }}
-                  className="px-4 py-3 text-sm text-gray-700 hover:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] cursor-pointer transition-all duration-200 font-medium"
+                  className="px-4 py-3 text-sm text-gray-700 hover:bg-[#4B5563]/10 hover:text-[#4B5563] cursor-pointer transition-all duration-200 font-medium"
                 >
                   {opt}
                 </div>
@@ -131,14 +131,14 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
               setRegionOpen(false);
               setRatingOpen(false);
             }}
-            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-sm text-gray-700 hover:border-[#2F5FEB] hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm"
+            className="w-full flex justify-between items-center border-2 border-gray-200 rounded-xl px-4 py-3 bg-white text-sm text-gray-700 hover:border-[#4B5563] hover:shadow-md focus:outline-none transition-all duration-300 shadow-sm"
           >
             <span className="font-medium flex items-center gap-2">
-              <Tag className="w-4 h-4 text-[#2F5FEB]" />
+              <Tag className="w-4 h-4 text-[#4B5563]" />
               <span>{category}</span>
             </span>
             <ChevronDown
-              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${categoryOpen ? "rotate-180 text-[#2F5FEB]" : ""}`}
+              className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${categoryOpen ? "rotate-180 text-[#4B5563]" : ""}`}
             />
           </button>
           {categoryOpen && (
@@ -150,7 +150,7 @@ const ProductFilters: React.FC<ProductFiltersProps> = ({
                     setCategory(opt);
                     setCategoryOpen(false);
                   }}
-                  className="px-4 py-3 text-sm text-gray-700 hover:bg-[#2F5FEB]/10 hover:text-[#2F5FEB] cursor-pointer transition-all duration-200 font-medium"
+                  className="px-4 py-3 text-sm text-gray-700 hover:bg-[#4B5563]/10 hover:text-[#4B5563] cursor-pointer transition-all duration-200 font-medium"
                 >
                   {opt}
                 </div>

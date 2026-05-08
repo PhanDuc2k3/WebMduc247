@@ -183,7 +183,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
             {/* Store info */}
             <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full lg:w-auto items-center sm:items-start">
               <div className="relative">
-                <div className="absolute inset-0 bg-[#2F5FEB] rounded-full blur opacity-40"></div>
+                <div className="absolute inset-0 bg-[#4B5563] rounded-full blur opacity-40"></div>
                 <img
                   src={store.logoUrl || "/default-store.png"}
                   alt={store.name}
@@ -198,7 +198,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                     {store.name}
                   </h2>
-                  <span className="text-[10px] md:text-xs bg-[#2F5FEB]/10 text-[#2F5FEB] px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm flex items-center gap-1">
+                  <span className="text-[10px] md:text-xs bg-[#4B5563]/10 text-[#4B5563] px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm flex items-center gap-1">
                     <Store className="w-2.5 h-2.5 md:w-3 md:h-3" />
                     <span>Mall</span>
                   </span>
@@ -216,7 +216,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
               <button
                 onClick={handleChat}
                 disabled={isLoadingChat}
-                className="px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl font-bold hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none touch-manipulation flex items-center gap-1.5 sm:gap-2"
+                className="px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 bg-[#4B5563] text-white rounded-lg md:rounded-xl font-bold hover:bg-[#374151] transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none touch-manipulation flex items-center gap-1.5 sm:gap-2"
               >
                 {isLoadingChat ? (
                   <>
@@ -236,7 +236,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
                 className={`px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3 border-2 rounded-lg md:rounded-xl font-bold transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95 text-xs sm:text-sm md:text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center gap-1.5 sm:gap-2 touch-manipulation ${
                   isFavorite
                     ? "bg-gradient-to-r from-red-50 to-pink-50 border-red-400 text-red-600 hover:border-red-500"
-                    : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-[#2F5FEB] hover:text-[#2F5FEB]"
+                    : "border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-[#4B5563] hover:text-[#4B5563]"
                 }`}
               >
                 <Heart
@@ -261,10 +261,10 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
             </div>
 
             {/* Products */}
-            <div className="flex flex-col items-center gap-1 md:gap-2 p-2 md:p-4 bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg md:rounded-xl border-2 border-blue-200 hover:border-blue-400 transition-all duration-300 transform hover:scale-105">
-              <span className="text-xl md:text-2xl font-bold text-blue-600">{store.products || 0}</span>
+            <div className="flex flex-col items-center gap-1 md:gap-2 p-2 md:p-4 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg md:rounded-xl border-2 border-gray-200 hover:border-gray-400 transition-all duration-300 transform hover:scale-105">
+              <span className="text-xl md:text-2xl font-bold text-gray-600">{store.products || 0}</span>
               <p className="text-gray-600 text-[10px] md:text-xs font-semibold flex items-center gap-1">
-                <Package className="w-3 h-3 text-blue-500" />
+                <Package className="w-3 h-3 text-gray-500" />
                 <span>Sản phẩm</span>
               </p>
             </div>

@@ -104,7 +104,7 @@ const FeaturedStores: React.FC = () => {
         onClick={() => navigate("/store")}
         className="text-center mt-6 sm:mt-8 cursor-pointer"
       >
-        <span className="inline-block font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all duration-300 transform hover:scale-105 text-sm sm:text-base md:text-lg">
+        <span className="inline-block font-bold text-gray-600 hover:text-gray-700 hover:underline transition-all duration-300 transform hover:scale-105 text-sm sm:text-base md:text-lg">
           Xem thêm cửa hàng →
         </span>
       </div>

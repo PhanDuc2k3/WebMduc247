@@ -176,13 +176,13 @@ export default function ChatInterface() {
             />
           ) : conversationId ? (
             // Show loading or placeholder when conversationId exists but selectedChat is not loaded yet
-            <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-[#2F5FEB]/10 animate-fade-in px-4">
-              <MessageCircle className="w-14 h-14 md:w-24 md:h-24 mb-3 sm:mb-4 md:mb-6 text-[#2F5FEB] animate-pulse" />
+            <div className="flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-[#4B5563]/10 animate-fade-in px-4">
+              <MessageCircle className="w-14 h-14 md:w-24 md:h-24 mb-3 sm:mb-4 md:mb-6 text-[#4B5563] animate-pulse" />
               <p className="text-base sm:text-lg md:text-2xl font-bold text-gray-700 mb-2">Đang tải...</p>
             </div>
           ) : (
-            <div className="hidden md:flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-[#2F5FEB]/10 animate-fade-in">
-              <MessageCircle className="w-20 h-20 md:w-28 md:h-28 mb-6 text-[#2F5FEB] animate-bounce" />
+            <div className="hidden md:flex flex-col items-center justify-center h-full w-full bg-gradient-to-br from-gray-50 to-[#4B5563]/10 animate-fade-in">
+              <MessageCircle className="w-20 h-20 md:w-28 md:h-28 mb-6 text-[#4B5563] animate-bounce" />
               <p className="text-2xl font-bold text-gray-700 mb-2">Chào mừng đến với Tin nhắn</p>
               <p className="text-lg text-gray-500 flex items-center gap-2">
                 <Clock className="w-5 h-5" />

@@ -27,7 +27,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
     <div className="w-full">
       {/* Ảnh chính với zoom effect */}
       <div 
-        className="w-full mb-6 relative group rounded-2xl overflow-hidden shadow-xl border-4 border-gray-100 hover:border-[#2F5FEB] transition-all duration-300 bg-white"
+        className="w-full mb-6 relative group rounded-2xl overflow-hidden shadow-xl border-4 border-gray-100 hover:border-[#4B5563] transition-all duration-300 bg-white"
         onMouseEnter={() => setZoomed(true)}
         onMouseLeave={() => setZoomed(false)}
         onMouseMove={handleMouseMove}
@@ -51,7 +51,7 @@ const ProductImages: React.FC<ProductImagesProps> = ({
         ) : (
           <div className="w-full aspect-[3/4] flex items-center justify-center border-2 border-dashed border-gray-300 rounded-xl text-gray-400 bg-gray-50">
             <div className="text-center">
-              <div className="text-4xl mb-2 text-[#2F5FEB]">📷</div>
+              <div className="text-4xl mb-2 text-[#4B5563]">📷</div>
               <p className="text-sm">Chưa có ảnh</p>
             </div>
           </div>
@@ -65,8 +65,8 @@ const ProductImages: React.FC<ProductImagesProps> = ({
             key={idx}
             className={`flex-shrink-0 w-20 h-20 rounded-xl border-4 overflow-hidden cursor-pointer transition-all duration-300 transform hover:scale-110 ${
               mainImage === img 
-                ? "border-[#2F5FEB] shadow-lg ring-4 ring-[#2F5FEB]/30" 
-                : "border-gray-200 hover:border-[#2F5FEB]"
+                ? "border-[#4B5563] shadow-lg ring-4 ring-[#4B5563]/30" 
+                : "border-gray-200 hover:border-[#4B5563]"
             }`}
             onClick={() => setMainImage(img)}
           >

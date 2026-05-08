@@ -339,13 +339,13 @@ export default function OrderPage() {
   return (
     <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6 bg-gray-50 min-h-screen">
       <div className="mb-4 sm:mb-6 md:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-[#4B5563] flex items-center gap-2 sm:gap-3">
           <Package className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
           Chi tiết đơn hàng
         </h1>
         <p className="text-gray-600 text-base sm:text-lg flex items-center gap-2">
           <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
-          Mã đơn hàng: <span className="font-bold text-[#2F5FEB] break-all">{order.orderCode}</span>
+          Mã đơn hàng: <span className="font-bold text-[#4B5563] break-all">{order.orderCode}</span>
         </p>
       </div>
 
@@ -591,7 +591,7 @@ export default function OrderPage() {
                   setShowPaymentSuccess(false);
                   setPaymentInfo(null);
                 }}
-                className="w-full py-3 px-4 bg-gradient-to-r from-[#2F5FEB] to-[#244ACC] text-white font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-gradient-to-r from-[#4B5563] to-[#374151] text-white font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
               >
                 <span>Đã hiểu</span>
                 <ArrowRight className="w-5 h-5" />

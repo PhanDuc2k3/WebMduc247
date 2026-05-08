@@ -83,7 +83,7 @@ const AddProductPopup: React.FC<AddProductPopupProps> = ({
         <div className="absolute -top-10 sm:-top-12 right-0">
           <button
             onClick={onClose}
-            className="text-white bg-[#2F5EE9] hover:bg-[#244ACC] px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-colors touch-manipulation shadow-lg flex items-center gap-2"
+            className="text-white bg-[#2F5EE9] hover:bg-[#374151] px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-colors touch-manipulation shadow-lg flex items-center gap-2"
           >
             <X className="w-4 h-4" /> Đóng
           </button>

@@ -83,7 +83,7 @@ class ProductService {
   // Lấy danh sách sản phẩm
   async getProducts(query) {
     const { category, search, sortBy, limit = 10, page = 1 } = query;
-    const filter = { isActive: true };
+    const filter = {}; // Hiển thị tất cả sản phẩm, không lọc theo isActive
 
     if (category) {
       // Filter theo category (case-insensitive, trim, escape special regex chars)
@@ -143,10 +143,10 @@ class ProductService {
       throw new Error("Product not found");
     }
 
-    // Kiểm tra sản phẩm có đang active không
-    if (!product.isActive) {
-      throw new Error("Product not found");
-    }
+    // Bỏ kiểm tra isActive để hiển thị sản phẩm
+    // if (!product.isActive) {
+    //   throw new Error("Product not found");
+    // }
 
     return product;
   }
@@ -316,7 +316,7 @@ class ProductService {
   // Lấy featured products
   async getFeaturedProducts() {
     return await productRepository.find(
-      { isActive: true },
+      {}, // Hiển thị tất cả sản phẩm, không lọc theo isActive
       {
         populate: "store",
         sort: { soldCount: -1 },
@@ -339,7 +339,7 @@ class ProductService {
   // Lấy sản phẩm theo store
   async getProductsByStore(storeId) {
     const products = await productRepository.find(
-      { store: storeId, isActive: true },
+      { store: storeId }, // Hiển thị tất cả sản phẩm, không lọc theo isActive
       { populate: "store" }
     );
     

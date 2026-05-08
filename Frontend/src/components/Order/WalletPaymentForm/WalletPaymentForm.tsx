@@ -205,7 +205,7 @@ export default function WalletPaymentForm({
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-blue-100 overflow-hidden animate-fade-in-up">
       <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 sm:p-6 border-b-2 border-blue-200">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#4B5563] flex items-center gap-2 sm:gap-3">
           <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" />
           Thanh toán bằng ví
         </h2>
@@ -244,7 +244,7 @@ export default function WalletPaymentForm({
             }}
             placeholder="Nhập mã xác thực"
             maxLength={6}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#2F5FEB] focus:outline-none text-lg text-center font-mono tracking-widest"
+            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4B5563] focus:outline-none text-lg text-center font-mono tracking-widest"
             disabled={isProcessing}
           />
 
@@ -252,7 +252,7 @@ export default function WalletPaymentForm({
           <button
             onClick={handleResendCode}
             disabled={sendingCode || isProcessing}
-            className="w-full py-2 px-4 text-sm text-[#2F5FEB] hover:text-[#244ACC] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-2 px-4 text-sm text-[#4B5563] hover:text-[#374151] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RefreshCw className={`w-4 h-4 ${sendingCode ? "animate-spin" : ""}`} />
             {sendingCode ? "Đang gửi..." : "Gửi lại mã xác thực"}
@@ -263,7 +263,7 @@ export default function WalletPaymentForm({
         <button
           onClick={handleConfirmPayment}
           disabled={isProcessing || paymentCode.length !== 6}
-          className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-[#2F5FEB] to-[#244ACC] text-white font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
+          className="w-full py-3 sm:py-4 px-4 sm:px-6 bg-gradient-to-r from-[#4B5563] to-[#374151] text-white font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
         >
           {isProcessing ? (
             <>

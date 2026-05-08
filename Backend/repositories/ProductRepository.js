@@ -116,7 +116,6 @@ class ProductRepository {
   async searchProducts(keyword, limit = 10) {
     const searchRegex = new RegExp(keyword, 'i');
     return await Product.find({
-      isActive: true,
       $or: [
         { name: searchRegex },
         { description: searchRegex },

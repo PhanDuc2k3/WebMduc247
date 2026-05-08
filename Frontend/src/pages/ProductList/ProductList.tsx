@@ -70,10 +70,12 @@ const ProductList: React.FC = () => {
 
   // Đọc search term và category từ URL query
   const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [showSaleOnly, setShowSaleOnly] = useState<boolean>(false);
 
   useEffect(() => {
     const search = searchParams.get("search");
     const category = searchParams.get("category");
+    const sale = searchParams.get("sale");
     
     if (search) {
       setSearchTerm(search);
@@ -85,6 +87,12 @@ const ProductList: React.FC = () => {
       setSelectedCategory(category);
     } else {
       setSelectedCategory("");
+    }
+    
+    if (sale === "true") {
+      setShowSaleOnly(true);
+    } else {
+      setShowSaleOnly(false);
     }
     
     // Reset về trang 1 khi search hoặc category thay đổi
@@ -206,7 +214,7 @@ const ProductList: React.FC = () => {
     return () => {
       isCancelled = true;
     };
-  }, [searchTerm, selectedCategory]);
+  }, [searchTerm, selectedCategory, showSaleOnly]);
 
   // Đóng dropdown khi click ra ngoài
   useEffect(() => {
@@ -236,6 +244,13 @@ const ProductList: React.FC = () => {
         if (productCategory !== selectedCat) {
           return false;
         }
+      }
+      return true;
+    })
+    .filter((p) => {
+      // Filter chỉ hiển thị sản phẩm sale (có salePrice và salePrice < price)
+      if (showSaleOnly) {
+        return p.salePrice && p.salePrice > 0 && p.salePrice < p.price;
       }
       return true;
     })
@@ -325,10 +340,12 @@ const ProductList: React.FC = () => {
       {/* Header */}
       <div className="pb-4 md:pb-6 animate-fade-in-down">
         <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold pb-2 md:pb-3 text-gray-900 flex items-center gap-2">
-          <Package className="w-6 h-6 md:w-7 md:h-7 text-[#2F5FEB]" />
-          <span className="text-[#2F5FEB]">
+          <Package className="w-6 h-6 md:w-7 md:h-7 text-[#4B5563]" />
+          <span className="text-[#4B5563]">
             {searchTerm 
               ? `Kết quả tìm kiếm: "${searchTerm}"`
+              : showSaleOnly
+              ? "Flash Sale"
               : selectedCategory
               ? `Danh mục: ${selectedCategory}`
               : "Danh sách sản phẩm"}
@@ -338,15 +355,21 @@ const ProductList: React.FC = () => {
           {searchTerm 
             ? <>
                 Tìm thấy{" "}
-                <span className="text-[#2F5FEB] font-semibold">{filteredProducts.length}</span>
+                <span className="text-[#4B5563] font-semibold">{filteredProducts.length}</span>
                 {" "}sản phẩm phù hợp
+              </>
+            : showSaleOnly
+            ? <>
+                Giảm giá cực sốc!{" "}
+                <span className="text-[#4B5563] font-semibold">{filteredProducts.length}</span>
+                {" "}sản phẩm đang được giảm giá
               </>
             : selectedCategory
             ? <>
                 Tìm thấy{" "}
-                <span className="text-[#2F5FEB] font-semibold">{filteredProducts.length}</span>
+                <span className="text-[#4B5563] font-semibold">{filteredProducts.length}</span>
                 {" "}sản phẩm trong danh mục{" "}
-                <span className="text-[#2F5FEB] font-semibold">{selectedCategory}</span>
+                <span className="text-[#4B5563] font-semibold">{selectedCategory}</span>
               </>
             : "Khám phá các sản phẩm nổi bật được nhiều người yêu thích"}
         </p>
@@ -356,7 +379,7 @@ const ProductList: React.FC = () => {
         {/* Bộ lọc giá - Desktop */}
         <div className="hidden lg:block lg:w-1/5 bg-white p-6 rounded-2xl shadow-md border border-gray-100 h-fit sticky top-[180px] animate-fade-in-left delay-300">
           <div className="flex items-center gap-2 mb-4">
-            <DollarSign className="w-6 h-6 text-[#2F5FEB]" />
+            <DollarSign className="w-6 h-6 text-[#4B5563]" />
             <h2 className="text-xl font-bold text-gray-900">Lọc theo giá</h2>
           </div>
           <PriceFilter selectedPrice={selectedPrice} setSelectedPrice={setSelectedPrice} />
@@ -367,7 +390,7 @@ const ProductList: React.FC = () => {
           {/* Mobile Filter Button */}
           <button
             onClick={() => setIsMobileFilterOpen(true)}
-            className="lg:hidden pb-3 w-full flex items-center justify-center gap-2 bg-[#2F5FEB] text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:bg-[#244ACC] transition-all duration-300"
+            className="lg:hidden pb-3 w-full flex items-center justify-center gap-2 bg-[#4B5563] text-white px-4 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg hover:bg-[#374151] transition-all duration-300"
           >
             <Filter size={20} />
             <span>Lọc sản phẩm</span>
@@ -384,7 +407,7 @@ const ProductList: React.FC = () => {
                     onClick={() => setSortBy("relevant")}
                     className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
                       sortBy === "relevant"
-                        ? "bg-[#2F5FEB] text-white shadow-md"
+                        ? "bg-[#4B5563] text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -394,7 +417,7 @@ const ProductList: React.FC = () => {
                   onClick={() => setSortBy("newest")}
                   className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
                     sortBy === "newest"
-                      ? "bg-[#2F5FEB] text-white shadow-md"
+                      ? "bg-[#4B5563] text-white shadow-md"
                       : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                   }`}
                 >
@@ -404,7 +427,7 @@ const ProductList: React.FC = () => {
                   onClick={() => setSortBy("bestselling")}
                   className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 ${
                     sortBy === "bestselling"
-                      ? "bg-[#2F5FEB] text-white shadow-md"
+                      ? "bg-[#4B5563] text-white shadow-md"
                       : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                   }`}
                 >
@@ -416,7 +439,7 @@ const ProductList: React.FC = () => {
                     onClick={() => setShowRatingDropdown(!showRatingDropdown)}
                     className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       ratingFilter
-                        ? "bg-[#2F5FEB] text-white shadow-md"
+                        ? "bg-[#4B5563] text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -435,7 +458,7 @@ const ProductList: React.FC = () => {
                           }}
                           className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
                             ratingFilter === option.value
-                              ? "bg-[#2F5FEB]/10 text-[#2F5FEB] font-medium"
+                              ? "bg-[#4B5563]/10 text-[#4B5563] font-medium"
                               : "text-gray-700"
                           } ${option.value ? "border-t border-gray-100" : ""}`}
                         >
@@ -451,7 +474,7 @@ const ProductList: React.FC = () => {
                     onClick={() => setShowLocationDropdown(!showLocationDropdown)}
                     className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       locationFilter
-                        ? "bg-[#2F5FEB] text-white shadow-md"
+                        ? "bg-[#4B5563] text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -469,7 +492,7 @@ const ProductList: React.FC = () => {
                           }}
                           className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
                             locationFilter === option.value
-                              ? "bg-[#2F5FEB]/10 text-[#2F5FEB] font-medium"
+                              ? "bg-[#4B5563]/10 text-[#4B5563] font-medium"
                               : "text-gray-700"
                           } ${option.value ? "border-t border-gray-100" : ""}`}
                         >
@@ -490,7 +513,7 @@ const ProductList: React.FC = () => {
                     }}
                     className={`px-3 py-1.5 md:px-4 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 flex items-center gap-1 ${
                       sortBy === "price"
-                        ? "bg-[#2F5FEB] text-white shadow-md"
+                        ? "bg-[#4B5563] text-white shadow-md"
                         : "bg-white text-gray-700 border border-gray-200 hover:border-gray-300"
                     }`}
                   >
@@ -505,7 +528,7 @@ const ProductList: React.FC = () => {
                           setShowPriceDropdown(false);
                         }}
                         className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors ${
-                          priceSort === "low" ? "bg-[#2F5FEB]/10 text-[#2F5FEB] font-medium" : "text-gray-700"
+                          priceSort === "low" ? "bg-[#4B5563]/10 text-[#4B5563] font-medium" : "text-gray-700"
                         }`}
                       >
                         Thấp đến cao
@@ -516,7 +539,7 @@ const ProductList: React.FC = () => {
                           setShowPriceDropdown(false);
                         }}
                         className={`w-full px-4 py-2 text-sm text-left hover:bg-gray-50 transition-colors border-t border-gray-100 ${
-                          priceSort === "high" ? "bg-[#2F5FEB]/10 text-[#2F5FEB] font-medium" : "text-gray-700"
+                          priceSort === "high" ? "bg-[#4B5563]/10 text-[#4B5563] font-medium" : "text-gray-700"
                         }`}
                       >
                         Cao đến thấp
@@ -527,35 +550,9 @@ const ProductList: React.FC = () => {
                 </div>
               </div>
 
-              {/* Pagination */}
-              <div className="flex items-center justify-between md:justify-end gap-2 md:gap-4 w-full md:w-auto pt-2 md:pt-0">
-                <span className="text-gray-700 text-xs md:text-sm">
-                  <span className="text-[#2F5FEB] font-bold">{currentPage}</span>/{totalPages}
-                </span>
-                <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className={`px-2 py-1.5 md:px-3 md:py-2 border-r border-gray-200 transition-colors ${
-                      currentPage === 1
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-[#2F5FEB]"
-                    }`}
-                  >
-                    <ChevronLeft size={16} />
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    className={`px-2 py-1.5 md:px-3 md:py-2 transition-colors ${
-                      currentPage === totalPages
-                        ? "text-gray-300 cursor-not-allowed"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-[#2F5FEB]"
-                    }`}
-                  >
-                    <ChevronRight size={16} />
-                  </button>
-                </div>
+              {/* Thông tin số sản phẩm */}
+              <div className="text-gray-600 text-xs md:text-sm pt-2 md:pt-0">
+                Hiển thị <span className="font-semibold text-[#4B5563]">{filteredProducts.length}</span> sản phẩm
               </div>
             </div>
 
@@ -603,6 +600,63 @@ const ProductList: React.FC = () => {
               </div>
             )}
           </div>
+
+          {/* Pagination ở dưới cùng */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-6 py-4">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  currentPage === 1
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-[#4B5563]"
+                }`}
+              >
+                <ChevronLeft size={18} className="inline" />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-10 h-10 rounded-lg font-medium transition-all duration-200 ${
+                        currentPage === pageNum
+                          ? "bg-[#4B5563] text-white shadow-md"
+                          : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  currentPage === totalPages
+                    ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                    : "bg-white text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-[#4B5563]"
+                }`}
+              >
+                <ChevronRight size={18} className="inline" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
       </div> {/* Đóng div flex flex-col lg:flex-row */}
@@ -629,7 +683,7 @@ const ProductList: React.FC = () => {
         >
           <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-4 flex items-center justify-between z-10">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              <DollarSign className="w-6 h-6 text-[#2F5FEB]" />
+              <DollarSign className="w-6 h-6 text-[#4B5563]" />
               Lọc theo giá
             </h2>
             <button

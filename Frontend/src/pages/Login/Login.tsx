@@ -207,16 +207,16 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#2F5FEB]/10 via-white to-[#2F5FEB]/20 py-8 px-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-[#4B5563]/10 via-white to-[#4B5563]/20 py-8 px-4">
       {/* Logo và Header */}
       <div className="flex flex-col items-center mb-8 animate-fade-in-down">
         <div className="relative mb-4">
-          <div className="absolute inset-0 bg-[#2F5FEB] rounded-full blur-lg opacity-50 animate-pulse"></div>
-          <div className="relative w-20 h-20 rounded-full bg-[#2F5FEB] flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
+          <div className="absolute inset-0 bg-[#4B5563] rounded-full blur-lg opacity-50 animate-pulse"></div>
+          <div className="relative w-20 h-20 rounded-full bg-[#4B5563] flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
             <ShoppingCart className="text-white w-10 h-10" />
           </div>
         </div>
-        <h1 className="text-3xl lg:text-4xl font-extrabold text-[#2F5FEB] mb-2">
+        <h1 className="text-3xl lg:text-4xl font-extrabold text-[#4B5563] mb-2">
           ShopMDuc247
         </h1>
         <p className="text-gray-600 text-center text-lg">
@@ -226,7 +226,7 @@ const Login: React.FC = () => {
 
       {/* Form Card */}
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border-2 border-gray-100 p-8 lg:p-10 relative animate-fade-in-up">
-        <div className="absolute inset-0 bg-[#2F5FEB]/5 rounded-3xl pointer-events-none"></div>
+        <div className="absolute inset-0 bg-[#4B5563]/5 rounded-3xl pointer-events-none"></div>
         
         {/* Tabs */}
         <div className="relative mb-8">
@@ -234,8 +234,8 @@ const Login: React.FC = () => {
             <button
               className={`w-1/2 py-3 text-center font-bold rounded-xl transition-all duration-300 ${
                 activeTab === "login" 
-                  ? "bg-[#2F5FEB] text-white shadow-lg scale-105" 
-                  : "bg-transparent text-gray-600 hover:text-[#2F5FEB]"
+                  ? "bg-[#4B5563] text-white shadow-lg scale-105" 
+                  : "bg-transparent text-gray-600 hover:text-[#4B5563]"
               }`}
               onClick={() => {
                 setActiveTab("login");
@@ -247,8 +247,8 @@ const Login: React.FC = () => {
             <button
               className={`w-1/2 py-3 text-center font-bold rounded-xl transition-all duration-300 ${
                 activeTab === "register" 
-                  ? "bg-[#2F5FEB] text-white shadow-lg scale-105" 
-                  : "bg-transparent text-gray-600 hover:text-[#2F5FEB]"
+                  ? "bg-[#4B5563] text-white shadow-lg scale-105" 
+                  : "bg-transparent text-gray-600 hover:text-[#4B5563]"
               }`}
               onClick={() => {
                 setActiveTab("register");
@@ -271,10 +271,10 @@ const Login: React.FC = () => {
               Email 
             </label>
             <div className="relative">
-              <div className="absolute inset-0 bg-[#2F5FEB]/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-[#4B5563]/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
               <input
                 type="text"
-                className="relative w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300"
+                className="relative w-full px-4 py-3 pl-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300"
                 placeholder="Nhập email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -289,10 +289,10 @@ const Login: React.FC = () => {
               Mật khẩu
             </label>
             <div className="relative">
-              <div className="absolute inset-0 bg-[#2F5FEB]/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-[#4B5563]/10 rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
               <input
                 type={showPassword ? "text" : "password"}
-                className="relative w-full px-4 py-3 pl-12 pr-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300"
+                className="relative w-full px-4 py-3 pl-12 pr-12 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300"
                 placeholder="Nhập mật khẩu"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -318,7 +318,7 @@ const Login: React.FC = () => {
                 type="checkbox" 
                 checked={remember} 
                 onChange={(e) => setRemember(e.target.checked)}
-                className="w-4 h-4 accent-[#2F5FEB] rounded"
+                className="w-4 h-4 accent-[#4B5563] rounded"
               />
               Ghi nhớ đăng nhập
             </label>
@@ -329,7 +329,7 @@ const Login: React.FC = () => {
                 e.stopPropagation();
                 setShowForgotPassword(true);
               }}
-              className="text-sm font-semibold text-[#2F5FEB] hover:text-[#2F5FEB] hover:underline transition-colors duration-200 cursor-pointer bg-transparent border-none outline-none focus:outline-none focus:ring-2 focus:ring-[#2F5FEB] focus:ring-offset-2 rounded px-1"
+              className="text-sm font-semibold text-[#4B5563] hover:text-[#4B5563] hover:underline transition-colors duration-200 cursor-pointer bg-transparent border-none outline-none focus:outline-none focus:ring-2 focus:ring-[#4B5563] focus:ring-offset-2 rounded px-1"
             >
               Quên mật khẩu?
             </button>
@@ -338,7 +338,7 @@ const Login: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="relative w-full bg-[#2F5FEB] text-white py-3.5 rounded-xl hover:bg-[#244ACC] transition-all duration-300 font-bold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            className="relative w-full bg-[#4B5563] text-white py-3.5 rounded-xl hover:bg-[#374151] transition-all duration-300 font-bold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
@@ -385,10 +385,10 @@ const Login: React.FC = () => {
                     <span>Email</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-0 bg-[#2F5FEB]/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-[#4B5563]/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                     <input
                       type="email"
-                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                       placeholder="Nhập email của bạn"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
@@ -401,7 +401,7 @@ const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={forgotLoading}
-                  className="relative w-full bg-[#2F5FEB] text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:bg-[#244ACC] transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="relative w-full bg-[#4B5563] text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:bg-[#374151] transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {forgotLoading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -426,10 +426,10 @@ const Login: React.FC = () => {
                     Mã xác thực (6 chữ số)
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-gray-500/10 to-gray-500/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                     <input
                       type="text"
-                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white transition-all duration-300 text-center text-xl sm:text-2xl font-bold tracking-widest"
+                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-gray-500 focus:border-gray-500 outline-none bg-white transition-all duration-300 text-center text-xl sm:text-2xl font-bold tracking-widest"
                       placeholder="000000"
                       value={resetCode}
                       onChange={(e) => setResetCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -442,7 +442,7 @@ const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={forgotLoading || resetCode.length !== 6}
-                  className="relative w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3.5 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-bold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="relative w-full bg-gradient-to-r from-gray-500 to-gray-700 text-white py-3.5 rounded-xl hover:from-gray-600 hover:to-gray-800 transition-all duration-300 font-bold text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {forgotLoading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -460,7 +460,7 @@ const Login: React.FC = () => {
                     setForgotPasswordStep("email");
                     setResetCode("");
                   }}
-                  className="w-full text-sm text-[#2F5FEB] hover:text-[#2F5FEB] hover:underline transition-colors duration-200"
+                  className="w-full text-sm text-[#4B5563] hover:text-[#4B5563] hover:underline transition-colors duration-200"
                 >
                   Quay lại nhập email
                 </button>
@@ -476,10 +476,10 @@ const Login: React.FC = () => {
                     <span>Mật khẩu mới</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-0 bg-[#2F5FEB]/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-[#4B5563]/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                     <input
                       type="password"
-                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 pr-10 sm:pr-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 pr-10 sm:pr-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                       placeholder="Nhập mật khẩu mới"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
@@ -496,10 +496,10 @@ const Login: React.FC = () => {
                     <span>Xác nhận mật khẩu</span>
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-0 bg-[#2F5FEB]/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-[#4B5563]/10 rounded-lg sm:rounded-xl blur-sm opacity-0 focus-within:opacity-100 transition-opacity duration-300"></div>
                     <input
                       type="password"
-                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 pr-10 sm:pr-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
+                      className="relative w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-12 pr-10 sm:pr-12 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300 text-sm sm:text-base"
                       placeholder="Nhập lại mật khẩu mới"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
@@ -516,7 +516,7 @@ const Login: React.FC = () => {
                 <button
                   type="submit"
                   disabled={forgotLoading || newPassword !== confirmPassword || newPassword.length < 6}
-                  className="relative w-full bg-[#2F5FEB] text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:bg-[#244ACC] transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                  className="relative w-full bg-[#4B5563] text-white py-2.5 sm:py-3.5 rounded-lg sm:rounded-xl hover:bg-[#374151] transition-all duration-300 font-bold text-sm sm:text-base shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                 >
                   {forgotLoading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -535,7 +535,7 @@ const Login: React.FC = () => {
                     setNewPassword("");
                     setConfirmPassword("");
                   }}
-                  className="w-full text-xs sm:text-sm text-[#2F5FEB] hover:text-[#2F5FEB] hover:underline transition-colors duration-200"
+                  className="w-full text-xs sm:text-sm text-[#4B5563] hover:text-[#4B5563] hover:underline transition-colors duration-200"
                 >
                   Quay lại nhập mã
                 </button>

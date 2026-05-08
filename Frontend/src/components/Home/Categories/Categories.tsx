@@ -1,136 +1,177 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Smartphone,
-  Book,        
   Shirt,
-  Laptop,
-  Heart,
-  Dumbbell,
-  Home,
-  Baby,
-  Car,
-  Camera,
-  Tv,
+  Wind,
+  Briefcase,
   Watch,
-  Gamepad2,
-  ChevronLeft,
-  ChevronRight,
+  ShoppingBag,
+  Footprints,
+  Grid3X3,
+  Crown,
 } from "lucide-react";
 import productApi from "../../../api/productApi";
 
-const baseCategories = [
-  { name: "Điện thoại", icon: Smartphone, key: "Điện thoại", color: "bg-blue-100", count: "" },
-  { name: "Sách", icon: Book, key: "Sách", color: "bg-amber-100", count: "" }, // ✅ thêm mục Sách ở đây
-  { name: "Thời trang", icon: Shirt, key: "Thời trang", color: "bg-pink-100", count: "" },
-  { name: "Laptop", icon: Laptop, key: "Laptop", color: "bg-purple-100", count: "" },
-  { name: "Làm đẹp", icon: Heart, key: "Làm đẹp", color: "bg-yellow-100", count: "" },
-  { name: "Thể thao", icon: Dumbbell, key: "Thể thao", color: "bg-green-100", count: "" },
-  { name: "Nhà cửa", icon: Home, key: "Nhà cửa", color: "bg-orange-100", count: "" },
-  { name: "Mẹ & Bé", icon: Baby, key: "Mẹ & Bé", color: "bg-red-100", count: "" },
-  { name: "Ô tô", icon: Car, key: "Ô tô", color: "bg-gray-200", count: "" },
-  { name: "Máy ảnh", icon: Camera, key: "Máy ảnh", color: "bg-indigo-100", count: "" },
-  { name: "Tivi", icon: Tv, key: "Tivi", color: "bg-teal-100", count: "" },
-  { name: "Đồng hồ", icon: Watch, key: "Đồng hồ", color: "bg-lime-100", count: "" },
-  { name: "Đồ chơi", icon: Gamepad2, key: "Đồ chơi", color: "bg-rose-100", count: "" },
+interface Category {
+  name: string;
+  icon: React.ElementType;
+  key: string;
+  color: string;
+  borderColor: string;
+  count?: number;
+  imageUrl?: string;
+  bgColor: string;
+}
+
+const baseCategories: Category[] = [
+  { name: "T-Shirt", icon: Shirt, key: "T-Shirt", color: "text-blue-600", borderColor: "border-blue-200", bgColor: "bg-blue-50" },
+  { name: "Jacket", icon: Wind, key: "Jacket", color: "text-gray-600", borderColor: "border-gray-200", bgColor: "bg-gray-50" },
+  { name: "Shirt", icon: Briefcase, key: "Shirt", color: "text-green-600", borderColor: "border-green-200", bgColor: "bg-green-50" },
+  { name: "Jeans", icon: Shirt, key: "Jeans", color: "text-indigo-600", borderColor: "border-indigo-200", bgColor: "bg-indigo-50" },
+  { name: "Bag", icon: ShoppingBag, key: "Bag", color: "text-amber-600", borderColor: "border-amber-200", bgColor: "bg-amber-50" },
+  { name: "Shoes", icon: Footprints, key: "Shoes", color: "text-red-600", borderColor: "border-red-200", bgColor: "bg-red-50" },
+  { name: "Watches", icon: Watch, key: "Watches", color: "text-purple-600", borderColor: "border-purple-200", bgColor: "bg-purple-50" },
+  { name: "Cap", icon: Crown, key: "Cap", color: "text-pink-600", borderColor: "border-pink-200", bgColor: "bg-pink-50" },
 ];
 
 const Categories: React.FC = () => {
   const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [categories, setCategories] = useState(baseCategories);
+  const [categories] = useState<Category[]>(baseCategories);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchCounts = async () => {
       try {
         const res = await productApi.getProductCountByCategory();
         const countData = res.data || [];
-
-        const updated = baseCategories.map((cat) => {
-          const found = countData.find((c: any) => c.category === cat.key);
-          return {
-            ...cat,
-            count: found ? `${found.count} sản phẩm` : "0 sản phẩm",
-          };
-        });
-        setCategories(updated);
+        const stored = localStorage.getItem("categoryCounts");
+        if (!stored) {
+          localStorage.setItem("categoryCounts", JSON.stringify(countData));
+        }
       } catch (error) {
-        console.error("❌ Lỗi tải số lượng:", error);
+        console.error("Lỗi tải số lượng:", error);
       }
     };
     fetchCounts();
   }, []);
 
-  const scroll = (dir: "left" | "right") => {
-    scrollRef.current?.scrollBy({
-      left: dir === "left" ? -300 : 300,
-      behavior: "smooth",
-    });
+  const handleCategoryClick = (key: string) => {
+    setActiveCategory(key === activeCategory ? null : key);
+    navigate(`/products?category=${encodeURIComponent(key)}`);
   };
 
   return (
-    <section className="p-3 sm:p-4 md:p-6 bg-gradient-to-br from-gray-50 via-white to-gray-50 mt-6 sm:mt-8 md:mt-10 rounded-xl sm:rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300">
-      <div className="mb-4 sm:mb-5 md:mb-6 animate-fade-in-down">
-        <h3 className="text-lg sm:text-xl md:text-[24px] lg:text-[28px] font-bold mb-1 sm:mb-2 text-gray-900 gradient-text">
-          🛍️ Danh mục nổi bật
-        </h3>
-        <p className="text-xs sm:text-sm text-gray-600">Khám phá các danh mục sản phẩm phổ biến</p>
-      </div>
+    <section className="mt-4 sm:mt-6 lg:mt-8">
+      {/* Categories Container - White Card with Shadow */}
+      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-4 md:p-5">
+        {/* Section Header */}
+        <div className="flex items-center justify-between mb-3 sm:mb-4">
+          <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-800">
+            Danh mục sản phẩm
+          </h2>
+          <button
+            onClick={() => navigate("/products")}
+            className="text-xs sm:text-sm text-[#4B5563] hover:text-[#374151] font-medium transition-colors flex items-center gap-1"
+          >
+            Xem tất cả →
+          </button>
+        </div>
 
-      <div className="relative">
-        <button
-          onClick={() => scroll("left")}
-          className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 z-20 
-                     w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center
-                     rounded-full bg-white/90 backdrop-blur-md glass-effect
-                     shadow-lg hover:bg-white hover:scale-110 hover:shadow-xl
-                     transition-all duration-300 group hidden sm:flex"
-          aria-label="Scroll left"
-        >
-          <ChevronLeft size={20} className="sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-blue-600 transition-colors" />
-        </button>
+        {/* Categories Grid */}
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-9 gap-2 sm:gap-3 md:gap-4 justify-items-center">
+          {/* All Category Button - Featured First */}
+          <button
+            onClick={() => {
+              setActiveCategory(null);
+              navigate("/products");
+            }}
+            className="flex flex-col items-center justify-center group cursor-pointer transition-all duration-300"
+          >
+            {/* Circular Icon Container - Featured Style */}
+            <div
+              className={`
+                w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20
+                rounded-full
+                flex items-center justify-center
+                transition-all duration-300
+                transform hover:scale-110 active:scale-95
+                ${!activeCategory
+                  ? "bg-gradient-to-br from-[#4B5563] to-[#374151] text-white shadow-lg ring-4 ring-[#4B5563]/20"
+                  : "bg-[#E5E9EC] text-[#4B5563] shadow-md hover:shadow-xl"
+                }
+              `}
+            >
+              <Grid3X3 size={22} className="sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9" />
+            </div>
+            <span
+              className={`
+                mt-2 sm:mt-2.5 text-[10px] sm:text-xs font-medium
+                text-center leading-tight
+                transition-colors duration-300
+                max-w-[60px] sm:max-w-[70px]
+                ${!activeCategory
+                  ? "text-[#4B5563] font-semibold"
+                  : "text-[#4B5563]/70 group-hover:text-[#4B5563]"
+                }
+              `}
+            >
+              All Category
+            </span>
+          </button>
 
-        <div
-          ref={scrollRef}
-          className="flex gap-2 sm:gap-3 md:gap-4 lg:gap-6 overflow-x-auto scroll-smooth px-2 sm:px-3 py-3 sm:py-4 no-scrollbar"
-        >
           {categories.map((cat, idx) => {
             const Icon = cat.icon;
+            const isActive = activeCategory === cat.key;
             return (
-              <div
+              <button
                 key={idx}
-                onClick={() => navigate(`/products?category=${encodeURIComponent(cat.key)}`)}
-                className={`flex flex-col items-center justify-center text-center rounded-xl sm:rounded-2xl
-                            shadow-md hover:shadow-xl transition-all duration-300
-                            p-3 sm:p-4 md:p-6 min-w-[100px] sm:min-w-[120px] md:min-w-[150px] cursor-pointer transform hover:-translate-y-2
-                            ${cat.color} group animate-scale-in flex-shrink-0`}
-                style={{ animationDelay: `${idx * 0.05}s` }}
+                onClick={() => handleCategoryClick(cat.key)}
+                className="flex flex-col items-center justify-center group cursor-pointer transition-all duration-300"
               >
-                <div className="mb-2 sm:mb-3 transform group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300">
-                  <Icon size={28} className="sm:w-8 sm:h-8 md:w-10 md:h-10 text-gray-800 group-hover:text-blue-600 transition-colors duration-300" />
+                {/* Circular Icon Container */}
+                <div
+                  className={`
+                    w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20
+                    rounded-full
+                    flex items-center justify-center
+                    transition-all duration-300
+                    transform hover:scale-110 active:scale-95
+                    ${isActive
+                      ? "bg-gradient-to-br from-[#4B5563] to-[#374151] text-white shadow-lg ring-4 ring-[#4B5563]/20"
+                      : `${cat.bgColor} text-[#4B5563] shadow-md hover:shadow-xl`
+                    }
+                  `}
+                >
+                  {cat.imageUrl ? (
+                    <img
+                      src={cat.imageUrl}
+                      alt={cat.name}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  ) : (
+                    <Icon size={22} className="sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9" />
+                  )}
                 </div>
-                <div className="font-bold text-xs sm:text-sm md:text-base text-gray-900 group-hover:text-blue-600 transition-colors duration-300">
+
+                {/* Category Name */}
+                <span
+                  className={`
+                    mt-2 sm:mt-2.5 text-[10px] sm:text-xs font-medium
+                    text-center leading-tight
+                    transition-colors duration-300
+                    max-w-[60px] sm:max-w-[70px]
+                    ${isActive
+                      ? "text-[#4B5563] font-semibold"
+                      : "text-[#4B5563]/70 group-hover:text-[#4B5563]"
+                    }
+                  `}
+                >
                   {cat.name}
-                </div>
-                <div className="text-[10px] sm:text-xs text-gray-600 mt-0.5 sm:mt-1 group-hover:text-gray-800 transition-colors duration-300">
-                  {cat.count}
-                </div>
-              </div>
+                </span>
+              </button>
             );
           })}
         </div>
-
-        <button
-          onClick={() => scroll("right")}
-          className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 z-20 
-                     w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 flex items-center justify-center
-                     rounded-full bg-white/90 backdrop-blur-md glass-effect
-                     shadow-lg hover:bg-white hover:scale-110 hover:shadow-xl
-                     transition-all duration-300 group hidden sm:flex"
-          aria-label="Scroll right"
-        >
-          <ChevronRight size={20} className="sm:w-5 sm:h-5 md:w-6 md:h-6 text-gray-700 group-hover:text-blue-600 transition-colors" />
-        </button>
       </div>
     </section>
   );

@@ -89,7 +89,7 @@ const handleUpdate = async () => {
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="px-4 py-2 md:px-6 md:py-2.5 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl hover:bg-[#244ACC] text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-1.5 md:gap-2"
+            className="px-4 py-2 md:px-6 md:py-2.5 bg-[#4B5563] text-white rounded-lg md:rounded-xl hover:bg-[#374151] text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-1.5 md:gap-2"
           >
             <Camera size={14} /> Chọn ảnh đại diện
           </button>
@@ -179,7 +179,7 @@ const handleUpdate = async () => {
         <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6 md:mt-8 justify-center sm:justify-start">
           <button
             onClick={handleUpdate}
-            className="px-6 md:px-8 py-2.5 md:py-3 bg-[#2F5FEB] text-white rounded-lg md:rounded-xl hover:bg-[#244ACC] text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
+            className="px-6 md:px-8 py-2.5 md:py-3 bg-[#4B5563] text-white rounded-lg md:rounded-xl hover:bg-[#374151] text-xs sm:text-sm md:text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-1.5 md:gap-2"
           >
             <Check size={14} className="md:w-4 md:h-4" /> Cập nhật
           </button>

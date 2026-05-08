@@ -72,8 +72,8 @@ const VoucherDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="p-4 sm:p-8 text-center animate-fade-in">
-        <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-4 border-b-4 border-[#2F5FEB] mx-auto mb-4"></div>
-        <p className="text-[#2F5FEB] text-sm sm:text-lg font-medium">Đang tải voucher...</p>
+        <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-4 border-b-4 border-[#4B5563] mx-auto mb-4"></div>
+        <p className="text-[#4B5563] text-sm sm:text-lg font-medium">Đang tải voucher...</p>
       </div>
     );
   }
@@ -93,7 +93,7 @@ const VoucherDashboard: React.FC = () => {
               <div className="absolute -top-10 sm:-top-12 right-0">
                 <button
                   onClick={() => setShowForm(false)}
-                  className="text-white bg-[#2F5FEB] hover:bg-[#244ACC] px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-colors touch-manipulation shadow-lg"
+                  className="text-white bg-[#4B5563] hover:bg-[#374151] px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base font-semibold transition-colors touch-manipulation shadow-lg"
                 >
                   ✕ Đóng
                 </button>
@@ -155,7 +155,7 @@ const VoucherDashboard: React.FC = () => {
           <input
             type="text"
             placeholder="Tìm kiếm voucher..."
-            className="w-full px-4 sm:px-5 py-2.5 sm:py-3 pl-10 sm:pl-12 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#2F5FEB] focus:border-[#2F5FEB] outline-none bg-white transition-all duration-300"
+            className="w-full px-4 sm:px-5 py-2.5 sm:py-3 pl-10 sm:pl-12 text-sm sm:text-base border-2 border-gray-200 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none bg-white transition-all duration-300"
           />
           <Search className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
         </div>
@@ -164,16 +164,16 @@ const VoucherDashboard: React.FC = () => {
             setEditingVoucher(null);
             setShowForm(true);
           }}
-          className="w-full sm:w-auto px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base bg-[#2F5FEB] text-white rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#244ACC] transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 touch-manipulation whitespace-nowrap"
+          className="w-full sm:w-auto px-4 sm:px-5 py-2.5 sm:py-3 text-sm sm:text-base bg-[#4B5563] text-white rounded-lg sm:rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#374151] transition-all duration-300 shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 touch-manipulation whitespace-nowrap"
         >
           <Plus className="w-4 h-4 sm:w-5 sm:h-5" /> <span>Tạo voucher mới</span>
         </button>
       </div>
 
       <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
-        <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-[#2F5FEB]/30">
-          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
-            <BadgeDollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-[#2F5FEB]" />
+        <div className="bg-[#4B5563]/5 p-4 sm:p-6 border-b-2 border-[#4B5563]/30">
+          <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-[#4B5563] flex items-center gap-2 sm:gap-3">
+            <BadgeDollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-[#4B5563]" />
             <span>Danh sách voucher</span>
           </h3>
           <p className="text-gray-600 text-xs sm:text-sm mt-1">{vouchers.length} voucher</p>
@@ -201,7 +201,7 @@ const VoucherDashboard: React.FC = () => {
                       {v.discountType === "percent" ? "Phần trăm" : "Số tiền"}
                     </td>
                     <td className="px-3 sm:px-4 py-3">
-                      <span className="font-bold text-xs sm:text-sm text-[#2F5FEB]">
+                      <span className="font-bold text-xs sm:text-sm text-[#4B5563]">
                         {v.discountType === "percent"
                           ? `${v.discountValue}%`
                           : `${v.discountValue.toLocaleString("vi-VN")}₫`}
@@ -218,7 +218,7 @@ const VoucherDashboard: React.FC = () => {
                       <span
                         className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-bold border-2 whitespace-nowrap ${
                           v.isActive
-                            ? "bg-[#2F5FEB]/10 text-[#2F5FEB] border-[#2F5FEB]/40"
+                            ? "bg-[#4B5563]/10 text-[#4B5563] border-[#4B5563]/40"
                             : "bg-gray-100 text-gray-700 border-gray-300"
                         }`}
                       >
@@ -233,7 +233,7 @@ const VoucherDashboard: React.FC = () => {
                             setEditingVoucher(v);
                             setShowForm(true);
                           }}
-                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#2F5FEB]/10 text-[#2F5FEB] hover:bg-[#2F5FEB]/20 hover:text-[#244ACC] active:scale-95 sm:hover:scale-110 flex items-center justify-center transition-all duration-300 touch-manipulation"
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-[#4B5563]/10 text-[#4B5563] hover:bg-[#4B5563]/20 hover:text-[#374151] active:scale-95 sm:hover:scale-110 flex items-center justify-center transition-all duration-300 touch-manipulation"
                         >
                           <Pencil className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
                         </button>

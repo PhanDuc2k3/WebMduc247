@@ -286,7 +286,7 @@ export default function PaymentModal({
         {/* Header */}
         <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-4 sm:p-6 flex items-center justify-between z-10">
           <div>
-            <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#4B5563] flex items-center gap-2">
               <CreditCard className="w-6 h-6" />
               Thanh toán đơn hàng
             </h2>
@@ -316,7 +316,7 @@ export default function PaymentModal({
                 disabled={isProcessing}
                 className={`p-4 border-2 rounded-lg transition-all ${
                   selectedMethod === "wallet"
-                    ? "border-[#2F5FEB] bg-blue-50"
+                    ? "border-[#4B5563] bg-blue-50"
                     : "border-gray-300 hover:border-gray-400"
                 } disabled:opacity-50`}
               >
@@ -400,14 +400,14 @@ export default function PaymentModal({
                   placeholder="Nhập mã xác thực"
                   maxLength={6}
                   disabled={isProcessing}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#2F5FEB] focus:outline-none text-lg text-center font-mono tracking-widest disabled:bg-gray-100"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4B5563] focus:outline-none text-lg text-center font-mono tracking-widest disabled:bg-gray-100"
                 />
               </div>
 
               <button
                 onClick={handleResendCode}
                 disabled={sendingCode || isProcessing}
-                className="w-full py-2 px-4 text-sm text-[#2F5FEB] hover:text-[#244ACC] font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-2 px-4 text-sm text-[#4B5563] hover:text-[#374151] font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 <RefreshCw className={`w-4 h-4 ${sendingCode ? "animate-spin" : ""}`} />
                 {sendingCode ? "Đang gửi..." : "Gửi lại mã xác thực"}
@@ -416,7 +416,7 @@ export default function PaymentModal({
               <button
                 onClick={handleWalletPayment}
                 disabled={isProcessing || paymentCode.length !== 6}
-                className="w-full py-3 px-4 bg-gradient-to-r from-[#2F5FEB] to-[#244ACC] text-white font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 bg-gradient-to-r from-[#4B5563] to-[#374151] text-white font-bold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isProcessing ? (
                   <>

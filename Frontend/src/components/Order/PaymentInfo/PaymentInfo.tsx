@@ -47,8 +47,8 @@ export default function PaymentInfo({ order, onPaymentSuccess }: PaymentInfoProp
   }, [order._id, order.paymentInfo.status]);
   return (
     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden animate-fade-in-up">
-      <div className="bg-[#2F5FEB]/5 p-4 sm:p-6 border-b-2 border-gray-200">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+      <div className="bg-[#4B5563]/5 p-4 sm:p-6 border-b-2 border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold text-[#4B5563] flex items-center gap-2 sm:gap-3">
           Thông tin thanh toán
         </h2>
         <p className="text-gray-600 text-xs sm:text-sm mt-1">Chi tiết thanh toán đơn hàng</p>
@@ -76,7 +76,7 @@ export default function PaymentInfo({ order, onPaymentSuccess }: PaymentInfoProp
             </div>
           )}
           <div className="border-t-2 border-gray-300 pt-3 sm:pt-4 mt-3 sm:mt-4">
-            <div className="flex justify-between items-center p-3 sm:p-4 bg-[#2F5FEB]/5 rounded-lg sm:rounded-xl gap-2">
+            <div className="flex justify-between items-center p-3 sm:p-4 bg-[#4B5563]/5 rounded-lg sm:rounded-xl gap-2">
               <span className="text-lg sm:text-xl font-extrabold text-gray-900 flex items-center gap-2">
                 Tổng cộng
               </span>
@@ -100,7 +100,7 @@ export default function PaymentInfo({ order, onPaymentSuccess }: PaymentInfoProp
           disabled={order.paymentInfo.status === "paid"}
           className={`w-full py-3 sm:py-4 px-4 sm:px-6 font-bold rounded-lg sm:rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 text-sm sm:text-base ${
             order.paymentInfo.status === "paid"
-              ? "bg-[#2F5FEB] text-white cursor-default"
+              ? "bg-[#4B5563] text-white cursor-default"
               : "bg-yellow-400 text-white hover:bg-orange-500 cursor-pointer"
           } disabled:transform-none`}
         >

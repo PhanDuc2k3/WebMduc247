@@ -170,7 +170,7 @@ const Step2Images: React.FC<Props> = ({
           <ChevronLeft className="w-5 h-5" /> Quay lại
         </button>
         <button
-          className="bg-[#2F5EE9] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-[#244ACC]"
+          className="bg-[#2F5EE9] text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 flex items-center gap-2 hover:bg-[#374151]"
           onClick={() => setStep(3)}
         >
           Tiếp tục <ChevronRight className="w-5 h-5" />

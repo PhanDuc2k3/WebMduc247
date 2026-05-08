@@ -57,7 +57,7 @@ const SellerBox: React.FC = () => {
 
   return (
     <section className="mt-6 sm:mt-8 md:mt-12">
-      <div className="bg-[#2F5FEB] text-white rounded-xl sm:rounded-2xl md:rounded-3xl px-4 sm:px-6 md:px-12 py-6 sm:py-8 md:py-10 lg:py-14 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 md:gap-8 shadow-2xl">
+      <div className="bg-[#4B5563] text-white rounded-xl sm:rounded-2xl md:rounded-3xl px-4 sm:px-6 md:px-12 py-6 sm:py-8 md:py-10 lg:py-14 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 md:gap-8 shadow-2xl">
         {/* Content */}
         <div className="w-full">
           <div className="text-center md:text-left flex-1">
@@ -83,7 +83,7 @@ const SellerBox: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-3 sm:gap-4">
               <button
                 onClick={handleRegisterClick}
-                className="flex-1 bg-white text-[#2F5FEB] font-bold rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base shadow-lg hover:shadow-xl hover:bg-[#f3f4ff] transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex items-center justify-center"
+                className="flex-1 bg-white text-[#4B5563] font-bold rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base shadow-lg hover:shadow-xl hover:bg-[#f3f4ff] transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex items-center justify-center"
               >
                 Đăng ký bán hàng
               </button>

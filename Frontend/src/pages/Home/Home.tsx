@@ -1,9 +1,12 @@
 import React, { useEffect, useRef } from "react";
-import Banner from "../../components/Home/Banner/Banner";
+import BannerSlider from "../../components/Home/Banner/Banner";
 import Categories from "../../components/Home/Categories/Categories";
-import FeaturedProducts from "../../components/Home/FeaturedProducts/FeaturedProducts";
-import FeaturedStores from "../../components/Home/FeaturedStores/FeaturedStores";
+import FlashSale from "../../components/Home/FlashSale/FlashSale";
+import ForYou from "../../components/Home/ForYou/ForYou";
+import BestSellingStores from "../../components/Home/BestSellingStores/BestSellingStores";
+import MidBanner from "../../components/Home/MidBanner/MidBanner";
 import SellerBox from "../../components/Home/SellerBox/SellerBox";
+import HomeFooter from "../../components/Home/HomeFooter/HomeFooter";
 
 const Home: React.FC = () => {
   const sectionsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -39,28 +42,46 @@ const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="w-full py-4 sm:py-6 md:py-12 lg:py-16">
-      <div className="space-y-8 sm:space-y-12 md:space-y-20 lg:space-y-24">
+    <div className="w-full bg-[#E5E9EC] min-h-screen">
+      <div className="max-w-[1600px] mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+        {/* Banner Section */}
         <div ref={(el) => { sectionsRef.current[0] = el; }} className="reveal">
-          <Banner />
+          <BannerSlider />
         </div>
 
+        {/* Categories Section */}
         <div ref={(el) => { sectionsRef.current[1] = el; }} className="reveal">
           <Categories />
         </div>
 
+        {/* Flash Sale Section */}
         <div ref={(el) => { sectionsRef.current[2] = el; }} className="reveal">
-          <FeaturedProducts />
+          <FlashSale />
         </div>
 
+        {/* Best Selling Stores Section */}
         <div ref={(el) => { sectionsRef.current[3] = el; }} className="reveal">
-          <FeaturedStores />
+          <BestSellingStores />
         </div>
 
+        {/* For You Section */}
         <div ref={(el) => { sectionsRef.current[4] = el; }} className="reveal">
+          <ForYou />
+        </div>
+
+        {/* Mid Banner Section */}
+        <div ref={(el) => { sectionsRef.current[5] = el; }} className="reveal">
+          <MidBanner />
+        </div>
+
+        {/* Seller Box Section */}
+        <div ref={(el) => { sectionsRef.current[6] = el; }} className="reveal pb-8">
           <SellerBox />
         </div>
       </div>
+
+      {/* Footer */}
+      <HomeFooter />
     </div>
   );
 };

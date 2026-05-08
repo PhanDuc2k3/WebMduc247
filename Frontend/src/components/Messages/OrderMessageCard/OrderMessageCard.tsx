@@ -158,14 +158,14 @@ const OrderMessageCard: React.FC<OrderMessageCardProps> = ({ message, isMine = f
       {/* Order Card */}
       <div className={`rounded sm:rounded-md overflow-hidden border shadow-sm transition-all duration-300 hover:shadow ${
         isMine
-          ? "bg-[#2F5FEB]/5 border-[#2F5FEB]/40"
+          ? "bg-[#4B5563]/5 border-[#4B5563]/40"
           : "bg-white border-gray-200"
       }`}>
         {/* Header */}
         <div className={`px-1.5 sm:px-2 md:px-3 py-0.5 sm:py-1 md:py-1.5 flex items-center justify-between ${
           isMine
-            ? "bg-[#2F5FEB] text-white"
-            : "bg-[#2F5FEB]/90 text-white"
+            ? "bg-[#4B5563] text-white"
+            : "bg-[#4B5563]/90 text-white"
         }`}>
           <div className="flex items-center gap-1 min-w-0">
             <Package className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 flex-shrink-0" />
@@ -195,7 +195,7 @@ const OrderMessageCard: React.FC<OrderMessageCardProps> = ({ message, isMine = f
                         x{product.quantity}
                       </p>
                     </div>
-                    <p className="font-semibold text-[#2F5FEB] text-[9px] sm:text-[10px] md:text-base whitespace-nowrap flex-shrink-0">
+                    <p className="font-semibold text-[#4B5563] text-[9px] sm:text-[10px] md:text-base whitespace-nowrap flex-shrink-0">
                       {product.price}
                     </p>
                   </div>
@@ -282,7 +282,7 @@ const OrderMessageCard: React.FC<OrderMessageCardProps> = ({ message, isMine = f
           {orderInfo.orderLink && (
             <button
               onClick={handleViewOrder}
-          className="w-full py-0.5 sm:py-1 md:py-1.5 px-1.5 sm:px-2 md:px-3 rounded font-semibold text-white text-[9px] sm:text-[10px] md:text-base transition-all duration-300 shadow-sm hover:shadow md:hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-0.5 md:gap-1 bg-[#2F5FEB] hover:bg-[#244ACC]"
+          className="w-full py-0.5 sm:py-1 md:py-1.5 px-1.5 sm:px-2 md:px-3 rounded font-semibold text-white text-[9px] sm:text-[10px] md:text-base transition-all duration-300 shadow-sm hover:shadow md:hover:shadow-md transform hover:scale-[1.01] active:scale-[0.99] flex items-center justify-center gap-0.5 md:gap-1 bg-[#4B5563] hover:bg-[#374151]"
             >
               <ExternalLink className="w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3 md:h-3 flex-shrink-0" />
               <span>Xem chi tiết</span>

@@ -207,12 +207,12 @@ const CheckoutPage: React.FC = () => {
   return (
     <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6">
       <div className="mb-4 sm:mb-6 md:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-[#2F5FEB] flex items-center gap-2 sm:gap-3">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-[#4B5563] flex items-center gap-2 sm:gap-3">
           <CreditCard className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
           Thanh toán
         </h1>
         <p className="text-gray-600 text-base sm:text-lg">
-          Hoàn tất <span className="text-[#2F5FEB] font-semibold">đơn hàng của bạn</span>
+          Hoàn tất <span className="text-[#4B5563] font-semibold">đơn hàng của bạn</span>
         </p>
       </div>
 
