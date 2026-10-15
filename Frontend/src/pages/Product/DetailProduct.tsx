@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Loader2, XCircle } from "lucide-react";
@@ -96,7 +96,8 @@ const ProductDetail: React.FC = () => {
   }
 
   return (
-    <div className="w-full py-8 md:py-12">
+    <div className="product-detail-page w-full py-8 md:py-12">
+      <nav className="product-detail-breadcrumb" aria-label="Đường dẫn trang"><Link to="/">Trang chủ</Link><span>/</span><Link to="/products">Sản phẩm</Link><span>/</span><strong>{product.name}</strong></nav>
       <div className="mb-8 animate-fade-in-up">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
           <div className="animate-fade-in-left delay-200">

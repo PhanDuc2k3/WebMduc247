@@ -15,6 +15,7 @@ import VoucherPage from "./pages/Voucher/Voucher";
 import StorePage from "./pages/Store/Store";
 import Checkout from "./pages/Payment/Payment";
 import OrderPage from "./pages/Order/Order";
+import DemoOrderDetail from "./pages/Order/DemoOrderDetail";
 import PaymentSuccess from "./components/Payment/PaymentSuccess/PaymentSuccess";
 import PaymentQR from "./pages/Payment/PaymentQR";
 import StoreList from "./pages/StoreList/StoreList";
@@ -28,6 +29,7 @@ import WalletPage from "./pages/Wallet/Wallet"
 import Notifications from "./pages/Notifications/Notifications"
 import Privacy from "./pages/Privacy/Privacy"
 import Terms from "./pages/Terms/Terms"
+import CategoryPage from "./pages/Category/CategoryPage"
 
 const AppRouter = () => (
   <Routes>
@@ -45,6 +47,7 @@ const AppRouter = () => (
       <Route path="/store/:id" element={<StorePage />} />
       <Route path="/store" element={<StoreList />} />
       <Route path="/checkout" element={<Checkout />} />
+      <Route path="/order/demo" element={<DemoOrderDetail />} />
       <Route path="/order/:orderId" element={<OrderPage />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/payment-qr" element={<PaymentQR />} />
@@ -52,6 +55,7 @@ const AppRouter = () => (
       <Route path="/message" element={<Navigate to="/messages" replace />} />
 
       <Route path="/products" element={<Product />} />
+      <Route path="/category/:slug" element={<CategoryPage />} />
       <Route path="/new" element={<NewPage />} />
       <Route path="/promotion/:id" element={<PromotionDetail />} />
       <Route path="/support" element={<SupportPage/>}/>

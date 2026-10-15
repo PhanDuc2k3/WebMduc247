@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext, type ReactNode } from "react";
 import axiosClient from "../api/axiosClient";
 import { getSocket } from "../socket";
+import { USE_MOCK_DATA } from "../config/runtime";
 
 interface CartItem {
   productId: string;
@@ -118,7 +119,7 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
 
   // --- Fetch cart từ API
   const fetchCart = async () => {
-    if (!userId) return;
+    if (!userId && !USE_MOCK_DATA) return;
     setLoading(true);
     try {
       const res = await axiosClient.get(`/api/cart`, {
@@ -145,7 +146,10 @@ export const CartProvider: React.FC<Props> = ({ children }) => {
   // --- Lấy userId từ token
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) return;
+    if (!token) {
+      if (USE_MOCK_DATA) void fetchCart();
+      return;
+    }
     try {
       const payload = JSON.parse(atob(token.split(".")[1]));
       const uid = payload.userId || payload.id || payload._id || payload.sub;

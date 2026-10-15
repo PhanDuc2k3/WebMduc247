@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400" role="img" aria-label="Hình minh họa sản phẩm">
+  <defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#edf2ff"/><stop offset="1" stop-color="#dfe9fa"/></linearGradient></defs>
+  <rect width="600" height="400" fill="url(#g)"/>
+  <circle cx="480" cy="85" r="110" fill="#ffffff" opacity=".32"/>
+  <circle cx="100" cy="350" r="125" fill="#ffffff" opacity=".28"/>
+  <g transform="translate(252 151)" fill="none" stroke="#94a9d7" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"><path d="M48 3 93 28v49L48 102 3 77V28L48 3Z"/><path d="m3 28 45 25 45-25M48 53v49"/></g>
+</svg>

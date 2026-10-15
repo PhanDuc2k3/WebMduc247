@@ -136,7 +136,7 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
       const chatUser = {
         _id: receiverId,
         name: store.name || "Cửa hàng",
-        avatar: store.logoUrl || "/default-avatar.png",
+        avatar: store.logoUrl || "/visual-placeholder.svg",
       };
 
       // ✅ Lấy tin nhắn ban đầu

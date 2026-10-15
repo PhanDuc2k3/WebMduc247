@@ -270,7 +270,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <div className="flex items-center gap-3 text-base text-gray-600">
           <div className="flex items-center gap-1 bg-yellow-50 px-3 py-1 rounded-full">
             <Star className="text-yellow-500" size={18} fill="currentColor" />
-            <span className="font-semibold">{product.rating || 0}</span>
+            <span className="font-semibold">{typeof product.rating === "number" ? product.rating : "Chưa có đánh giá"}</span>
           </div>
           <span className="text-gray-500">
             ({product.reviewsCount || 0} đánh giá)
@@ -281,7 +281,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       {/* Giá */}
       <div className="animate-fade-in-up delay-100">
         <div className="flex items-baseline gap-3 mb-2">
-          <span className="text-3xl lg:text-4xl font-bold text-red-600">
+          <span className="product-detail-price text-3xl lg:text-4xl font-bold text-red-600">
             {finalPrice.toLocaleString("vi-VN")}₫
           </span>
           {product.salePrice && (
@@ -291,7 +291,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
           )}
         </div>
         {product.salePrice && (
-          <span className="inline-flex items-center gap-1 bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-semibold">
+          <span className="product-detail-discount inline-flex items-center gap-1 bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-semibold">
             <Flame size={16} />
             <span>Giảm {Math.round((1 - product.salePrice / product.price) * 100)}%</span>
           </span>
@@ -301,7 +301,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       {/* Chọn loại 1 */}
       <div className="animate-fade-in-up delay-200">
         <h3 className="font-bold text-lg mb-3 text-gray-900">
-          Loại 1
+          Màu sắc
         </h3>
             <div className="flex gap-3 flex-wrap">
           {colors.map((color) => (
@@ -328,7 +328,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       {selectedColor && (
         <div className="animate-fade-in-up delay-300">
           <h3 className="font-bold text-lg mb-3 text-gray-900">
-            Loại 2
+            Phiên bản
           </h3>
           <div className="flex gap-3 flex-wrap">
             {availableStorages.map((s) => {
@@ -404,7 +404,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <button
           onClick={handleAddToCart}
           disabled={loading}
-          className="flex-1 px-6 py-3.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl font-bold hover:from-yellow-600 hover:to-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+          className="product-detail-add flex-1 px-6 py-3.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">
@@ -420,7 +420,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <button 
           onClick={handleBuyNow}
           disabled={loading}
-          className="flex-1 px-6 py-3.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold hover:from-red-700 hover:to-red-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+          className="product-detail-buy flex-1 px-6 py-3.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
         >
           {loading ? (
             <span className="flex items-center justify-center gap-2">

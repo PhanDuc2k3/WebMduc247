@@ -1,131 +1,48 @@
-import React from "react";
-import { Facebook, Instagram, Twitter, Youtube } from "lucide-react";
+import { Boxes, Facebook, Instagram, Mail, MapPin, Phone, Youtube } from "lucide-react";
+import { Link } from "react-router-dom";
+import { SITE_CONTENT } from "../../config/siteContent";
 
-const Footer: React.FC = () => {
-  return (
-    <footer className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white shadow-2xl mt-auto">
-      {/* Top */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
-          {/* Brand */}
-          <div className="lg:col-span-1">
-            <span className="bg-[#4B5563] text-white text-xl font-bold rounded-xl px-6 py-2 inline-block mb-4 shadow-lg">
-              ShopMduc247
-            </span>
-            <p className="text-gray-300 text-sm mb-4 leading-relaxed">
-              Sàn thương mại điện tử hàng đầu Việt Nam với hàng triệu sản phẩm chất lượng và dịch vụ tốt nhất.
-            </p>
-            <div className="flex gap-3 mt-4">
-              <a 
-                href="#" 
-                aria-label="Facebook"
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#3b5998] flex items-center justify-center transition-all duration-300 transform hover:scale-110"
-              >
-                <Facebook size={18} />
-              </a>
-              <a 
-                href="#" 
-                aria-label="Instagram"
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 flex items-center justify-center transition-all duration-300 transform hover:scale-110"
-              >
-                <Instagram size={18} />
-              </a>
-              <a 
-                href="#" 
-                aria-label="Twitter"
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#1da1f2] flex items-center justify-center transition-all duration-300 transform hover:scale-110"
-              >
-                <Twitter size={18} />
-              </a>
-              <a 
-                href="#" 
-                aria-label="YouTube"
-                className="w-10 h-10 rounded-full bg-white/10 hover:bg-[#ff0000] flex items-center justify-center transition-all duration-300 transform hover:scale-110"
-              >
-                <Youtube size={18} />
-              </a>
-            </div>
-          </div>
+const customerLinks = [
+  ["Trung tâm trợ giúp", "/support"],
+  ["Theo dõi đơn hàng", "/profile"],
+  ["Voucher của bạn", "/voucher"],
+  ["Ví MDUC247", "/wallet"],
+];
 
-          {/* Footer columns */}
-          <div>
-            <h4 className="text-white font-bold text-lg mb-4 relative pb-2">
-              Chăm sóc khách hàng
-              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-[#4B5563]"></span>
-            </h4>
-            <ul className="space-y-2 text-gray-300 text-sm">
-              {['Trung tâm trợ giúp', 'Hướng dẫn mua hàng', 'Hướng dẫn bán hàng', 'Thanh toán', 'Vận chuyển', 'Trả hàng & Hoàn tiền'].map((item, idx) => (
-                <li key={idx}>
-                  <a href="#" className="hover:text-[#4B5563] transition-colors duration-300 flex items-center gap-2">
-                    <span>•</span>
-                    <span>{item}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+const aboutLinks = [
+  ["Cửa hàng", "/store"],
+  ["Khuyến mãi", "/new"],
+  ["Điều khoản", "/terms"],
+  ["Chính sách bảo mật", "/privacy"],
+];
 
-          <div>
-            <h4 className="text-white font-bold text-lg mb-4 relative pb-2">
-              Về ShopMduc247
-              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-[#4B5563]"></span>
-            </h4>
-            <ul className="space-y-2 text-gray-300 text-sm">
-              {['Giới thiệu', 'Tuyển dụng', 'Điều khoản', 'Chính sách bảo mật', 'Chính hãng', 'Kênh người bán'].map((item, idx) => (
-                <li key={idx}>
-                  <a href="#" className="hover:text-[#4B5563] transition-colors duration-300 flex items-center gap-2">
-                    <span>•</span>
-                    <span>{item}</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="text-white font-bold text-lg mb-4 relative pb-2">
-              Liên hệ
-              <span className="absolute bottom-0 left-0 w-12 h-0.5 bg-[#4B5563]"></span>
-            </h4>
-            <ul className="space-y-3 text-gray-300 text-sm">
-              <li className="flex items-start gap-2">
-                <span className="text-lg mt-0.5">📞</span>
-                <span className="hover:text-[#4B5563] transition-colors duration-300">Hotline: 1800 1234</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-lg mt-0.5">✉️</span>
-                <span className="hover:text-[#4B5563] transition-colors duration-300">support@shopmduc247.vn</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-lg mt-0.5">📍</span>
-                <span className="hover:text-[#4B5563] transition-colors duration-300">Tầng 4-5-6, Tòa nhà Capital Place, số 29 Liễu Giai, Ba Đình, Hà Nội</span>
-              </li>
-            </ul>
-          </div>
+const Footer = () => (
+  <footer className="mt-auto bg-[#172b49] text-white">
+    <div className="site-shell grid grid-cols-1 gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      <section>
+        <Link to="/" className="mb-5 inline-flex items-center gap-3 text-white no-underline">
+          <span className="grid h-10 w-10 -rotate-6 place-items-center rounded-xl bg-[#476de4]"><Boxes size={21} /></span>
+          <strong className="text-xl tracking-tight">MDUC247</strong>
+        </Link>
+        <p className="text-sm leading-7 text-[#c4d0e1]">Không gian mua sắm trực quan, thân thiện và kết nối bạn với những cửa hàng phù hợp mỗi ngày.</p>
+        <div className="mt-5 flex gap-2">
+          {[Facebook, Instagram, Youtube].map((Icon, index) => <a href="#" aria-label={["Facebook", "Instagram", "YouTube"][index]} key={index} className="grid h-10 w-10 place-items-center rounded-xl border border-white/15 text-[#c4d0e1] hover:border-white/35 hover:bg-white/10 hover:text-white"><Icon size={17} /></a>)}
         </div>
-      </div>
+      </section>
 
-      {/* Bottom */}
-      <div className="border-t border-gray-700/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <span className="text-gray-300 text-sm">© 2024 ShopMduc247. Tất cả quyền được bảo lưu.</span>
-            <div className="flex gap-3">
-              <span className="bg-gradient-to-r from-[#1976d2] to-[#1565c0] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-lg transform hover:scale-105 transition-all duration-300">
-                VISA
-              </span>
-              <span className="bg-gradient-to-r from-[#e53935] to-[#c62828] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-lg transform hover:scale-105 transition-all duration-300">
-                MC
-              </span>
-              <span className="bg-gradient-to-r from-[#fbc02d] to-[#f9a825] text-white px-3 py-1.5 rounded-lg font-semibold text-xs shadow-lg transform hover:scale-105 transition-all duration-300">
-                JCB
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
-};
+      <section><h2 className="mb-4 text-base font-bold">Hỗ trợ khách hàng</h2><ul className="space-y-3 text-sm text-[#c4d0e1]">{customerLinks.map(([label, to]) => <li key={to}><Link to={to} className="hover:text-white">{label}</Link></li>)}</ul></section>
+      <section><h2 className="mb-4 text-base font-bold">Khám phá MDUC247</h2><ul className="space-y-3 text-sm text-[#c4d0e1]">{aboutLinks.map(([label, to]) => <li key={to}><Link to={to} className="hover:text-white">{label}</Link></li>)}</ul></section>
+      <section>
+        <h2 className="mb-4 text-base font-bold">Liên hệ</h2>
+        <ul className="space-y-4 text-sm text-[#c4d0e1]">
+          <li className="flex gap-3"><Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#8fa5ff]" /><a href={`tel:${SITE_CONTENT.supportPhone.replace(/\s/g, "")}`} className="hover:text-white">{SITE_CONTENT.supportPhone}</a></li>
+          <li className="flex gap-3"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#8fa5ff]" /><a href={`mailto:${SITE_CONTENT.supportEmail}`} className="hover:text-white">{SITE_CONTENT.supportEmail}</a></li>
+          <li className="flex gap-3"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#8fa5ff]" /><span>{SITE_CONTENT.supportAddress}</span></li>
+        </ul>
+      </section>
+    </div>
+    <div className="border-t border-white/10"><div className="site-shell flex flex-col justify-between gap-3 py-5 text-xs text-[#aebbd0] sm:flex-row"><span>© 2026 MDUC247. Tất cả quyền được bảo lưu.</span><span>Thanh toán an toàn · Giao hàng thuận tiện · Hỗ trợ tận tâm</span></div></div>
+  </footer>
+);
 
 export default Footer;

@@ -14,18 +14,15 @@ app.use(express.json());
 
 app.use(cors({
   origin: [
-  'https://shopmduc247.online',
   'http://localhost:5173',
-  'https://api.shopmduc247.online',
-  'https://web-mduc247.vercel.app',
-  'https://ws.shopmduc247.online',
+  'http://127.0.0.1:5173',
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
 }));
 
 // ===== MongoDB =====
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(process.env.LOCAL_MONGO_URI || process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
@@ -33,7 +30,7 @@ mongoose.connect(process.env.MONGO_URI, {
   .catch(err => console.error("❌ MongoDB connection error:", err));
 
 // ===== Redis (Upstash) =====
-const redis = new Redis(process.env.REDIS_URL, {
+const redis = new Redis(process.env.LOCAL_REDIS_URL || process.env.REDIS_URL, {
   maxRetriesPerRequest: 0,
   retryStrategy() {
     return null;

@@ -32,6 +32,7 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
     "Thực phẩm",
     "Gia dụng",
     "Mỹ phẩm",
+    "Thể thao",
     "Sách",
     "Đồ chơi",
     "Khác",
@@ -54,7 +55,7 @@ const StoreFilters: React.FC<StoreFiltersProps> = ({ onFilterChange }) => {
   }, [rating, region, category, onFilterChange]);
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 p-3 md:p-4 lg:p-6 rounded-xl md:rounded-2xl shadow-lg border border-gray-200">
+    <div className="canva-filter-bar bg-transparent p-0">
       <div className="flex flex-col sm:flex-row flex-wrap gap-2 md:gap-3 lg:gap-4">
         {/* Bộ lọc đánh giá */}
         <div 

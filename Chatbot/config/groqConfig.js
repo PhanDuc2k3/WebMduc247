@@ -6,7 +6,7 @@ dotenv.config();
 
 // ====== ENV ======
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const REDIS_URL = process.env.REDIS_URL;
+const REDIS_URL = process.env.LOCAL_REDIS_URL || process.env.REDIS_URL;
 
 if (!GROQ_API_KEY) {
   console.error("⚠️ GROQ_API_KEY chưa thiết lập!");

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Ảnh đại diện mặc định">
+  <circle cx="100" cy="100" r="100" fill="#e9edff"/>
+  <circle cx="100" cy="76" r="32" fill="#9bb0e2"/>
+  <path d="M38 172c3-36 27-57 62-57s59 21 62 57" fill="#9bb0e2"/>
+</svg>

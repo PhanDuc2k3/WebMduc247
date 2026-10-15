@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import ContentBreadcrumb from '../../components/ui/ContentBreadcrumb';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { XCircle } from 'lucide-react';
 import orderApi from '../../api/orderApi';
@@ -175,6 +176,7 @@ const PaymentQR: React.FC = () => {
   return (
     <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <div className="max-w-2xl mx-auto">
+        <ContentBreadcrumb items={[{ label: "Giỏ hàng", to: "/cart" }, { label: "Thanh toán VietQR" }]} />
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-6 text-white text-center">

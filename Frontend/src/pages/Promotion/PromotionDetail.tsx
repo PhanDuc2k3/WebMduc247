@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { CalendarDays, Eye, ArrowLeft, Tag } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { CalendarDays, Eye, Tag } from "lucide-react";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 import promotionApi from "../../api/promotionApi";
 import type { PromotionType } from "../../api/promotionApi";
 import { toast } from "react-toastify";
@@ -81,14 +82,7 @@ const PromotionDetail: React.FC = () => {
   return (
     <div className="w-full py-8 md:py-12">
       <div className="max-w-4xl mx-auto">
-        {/* Back button */}
-        <Link
-          to="/new"
-          className="inline-flex items-center gap-2 text-gray-700 hover:text-purple-600 mb-6 transition-colors duration-300 font-bold"
-        >
-          <ArrowLeft size={20} />
-          <span>Quay lại danh sách</span>
-        </Link>
+        <ContentBreadcrumb items={[{ label: "Khuyến mãi", to: "/new" }, { label: promotion.title }]} />
 
         {/* Image */}
         {promotion.imageUrl && (

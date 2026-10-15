@@ -34,17 +34,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
   // Handle click on card - navigate to product detail (mobile only)
   const handleCardClick = (e: React.MouseEvent) => {
-    // Check if click is on FavoriteButton or its children - don't navigate
     const target = e.target as HTMLElement;
     if (target.closest('[data-favorite-button]')) {
       return;
     }
-    // Check if click is on the "Xem" button - it will handle navigation itself
     if (target.closest('a[href*="/products/"]')) {
       return;
     }
-    // Only navigate on mobile devices (screen width < 640px or touch device)
-    // On desktop, users should use the "Xem" button that appears on hover
     const isMobile = window.innerWidth < 640 || 'ontouchstart' in window;
     if (isMobile) {
       navigate(`/products/${product._id}`);
@@ -52,41 +48,40 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   return (
-    <div 
+    <div
       onClick={handleCardClick}
-      className="group bg-white border-2 border-gray-200 rounded-lg sm:rounded-xl shadow-md p-1.5 sm:p-2 relative transition-all duration-500 hover:shadow-2xl hover:border-[#4B5563] w-full flex flex-col animate-scale-in cursor-pointer sm:cursor-default active:scale-[0.98] sm:active:scale-100 touch-manipulation"
+      className="group bg-white border border-gray-200 rounded-lg shadow-sm w-full flex flex-col cursor-pointer active:scale-[0.98] touch-manipulation hover:shadow-md transition-shadow"
     >
-      <div className="relative overflow-hidden rounded-md sm:rounded-lg pb-1 sm:pb-2">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
+      {/* Image */}
+      <div className="relative overflow-hidden rounded-t-lg">
         <img
           src={getImageUrl(product.images?.[0])}
           alt={product.name}
-          className="w-full h-28 sm:h-36 md:h-44 lg:h-52 object-cover rounded-md sm:rounded-lg transition-transform duration-500 group-hover:scale-110"
+          className="w-full h-28 sm:h-32 md:h-40 lg:h-48 object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
 
         {product.salePrice && (
-          <div className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5 md:top-3 md:left-3 flex items-center gap-1 sm:gap-1.5 md:gap-2 z-20">
-            <span className="bg-gradient-to-r from-red-600 to-red-500 text-white text-[9px] sm:text-[10px] md:text-xs font-bold px-1 sm:px-1.5 md:px-3 py-0.5 md:py-1.5 rounded-full shadow-lg transform group-hover:scale-110 transition-transform duration-300">
+          <div className="absolute top-1 left-1 flex flex-col gap-0.5">
+            <span className="bg-red-600 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full">
               -{Math.round((1 - product.salePrice / product.price) * 100)}%
             </span>
-            <span className="flex items-center gap-0.5 bg-gradient-to-r from-orange-500 to-orange-400 text-white text-[7px] sm:text-[8px] md:text-xs font-bold px-1 sm:px-1.5 md:px-3 py-0.5 md:py-1 rounded-full shadow-lg animate-pulse">
-              <Flame className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5" />
-              <span>HOT</span>
+            <span className="bg-orange-500 text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+              <Flame className="w-2.5 h-2.5" />
+              HOT
             </span>
           </div>
         )}
 
-        <div 
-          className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 md:top-3 md:right-3 z-30"
+        <div
+          className="absolute top-1 right-1 z-20"
           onClick={(e) => e.stopPropagation()}
           data-favorite-button
         >
-          <div className="scale-75 sm:scale-90 md:scale-100">
-            <FavoriteButton productId={product._id} />
-          </div>
+          <FavoriteButton productId={product._id} />
         </div>
 
+        {/* View button - desktop only */}
         <a
           href={`/products/${product._id}`}
           onClick={(e) => {
@@ -94,46 +89,47 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             e.stopPropagation();
             navigate(`/products/${product._id}`);
           }}
-          className="absolute bottom-1 sm:bottom-1.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-[10px] sm:text-xs md:text-sm font-bold px-2 sm:px-3 md:px-6 py-0.5 sm:py-1 md:py-2 rounded-full opacity-0 transform translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 hover:from-orange-600 hover:to-orange-700 shadow-xl z-20 hidden sm:block"
+          className="absolute bottom-1 sm:bottom-1.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-[10px] sm:text-xs font-bold px-2 sm:px-3 py-0.5 sm:py-1 rounded-full opacity-0 transform translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0 hover:from-orange-600 hover:to-orange-700 shadow-xl z-20 hidden sm:block"
         >
           Xem
         </a>
       </div>
 
-      <div className="pt-0.5 sm:pt-1 text-[10px] sm:text-xs font-bold text-gray-800 overflow-hidden truncate group-hover:text-[#4B5563] transition-colors duration-300">
-        {product.name}
-      </div>
-
-      <div className="pt-1 sm:pt-1.5 flex items-center gap-1 sm:gap-1.5 overflow-hidden">
-        <span className="text-[10px] sm:text-xs text-red-600 font-bold whitespace-nowrap truncate">
-          {(product.salePrice || product.price).toLocaleString("vi-VN")}₫
-        </span>
-        {product.salePrice && (
-          <span className="text-gray-400 line-through text-[9px] sm:text-[10px] font-medium whitespace-nowrap">
-            {product.price.toLocaleString("vi-VN")}₫
-          </span>
-        )}
-      </div>
-
-      <div className="flex justify-between items-center pt-1.5 sm:pt-2 text-gray-600 text-[9px] sm:text-[10px] bg-gray-50 rounded-md sm:rounded-lg px-1.5 sm:px-2 py-0.5 sm:py-1">
-        <div className="flex items-center gap-0.5">
-          <Star className="text-yellow-500 fill-yellow-500 w-3 h-3 sm:w-3.5 sm:h-3.5" />
-          <span className="font-semibold">{product.rating?.toFixed(1) || "0"}</span>
-          <span className="text-gray-500">({product.reviewsCount ?? 0})</span>
+      {/* Content */}
+      <div className="p-1.5 sm:p-2 flex flex-col flex-1 gap-0.5 sm:gap-1">
+        <div className="text-[11px] sm:text-xs font-semibold text-gray-800 line-clamp-2 leading-tight">
+          {product.name}
         </div>
-        <div className="text-gray-700 font-medium text-[9px] sm:text-[10px]">Đã bán {product.soldCount || 0}</div>
-      </div>
 
-      <div className="flex justify-between items-center pt-1.5 sm:pt-2 text-gray-500 text-[9px] sm:text-[10px] border-t">
-        <div className="truncate flex-1 font-medium flex items-center gap-1">
-          <StoreIcon className="w-3 h-3 flex-shrink-0" />
+        <div className="flex items-baseline gap-1">
+          <span className="text-[11px] sm:text-sm text-red-600 font-bold">
+            {(product.salePrice || product.price).toLocaleString("vi-VN")}₫
+          </span>
+          {product.salePrice && (
+            <span className="text-[10px] sm:text-xs text-gray-400 line-through">
+              {product.price.toLocaleString("vi-VN")}₫
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] sm:text-[11px] text-gray-600">
+          <div className="flex items-center gap-0.5">
+            <Star className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400" />
+            <span className="font-semibold">{product.rating?.toFixed(1) || "0"}</span>
+            <span className="text-gray-500">({product.reviewsCount ?? 0})</span>
+          </div>
+          <span className="text-gray-500">Đã bán {product.soldCount || 0}</span>
+        </div>
+
+        <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-gray-500 mt-auto">
+          <StoreIcon className="w-2.5 h-2.5 flex-shrink-0" />
           <span className="truncate">
             {typeof product.store === "string" ? product.store : product.store?.name || "N/A"}
           </span>
-        </div>
-        <div className="ml-1 sm:ml-2 hidden md:flex items-center gap-1 whitespace-nowrap">
-          <MapPin className="w-3 h-3 flex-shrink-0" />
-          <span>{product.location || "VN"}</span>
+          <span className="hidden sm:flex items-center gap-0.5 ml-auto flex-shrink-0">
+            <MapPin className="w-2.5 h-2.5" />
+            {product.location || "VN"}
+          </span>
         </div>
       </div>
     </div>

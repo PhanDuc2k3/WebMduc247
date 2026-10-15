@@ -1,0 +1,22 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: webmduc247-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - webmduc247-mongo-data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: webmduc247-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - webmduc247-redis-data:/data
+
+volumes:
+  webmduc247-mongo-data:
+  webmduc247-redis-data:

@@ -1,13 +1,16 @@
 import axios, { type AxiosInstance, type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { toast } from "react-toastify";
 import userApi from "./userApi";
+import { USE_MOCK_DATA } from "../config/runtime";
+import { mockAdapter } from "../mocks/mockApi";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const axiosClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: USE_MOCK_DATA ? "http://mock.local" : API_BASE_URL,
   withCredentials: true,
+  adapter: USE_MOCK_DATA ? mockAdapter : undefined,
 });
 
 // Flag để chỉ log 1 lần
@@ -43,7 +46,7 @@ axiosClient.interceptors.request.use((config) => {
 
   // Chỉ log 1 lần khi khởi động
   if (import.meta.env.DEV && !hasLoggedBaseURL) {
-    console.log("API base URL:", API_BASE_URL);
+    console.log(USE_MOCK_DATA ? "API mode: mock data" : `API base URL: ${API_BASE_URL}`);
     hasLoggedBaseURL = true;
   }
 

@@ -1,6 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import "./styles/DesignSystem.css";
+import "./components/ui/PublicPages.css";
 import App from "./App";
 
 import { CartProvider } from "./context/CartContext";
@@ -11,6 +13,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import { BrowserRouter } from "react-router-dom";
+import "./styles/UiConsistency.css";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

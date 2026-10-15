@@ -1,14 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Store, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
+import { Store, ChevronLeft, ChevronRight } from "lucide-react";
 import StoreFilters from "../../components/StoreList/StoreFilters";
 import StoreGrid from "../../components/StoreList/StoreGrid";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 import StoreLoading from "../../components/StoreList/StoreLoading";
 import type { StoreType } from "../../types/store";
 import storeApi from "../../api/storeApi"; // dùng API đã tách
 import { useChat } from "../../context/chatContext";
 
 const ITEMS_PER_PAGE = 9;
+
+interface StoreApiItem extends StoreType {
+  created_at?: string;
+  created?: string;
+  responseRate?: number;
+  responseTime?: string;
+}
 
 const StoreList: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -37,10 +45,12 @@ const StoreList: React.FC = () => {
   // Reset về trang 1 khi search keyword thay đổi
   useEffect(() => {
     setCurrentPage(1);
-    const newParams = new URLSearchParams(searchParams);
-    newParams.delete("page");
-    setSearchParams(newParams, { replace: true });
-  }, [searchKeyword]);
+    setSearchParams((current) => {
+      const newParams = new URLSearchParams(current);
+      newParams.delete("page");
+      return newParams;
+    }, { replace: true });
+  }, [searchKeyword, setSearchParams]);
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -59,7 +69,7 @@ const StoreList: React.FC = () => {
         }
 
         // Giống hệt FeaturedStores để đảm bảo consistency
-        const mappedStores: StoreType[] = (data.stores || []).map((s: any) => {
+        const mappedStores: StoreType[] = ((data.stores || []) as StoreApiItem[]).map((s) => {
           // Đảm bảo createdAt được truyền đúng format - giống FeaturedStores
           const createdAtValue = s.createdAt || s.created_at || s.created;
           
@@ -73,7 +83,7 @@ const StoreList: React.FC = () => {
             joinDate: createdAtValue ? new Date(createdAtValue).toLocaleDateString() : "—",
             createdAt: createdAtValue, // ✅ Đảm bảo createdAt được truyền vào (giống FeaturedStores)
             isActive: s.isActive ?? true,
-            customCategory: s.category || s.customCategory,
+            customCategory: s.customCategory || s.category,
             // Giữ lại các field khác từ API response
             _id: s._id,
             owner: typeof s.owner === 'object' ? s.owner : { _id: s.owner || "" },
@@ -133,16 +143,17 @@ const StoreList: React.FC = () => {
       "Thực phẩm": "other",
       "Gia dụng": "home",
       "Mỹ phẩm": "other",
+      "Thể thao": "other",
       "Sách": "books",
       "Đồ chơi": "other",
       "Khác": "other",
     };
 
     const selectedCategory = categoryMap[filters.category] || "";
-    const matchesCategory = 
-      filters.category === "Tất cả ngành hàng" ||
-      s.category?.toLowerCase() === selectedCategory.toLowerCase() ||
-      s.customCategory?.toLowerCase().includes(filters.category.toLowerCase());
+    const matchesCategory = filters.category === "Tất cả ngành hàng" ||
+      (s.customCategory
+        ? s.customCategory.toLowerCase().includes(filters.category.toLowerCase())
+        : s.category?.toLowerCase() === selectedCategory.toLowerCase());
 
     return matchesRegion && matchesCategory;
   });
@@ -152,11 +163,12 @@ const StoreList: React.FC = () => {
     switch (filters.rating) {
       case "Đánh giá cao nhất":
         return (b.rating || 0) - (a.rating || 0);
-      case "Đánh giá trung bình":
+      case "Đánh giá trung bình": {
         // Sắp xếp theo rating gần với trung bình (3.5)
         const avgA = Math.abs((a.rating || 0) - 3.5);
         const avgB = Math.abs((b.rating || 0) - 3.5);
         return avgA - avgB;
+      }
       default:
         return 0;
     }
@@ -199,24 +211,13 @@ const StoreList: React.FC = () => {
   };
 
   return (
-    <div className="w-full p-3 md:p-4 lg:p-6 xl:p-8">
-      {/* Header */}
-      <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-gray-900 gradient-text flex items-center gap-2 sm:gap-3">
-          <Store className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-[#4B5563]" />
-          <span>
-            {searchKeyword ? `Kết quả tìm kiếm: "${searchKeyword}"` : "Danh sách cửa hàng"}
-          </span>
-        </h1>
-        <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-          {searchKeyword 
-            ? `Tìm thấy ${filteredStores.length} cửa hàng phù hợp`
-            : "Khám phá các cửa hàng uy tín trên nền tảng"}
-        </p>
-      </div>
+    <div className="canva-public-page">
+      <ContentBreadcrumb items={[{ label: searchKeyword ? `Cửa hàng cho “${searchKeyword}”` : "Cửa hàng" }]} />
+
+      <div className="canva-public-page__content">
 
       {/* Filter Section - ở trên */}
-      <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-up delay-200" style={{ position: 'relative', zIndex: 50 }}>
+      <div className="canva-public-page__toolbar mb-6" style={{ position: 'relative', zIndex: 50 }}>
         <StoreFilters onFilterChange={setFilters} />
       </div>
 
@@ -331,6 +332,7 @@ const StoreList: React.FC = () => {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

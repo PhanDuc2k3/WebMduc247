@@ -400,7 +400,7 @@ export default function PaymentModal({
                   placeholder="Nhập mã xác thực"
                   maxLength={6}
                   disabled={isProcessing}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4B5563] focus:outline-none text-lg text-center font-mono tracking-widest disabled:bg-gray-100"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#4B5563] focus:outline-none text-lg text-center tracking-widest disabled:bg-gray-100"
                 />
               </div>
 

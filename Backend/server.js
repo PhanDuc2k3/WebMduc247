@@ -24,21 +24,16 @@ const adminStatisticsRoutes = require("./routes/AdminStatisticsRoutes");
 const chatbotRoutes = require("./routes/ChatbotRoutes"); // 👈 chatbot
 
 dotenv.config();
-connectDB();
 
 // ✅ Bổ sung: Khởi động Order Scheduler
 const { startOrderScheduler } = require('./utils/orderScheduler');
-startOrderScheduler();
 
 const app = express();
 
 // 🛡️ CORS
 const allowedOrigins = [
-  'https://shopmduc247.online',
   'http://localhost:5173',
-  'https://api.shopmduc247.online',
-  'https://web-mduc247.vercel.app',
-  'https://ws.shopmduc247.online',
+  'http://127.0.0.1:5173',
 ];
 
 app.use(
@@ -94,4 +89,13 @@ app.use((err, req, res, next) => {
 
 // 🚀 Khởi động server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(` Backend running on port ${PORT}`));
+const startServer = async () => {
+  await connectDB();
+  startOrderScheduler();
+  app.listen(PORT, () => console.log(`Backend running on http://localhost:${PORT}`));
+};
+
+startServer().catch((error) => {
+  console.error(error.message);
+  process.exit(1);
+});

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axiosClient from "@/api/axiosClient";
 import userApi from "@/api/userApi";
-import { Mail, Lock, X, ShoppingCart, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, X, Boxes, Eye, EyeOff } from "lucide-react";
 import { useChat } from "../../context/chatContext";
 import { toast } from "react-toastify";
 import { getSocket } from "../../socket";
@@ -212,12 +212,12 @@ const Login: React.FC = () => {
       <div className="flex flex-col items-center mb-8 animate-fade-in-down">
         <div className="relative mb-4">
           <div className="absolute inset-0 bg-[#4B5563] rounded-full blur-lg opacity-50 animate-pulse"></div>
-          <div className="relative w-20 h-20 rounded-full bg-[#4B5563] flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
-            <ShoppingCart className="text-white w-10 h-10" />
+          <div className="auth-brand-icon relative w-20 h-20 rounded-2xl bg-[#4B5563] flex items-center justify-center shadow-lg">
+            <Boxes className="text-white w-10 h-10" />
           </div>
         </div>
-        <h1 className="text-3xl lg:text-4xl font-extrabold text-[#4B5563] mb-2">
-          ShopMDuc247
+        <h1 className="auth-brand-name text-3xl lg:text-4xl font-extrabold text-[#4B5563] mb-2">
+          MDUC247
         </h1>
         <p className="text-gray-600 text-center text-lg">
           Chào mừng bạn quay trở lại!

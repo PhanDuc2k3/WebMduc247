@@ -87,10 +87,10 @@ const BannerSlider: React.FC = () => {
   const banner = demoBanners[currentIndex];
 
   return (
-    <div className="mt-4 sm:mt-6 lg:mt-8 relative">
+    <div className="mt-3 sm:mt-6 lg:mt-8 relative px-1 sm:px-0">
       <div
         ref={carouselRef}
-        className="relative rounded-xl sm:rounded-2xl overflow-hidden w-full h-[180px] sm:h-[220px] md:h-[280px] lg:h-[380px] shadow-xl"
+        className="relative rounded-lg xs:rounded-xl sm:rounded-2xl overflow-hidden w-full h-[160px] xs:h-[180px] sm:h-[220px] md:h-[280px] lg:h-[380px] shadow-xl"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -104,34 +104,34 @@ const BannerSlider: React.FC = () => {
         <div className="absolute top-1/2 left-1/4 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2"></div>
 
         {/* Content */}
-        <div className="relative h-full flex flex-col lg:flex-row items-center justify-between px-6 sm:px-10 lg:px-16 py-6 sm:py-8">
+        <div className="relative h-full flex flex-col lg:flex-row items-center justify-between px-4 xs:px-6 sm:px-10 lg:px-16 py-4 xs:py-5 sm:py-8">
           {/* Left - Text */}
           <div className="flex-1 text-white z-10 text-center lg:text-left">
             {/* Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm px-4 sm:px-5 py-2 rounded-full mb-3 sm:mb-4">
-              <ShoppingBag size={14} className="sm:w-4 sm:h-4" />
-              <span className="text-xs sm:text-sm font-semibold tracking-wide">{banner.badge}</span>
+            <div className="inline-flex items-center gap-1.5 xs:gap-2 bg-white/15 backdrop-blur-sm px-3 xs:px-4 sm:px-5 py-1.5 xs:py-2 rounded-full mb-2 xs:mb-3 sm:mb-4">
+              <ShoppingBag size={12} className="xs:w-3.5 xs:h-3.5 sm:w-4 sm:h-4" />
+              <span className="text-[10px] xs:text-xs sm:text-sm font-semibold tracking-wide">{banner.badge}</span>
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black mb-1 sm:mb-2 leading-tight">
+            <h1 className="text-lg xs:text-xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-black mb-1 sm:mb-2 leading-tight">
               {banner.title}
             </h1>
-            <p className="text-white/80 text-xs sm:text-sm md:text-base mb-3 sm:mb-4 font-medium max-w-md mx-auto lg:mx-0">
+            <p className="text-white/80 text-[10px] xs:text-xs sm:text-sm md:text-base mb-2 xs:mb-3 sm:mb-4 font-medium max-w-md mx-auto lg:mx-0">
               {banner.subtitle}
             </p>
 
             {/* Discount */}
-            <div className="flex items-center justify-center lg:justify-start gap-1.5 sm:gap-2 mb-4 sm:mb-5">
-              <span className="text-sm sm:text-xl md:text-2xl font-bold text-gray-200">Up to</span>
-              <span className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black">{banner.discount}</span>
-              <span className="text-sm sm:text-xl md:text-2xl font-bold text-gray-200">OFF!</span>
+            <div className="flex items-center justify-center lg:justify-start gap-1 xs:gap-1.5 sm:gap-2 mb-3 xs:mb-4 sm:mb-5">
+              <span className="text-xs xs:text-sm sm:text-xl md:text-2xl font-bold text-gray-200">Up to</span>
+              <span className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-black">{banner.discount}</span>
+              <span className="text-xs xs:text-sm sm:text-xl md:text-2xl font-bold text-gray-200">OFF!</span>
             </div>
 
             {/* CTA */}
             <Link
               to={banner.ctaLink}
-              className="inline-block bg-gray-200 text-gray-800 font-bold px-5 sm:px-8 lg:px-10 py-2.5 sm:py-3 rounded-full hover:bg-white hover:shadow-2xl transition-all duration-300 shadow-xl transform hover:scale-105 text-xs sm:text-sm md:text-base"
+              className="inline-block bg-gray-200 text-gray-800 font-bold px-4 xs:px-5 sm:px-8 lg:px-10 py-2 xs:py-2.5 sm:py-3 rounded-full hover:bg-white hover:shadow-2xl transition-all duration-300 shadow-xl transform hover:scale-105 text-[11px] xs:text-xs sm:text-sm md:text-base"
             >
               {banner.ctaText}
             </Link>
@@ -175,28 +175,28 @@ const BannerSlider: React.FC = () => {
         {/* Navigation Arrows */}
         <button
           onClick={goToPrevious}
-          className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 bg-gray-200/90 hover:bg-gray-200 text-gray-800 rounded-full p-2 sm:p-3 shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
+          className="absolute left-1 xs:left-2 sm:left-4 top-1/2 -translate-y-1/2 z-30 bg-gray-200/90 hover:bg-gray-200 text-gray-800 rounded-full p-1.5 xs:p-2 sm:p-3 shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
           aria-label="Banner trước"
         >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
+          <ChevronLeft className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
         </button>
         <button
           onClick={goToNext}
-          className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 bg-gray-200/90 hover:bg-gray-200 text-gray-800 rounded-full p-2 sm:p-3 shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
+          className="absolute right-1 xs:right-2 sm:right-4 top-1/2 -translate-y-1/2 z-30 bg-gray-200/90 hover:bg-gray-200 text-gray-800 rounded-full p-1.5 xs:p-2 sm:p-3 shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
           aria-label="Banner sau"
         >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+          <ChevronRight className="w-3 h-3 xs:w-4 xs:h-4 sm:w-5 sm:h-5" />
         </button>
 
         {/* Dots */}
-        <div className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+        <div className="absolute bottom-2 xs:bottom-3 sm:bottom-6 left-1/2 -translate-x-1/2 z-30 flex gap-1.5 xs:gap-2">
           {demoBanners.map((_, index) => (
             <button
               key={index}
               onClick={() => setCurrentIndex(index)}
-              className={`w-6 sm:w-10 h-2 rounded-full transition-all duration-300 ${
+              className={`w-5 xs:w-6 sm:w-10 h-1.5 xs:h-2 rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? "bg-gray-200 w-10 sm:w-12"
+                  ? "bg-gray-200 w-5 xs:w-6 sm:w-12"
                   : "bg-white/40 hover:bg-white/60"
               }`}
               aria-label={`Đi tới banner ${index + 1}`}

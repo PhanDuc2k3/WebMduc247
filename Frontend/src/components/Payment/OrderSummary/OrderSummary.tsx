@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertTriangle, XCircle, CheckCircle, Wallet } from "lucide-react";
-import Subtotal from "./Subtotal";
-import CartDiscount from "./CartDiscount";
-import ShippingFee from "./ShippingFee";
-import PlatformFee from "./PlatformFee";
-import TotalAmount from "./TotalAmount";
+import { AlertTriangle, ShieldCheck, XCircle } from "lucide-react";
 
 import cartApi from "../../../api/cartApi";
 import addressApi from "../../../api/addressApi";
@@ -25,6 +20,7 @@ interface OrderSummaryProps {
   shippingDiscount?: number;
   productVoucherCode?: string | null;
   freeshipVoucherCode?: string | null;
+  selectedProducts?: { _id?: string; name?: string; quantity?: number; subtotal?: number; price?: number; salePrice?: number; variation?: { additionalPrice?: number } }[];
 }
 
 interface CartResponse {
@@ -48,12 +44,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   shippingDiscount,
   productVoucherCode,
   freeshipVoucherCode,
+  selectedProducts = [],
 }) => {
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedAddress, setSelectedAddress] = useState<AddressType | null>(null);
   const [selectedCartSubtotal, setSelectedCartSubtotal] = useState<number>(0);
   const [isProcessing, setIsProcessing] = useState(false); // Chống double click
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const navigate = useNavigate();
 
@@ -162,6 +160,11 @@ const handleCheckout = async () => {
     return;
   }
 
+  if (!acceptedTerms) {
+    toast.warning("Vui lòng đồng ý với điều khoản sử dụng và chính sách mua hàng.", { containerId: "general-toast" });
+    return;
+  }
+
   if (!selectedAddress) {
     toast.warning(
       <div className="flex items-center gap-2">
@@ -230,8 +233,6 @@ const handleCheckout = async () => {
       );
       return;
     }
-
-    const shippingAddressString = `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.country || ""}`;
 
 const orderPayload: CreateOrderData = {
     items: itemsForOrder,
@@ -521,56 +522,29 @@ const orderPayload: CreateOrderData = {
       </div>
     );
   }
+  const hasProducts = selectedProducts.length > 0;
+  const displayedShippingFee = hasProducts ? shippingFee : 0;
   
-  if (!cart) {
-    return (
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 p-4 sm:p-6 text-center animate-fade-in">
-        <p className="text-red-500 text-base sm:text-lg font-medium">Không lấy được dữ liệu giỏ hàng</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl border-2 border-gray-200 overflow-hidden lg:sticky lg:top-6">
-      <div className="bg-[#4B5563] p-4 sm:p-6 border-b-2 border-gray-200">
-        <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 sm:gap-3">
-          Tóm tắt đơn hàng
-        </h2>
-        <p className="text-white/90 text-xs sm:text-sm mt-1">Kiểm tra thông tin trước khi thanh toán</p>
+    <section className="checkout-summary">
+      <h2>Tóm tắt đơn hàng</h2>
+      <p className="checkout-summary-count">{selectedProducts.length} sản phẩm trong đơn hàng</p>
+      <div className="checkout-summary-products">{selectedProducts.map((item, index) => {
+        const itemTotal = item.subtotal || ((item.salePrice ?? item.price ?? 0) + (item.variation?.additionalPrice || 0)) * (item.quantity || 1);
+        return <p key={item._id || index}><span>{item.name || `Sản phẩm ${index + 1}`} × {item.quantity || 1}</span><strong>{itemTotal.toLocaleString("vi-VN")}₫</strong></p>;
+      })}</div>
+      <div className="checkout-summary-lines">
+        <p><span>Tạm tính</span><strong>{selectedCartSubtotal.toLocaleString("vi-VN")}₫</strong></p>
+        <p><span>Phí nền tảng</span><strong>{platformFee.toLocaleString("vi-VN")}₫</strong></p>
+        <p><span>Phí vận chuyển</span><strong>{displayedShippingFee.toLocaleString("vi-VN")}₫</strong></p>
+        <p><span>Giảm giá</span><strong>-{discount.toLocaleString("vi-VN")}₫</strong></p>
+        {Boolean(shippingDiscount) && <p><span>Ưu đãi vận chuyển</span><strong>-{(shippingDiscount || 0).toLocaleString("vi-VN")}₫</strong></p>}
       </div>
-      <div className="p-4 sm:p-6 space-y-3 sm:space-y-4 bg-gradient-to-br from-white to-gray-50">
-        <Subtotal subtotal={selectedCartSubtotal} />
-        <PlatformFee platformFee={platformFee} />
-        {discount > 0 && <CartDiscount voucherDiscount={discount} />}
-        <ShippingFee shippingFee={shippingFee} shippingDiscount={shippingDiscount || 0} />
-        <div className="border-t-2 border-gray-300 pt-3 sm:pt-4 mt-3 sm:mt-4">
-          <TotalAmount total={total} />
-        </div>
-        <button
-          onClick={handleCheckout}
-          disabled={isProcessing}
-          className={`w-full mt-4 sm:mt-6 px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl font-bold text-base sm:text-lg lg:text-xl transition-all duration-300 shadow-lg flex items-center justify-center gap-2 ${
-            isProcessing
-              ? "bg-gray-400 text-white cursor-not-allowed"
-              : "bg-[#4B5563] text-white hover:bg-[#374151] hover:shadow-2xl transform hover:scale-105"
-          }`}
-        >
-          {isProcessing ? (
-            <>
-              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              <span>Đang xử lý...</span>
-            </>
-          ) : (
-            <span>Thanh toán ngay</span>
-          )}
-        </button>
-        <div className="p-3 sm:p-4 bg-yellow-50 border-2 border-yellow-200 rounded-lg sm:rounded-xl mt-3 sm:mt-4">
-          <p className="text-yellow-800 text-xs sm:text-sm font-semibold flex items-center gap-2">
-            Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi xác nhận
-          </p>
-        </div>
-      </div>
-    </div>
+      <div className="checkout-summary-total"><span>Tổng cộng</span><strong>{(hasProducts ? total : 0).toLocaleString("vi-VN")}₫</strong><small>{hasProducts ? "Đã bao gồm các khoản phí áp dụng" : "Chọn sản phẩm trong giỏ hàng để tiếp tục"}</small></div>
+      <label className="checkout-terms"><input type="checkbox" checked={acceptedTerms} onChange={(event) => setAcceptedTerms(event.target.checked)} /> <span>Tôi đồng ý với Điều khoản sử dụng và Chính sách mua hàng của MDUC247.</span></label>
+      <button type="button" className="checkout-place-order" onClick={handleCheckout} disabled={isProcessing || !acceptedTerms || !hasProducts}>{isProcessing ? "Đang xử lý..." : "Đặt hàng"}</button>
+      <p className="checkout-summary-safe"><ShieldCheck /> Thanh toán an toàn · Xem lại trước khi xác nhận</p>
+    </section>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
 import userApi from "../../api/userApi";
-import { User, Phone, Mail, Lock, CheckCircle, ShoppingCart, Eye, EyeOff } from "lucide-react";
+import { User, Phone, Mail, Lock, CheckCircle, Boxes, Eye, EyeOff } from "lucide-react";
 
 const Register: React.FC = () => {
   const [activeTab, setActiveTab] = useState("register");
@@ -78,12 +78,12 @@ const handleRegister = async (e: React.FormEvent) => {
         <div className="flex flex-col items-center mb-4 sm:mb-8 animate-fade-in-down">
           <div className="relative mb-3 sm:mb-4">
             <div className="absolute inset-0 bg-[#4B5563] rounded-full blur-lg opacity-50 animate-pulse"></div>
-            <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#4B5563] flex items-center justify-center shadow-2xl transform hover:scale-110 transition-transform duration-300">
-              <ShoppingCart className="text-white w-8 h-8 sm:w-10 sm:h-10" />
+            <div className="auth-brand-icon relative w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#4B5563] flex items-center justify-center shadow-lg">
+              <Boxes className="text-white w-8 h-8 sm:w-10 sm:h-10" />
             </div>
           </div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#4B5563] mb-2">
-            ShopMDuc247
+          <h1 className="auth-brand-name text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#4B5563] mb-2">
+            MDUC247
           </h1>
           <p className="text-gray-600 text-center text-sm sm:text-base lg:text-lg">
             Tạo tài khoản mới ngay hôm nay!

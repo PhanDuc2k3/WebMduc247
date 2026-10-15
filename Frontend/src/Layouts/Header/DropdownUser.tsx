@@ -28,8 +28,9 @@ const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, setShow
         
         const res = await walletApi.getWallet();
         setWalletBalance(res.data.wallet.balance);
-      } catch (err: any) {
-        if (err.response?.status !== 401 && err.code !== 'ERR_NETWORK') {
+      } catch (err: unknown) {
+        const requestError = err as { response?: { status?: number }; code?: string };
+        if (requestError.response?.status !== 401 && requestError.code !== 'ERR_NETWORK') {
           console.error('Lỗi lấy ví:', err);
         }
       }
@@ -39,9 +40,8 @@ const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, setShow
   }, []);
 
   return (
-    <div className="absolute right-0 mt-2 bg-white border rounded-xl shadow-md w-56 md:w-48 p-2 z-50">
-      {/* Mobile: Wallet, Voucher, Messages */}
-      <div className="md:hidden border-b border-gray-200 pb-2 mb-2">
+    <div className="canva-user-menu absolute right-0 mt-2 bg-white border border-[#e8edf5] rounded-2xl shadow-xl w-64 p-2 z-50">
+      <div className="border-b border-gray-200 pb-2 mb-2">
         <button
           onClick={() => {
             setShowDropdown(false);

@@ -28,7 +28,7 @@ const AdditionalInfoCard = () => {
       {infoBlocks.map((block, idx) => (
         <div
           key={idx}
-          className="bg-white w-full md:w-1/3 p-8 rounded-2xl shadow-xl border-2 border-gray-100 flex flex-col space-y-4 transition-all duration-300 transform hover:-translate-y-2 hover:shadow-2xl group animate-fade-in-up"
+          className="bg-white w-full md:w-1/3 p-6 md:p-8 rounded-2xl border border-[#e8edf5] flex flex-col space-y-4 transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg group animate-fade-in-up"
           style={{ animationDelay: `${idx * 0.1}s` }}
         >
           <div className="flex items-center space-x-3 mb-2">

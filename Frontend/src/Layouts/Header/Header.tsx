@@ -1,688 +1,154 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
-import {
-  User,
-  Menu,
-  Search,
-  ChevronDown,
-  Store,
-  Package,
-  ShoppingCart,
-  Gift,
-  MessageCircle,
-  Wallet as WalletIconLucide,
-  Home,
-  Tag,
-  Headset,
-  X,
-  ChevronRight,
-  Download,
-  Users,
-  Info,
-  ShieldCheck,
-  Bell,
-} from "lucide-react";
-import { useHeader } from "./useHeader";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Boxes, ChevronDown, Menu, Search, Store, User, X } from "lucide-react";
+import { useCart } from "../../context/CartContext";
+import productApi from "../../api/productApi";
+import storeApi from "../../api/storeApi";
 import DropdownUser from "./DropdownUser";
 import { HeaderIcons } from "./HeaderIcons";
-import { useCart } from "../../context/CartContext";
-import { useChat } from "../../context/chatContext";
-import storeApi from "../../api/storeApi";
-import productApi from "../../api/productApi";
+import { useHeader } from "./useHeader";
+import "./Header.css";
+import { USE_MOCK_DATA } from "../../config/runtime";
+import { showAvatarFallback } from "../../utils/imageFallback";
 
-// Top bar links configuration
-const topBarLinks = [
-  { label: "Download BeliBeli App", icon: Download, href: "/download-app" },
-  { label: "Mitra BeliBeli", icon: Users, href: "/mitra" },
-  { label: "Tentang BeliBeli", icon: Info, href: "/about" },
-  { label: "BeliBeli Care", icon: ShieldCheck, href: "/care" },
+interface ProductSearchResult { _id: string; name: string; images?: string[]; price?: number; salePrice?: number; }
+interface StoreSearchResult { _id: string; name: string; logoUrl?: string; category?: string; }
+type SearchResult = ProductSearchResult | StoreSearchResult;
+
+const categoryLinks = [
+  { label: "Tất cả danh mục", to: "/products" },
+  { label: "Điện thoại & Phụ kiện", to: "/category/phone" },
+  { label: "Điện tử", to: "/category/electronics" },
+  { label: "Thời trang", to: "/category/fashion" },
+  { label: "Nhà cửa & Đời sống", to: "/category/home" },
+  { label: "Làm đẹp", to: "/category/beauty" },
+  { label: "Thể thao", to: "/category/sports" },
+  { label: "Khuyến mãi", to: "/new" },
 ];
 
-const Header: React.FC = () => {
+const isStoreResult = (result: SearchResult): result is StoreSearchResult => "logoUrl" in result;
+
+const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, online, lastSeen, showDropdown, setShowDropdown, handleLogout } = useHeader();
   const { cartCount } = useCart();
-  const { unreadMessages } = useChat();
-
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState<"product" | "store">("product");
-  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
-  const [showSearchResults, setShowSearchResults] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [totalSearchResults, setTotalSearchResults] = useState(0);
-  const [isSearching, setIsSearching] = useState(false);
-  const searchDropdownRef = useRef<HTMLDivElement>(null);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [typeMenuOpen, setTypeMenuOpen] = useState(false);
+  const [resultsOpen, setResultsOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [searching, setSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
 
-  const navLinks = [
-    { to: "/", label: "Trang chủ", icon: Home },
-    { to: "/store", label: "Cửa hàng", icon: Store },
-    { to: "/products", label: "Sản phẩm", icon: Package },
-    { to: "/new", label: "Khuyến mãi", icon: Tag },
-    { to: "/support", label: "Hỗ trợ", icon: Headset },
-  ];
-
-  // Đóng dropdown khi click ra ngoài
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchDropdownRef.current && !searchDropdownRef.current.contains(e.target as Node)) {
-        setShowSearchDropdown(false);
-        setShowSearchResults(false);
+    const closeMenus = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setTypeMenuOpen(false);
+        setResultsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", closeMenus);
+    return () => document.removeEventListener("mousedown", closeMenus);
   }, []);
 
-  // Tìm kiếm real-time cho stores và products
   useEffect(() => {
-    if (searchTerm.trim().length >= 2) {
-      // Clear timeout trước đó
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-
-      // Debounce search
-      searchTimeoutRef.current = setTimeout(async () => {
-        setIsSearching(true);
-        try {
-          if (searchType === "store") {
-            const res = await storeApi.searchStores(searchTerm.trim(), 10); // Lấy 10 để biết có nhiều hơn 5 không
-            const stores = res.data.stores || [];
-            setTotalSearchResults(stores.length);
-            setSearchResults(stores.slice(0, 5)); // Chỉ hiển thị 5 kết quả đầu
-            setShowSearchResults(true);
-          } else if (searchType === "product") {
-            const res = await productApi.searchProducts(searchTerm.trim(), 10); // Lấy 10 để biết có nhiều hơn 5 không
-            const products = res.data.products || [];
-            setTotalSearchResults(products.length);
-            setSearchResults(products.slice(0, 5)); // Chỉ hiển thị 5 kết quả đầu
-            setShowSearchResults(true);
-          }
-        } catch (error) {
-          console.error("Search error:", error);
-          setSearchResults([]);
-          setTotalSearchResults(0);
-        } finally {
-          setIsSearching(false);
-        }
-      }, 300);
-    } else {
-      setShowSearchResults(false);
+    if (searchTerm.trim().length < 2) {
       setSearchResults([]);
+      setResultsOpen(false);
+      return;
     }
-
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
+    let active = true;
+    const timer = window.setTimeout(async () => {
+      setSearching(true);
+      try {
+        if (searchType === "store") {
+          const response = await storeApi.searchStores(searchTerm.trim(), 10);
+          const stores = Array.isArray(response.data?.stores) ? response.data.stores as StoreSearchResult[] : [];
+          if (active) { setTotalResults(stores.length); setSearchResults(stores.slice(0, 5)); }
+        } else {
+          const response = await productApi.searchProducts(searchTerm.trim(), 10);
+          const products = Array.isArray(response.data?.products) ? response.data.products as ProductSearchResult[] : [];
+          if (active) { setTotalResults(products.length); setSearchResults(products.slice(0, 5)); }
+        }
+        if (active) setResultsOpen(true);
+      } catch {
+        if (active) { setSearchResults([]); setTotalResults(0); setResultsOpen(true); }
+      } finally {
+        if (active) setSearching(false);
       }
-    };
+    }, 300);
+    return () => { active = false; window.clearTimeout(timer); };
   }, [searchTerm, searchType]);
 
-  // Đóng các menu khi thay đổi route
   useEffect(() => {
-    setIsSidebarOpen(false);
-  }, [location.pathname]);
+    setMobileNavOpen(false);
+    setShowDropdown(false);
+  }, [location.pathname, setShowDropdown]);
 
-  // Khóa scroll khi mở sidebar trên mobile
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    document.body.style.overflow = isSidebarOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isSidebarOpen]);
-
-  // Xử lý tìm kiếm
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      if (searchType === "store") {
-        navigate(`/store?search=${encodeURIComponent(searchTerm.trim())}`);
-      } else {
-        navigate(`/products?search=${encodeURIComponent(searchTerm.trim())}`);
-      }
-      setSearchTerm("");
-      setShowSearchResults(false);
-    }
+  const searchPath = () => searchType === "store" ? "/store" : "/products";
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    const value = searchTerm.trim();
+    if (!value) return;
+    navigate(`${searchPath()}?search=${encodeURIComponent(value)}`);
+    setResultsOpen(false);
   };
-
-  // Xử lý click vào kết quả tìm kiếm
-  const handleStoreClick = (storeId: string) => {
-    navigate(`/store/${storeId}`);
+  const selectResult = (result: SearchResult) => {
+    navigate(isStoreResult(result) ? `/store/${result._id}` : `/products/${result._id}`);
     setSearchTerm("");
-    setShowSearchResults(false);
-  };
-
-  // Xử lý xem thêm kết quả
-  const handleViewMore = () => {
-    if (searchTerm.trim()) {
-      navigate(`/store?search=${encodeURIComponent(searchTerm.trim())}`);
-      setSearchTerm("");
-      setShowSearchResults(false);
-    }
-  };
-
-  // Xử lý login
-  const handleLoginClick = () => {
-    navigate("/login");
-  };
-
-  const handleProductClick = (productId: string) => {
-    navigate(`/products/${productId}`);
-    setSearchTerm("");
-    setShowSearchResults(false);
+    setResultsOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-[100] bg-[#E5E9EC] shadow-xl border-b-2 border-gray-200">
-      {/* Top bar - BeliBeli Style */}
-      <div className="bg-[#4B5563] text-white hidden md:block">
-        <div className="flex justify-between items-center px-4 sm:px-8 py-2 text-xs">
-          {/* Left links */}
-          <div className="flex items-center gap-1 sm:gap-4">
-            {topBarLinks.map((link, index) => (
-              <a
-                key={index}
-                href={link.href}
-                className="flex items-center gap-1 hover:text-gray-200 transition-colors duration-200 font-medium"
-              >
-                <link.icon size={12} />
-                <span className="hidden lg:inline">{link.label}</span>
-              </a>
-            ))}
-          </div>
-          {/* Right links */}
-          <div className="flex items-center gap-4">
-            <a href="/promo" className="flex items-center gap-1 hover:text-gray-200 transition-colors duration-200 font-medium">
-              <Gift size={12} />
-              <span className="hidden lg:inline">Promo</span>
-            </a>
-            <a href="/signup" className="flex items-center gap-1 hover:text-gray-200 transition-colors duration-200 font-medium">
-              <User size={12} />
-              <span className="hidden lg:inline">Sign Up</span>
-            </a>
-            <a href="/login" className="flex items-center gap-1 hover:text-gray-200 transition-colors duration-200 font-medium">
-              <span className="hidden lg:inline">Login</span>
-            </a>
-          </div>
+    <header className="canva-header">
+      <div className="canva-header__main">
+        <button type="button" className="canva-header__icon-button canva-header__menu-button" onClick={() => setMobileNavOpen((open) => !open)} aria-label="Mở danh mục" aria-expanded={mobileNavOpen}>{mobileNavOpen ? <X /> : <Menu />}</button>
+        <Link to="/" className="canva-header__brand" aria-label="MDUC247 - Trang chủ"><span><Boxes /></span><strong>MDUC247</strong></Link>
+
+        <div className="canva-header__search-wrap" ref={searchRef}>
+          <form className="canva-header__search" role="search" onSubmit={submitSearch}>
+            <button type="button" className="canva-header__search-type" onClick={() => setTypeMenuOpen((open) => !open)} aria-expanded={typeMenuOpen}>{searchType === "product" ? "Sản phẩm" : "Cửa hàng"}<ChevronDown /></button>
+            <Search className="canva-header__search-icon" aria-hidden="true" />
+            <label className="sr-only" htmlFor="site-search">Tìm kiếm</label>
+            <input id="site-search" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} onFocus={() => searchTerm.trim().length >= 2 && setResultsOpen(true)} placeholder={searchType === "store" ? "Tìm kiếm cửa hàng..." : "Tìm kiếm sản phẩm, thương hiệu..."} autoComplete="off" />
+            <button type="submit" className="canva-header__search-submit" aria-label="Tìm kiếm"><Search /></button>
+          </form>
+          {typeMenuOpen && <div className="canva-header__type-menu"><button type="button" onClick={() => { setSearchType("product"); setTypeMenuOpen(false); }}>Sản phẩm</button><button type="button" onClick={() => { setSearchType("store"); setTypeMenuOpen(false); }}>Cửa hàng</button></div>}
+          {resultsOpen && (
+            <div className="canva-header__results">
+              <div className="canva-header__results-title">{searching ? "Đang tìm kiếm..." : `Kết quả ${searchType === "store" ? "cửa hàng" : "sản phẩm"}`}</div>
+              {!searching && searchResults.length === 0 && <p>Không tìm thấy kết quả phù hợp.</p>}
+              {!searching && searchResults.map((result) => (
+                <button type="button" key={result._id} onClick={() => selectResult(result)}>
+                  {isStoreResult(result) ? <><img src={result.logoUrl || "/image.png"} alt="" /><span><strong>{result.name}</strong><small>{result.category || "Cửa hàng"}</small></span></> : <><img src={result.images?.[0] || "/image.png"} alt="" /><span><strong>{result.name}</strong><small>{(result.salePrice || result.price || 0).toLocaleString("vi-VN")}₫</small></span></>}
+                </button>
+              ))}
+              {!searching && totalResults > 5 && <button type="button" className="canva-header__view-all" onClick={submitSearch}>Xem thêm {totalResults - 5} kết quả</button>}
+            </div>
+          )}
+        </div>
+
+        <div className="canva-header__actions">
+          <HeaderIcons cartCount={cartCount} userId={user._id} />
+          {user._id ? (
+            <div className="canva-header__account-wrap">
+              <button type="button" className="canva-header__account" onClick={() => setShowDropdown((open) => !open)} aria-expanded={showDropdown}>
+                <span className="canva-header__avatar">{user.avatarUrl ? <img src={user.avatarUrl} alt="" onError={showAvatarFallback} /> : <User />}{online && <i />}</span><span><small>Tài khoản</small><strong>{user.fullName}</strong></span>
+              </button>
+              {showDropdown && <DropdownUser userId={user._id} online={online} lastSeen={lastSeen} handleLogout={handleLogout} setShowDropdown={setShowDropdown} userRole={user.role} />}
+            </div>
+          ) : <button type="button" className="canva-header__account" onClick={() => navigate("/login")}><span className="canva-header__avatar"><User /></span><span><small>Tài khoản</small><strong>Đăng nhập</strong></span></button>}
         </div>
       </div>
 
-      {/* Main header - Row 1: Logo, Search, Icons, Avatar */}
-      <div className="flex items-center justify-between px-2 sm:px-4 md:px-8 py-2 sm:py-3 bg-[#E5E9EC] gap-1 sm:gap-2">
-        {/* Logo - BeliBeli Style */}
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-          <Link to="/" className="relative group animate-fade-in-left flex-shrink-0">
-            <div className="flex items-center gap-1 sm:gap-2">
-              {/* BeliBeli Logo - B Icon with gradient */}
-              <div className="w-9 h-9 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-gradient-to-br from-[#4B5563] to-[#374151] rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transform group-hover:scale-110 transition-all duration-300">
-                <span className="text-lg sm:text-2xl md:text-3xl font-black text-white">B</span>
-              </div>
-              {/* Logo Text */}
-              <div className="hidden xs:block">
-                <h1 className="text-base sm:text-xl md:text-2xl font-black text-gray-900">
-                  <span className="text-[#4B5563]">BeliBeli</span>
-                  <span className="text-gray-700">.com</span>
-                </h1>
-                <p className="text-[10px] sm:text-xs text-gray-500 font-medium -mt-0.5">Shopping Mall</p>
-              </div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Mobile Search - Compact */}
-        <div className="md:hidden flex-1 min-w-0 mx-1 sm:mx-2">
-          <form onSubmit={handleSearch} className="relative w-full group">
-            <div className="relative flex items-center" ref={searchDropdownRef}>
-              {/* Nút chọn loại tìm kiếm - Mobile Compact */}
-              <button
-                type="button"
-                onClick={() => setShowSearchDropdown(!showSearchDropdown)}
-                className="absolute left-[2px] top-[2px] bottom-[2px] z-20 flex items-center justify-center px-1.5 sm:px-2 py-1.5 
-                           bg-[#4B5563] text-white 
-                           rounded-l-md sm:rounded-l-lg hover:bg-[#374151] 
-                           transition-all duration-300 shadow-md hover:shadow-lg 
-                           transform hover:scale-[1.02] text-[10px] sm:text-xs font-bold border border-r-0 border-white"
-              >
-                {searchType === "product" ? (
-                  <Package size={10} className="sm:w-3 sm:h-3" />
-                ) : (
-                  <Store size={10} className="sm:w-3 sm:h-3" />
-                )}
-                <ChevronDown
-                  size={8}
-                  className={`sm:w-2.5 sm:h-2.5 transition-transform duration-300 ${showSearchDropdown ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {/* Dropdown loại tìm kiếm - Mobile */}
-              {showSearchDropdown && (
-                <div
-                  className="absolute left-0 top-[calc(100%+4px)] w-36 sm:w-40 
-                             bg-white border border-gray-200 rounded-xl shadow-xl 
-                             overflow-hidden animate-fade-in z-[10000]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchType("product");
-                      setShowSearchDropdown(false);
-                    }}
-                    className={`w-full px-3 py-2 text-xs font-medium flex items-center gap-2 transition-all duration-200 
-                      ${searchType === "product"
-                        ? "bg-[#4B5563]/10 text-[#4B5563]"
-                        : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                  >
-                    <Package size={14} />
-                    Search Products
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchType("store");
-                      setShowSearchDropdown(false);
-                    }}
-                    className={`w-full px-3 py-2 text-xs font-medium flex items-center gap-2 transition-all duration-200 border-t border-gray-100 
-                      ${searchType === "store"
-                        ? "bg-[#4B5563]/10 text-[#4B5563]"
-                        : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                  >
-                    <Store size={14} />
-                    Search Stores
-                  </button>
-                </div>
-              )}
-
-              {/* Input tìm kiếm - Mobile Compact */}
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onFocus={() => {
-                  if (searchType === "store" && searchResults.length > 0) {
-                    setShowSearchResults(true);
-                  }
-                }}
-                placeholder={searchType === "product" ? "Search product or brand here..." : "Tìm cửa hàng..."}
-                className="w-full pl-[42px] sm:pl-[50px] pr-8 sm:pr-10 py-1.5 sm:py-2 text-[11px] sm:text-xs border-2 border-gray-300 rounded-md sm:rounded-lg 
-                           shadow-md focus:outline-none focus:ring-2 focus:ring-[#4B5563] 
-                           transition-all duration-200 bg-white/90 backdrop-blur-sm placeholder-gray-400"
-              />
-
-              {/* Kết quả tìm kiếm - Mobile */}
-              {showSearchResults && searchType === "store" && (
-                <div className="absolute left-0 top-[calc(100%+4px)] w-full bg-white border border-gray-200 rounded-xl shadow-xl max-h-80 overflow-y-auto z-[10000]">
-                  {isSearching ? (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">Đang tìm kiếm...</div>
-                  ) : searchResults.length > 0 ? (
-                    <>
-                      {searchResults.map((store) => (
-                        <button
-                          key={store._id}
-                          onClick={() => handleStoreClick(store._id)}
-                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
-                        >
-                          {store.logoUrl ? (
-                            <img src={store.logoUrl} alt={store.name} className="w-10 h-10 rounded-lg object-cover" />
-                          ) : (
-                            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-                              <Store size={20} className="text-white" />
-                            </div>
-                          )}
-                          <div className="flex-1 text-left">
-                            <div className="font-semibold text-sm text-gray-900">{store.name}</div>
-                            <div className="text-xs text-gray-500 line-clamp-1">{store.description}</div>
-                            {store.rating > 0 && (
-                              <div className="text-xs text-yellow-500 mt-1">⭐ {store.rating.toFixed(1)}</div>
-                            )}
-                          </div>
-                          <ChevronRight size={16} className="text-gray-400" />
-                        </button>
-                      ))}
-                      {totalSearchResults > 5 && (
-                        <button
-                          onClick={handleViewMore}
-                          className="w-full px-4 py-3 text-sm font-semibold text-[#4B5563] hover:bg-[#4B5563]/5 transition-colors border-t border-gray-200"
-                        >
-                          Xem thêm {totalSearchResults - 5} kết quả
-                        </button>
-                      )}
-                    </>
-                  ) : searchTerm.trim().length >= 2 ? (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">Không tìm thấy cửa hàng</div>
-                  ) : null}
-                </div>
-              )}
-
-              {/* Nút search - Mobile Compact */}
-              <button
-                type="submit"
-                className="absolute right-[2px] top-[2px] bottom-[2px] flex items-center justify-center 
-                           bg-[#4B5563] text-white 
-                           px-1.5 sm:px-2.5 rounded-r-md sm:rounded-r-lg hover:bg-[#374151] 
-                           transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                <Search size={12} className="sm:w-3.5 sm:h-3.5" />
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Search - Desktop */}
-        <div className="hidden md:flex items-center flex-1 max-w-xl mx-4">
-          <form onSubmit={handleSearch} className="relative w-full group">
-            <div className="relative flex items-center" ref={searchDropdownRef}>
-              {/* Nút chọn loại tìm kiếm */}
-              <button
-                type="button"
-                onClick={() => setShowSearchDropdown(!showSearchDropdown)}
-                className="absolute left-[2px] top-[2px] bottom-[2px] z-20 flex items-center justify-center gap-1 px-3 py-2.5 
-                           bg-[#4B5563] text-white 
-                           rounded-l-xl hover:bg-[#374151] 
-                           transition-all duration-300 shadow-md hover:shadow-lg 
-                           transform hover:scale-[1.02] text-xs sm:text-sm font-bold border-2 border-r-0 border-white"
-              >
-                {searchType === "product" ? (
-                  <>
-                    <Package size={14} />
-                    <span className="hidden sm:inline">Sản phẩm</span>
-                  </>
-                ) : (
-                  <>
-                    <Store size={14} />
-                    <span className="hidden sm:inline">Cửa hàng</span>
-                  </>
-                )}
-                <ChevronDown
-                  size={12}
-                  className={`transition-transform duration-300 ${showSearchDropdown ? "rotate-180" : ""}`}
-                />
-              </button>
-
-              {/* Dropdown loại tìm kiếm */}
-              {showSearchDropdown && (
-                <div
-                  className="absolute left-0 top-[calc(100%+6px)] w-44 
-                             bg-white border border-gray-200 rounded-xl shadow-xl 
-                             overflow-hidden animate-fade-in z-[10000]"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchType("product");
-                      setShowSearchDropdown(false);
-                    }}
-                    className={`w-full px-4 py-3 text-sm font-medium flex items-center gap-2 transition-all duration-200 
-                      ${searchType === "product"
-                        ? "bg-[#4B5563]/10 text-[#4B5563]"
-                        : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                  >
-                    <Package size={16} />
-                    Search Products
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchType("store");
-                      setShowSearchDropdown(false);
-                    }}
-                    className={`w-full px-4 py-3 text-sm font-medium flex items-center gap-2 transition-all duration-200 border-t border-gray-100 
-                      ${searchType === "store"
-                        ? "bg-[#4B5563]/10 text-[#4B5563]"
-                        : "text-gray-700 hover:bg-gray-50"
-                      }`}
-                  >
-                    <Store size={16} />
-                    Search Stores
-                  </button>
-                </div>
-              )}
-
-              {/* Input tìm kiếm */}
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onFocus={() => {
-                  if (searchResults.length > 0) {
-                    setShowSearchResults(true);
-                  }
-                }}
-                placeholder={searchType === "product" ? "Search product or brand here..." : "Tìm kiếm cửa hàng..."}
-                className="w-full pl-[130px] pr-12 py-2.5 text-sm border-2 border-gray-300 rounded-xl 
-                           shadow-md focus:outline-none focus:ring-2 focus:ring-[#4B5563] 
-                           transition-all duration-200 bg-white/90 backdrop-blur-sm placeholder-gray-400"
-              />
-
-              {/* Kết quả tìm kiếm - Desktop */}
-              {showSearchResults && (
-                <div className="absolute left-0 top-[calc(100%+6px)] w-full bg-white border border-gray-200 rounded-xl shadow-xl max-h-96 overflow-y-auto z-[10000]">
-                  {isSearching ? (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">Đang tìm kiếm...</div>
-                  ) : searchResults.length > 0 ? (
-                    <>
-                      <div className="px-4 py-2 text-xs font-semibold text-gray-500 bg-gray-50 border-b">
-                        Kết quả tìm kiếm ({totalSearchResults > 5 ? `5/${totalSearchResults}` : searchResults.length})
-                      </div>
-                      {searchResults.map((item) => (
-                        <button
-                          key={item._id}
-                          onClick={() => searchType === "store" ? handleStoreClick(item._id) : handleProductClick(item._id)}
-                          className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors border-b border-gray-100"
-                        >
-                          {searchType === "store" ? (
-                            <>
-                              {item.logoUrl ? (
-                                <img src={item.logoUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
-                              ) : (
-                                <div className="w-12 h-12 rounded-lg bg-[#4B5563] flex items-center justify-center">
-                                  <Store size={24} className="text-white" />
-                                </div>
-                              )}
-                              <div className="flex-1 text-left">
-                                <div className="font-semibold text-sm text-gray-900">{item.name}</div>
-                                <div className="text-xs text-gray-500 line-clamp-1 mt-1">{item.description}</div>
-                                <div className="flex items-center gap-3 mt-1">
-                                  {item.rating > 0 && (
-                                    <div className="text-xs text-yellow-500">⭐ {item.rating.toFixed(1)}</div>
-                                  )}
-                                  {item.productsCount > 0 && (
-                                    <div className="text-xs text-gray-400">{item.productsCount} sản phẩm</div>
-                                  )}
-                                </div>
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              {item.images && item.images.length > 0 ? (
-                                <img src={item.images[0]} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
-                              ) : (
-                                <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-                                  <Package size={24} className="text-white" />
-                                </div>
-                              )}
-                              <div className="flex-1 text-left">
-                                <div className="font-semibold text-sm text-gray-900">{item.name}</div>
-                                <div className="text-xs text-gray-500 line-clamp-1 mt-1">{item.brand || item.category}</div>
-                                <div className="flex items-center gap-3 mt-1">
-                                  <div className="text-xs font-semibold text-[#4B5563]">
-                                    {item.salePrice ? (
-                                      <>
-                                        <span className="line-through text-gray-400 mr-2">{item.price?.toLocaleString()}đ</span>
-                                        <span>{item.salePrice?.toLocaleString()}đ</span>
-                                      </>
-                                    ) : (
-                                      <span>{item.price?.toLocaleString()}đ</span>
-                                    )}
-                                  </div>
-                                  {item.rating > 0 && (
-                                    <div className="text-xs text-yellow-500">⭐ {item.rating.toFixed(1)}</div>
-                                  )}
-                                </div>
-                              </div>
-                            </>
-                          )}
-                          <ChevronRight size={18} className="text-gray-400" />
-                        </button>
-                      ))}
-                      {totalSearchResults > 5 && (
-                        <button
-                          onClick={handleViewMore}
-                          className="w-full px-4 py-3 text-sm font-semibold text-[#4B5563] hover:bg-[#4B5563]/5 transition-colors border-t border-gray-200"
-                        >
-                          Xem thêm {totalSearchResults - 5} kết quả
-                        </button>
-                      )}
-                    </>
-                  ) : searchTerm.trim().length >= 2 ? (
-                    <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                      Không tìm thấy {searchType === "store" ? "cửa hàng" : "sản phẩm"}
-                    </div>
-                  ) : null}
-                </div>
-              )}
-
-              {/* Nút search */}
-              <button
-                type="submit"
-                className="absolute right-[2px] top-[2px] bottom-[2px] flex items-center justify-center 
-                           bg-[#4B5563] text-white 
-                           px-3 rounded-r-xl hover:bg-[#374151] 
-                           transition-all duration-300 shadow-md hover:shadow-lg"
-              >
-                <Search size={18} />
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Icons + User - Row 1: Cart, Notifications, Messages, Avatar */}
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-          {/* Mobile Icons: Cart, Notifications, Messages, Avatar */}
-          <div className="md:hidden flex items-center gap-1">
-            <HeaderIcons cartCount={cartCount} userId={user._id} />
-            <div className="relative">
-              {user._id ? (
-                <>
-                  <button
-                    className="relative group"
-                    onClick={() => setShowDropdown((v) => !v)}
-                    title={user.fullName}
-                  >
-                          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden shadow-xl ring-2 ring-[#4B5563]/20 group-hover:ring-[#4B5563]/40 transition-all duration-300 transform group-hover:scale-110">
-                      {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-[#4B5563] flex items-center justify-center">
-                          <User size={14} className="sm:w-4 sm:h-4 text-white" />
-                        </div>
-                      )}
-                    </div>
-                    {online && (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 bg-gradient-to-br from-green-400 to-green-600 border-2 border-white rounded-full animate-pulse shadow-md"></span>
-                    )}
-                  </button>
-                  {showDropdown && (
-                    <DropdownUser
-                      userId={user._id}
-                      online={online}
-                      lastSeen={lastSeen}
-                      handleLogout={handleLogout}
-                      setShowDropdown={setShowDropdown}
-                      userRole={user.role}
-                    />
-                  )}
-                </>
-              ) : (
-                <button
-                  onClick={handleLoginClick}
-                  className="p-1.5 sm:p-2 bg-[#4B5563] text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:bg-[#374151]"
-                  title="Đăng nhập"
-                >
-                  <User size={14} className="sm:w-4 sm:h-4" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Desktop Icons */}
-          <div className="hidden md:flex items-center gap-2 sm:gap-3">
-            <HeaderIcons cartCount={cartCount} userId={user._id} />
-            <div className="relative">
-              {user._id ? (
-                <>
-                  <button
-                    className="relative group"
-                    onClick={() => setShowDropdown((v) => !v)}
-                    title={user.fullName}
-                  >
-                    <div className="w-10 h-10 md:w-11 md:h-11 rounded-full overflow-hidden shadow-xl ring-2 md:ring-3 ring-[#4B5563]/20 group-hover:ring-[#4B5563]/40 transition-all duration-300 transform group-hover:scale-110">
-                      {user.avatarUrl ? (
-                        <img src={user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-[#4B5563] flex items-center justify-center">
-                          <User size={20} className="text-white" />
-                        </div>
-                      )}
-                    </div>
-                    {online && (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 md:w-3.5 md:h-3.5 bg-gradient-to-br from-green-400 to-green-600 border-2 md:border-3 border-white rounded-full animate-pulse shadow-md"></span>
-                    )}
-                  </button>
-                  {showDropdown && (
-                    <DropdownUser
-                      userId={user._id}
-                      online={online}
-                      lastSeen={lastSeen}
-                      handleLogout={handleLogout}
-                      setShowDropdown={setShowDropdown}
-                      userRole={user.role}
-                    />
-                  )}
-                </>
-              ) : (
-                <button
-                  onClick={handleLoginClick}
-                  className="hidden sm:flex items-center gap-2 bg-[#4B5563] text-white px-4 py-2 md:px-6 md:py-2.5 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 group text-sm md:text-base hover:bg-[#374151]"
-                  title="Đăng nhập"
-                >
-                  <User size={18} className="group-hover:scale-125 transition-transform" />
-                  <span className="hidden lg:inline">Đăng nhập</span>
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-
-
-
-      {/* Navigation - Row 2: BeliBeli Style */}
-      <nav className="flex flex-row gap-1 sm:gap-4 px-2 sm:px-4 md:px-8 py-2 sm:py-3 text-xs sm:text-sm font-bold text-gray-700 border-t border-gray-200 bg-[#E5E9EC] overflow-x-auto no-scrollbar">
-        {navLinks.map(({ to, label, icon: Icon }, index) => (
-          <Link
-            key={`${label}-${index}`}
-            to={to}
-            className="flex items-center gap-1 sm:gap-2 px-2 sm:px-4 py-2 sm:py-2.5 hover:text-[#4B5563] transition-all duration-300 relative group rounded-lg hover:bg-gray-50 whitespace-nowrap flex-shrink-0"
-          >
-            <Icon size={14} className="sm:w-4 sm:h-4 md:hidden" />
-            <span>{label}</span>
-            {index === 0 && (
-              <span className="absolute bottom-0 left-2 sm:left-4 right-2 sm:right-4 h-0.5 bg-[#4B5563] rounded-full"></span>
-            )}
-          </Link>
-        ))}
+      <nav className={`canva-header__nav ${mobileNavOpen ? "is-open" : ""}`} aria-label="Danh mục sản phẩm">
+        {categoryLinks.map((link, index) => <Link key={`${link.label}-${link.to}`} to={link.to} className={location.pathname === link.to || (index === 0 && location.pathname === "/products") ? "is-active" : ""}>{index === 0 && <Menu />} {link.label}</Link>)}
+        {USE_MOCK_DATA && <span className="canva-header__mock-badge">Dữ liệu minh họa</span>}
+        <Link to="/store" className="canva-header__stores-link"><Store /> Cửa hàng</Link>
       </nav>
-
-      {/* Mobile sidebar */}
-
     </header>
   );
 };

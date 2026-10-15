@@ -1,10 +1,11 @@
 import React from 'react';
 import ContactInfoCard from '../../components/Support/ContactInfoCard';
 import QuickGuideCard from '../../components/Support/QuickGuideCard';
-import FAQGroup from '../../components/Support/FAQGroup';
 import SupportForm from '../../components/Support/SupportForm';
 import AdditionalInfoCard from '../../components/Support/AdditionalInfoCard';
-import { Phone, Mail, MessageSquare, MapPin, ShoppingCart, Eye, CreditCard, Gift, Truck, HelpCircle, Headset, Zap, Edit3, ChevronDown } from 'lucide-react';
+import { Phone, Mail, MessageSquare, MapPin, ShoppingCart, Eye, CreditCard, Gift, Truck, HelpCircle, Zap, Edit3, ChevronDown } from 'lucide-react';
+import ContentBreadcrumb from '../../components/ui/ContentBreadcrumb';
+import { SITE_CONTENT } from '../../config/siteContent';
 
 const faqCategories = [
     {
@@ -13,7 +14,7 @@ const faqCategories = [
       icon: ShoppingCart,
       questions: [
         {
-          q: "Làm thế nào để đặt hàng trên ShopMduc247?",
+          q: "Làm thế nào để đặt hàng trên MDUC247?",
           a: "Để đặt hàng, bạn chỉ cần: 1) Tìm kiếm sản phẩm muốn mua, 2) Thêm vào giỏ hàng, 3) Chọn phương thức thanh toán và điền thông tin giao hàng, 4) Xác nhận đơn hàng. Bạn sẽ nhận được email xác nhận ngay sau đó."
         },
         {
@@ -37,11 +38,11 @@ const faqCategories = [
       questions: [
         {
           q: "Thời gian giao hàng là bao lâu?",
-          a: "Thời gian giao hàng phụ thuộc vào khu vực: Nội thành Hà Nội, TP.HCM: 1-2 ngày. Các tỉnh thành khác: 3-5 ngày. Vùng sâu vùng xa: 5-7 ngày. Bạn có thể theo dõi đơn hàng realtime qua trang 'Đơn hàng của tôi'."
+          a: "Thời gian giao hàng phụ thuộc vào khu vực và phương thức vận chuyển. Ngày nhận dự kiến được hiển thị khi đặt hàng; bạn có thể theo dõi tiến trình trong mục 'Đơn hàng của tôi'."
         },
         {
           q: "Phí vận chuyển được tính như thế nào?",
-          a: "Phí vận chuyển được tính dựa trên trọng lượng, kích thước và khoảng cách giao hàng. Chúng tôi có chương trình freeship cho đơn hàng từ 300K. Phí vận chuyển cụ thể sẽ được hiển thị trước khi bạn thanh toán."
+          a: "Phí vận chuyển và ưu đãi áp dụng cho từng đơn hàng được hiển thị trong giỏ hàng và bước thanh toán. Vui lòng kiểm tra tổng tiền trước khi xác nhận đặt hàng."
         },
         {
           q: "Tôi có thể thay đổi địa chỉ giao hàng không?",
@@ -106,7 +107,7 @@ const faqCategories = [
       questions: [
         {
           q: "Làm thế nào để nhận voucher?",
-          a: "Bạn có thể nhận voucher từ: Các chương trình khuyến mãi trên trang chủ, Trang Voucher của ShopMduc247, Email/SMS từ chúng tôi, Tích điểm đổi quà, Mini game và sự kiện đặc biệt."
+          a: "Bạn có thể xem các mã đang có tại trang Voucher và trong các chương trình khuyến mãi của MDUC247. Điều kiện áp dụng được hiển thị trên từng mã."
         },
         {
           q: "Tại sao voucher của tôi không áp dụng được?",
@@ -114,7 +115,7 @@ const faqCategories = [
         },
         {
           q: "Tôi có thể dùng nhiều voucher cùng lúc không?",
-          a: "Bạn có thể sử dụng nhiều loại voucher khác nhau (voucher giảm giá + voucher freeship) nhưng chỉ được dùng 1 voucher giảm giá cho mỗi đơn hàng. Voucher của shop và voucher của ShopMduc247 có thể dùng cùng lúc."
+          a: "Các mã có thể kết hợp hay không phụ thuộc vào điều kiện của từng chương trình. Trang thanh toán sẽ hiển thị những ưu đãi được áp dụng cho đơn hàng của bạn."
         },
         {
           q: "Voucher có được hoàn lại khi tôi hủy đơn?",
@@ -137,29 +138,21 @@ const SupportPage = () => {
       };
     });
   };
+  const activeFaq = faqCategories.find((group) => group.id === selectedTab);
 
   return (
-    <div className="w-full py-8 md:py-12">
-      {/* Header Section */}
-      <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-[#4B5563] flex items-center gap-3">
-          <Headset className="w-8 h-8" />
-          <span>Trung tâm hỗ trợ</span>
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Chúng tôi luôn sẵn sàng giúp đỡ bạn!
-        </p>
-      </div>
+    <div className="canva-public-page">
+      <ContentBreadcrumb items={[{ label: "Hỗ trợ" }]} />
 
-      <div className="space-y-8">
+      <div className="canva-public-page__content space-y-10">
 
         {/* Contact Info */}
         <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up">
         {[
-          { title: 'Hotline', content: '1800 1234', note: 'Hỗ trợ 24/7', icon: <Phone size={28} className="text-blue-700" />, iconBgColor: 'rgba(59,130,246,0.2)', iconBorderColor: 'rgba(59,130,246,0.5)' },
-          { title: 'Email', content: 'support@shoppingabc.com', note: 'Phản hồi trong 24h', icon: <Mail size={28} className="text-green-700" />, iconBgColor: 'rgba(34,197,94,0.2)', iconBorderColor: 'rgba(34,197,94,0.5)' },
-          { title: 'Live Chat', content: 'Chat ngay', note: '8h - 22h hàng ngày', icon: <MessageSquare size={28} className="text-purple-700" />, iconBgColor: 'rgba(139,92,246,0.2)', iconBorderColor: 'rgba(139,92,246,0.5)' },
-          { title: 'Địa chỉ', content: 'Số 123, Đường ABC, Quận 1, TP.HCM', note: '', icon: <MapPin size={28} className="text-orange-500" />, iconBgColor: 'rgba(251,146,60,0.2)', iconBorderColor: 'rgba(251,146,60,0.5)' },
+          { title: 'Hotline', content: SITE_CONTENT.supportPhone, note: SITE_CONTENT.supportHours, icon: <Phone size={28} className="text-blue-700" />, iconBgColor: 'rgba(59,130,246,0.2)', iconBorderColor: 'rgba(59,130,246,0.5)' },
+          { title: 'Email', content: SITE_CONTENT.supportEmail, note: 'Gửi yêu cầu bất cứ lúc nào', icon: <Mail size={28} className="text-green-700" />, iconBgColor: 'rgba(34,197,94,0.2)', iconBorderColor: 'rgba(34,197,94,0.5)' },
+          { title: 'Trò chuyện trực tuyến', content: 'Nhắn tin ngay', note: SITE_CONTENT.supportHours, icon: <MessageSquare size={28} className="text-purple-700" />, iconBgColor: 'rgba(139,92,246,0.2)', iconBorderColor: 'rgba(139,92,246,0.5)' },
+          { title: 'Địa chỉ', content: SITE_CONTENT.supportAddress, note: '', icon: <MapPin size={28} className="text-orange-500" />, iconBgColor: 'rgba(251,146,60,0.2)', iconBorderColor: 'rgba(251,146,60,0.5)' },
         ].map((item, idx) => (
           <ContactInfoCard key={idx} {...item} />
         ))}
@@ -184,7 +177,7 @@ const SupportPage = () => {
       </section>
 
         {/* FAQ Section */}
-        <section className="bg-white rounded-2xl shadow-xl border-2 border-gray-100 p-8 animate-fade-in-up delay-300">
+        <section className="canva-public-page__panel p-5 md:p-8 animate-fade-in-up delay-300">
           <h2 className="text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900">
             <HelpCircle className="w-6 h-6 text-[#4B5563]" /> 
             <span className="text-[#4B5563]">Câu hỏi thường gặp</span>
@@ -209,13 +202,11 @@ const SupportPage = () => {
 
           {/* Danh sách câu hỏi */}
           <div className="border-2 border-gray-200 rounded-2xl shadow-lg overflow-hidden">
-    {faqCategories
-      .find((group) => group.id === selectedTab)
-      ?.questions.map((item, idx) => (
+    {activeFaq?.questions.map((item, idx) => (
         <div
           key={idx}
           className={`p-6 cursor-pointer transition-all duration-300 ${
-            idx !== faqCategories.find((group) => group.id === selectedTab)?.questions.length! - 1 ? "border-b-2 border-gray-200" : ""
+            idx !== activeFaq.questions.length - 1 ? "border-b border-gray-200" : ""
           } ${openAnswers[selectedTab]?.includes(idx) ? "bg-[#4B5563]/10" : "hover:bg-[#4B5563]/5"}`}
           onClick={() => toggleAnswer(selectedTab, idx)}
         >

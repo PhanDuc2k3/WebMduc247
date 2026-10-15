@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import notificationApi from "../../api/notificationApi";
 import type { Notification } from "../../api/notificationApi";
 import { toast } from "react-toastify";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 // Loại bỏ emoji khỏi tiêu đề thông báo (emoji được backend gửi trong text)
 const cleanTitle = (title: string) => {
@@ -152,36 +153,11 @@ const Notifications: React.FC = () => {
 
   return (
     <div className="w-full p-3 sm:p-4 md:p-6 lg:p-8">
-      {/* Header */}
-      <div className="mb-4 sm:mb-6 animate-fade-in-down">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2 text-[#4B5563] flex items-center gap-2 sm:gap-3">
-              <Bell size={24} className="text-[#4B5563]" />
-              Thông báo
-            </h1>
-            <p className="text-gray-600 text-sm sm:text-base">
-              {unreadCount > 0 ? `${unreadCount} thông báo chưa đọc` : "Tất cả thông báo đã đọc"}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllAsRead}
-                className="px-3 py-2 sm:px-4 sm:py-2.5 bg-[#4B5563] text-white rounded-lg sm:rounded-xl hover:bg-[#374151] text-xs sm:text-sm font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-1.5 sm:gap-2"
-              >
-                <Check size={14} className="sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Đánh dấu tất cả đã đọc</span>
-                <span className="sm:hidden">Đã đọc tất cả</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      <ContentBreadcrumb items={[{ label: "Thông báo" }]} />
 
       {/* Filter */}
       <div className="mb-4 sm:mb-6 animate-fade-in-up delay-100">
-        <div className="flex items-center gap-2 sm:gap-3 bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200 p-2 sm:p-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-200 p-2 sm:p-3">
           <Filter size={16} className="sm:w-5 sm:h-5 text-gray-600" />
           <button
             onClick={() => setFilter("all")}
@@ -208,6 +184,7 @@ const Notifications: React.FC = () => {
               </span>
             )}
           </button>
+          {unreadCount > 0 && <button type="button" onClick={handleMarkAllAsRead} className="ml-auto px-3 py-2 sm:px-4 sm:py-2.5 bg-[#4B5563] text-white rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold flex items-center gap-1.5"><Check size={14} /> Đánh dấu tất cả đã đọc</button>}
         </div>
       </div>
 

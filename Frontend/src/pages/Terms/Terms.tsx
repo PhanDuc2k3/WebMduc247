@@ -1,39 +1,18 @@
 import React from "react";
-import { FileText, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 const Terms: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
+    <div className="policy-page min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Quay lại</span>
-          </button>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
-              <FileText className="text-white w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">Điều khoản sử dụng</h1>
-              <p className="text-gray-600 mt-1">Cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN')}</p>
-            </div>
-          </div>
-        </div>
+        <ContentBreadcrumb items={[{ label: "Điều khoản sử dụng" }]} />
 
         {/* Content */}
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10 space-y-6">
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Chấp nhận điều khoản</h2>
             <p className="text-gray-700 leading-relaxed">
-              Bằng việc truy cập và sử dụng nền tảng ShopMDuc247 ("Nền tảng"), bạn đồng ý tuân thủ và bị ràng buộc bởi các Điều khoản sử dụng này. 
+              Bằng việc truy cập và sử dụng nền tảng MDUC247 ("Nền tảng"), bạn đồng ý tuân thủ và bị ràng buộc bởi các Điều khoản sử dụng này. 
               Nếu bạn không đồng ý với bất kỳ phần nào của các điều khoản này, vui lòng không sử dụng Nền tảng.
             </p>
           </section>
@@ -41,7 +20,7 @@ const Terms: React.FC = () => {
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Định nghĩa</h2>
             <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
-              <li><strong>"Nền tảng"</strong> hoặc <strong>"Chúng tôi"</strong>: Chỉ ShopMDuc247 và các dịch vụ liên quan</li>
+              <li><strong>"Nền tảng"</strong> hoặc <strong>"Chúng tôi"</strong>: Chỉ MDUC247 và các dịch vụ liên quan</li>
               <li><strong>"Người dùng"</strong> hoặc <strong>"Bạn"</strong>: Bất kỳ cá nhân hoặc tổ chức nào truy cập hoặc sử dụng Nền tảng</li>
               <li><strong>"Người mua"</strong>: Người dùng mua sản phẩm trên Nền tảng</li>
               <li><strong>"Người bán"</strong>: Người dùng đăng ký và bán sản phẩm trên Nền tảng</li>
@@ -142,7 +121,7 @@ const Terms: React.FC = () => {
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Quyền sở hữu trí tuệ</h2>
             <p className="text-gray-700 leading-relaxed">
-              Tất cả nội dung trên Nền tảng, bao gồm logo, thiết kế, văn bản, hình ảnh và phần mềm, đều thuộc quyền sở hữu của ShopMDuc247 hoặc được cấp phép sử dụng. 
+              Tất cả nội dung trên Nền tảng, bao gồm logo, thiết kế, văn bản, hình ảnh và phần mềm, đều thuộc quyền sở hữu của MDUC247 hoặc được cấp phép sử dụng. 
               Bạn không được sao chép, sử dụng hoặc phân phối nội dung này mà không có sự cho phép bằng văn bản của chúng tôi.
             </p>
           </section>

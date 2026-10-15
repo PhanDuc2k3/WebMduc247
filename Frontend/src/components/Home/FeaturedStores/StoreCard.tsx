@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, Calendar, Circle, Store, MessageCircle, AlertTriangle, XCircle } from "lucide-react";
 import axiosClient from "../../../api/axiosClient";
@@ -67,7 +67,7 @@ const StoreCard: React.FC<StoreCardProps> = ({
       const chatUser = {
         _id: receiverId,
         name: name || "Cửa hàng",
-        avatar: logoUrl || "/default-avatar.png",
+        avatar: logoUrl || "/visual-placeholder.svg",
       };
 
       // ✅ Lấy tin nhắn ban đầu
@@ -96,51 +96,19 @@ const StoreCard: React.FC<StoreCardProps> = ({
   // 🕒 Thông tin hiển thị - xử lý date với nhiều format
   const getJoinDate = () => {
     if (!createdAt) {
-      // Nếu không có createdAt, thử lấy từ joinDate hoặc trả về mặc định
       return "—";
     }
-    
     try {
-      // Xử lý MongoDB date format (nếu có $date)
-      let dateValue = createdAt;
-      
-      // Nếu là object với $date
-      if (typeof createdAt === 'object' && createdAt !== null) {
-        if (createdAt.$date) {
-          dateValue = createdAt.$date.$numberLong 
-            ? new Date(parseInt(createdAt.$date.$numberLong))
-            : createdAt.$date;
-        } else if (createdAt instanceof Date) {
-          dateValue = createdAt;
-        } else if (createdAt.toString) {
-          // Thử parse string representation
-          dateValue = new Date(createdAt.toString());
-        }
-      }
-      
-      const date = new Date(dateValue);
+      const date = new Date(createdAt);
       if (isNaN(date.getTime())) {
-        // Nếu parse thất bại, thử format khác
-        if (typeof createdAt === 'string') {
-          const altDate = new Date(createdAt.replace(/-/g, '/'));
-          if (!isNaN(altDate.getTime())) {
-            return altDate.toLocaleDateString("vi-VN", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit"
-            });
-          }
+        const altDate = new Date(createdAt.replace(/-/g, '/'));
+        if (!isNaN(altDate.getTime())) {
+          return altDate.toLocaleDateString("vi-VN", { year: "numeric", month: "2-digit", day: "2-digit" });
         }
         return "—";
       }
-      
-      return date.toLocaleDateString("vi-VN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit"
-      });
-    } catch (err) {
-      // Silent fail - không log error để tránh spam console
+      return date.toLocaleDateString("vi-VN", { year: "numeric", month: "2-digit", day: "2-digit" });
+    } catch {
       return "—";
     }
   };
@@ -161,7 +129,7 @@ const StoreCard: React.FC<StoreCardProps> = ({
   }
 
   return (
-    <div className="bg-white border-2 border-gray-200 rounded-xl md:rounded-2xl shadow-md hover:shadow-2xl hover:border-gray-400 transition-all duration-500 p-3 md:p-4 lg:p-6 flex flex-col overflow-hidden min-w-0 group" style={{ position: 'relative', zIndex: 1 }}>
+    <div className="canva-store-card bg-white border border-[#e8edf5] rounded-2xl transition-all duration-300 p-3 md:p-4 lg:p-5 flex flex-col overflow-hidden min-w-0 group" style={{ position: 'relative', zIndex: 1 }}>
       {bannerUrl && (
         <div className="h-24 sm:h-28 md:h-32 w-full overflow-hidden rounded-lg md:rounded-xl mb-3 md:mb-4 relative">
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10"></div>
@@ -233,7 +201,7 @@ const StoreCard: React.FC<StoreCardProps> = ({
         <div className="mt-auto flex gap-2 md:gap-3">
           <button
             onClick={() => navigate(`/store/${storeId}`)}
-            className="flex-1 bg-gradient-to-r from-gray-900 to-gray-800 text-white py-2 md:py-2.5 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:from-gray-800 hover:to-gray-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 touch-manipulation flex items-center justify-center gap-1.5 sm:gap-2"
+            className="flex-1 bg-[#476de4] text-white py-2 md:py-2.5 rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#375ac9] transition-all duration-200 touch-manipulation flex items-center justify-center gap-1.5 sm:gap-2"
           >
             <Store className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
             <span>Xem cửa hàng</span>
@@ -241,7 +209,7 @@ const StoreCard: React.FC<StoreCardProps> = ({
 
           <button
             onClick={handleChatNow}
-            className="flex-1 border-2 border-gray-300 text-gray-900 py-2 md:py-2.5 rounded-lg md:rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-gray-100 hover:border-gray-400 hover:text-gray-600 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95 touch-manipulation flex items-center justify-center gap-1.5 sm:gap-2"
+            className="flex-1 border border-[#e8edf5] text-[#586a84] py-2 md:py-2.5 rounded-xl font-bold text-xs sm:text-sm md:text-base hover:bg-[#f7f9fd] hover:border-[#476de4] hover:text-[#476de4] transition-all duration-200 touch-manipulation flex items-center justify-center gap-1.5 sm:gap-2"
           >
             <MessageCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
             <span>Chat</span>

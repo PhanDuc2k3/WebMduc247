@@ -1,58 +1,19 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
+import walletApi from "../../../api/walletApi";
 
-interface PaymentProps {
-  onChange?: (methodId: "cod" | "momo" | "vietqr" | "wallet") => void; // ✅ khớp với CheckoutPage
-}
+type Method = "cod" | "momo" | "vietqr" | "wallet";
 
-const Payment: React.FC<PaymentProps> = ({ onChange }) => {
-  const [selectedMethod, setSelectedMethod] = useState<"cod" | "momo" | "vietqr" | "wallet">("cod");
-
-  const methods: { id: "cod" | "momo" | "vietqr" | "wallet"; label: string }[] = [
-    { id: "cod", label: "Thanh toán khi nhận hàng (COD)" },
-    { id: "momo", label: "Ví MoMo" },
-    { id: "vietqr", label: "VietQR" },
-    { id: "wallet", label: "Ví của tôi" },
+const Payment = ({ onChange }: { onChange?: (method: Method) => void }) => {
+  const [selected, setSelected] = useState<Method>("wallet");
+  const [balance, setBalance] = useState<number | null>(null);
+  useEffect(() => { walletApi.getWallet().then((response) => setBalance(response.data.wallet?.balance ?? 0)).catch(() => setBalance(null)); }, []);
+  const methods: { id: Method; label: string; description: string }[] = [
+    { id: "wallet", label: "Ví MDUC247", description: balance === null ? "Thanh toán bằng số dư ví" : `Số dư: ${balance.toLocaleString("vi-VN")}₫` },
+    { id: "vietqr", label: "Thẻ ngân hàng / VietQR", description: "Quét QR bằng ứng dụng ngân hàng" },
+    { id: "momo", label: "Ví điện tử MoMo", description: "Thanh toán qua cổng MoMo" },
+    { id: "cod", label: "Thanh toán khi nhận hàng", description: "Trả tiền khi nhận hàng" },
   ];
-
-  const handleSelect = (methodId: "cod" | "momo" | "vietqr" | "wallet") => {
-    setSelectedMethod(methodId);
-    onChange?.(methodId);
-  };
-
-  return (
-    <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden">
-      <div className="bg-[#4B5563]/5 p-4 sm:p-6 border-b-2 border-gray-200">
-        <h2 className="text-xl sm:text-2xl font-bold text-[#4B5563] flex items-center gap-2 sm:gap-3">
-          Phương thức thanh toán
-        </h2>
-        <p className="text-gray-600 text-xs sm:text-sm mt-1">Chọn cách thanh toán</p>
-      </div>
-      <div className="p-4 sm:p-6 space-y-3 sm:space-y-4">
-        {methods.map((method) => (
-          <label
-            key={method.id}
-            className={`flex items-center p-4 sm:p-5 border-2 rounded-xl sm:rounded-2xl cursor-pointer transition-all duration-300 transform hover:scale-105 ${
-              selectedMethod === method.id
-                ? "border-[#4B5563] bg-[#4B5563]/6 shadow-lg"
-                : "border-gray-300 hover:border-[#4B5563]"
-            }`}
-            onClick={() => handleSelect(method.id)}
-          >
-            <input
-              type="radio"
-              name="payment"
-              checked={selectedMethod === method.id}
-              onChange={() => handleSelect(method.id)}
-              className="mr-3 sm:mr-4 w-4 h-4 sm:w-5 sm:h-5 cursor-pointer flex-shrink-0"
-            />
-            <span className="font-bold text-sm sm:text-base lg:text-lg text-gray-900 break-words">
-              {method.label}
-            </span>
-          </label>
-        ))}
-      </div>
-    </div>
-  );
+  return <section className="checkout-card checkout-options checkout-payment-methods"><h2>Phương thức thanh toán</h2><div>{methods.map((method) => <label className={selected === method.id ? "is-selected" : ""} key={method.id}><input type="radio" name="payment" checked={selected === method.id} onChange={() => { setSelected(method.id); onChange?.(method.id); }} /><span><strong>{method.label}</strong><small>{method.description}</small></span></label>)}</div><button type="button" className="checkout-link-button">+ Thêm phương thức thanh toán</button><p className="checkout-security">Bảo mật thanh toán · Thông tin được mã hóa trong quá trình xử lý</p></section>;
 };
 
 export default Payment;

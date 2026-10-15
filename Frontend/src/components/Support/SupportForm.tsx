@@ -2,7 +2,7 @@ import React from 'react';
 
 const ContactForm = () => {
   return (
-    <section className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl border-2 border-gray-100 p-8 text-gray-800 space-y-6 animate-fade-in-up">
+    <section className="max-w-4xl mx-auto bg-white rounded-2xl border border-[#e8edf5] p-5 md:p-8 text-gray-800 space-y-6 animate-fade-in-up">
       {/* Tiêu đề */}
       <div>
         <h3 className="text-2xl font-black text-gray-900 mb-2">📋 Biểu mẫu liên hệ</h3>
@@ -22,7 +22,7 @@ const ContactForm = () => {
             <input
               type="text"
               placeholder="Nguyễn Văn A"
-              className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+              className="w-full border border-[#dce2ec] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#476de4]/30 focus:border-[#476de4] transition-all duration-300 font-medium"
               required
             />
           </div>
@@ -34,7 +34,7 @@ const ContactForm = () => {
             <input
               type="email"
               placeholder="email@example.com"
-              className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+              className="w-full border border-[#dce2ec] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#476de4]/30 focus:border-[#476de4] transition-all duration-300 font-medium"
               required
             />
           </div>
@@ -47,7 +47,7 @@ const ContactForm = () => {
           <input
             type="text"
             placeholder="Nhập chủ đề"
-            className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+            className="w-full border border-[#dce2ec] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#476de4]/30 focus:border-[#476de4] transition-all duration-300 font-medium"
             required
           />
         </div>
@@ -59,14 +59,14 @@ const ContactForm = () => {
           <textarea
             rows={5}
             placeholder="Nhập nội dung yêu cầu"
-            className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium"
+            className="w-full border border-[#dce2ec] rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-[#476de4]/30 focus:border-[#476de4] transition-all duration-300 font-medium"
             required
           ></textarea>
         </div>
 
         <button
           type="submit"
-          className="w-full bg-[#4B5563] text-white px-8 py-4 rounded-xl hover:bg-[#374151] transition-all duration-300 font-black text-lg shadow-xl hover:shadow-2xl transform hover:scale-105"
+          className="w-full bg-[#476de4] text-white px-8 py-4 rounded-xl hover:bg-[#375ac9] transition-all duration-200 font-bold text-lg"
         >
           Gửi yêu cầu
         </button>

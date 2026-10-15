@@ -335,7 +335,7 @@ const ProfileOrders: React.FC<ProfileOrdersProps> = ({
                     <div key={`${item.productId}-${idx}`} className="flex items-center gap-2 md:gap-4 p-3 md:p-4 bg-white rounded-lg md:rounded-xl border border-gray-200 hover:border-[#4B5563] transition-all duration-300">
                       <div className="relative flex-shrink-0">
                         <img
-                          src={item.imgUrl || "/default-avatar.png"}
+                          src={item.imgUrl || "/visual-placeholder.svg"}
                           alt={item.name}
                           className="w-16 h-16 md:w-20 md:h-20 rounded-lg md:rounded-xl object-cover border-2 border-gray-200"
                           loading="lazy"

@@ -229,7 +229,7 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
                         <div className="flex items-center gap-2 md:gap-3">
                           <div className="relative flex-shrink-0">
                             <img
-                              src={order.userInfo.avatarUrl || '/avatar.png'}
+                              src={order.userInfo.avatarUrl || '/avatar-placeholder.svg'}
                               alt={order.userInfo.fullName}
                               className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border-2 border-gray-200 shadow-md"
                             />
@@ -316,7 +316,7 @@ const getLatestStatus = (order: Order & { statusHistory?: { status: string; time
                     <div className="flex items-start gap-2">
                       <div className="relative flex-shrink-0">
                         <img
-                          src={order.userInfo.avatarUrl || '/avatar.png'}
+                          src={order.userInfo.avatarUrl || '/avatar-placeholder.svg'}
                           alt={order.userInfo.fullName}
                           className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 shadow-md"
                         />

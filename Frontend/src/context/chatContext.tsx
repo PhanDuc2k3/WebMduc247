@@ -43,7 +43,7 @@ const MessageToastContent: React.FC<{
       }}
     >
       <img
-        src={avatarUrl || "/default-avatar.png"}
+        src={avatarUrl || "/avatar-placeholder.svg"}
         alt={senderName}
         style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", border: "2px solid white", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", flexShrink: 0 }}
       />

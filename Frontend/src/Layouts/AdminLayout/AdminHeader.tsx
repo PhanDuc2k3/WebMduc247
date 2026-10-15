@@ -10,9 +10,9 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onSearch }) => {
   const [showProfile, setShowProfile] = useState(false);
 
   const notifications = [
-    { id: 1, message: 'New order received', time: '2 min ago', unread: true },
-    { id: 2, message: '3 new seller requests', time: '10 min ago', unread: true },
-    { id: 3, message: 'System update completed', time: '1 hour ago', unread: false },
+    { id: 1, message: 'Có đơn hàng mới', time: '2 phút trước', unread: true },
+    { id: 2, message: 'Có 3 yêu cầu bán hàng mới', time: '10 phút trước', unread: true },
+    { id: 3, message: 'Hệ thống đã cập nhật', time: '1 giờ trước', unread: false },
   ];
 
   const handleSearch = (e: React.FormEvent) => {
@@ -30,7 +30,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onSearch }) => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search..."
+              placeholder="Tìm kiếm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border-2 border-slate-500 bg-slate-600 text-white placeholder-slate-300 rounded-xl focus:ring-2 focus:ring-slate-400 focus:border-slate-400 transition-all duration-300"
@@ -55,7 +55,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onSearch }) => {
             {showNotifications && (
               <div className="absolute right-0 top-full mt-2 w-80 bg-slate-700 rounded-2xl shadow-2xl border-2 border-slate-600 overflow-hidden animate-fade-in">
                 <div className="bg-slate-600 p-4">
-                  <h3 className="text-white font-bold">Notifications</h3>
+                  <h3 className="text-white font-bold">Thông báo</h3>
                 </div>
                 <div className="max-h-96 overflow-y-auto">
                   {notifications.map((notif) => (
@@ -72,7 +72,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onSearch }) => {
                 </div>
                 <div className="p-3 bg-slate-600">
                   <button className="w-full text-center text-white font-bold hover:text-slate-200 transition-colors">
-                    View All
+                    Xem tất cả
                   </button>
                 </div>
               </div>
@@ -90,7 +90,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onSearch }) => {
               </div>
               <div className="text-left hidden sm:block">
                 <p className="text-sm font-bold text-white">Admin</p>
-                <p className="text-xs text-slate-300">Administrator</p>
+                <p className="text-xs text-slate-300">Quản trị viên</p>
               </div>
               <span className="hidden sm:block group-hover:rotate-180 transition-transform duration-300 text-white">▼</span>
             </button>
@@ -104,10 +104,10 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ onSearch }) => {
                 </div>
                 <div className="p-2">
                   <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-slate-600 transition-colors text-white font-medium">
-                    Profile
+                    Hồ sơ
                   </button>
                   <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-slate-600 transition-colors text-white font-medium">
-                    Settings
+                    Cài đặt
                   </button>
                   <button className="w-full text-left px-4 py-2 rounded-lg hover:bg-slate-600 transition-colors text-white font-medium">
                     Logout

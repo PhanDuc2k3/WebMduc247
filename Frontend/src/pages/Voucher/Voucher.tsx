@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { XCircle, Gift } from "lucide-react";
 import voucherApi, { type VoucherType } from "../../api/voucherApi";
 import { toast } from "react-toastify";
+import { formatDisplayDate } from "../../utils/formatDisplayDate";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 export type Voucher = VoucherType & {
   title: string;
@@ -164,16 +166,8 @@ export default function VoucherPage() {
   };
 
   return (
-    <div className="w-full p-3 md:p-4 lg:p-6 xl:p-8">
-      <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3 text-[#4B5563] flex items-center gap-2 md:gap-3">
-          <Gift className="w-7 h-7" />
-          <span>Kho Voucher</span>
-        </h1>
-        <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-          Tận hưởng <span className="text-[#4B5563] font-semibold">ưu đãi tốt nhất</span> từ các cửa hàng
-        </p>
-      </div>
+    <div className="voucher-page w-full p-3 md:p-4 lg:p-6 xl:p-8">
+      <ContentBreadcrumb items={[{ label: "Kho voucher" }]} />
 
       {/* Category Tabs */}
       <div className="flex flex-wrap gap-2 md:gap-3 mb-4 md:mb-6 animate-fade-in-up delay-200 overflow-x-auto pb-2">
@@ -222,7 +216,7 @@ export default function VoucherPage() {
           {filteredVouchers.map((v, index) => (
             <div
               key={v._id}
-              className="border-2 border-gray-200 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-white to-gray-50 animate-fade-in-up"
+              className="voucher-card border-2 border-gray-200 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-white to-gray-50 animate-fade-in-up"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="flex justify-between items-start mb-3 md:mb-4 gap-2">
@@ -242,9 +236,9 @@ export default function VoucherPage() {
                 </p>
                 <p className="flex items-center gap-1 md:gap-2 flex-wrap">
                   <span className="font-semibold">Ngày áp dụng:</span>
-                  <span className="font-bold text-xs md:text-sm">{v.startDate.split("T")[0]}</span>
+                  <span className="font-bold text-xs md:text-sm">{formatDisplayDate(v.startDate)}</span>
                   <span>→</span>
-                  <span className="font-bold text-xs md:text-sm">{v.endDate.split("T")[0]}</span>
+                  <span className="font-bold text-xs md:text-sm">{formatDisplayDate(v.endDate)}</span>
                 </p>
                 <p className="flex items-center gap-1 md:gap-2 flex-wrap">
                   <span className="font-semibold">{getStoreLabel(v)}</span>

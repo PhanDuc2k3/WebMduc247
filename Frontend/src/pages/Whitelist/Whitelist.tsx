@@ -4,6 +4,7 @@ import favoriteApi from "../../api/favoriteApi";
 import type { ProductType } from "../../types/product";
 import type { StoreType } from "../../types/store";
 import FavoriteButton from "../../components/Favorite/FavoriteButton";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 const Whitelist: React.FC = () => {
   const [products, setProducts] = useState<ProductType[]>([]);
@@ -44,14 +45,7 @@ const Whitelist: React.FC = () => {
   if (loading) {
     return (
       <div className="w-full py-8 md:py-12">
-        <div className="mb-8 animate-fade-in-down">
-          <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-            <span>❤️</span> Danh sách yêu thích
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Những sản phẩm và cửa hàng bạn đã yêu thích
-          </p>
-        </div>
+        <ContentBreadcrumb items={[{ label: "Yêu thích" }]} />
         <div className="bg-white rounded-xl shadow-lg p-8">
           <div className="text-center py-16">
             <div className="text-4xl mb-4 animate-pulse">⏳</div>
@@ -64,14 +58,7 @@ const Whitelist: React.FC = () => {
 
   return (
     <div className="w-full py-8 md:py-12">
-      <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-gray-900 gradient-text flex items-center gap-3">
-          <span>❤️</span> Danh sách yêu thích
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Những sản phẩm và cửa hàng bạn đã yêu thích
-        </p>
-      </div>
+      <ContentBreadcrumb items={[{ label: "Yêu thích" }]} />
 
       {/* Tabs */}
       <div className="bg-white rounded-xl shadow-lg p-6 mb-6">

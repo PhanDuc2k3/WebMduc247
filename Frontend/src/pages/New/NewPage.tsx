@@ -4,6 +4,7 @@ import PromotionCard from "../../components/New/PromotionCard";
 import { Tag, Flame, Zap, ArrowUp, Wallet, Star, Gift } from "lucide-react";
 import promotionApi from "../../api/promotionApi";
 import type { PromotionType } from "../../api/promotionApi";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 const tabs = [
   { label: "Tất cả", icon: <Tag size={18} className="text-blue-500" /> },
@@ -20,11 +21,7 @@ const PromotionPage: React.FC = () => {
   const [promotions, setPromotions] = useState<PromotionType[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchPromotions();
-  }, [activeTab]);
-
-  const fetchPromotions = async () => {
+  const fetchPromotions = React.useCallback(async () => {
     try {
       setLoading(true);
       const params: { category?: string; isActive?: boolean } = {
@@ -42,7 +39,11 @@ const PromotionPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  useEffect(() => {
+    void fetchPromotions();
+  }, [fetchPromotions]);
 
   const formatDate = (startDate: string, endDate: string) => {
     const start = new Date(startDate);
@@ -51,33 +52,21 @@ const PromotionPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full py-8 md:py-12">
-      {/* Header */}
-      <div className="mb-8 animate-fade-in-down">
-        <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-[#4B5563]">
-          Tin tức & Khuyến mãi
-        </h1>
-        <p className="text-gray-600 text-lg">
-          Những chương trình <span className="text-[#4B5563] font-semibold">khuyến mãi hấp dẫn</span> đang chờ đón bạn!
-        </p>
-      </div>
+    <div className="canva-public-page">
+      <ContentBreadcrumb items={[{ label: "Khuyến mãi" }]} />
+      <div className="canva-public-page__content">
 
       <PromotionTabs tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
 
       {/* Loading */}
       {loading && (
-        <div className="flex items-center justify-center py-16">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-500 mx-auto mb-4"></div>
-            <p className="text-gray-600 text-lg font-medium">Đang tải...</p>
-          </div>
-        </div>
+        <div className="canva-public-page__loader"><span aria-label="Đang tải" /></div>
       )}
 
       {/* Empty state */}
       {!loading && promotions.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-gray-500 text-lg font-medium">Chưa có tin tức khuyến mãi nào</p>
+        <div className="canva-public-page__empty">
+          <p className="text-gray-500 text-lg font-medium">Chưa có chương trình khuyến mãi nào</p>
         </div>
       )}
 
@@ -98,6 +87,7 @@ const PromotionPage: React.FC = () => {
           ))}
         </div>
       )}
+      </div>
     </div>
   );
 };

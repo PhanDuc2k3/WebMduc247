@@ -10,6 +10,7 @@ import ProductReview from "../Review/Review";
 import userApi from "../../api/userApi";
 import orderApi from "../../api/orderApi";
 import { toast } from "react-toastify";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 interface OrderItem {
   name: string;
@@ -133,16 +134,8 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="w-full p-3 md:p-4 lg:p-6 xl:px-8">
-      <div className="mb-4 md:mb-6 lg:mb-8 animate-fade-in-down">
-        <h1 className="text-xl sm:text-2xl md:text-3xl lg:4xl font-bold mb-2 md:mb-3 text-[#4B5563] flex items-center gap-2 md:gap-3">
-          <User size={24} className="text-[#4B5563]" />
-          Trang cá nhân
-        </h1>
-        <p className="text-gray-600 text-sm md:text-base lg:text-lg">
-          Quản lý <span className="text-[#4B5563] font-semibold">thông tin & đơn hàng</span> của bạn
-        </p>
-      </div>
+    <div className="profile-page w-full p-3 md:p-4 lg:p-6 xl:px-8">
+      <ContentBreadcrumb items={[{ label: "Trang cá nhân" }]} />
 
       {/* Thông tin user */}
       <div className="mb-4 md:mb-6 animate-fade-in-up delay-100">

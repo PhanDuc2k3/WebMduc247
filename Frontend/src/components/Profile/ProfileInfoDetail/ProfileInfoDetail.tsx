@@ -1,6 +1,8 @@
 import React, { useState, useRef } from "react";
 import { FileText, Camera, Calendar, Users, User, Store, Crown, Check, X, Mail, Phone } from "lucide-react";
 import userApi from "../../../api/userApi"
+import { formatDisplayDate } from "../../../utils/formatDisplayDate";
+import { showAvatarFallback } from "../../../utils/imageFallback";
 interface ProfileInfoDetailProps {
   isEditing: boolean;
   onCancel: () => void;
@@ -75,7 +77,8 @@ const handleUpdate = async () => {
         <div className="flex flex-col items-center mb-6 md:mb-8 p-4 md:p-6 bg-[#F3F6FF] rounded-lg md:rounded-xl border border-[#E5E7EB]">
           <div className="relative mb-3 md:mb-4">
             <img
-              src={previewAvatar || "/default-avatar.png"}
+              src={previewAvatar || "/avatar-placeholder.svg"}
+              onError={showAvatarFallback}
               alt="avatar"
               className="w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full object-cover border-2 md:border-4 border-white shadow-2xl mb-2 md:mb-3"
             />
@@ -146,7 +149,7 @@ const handleUpdate = async () => {
               <Calendar size={14} className="md:w-4 md:h-4" /> Ngày tham gia
             </span>
             <div className="text-sm md:text-base lg:text-lg font-bold text-gray-900">
-              {new Date(user.createdAt).toLocaleDateString("vi-VN")}
+              {formatDisplayDate(user.createdAt)}
             </div>
           </div>
 

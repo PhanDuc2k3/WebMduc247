@@ -61,24 +61,24 @@ const Categories: React.FC = () => {
   };
 
   return (
-    <section className="mt-4 sm:mt-6 lg:mt-8">
+    <section className="mt-3 sm:mt-6 lg:mt-8">
       {/* Categories Container - White Card with Shadow */}
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-3 sm:p-4 md:p-5">
+      <div className="bg-white rounded-lg sm:rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-2 sm:p-3 sm:p-4 md:p-5">
         {/* Section Header */}
-        <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <h2 className="text-sm sm:text-base md:text-lg font-bold text-gray-800">
+        <div className="flex items-center justify-between mb-2 sm:mb-3 sm:mb-4">
+          <h2 className="text-xs sm:text-sm sm:text-base md:text-lg font-bold text-gray-800">
             Danh mục sản phẩm
           </h2>
           <button
             onClick={() => navigate("/products")}
-            className="text-xs sm:text-sm text-[#4B5563] hover:text-[#374151] font-medium transition-colors flex items-center gap-1"
+            className="text-[10px] sm:text-xs sm:text-sm text-[#4B5563] hover:text-[#374151] font-medium transition-colors flex items-center gap-0.5 sm:gap-1"
           >
             Xem tất cả →
           </button>
         </div>
 
         {/* Categories Grid */}
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-9 gap-2 sm:gap-3 md:gap-4 justify-items-center">
+        <div className="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-9 gap-1 sm:gap-2 sm:gap-3 md:gap-4 justify-items-center">
           {/* All Category Button - Featured First */}
           <button
             onClick={() => {
@@ -90,7 +90,7 @@ const Categories: React.FC = () => {
             {/* Circular Icon Container - Featured Style */}
             <div
               className={`
-                w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20
+                w-11 h-11 xs:w-12 xs:h-12 sm:w-14 sm:h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20
                 rounded-full
                 flex items-center justify-center
                 transition-all duration-300
@@ -101,14 +101,14 @@ const Categories: React.FC = () => {
                 }
               `}
             >
-              <Grid3X3 size={22} className="sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9" />
+              <Grid3X3 size={18} className="xs:w-5 xs:h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8" />
             </div>
             <span
               className={`
-                mt-2 sm:mt-2.5 text-[10px] sm:text-xs font-medium
+                mt-1.5 sm:mt-2 sm:mt-2.5 text-[9px] sm:text-[10px] sm:text-xs font-medium
                 text-center leading-tight
                 transition-colors duration-300
-                max-w-[60px] sm:max-w-[70px]
+                max-w-[50px] xs:max-w-[55px] sm:max-w-[60px]
                 ${!activeCategory
                   ? "text-[#4B5563] font-semibold"
                   : "text-[#4B5563]/70 group-hover:text-[#4B5563]"
@@ -131,7 +131,7 @@ const Categories: React.FC = () => {
                 {/* Circular Icon Container */}
                 <div
                   className={`
-                    w-14 h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20
+                    w-11 h-11 xs:w-12 xs:h-12 sm:w-14 sm:h-14 sm:w-16 sm:h-16 md:w-18 md:h-18 lg:w-20 lg:h-20
                     rounded-full
                     flex items-center justify-center
                     transition-all duration-300
@@ -149,17 +149,17 @@ const Categories: React.FC = () => {
                       className="w-full h-full object-cover rounded-full"
                     />
                   ) : (
-                    <Icon size={22} className="sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-9 lg:h-9" />
+                    <Icon size={18} className="xs:w-5 xs:h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8" />
                   )}
                 </div>
 
                 {/* Category Name */}
                 <span
                   className={`
-                    mt-2 sm:mt-2.5 text-[10px] sm:text-xs font-medium
+                    mt-1.5 sm:mt-2 sm:mt-2.5 text-[9px] sm:text-[10px] sm:text-xs font-medium
                     text-center leading-tight
                     transition-colors duration-300
-                    max-w-[60px] sm:max-w-[70px]
+                    max-w-[50px] xs:max-w-[55px] sm:max-w-[60px]
                     ${isActive
                       ? "text-[#4B5563] font-semibold"
                       : "text-[#4B5563]/70 group-hover:text-[#4B5563]"

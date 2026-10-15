@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "react-toastify";
+import axiosClient from "../../../api/axiosClient";
 
 interface OrderUpdateProps {
   orderId: string;
@@ -13,7 +14,6 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
   const [loading, setLoading] = useState(false);
 
   const token = localStorage.getItem("token");
-  const serverHost = "http://localhost:5000";
 
   // Danh sách trạng thái có thể cập nhật
   const statusOptions = [
@@ -43,18 +43,12 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
 
     setLoading(true);
     try {
-      const res = await fetch(`${serverHost}/api/orders/${orderId}/status`, {
-        method: "PUT",
+      await axiosClient.put(`/api/orders/${orderId}/status`, { status, note }, {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status, note }),
       });
-
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.message || "Cập nhật thất bại");
 
       toast.success(
         <div className="flex items-center gap-2">
@@ -62,12 +56,13 @@ const OrderUpdate: React.FC<OrderUpdateProps> = ({ orderId, currentStatus }) => 
           <span>Cập nhật trạng thái đơn hàng thành công!</span>
         </div>
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Lỗi cập nhật đơn hàng:", err);
+      const message = err instanceof Error ? err.message : "Cập nhật thất bại";
       toast.error(
         <div className="flex items-center gap-2">
           <XCircle className="text-red-500" size={18} />
-          <span>Lỗi: {err.message}</span>
+          <span>Lỗi: {message}</span>
         </div>
       );
     } finally {

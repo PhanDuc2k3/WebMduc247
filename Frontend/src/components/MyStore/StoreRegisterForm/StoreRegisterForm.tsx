@@ -99,7 +99,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
         </div>
         <h2 className="font-bold text-lg sm:text-xl mb-1">Đăng ký mở cửa hàng</h2>
         <p className="text-gray-500 text-center text-sm sm:text-base px-2">
-          Điền thông tin để tạo cửa hàng của bạn trên ShopMduc247
+          Điền thông tin để tạo cửa hàng của bạn trên MDUC247
         </p>
       </div>
 
@@ -275,7 +275,7 @@ const StoreRegisterForm: React.FC<StoreRegisterFormProps> = ({ onClose, onSucces
               cửa hàng
             </li>
             <li>
-              ShopMduc247 sẽ xem xét và phê duyệt cửa hàng trong vòng 24h
+              MDUC247 sẽ xem xét yêu cầu đăng ký cửa hàng của bạn
             </li>
           </ul>
         </div>

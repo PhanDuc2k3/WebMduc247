@@ -1,19 +1,35 @@
 import React from "react";
-import { CheckCircle2, Circle } from "lucide-react";
+import { CheckCircle2, Circle, ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 import CartItem from "../CartItem/CartItem";
+import type { CartItemType } from "../CartItem/CartItem";
 
-const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, onRemove, cart }: any) => {
-  const allSelected = items.every((item: any) => selectedItems.includes(item._id));
+interface GroupedCartItem extends CartItemType {
+  storeId: string | { _id: string; name: string; logoUrl?: string };
+}
+
+interface Props {
+  store: { _id?: string; name: string; logoUrl?: string };
+  items: GroupedCartItem[];
+  selectedItems: string[];
+  onSelect: (id: string) => void;
+  onUpdateQty?: (itemId: string, quantity: number) => void;
+  onRemove: (id: string) => void;
+  cart: { items: GroupedCartItem[] } | null;
+}
+
+const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, onRemove, cart }: Props) => {
+  const allSelected = items.every((item) => selectedItems.includes(item._id));
   
   // Lấy storeId của store này
-  const getStoreId = (item: any): string => {
+  const getStoreId = (item: GroupedCartItem): string => {
     return typeof item.storeId === "string" ? item.storeId : item.storeId._id;
   };
   
   const currentStoreId = items.length > 0 ? getStoreId(items[0]) : null;
   
   // Kiểm tra xem có item từ cửa hàng khác đang được chọn không
-  const hasOtherStoreSelected = cart?.items?.some((item: any) => {
+  const hasOtherStoreSelected = cart?.items?.some((item) => {
     const itemStoreId = getStoreId(item);
     return itemStoreId !== currentStoreId && selectedItems.includes(item._id);
   }) || false;
@@ -23,7 +39,7 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
   
   const handleToggleAll = () => {
     if (allSelected) {
-      items.forEach((item: any) => {
+      items.forEach((item) => {
         if (selectedItems.includes(item._id)) {
           onSelect(item._id);
         }
@@ -32,7 +48,7 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
       // Nếu đã có cửa hàng khác được chọn, bỏ chọn tất cả cửa hàng khác trước
       if (hasOtherStoreSelected) {
         // Bỏ chọn tất cả item từ cửa hàng khác
-        cart?.items?.forEach((item: any) => {
+        cart?.items?.forEach((item) => {
           const itemStoreId = getStoreId(item);
           if (itemStoreId !== currentStoreId && selectedItems.includes(item._id)) {
             onSelect(item._id);
@@ -40,7 +56,7 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
         });
       }
       // Sau đó chọn tất cả item từ cửa hàng này
-      items.forEach((item: any) => {
+      items.forEach((item) => {
         if (!selectedItems.includes(item._id)) {
           onSelect(item._id);
         }
@@ -48,59 +64,26 @@ const CartStoreGroup = ({ store, items, selectedItems, onSelect, onUpdateQty, on
     }
   };
 
-  const storeTotal = items.reduce((sum: number, item: any) => 
-    selectedItems.includes(item._id) ? sum + item.subtotal : sum, 0
-  );
+  const storeTotal = items.reduce((sum, item) => sum + item.subtotal, 0);
 
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300 animate-fade-in-up">
+    <div className="cart-store animate-fade-in-up">
       {/* Header cửa hàng */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 px-6 py-4 border-b-2 border-gray-200 flex items-center justify-between">
+      <div className="cart-store__header">
         <div className="flex items-center gap-3">
-          <div className="relative">
-            {store.logoUrl && (
-              <img
-                src={store.logoUrl}
-                alt={store.name}
-                className="w-12 h-12 rounded-full border-2 border-white shadow-lg object-cover"
-              />
-            )}
-          </div>
+          <button type="button" className="cart-store__check" onClick={handleToggleAll} disabled={isDisabled} aria-label={allSelected ? "Bỏ chọn cửa hàng" : "Chọn cửa hàng"}>{allSelected ? <CheckCircle2 /> : <Circle />}</button>
+          <div className="cart-store__logo">{store.logoUrl ? <img src={store.logoUrl} alt={store.name} /> : <span>{store.name.slice(0, 2).toUpperCase()}</span>}</div>
           <div className="flex flex-col">
-            <span className="font-bold text-lg text-gray-900">{store.name}</span>
-            <span className="text-xs text-gray-600">
-              {items.length} sản phẩm • Tổng: <span className="font-bold text-blue-600">{storeTotal.toLocaleString("vi-VN")}₫</span>
-            </span>
+            <span className="cart-store__name">{store.name}</span>
+            <span className="cart-store__trusted">✓ Gian hàng uy tín · {items.length} sản phẩm · {storeTotal.toLocaleString("vi-VN")}₫</span>
           </div>
         </div>
-        
-        <button
-          onClick={handleToggleAll}
-          disabled={isDisabled}
-          className={`px-3 sm:px-4 py-2 rounded-lg md:rounded-xl border-2 text-xs sm:text-sm font-semibold transition-all duration-300 transform touch-manipulation flex items-center gap-1.5 sm:gap-2 ${
-            isDisabled
-              ? "border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed opacity-50"
-              : "border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-700 hover:text-blue-600 hover:scale-105 active:scale-95"
-          }`}
-        >
-          {allSelected ? (
-            <>
-              <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
-              <span className="hidden sm:inline">Bỏ chọn tất cả</span>
-              <span className="sm:hidden">Bỏ chọn</span>
-            </>
-          ) : (
-            <>
-              <Circle className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span>Chọn tất cả</span>
-            </>
-          )}
-        </button>
+        {currentStoreId && <Link className="cart-store__visit" to={`/store/${currentStoreId}`}>Xem shop <ExternalLink /></Link>}
       </div>
 
       {/* Sản phẩm */}
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
-        {items.map((item: any, index: number) => (
+      <div className="cart-store__items">
+        {items.map((item, index) => (
           <div
             key={item._id}
             className="animate-fade-in-up"

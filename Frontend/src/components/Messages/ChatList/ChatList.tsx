@@ -113,7 +113,7 @@ const mappedChats: Chat[] = await Promise.all(
 
     // Fetch thông tin user từ API để đảm bảo lấy đúng fullName và avatarUrl (đặc biệt cho seller/owner)
     let displayName = participant.fullName || participant.name || "Người dùng ẩn danh";
-    let displayAvatar = participant.avatarUrl || "/default-avatar.png";
+    let displayAvatar = participant.avatarUrl || "/avatar-placeholder.svg";
 
     // Fetch từ API để đảm bảo có thông tin mới nhất (quan trọng cho seller để hiển thị tên owner thay vì tên store)
     const userInfo = await fetchUserInfo(participant._id);
@@ -242,11 +242,11 @@ const filteredChats = mappedChats.filter((c): c is Chat => Boolean(c?.conversati
               {/* Avatar */}
               <div className="relative flex-shrink-0">
                 <img
-                  src={chat.avatarUrl || "/default-avatar.png"}
+                  src={chat.avatarUrl || "/avatar-placeholder.svg"}
                   alt={chat.name}
                   className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover border-2 md:border-3 border-white shadow-md md:shadow-lg"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/default-avatar.png";
+                    (e.target as HTMLImageElement).src = "/avatar-placeholder.svg";
                   }}
                 />
                 {/* Online status indicator */}

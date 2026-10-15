@@ -8,9 +8,9 @@ interface Props {
 
 const QuickGuideCard: React.FC<Props> = ({ icon, title, description }) => {
   return (
-    <div className="bg-[#4B5563]/5 rounded-2xl shadow-lg border-2 border-[#4B5563]/30 p-6 hover:shadow-2xl hover:border-[#4B5563] cursor-pointer transition-all duration-300 flex flex-col items-center space-y-3 text-center group transform hover:-translate-y-2 hover:scale-105 animate-fade-in-up">
+    <div className="bg-[#f7f9fd] rounded-2xl border border-[#e8edf5] p-6 hover:shadow-lg hover:border-[#cdd6f5] cursor-pointer transition-all duration-300 flex flex-col items-center space-y-3 text-center group transform hover:-translate-y-1 animate-fade-in-up">
       {/* Icon trên */}
-      <div className="w-16 h-16 bg-[#4B5563] rounded-2xl flex items-center justify-center text-white shadow-xl group-hover:shadow-2xl group-hover:rotate-6 transition-all duration-300">
+      <div className="w-16 h-16 bg-[#476de4] rounded-2xl flex items-center justify-center text-white shadow-md group-hover:rotate-3 transition-all duration-300">
         {icon}
       </div>
 

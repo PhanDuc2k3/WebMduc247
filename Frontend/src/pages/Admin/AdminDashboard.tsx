@@ -108,7 +108,7 @@ const AdminDashboard: React.FC = () => {
         <div className="p-4 md:p-6">
           <div className="bg-slate-700 rounded-xl md:rounded-2xl p-6 md:p-8 text-white shadow-xl md:shadow-2xl">
             <div>
-              <h1 className="text-2xl md:text-4xl font-bold mb-2">Welcome back, Admin!</h1>
+              <h1 className="text-2xl md:text-4xl font-bold mb-2">Tổng quan quản trị</h1>
               <p className="text-slate-300 text-sm md:text-lg">Chào mừng bạn trở lại trang quản trị</p>
             </div>
           </div>

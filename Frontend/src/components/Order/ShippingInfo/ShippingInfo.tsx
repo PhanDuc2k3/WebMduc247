@@ -153,7 +153,7 @@ export default function ShippingInfo({
 
       // Lấy thông tin chủ cửa hàng (owner)
       let ownerName = storeName || "Cửa hàng";
-      let ownerAvatar = "/default-avatar.png";
+      let ownerAvatar = "/avatar-placeholder.svg";
       
       try {
         const ownerRes = await axiosClient.get(`/api/users/${ownerId}`);

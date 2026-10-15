@@ -56,39 +56,39 @@ const SellerBox: React.FC = () => {
   if (!showBox) return null;
 
   return (
-    <section className="mt-6 sm:mt-8 md:mt-12">
-      <div className="bg-[#4B5563] text-white rounded-xl sm:rounded-2xl md:rounded-3xl px-4 sm:px-6 md:px-12 py-6 sm:py-8 md:py-10 lg:py-14 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6 md:gap-8 shadow-2xl">
+    <section className="mt-4 sm:mt-6 sm:mt-8 md:mt-12">
+      <div className="bg-[#4B5563] text-white rounded-lg sm:rounded-xl sm:rounded-2xl md:rounded-3xl px-3 sm:px-4 sm:px-6 md:px-12 py-5 sm:py-6 sm:py-8 md:py-10 lg:py-14 flex flex-col md:flex-row items-center justify-between gap-3 sm:gap-4 sm:gap-6 md:gap-8 shadow-2xl">
         {/* Content */}
         <div className="w-full">
           <div className="text-center md:text-left flex-1">
-            <h3 className="text-lg sm:text-xl md:text-[1.5rem] lg:text-[2rem] font-extrabold mb-2 sm:mb-3">
-              Bán hàng cùng ShopMduc247
+            <h3 className="text-base xs:text-lg sm:text-xl md:text-[1.5rem] lg:text-[2rem] font-extrabold mb-2 sm:mb-2 sm:mb-3">
+              Bán hàng cùng MDUC247
             </h3>
-            <p className="text-sm sm:text-base md:text-lg mb-4 sm:mb-5 md:mb-6 opacity-95">
+            <p className="text-xs xs:text-sm sm:text-base md:text-lg mb-3 sm:mb-4 sm:mb-5 md:mb-6 opacity-95">
               Mở cửa hàng online miễn phí, tiếp cận hàng triệu khách hàng trên toàn quốc.
             </p>
 
-            <div className="flex flex-wrap justify-center md:justify-start gap-2 sm:gap-3 md:gap-4 lg:gap-8 text-xs sm:text-sm md:text-base mb-4 sm:mb-6 md:mb-8">
-              <span className="bg-white/15 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-semibold">
+            <div className="flex flex-wrap justify-center md:justify-start gap-1.5 sm:gap-2 sm:gap-3 md:gap-4 lg:gap-8 text-[10px] xs:text-xs sm:text-sm md:text-base mb-3 sm:mb-4 sm:mb-6 md:mb-8">
+              <span className="bg-white/15 px-2 sm:px-3 sm:px-4 py-1 sm:py-1.5 rounded-full font-semibold">
                 {stats.totalUsers ? stats.totalUsers.toLocaleString("vi-VN") : "..."} người mua
               </span>
-              <span className="bg-white/15 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-semibold">
+              <span className="bg-white/15 px-2 sm:px-3 sm:px-4 py-1 sm:py-1.5 rounded-full font-semibold">
                 {stats.totalProducts ? stats.totalProducts.toLocaleString("vi-VN") : "..."} sản phẩm
               </span>
-              <span className="bg-white/15 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full font-semibold">
+              <span className="bg-white/15 px-2 sm:px-3 sm:px-4 py-1 sm:py-1.5 rounded-full font-semibold">
                 {stats.totalStores ? stats.totalStores.toLocaleString("vi-VN") : "..."} cửa hàng
               </span>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row justify-center md:justify-start gap-2 sm:gap-3 sm:gap-4">
               <button
                 onClick={handleRegisterClick}
-                className="flex-1 bg-white text-[#4B5563] font-bold rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base shadow-lg hover:shadow-xl hover:bg-[#f3f4ff] transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex items-center justify-center"
+                className="flex-1 bg-white text-[#4B5563] font-bold rounded-lg sm:rounded-xl px-3 sm:px-4 sm:px-6 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base shadow-lg hover:shadow-xl hover:bg-[#f3f4ff] transition-all duration-300 transform hover:scale-105 active:scale-95 touch-manipulation flex items-center justify-center"
               >
                 Đăng ký bán hàng
               </button>
               <button
-                className="flex-1 bg-transparent border border-white/70 text-white font-bold rounded-lg sm:rounded-xl px-4 sm:px-6 py-2 sm:py-2.5 md:py-3 text-sm sm:text-base hover:bg-white/10 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95 touch-manipulation flex items-center justify-center"
+                className="flex-1 bg-transparent border border-white/70 text-white font-bold rounded-lg sm:rounded-xl px-3 sm:px-4 sm:px-6 py-2 sm:py-2.5 md:py-3 text-xs sm:text-sm md:text-base hover:bg-white/10 transition-all duration-300 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95 touch-manipulation flex items-center justify-center"
               >
                 Tìm hiểu thêm
               </button>

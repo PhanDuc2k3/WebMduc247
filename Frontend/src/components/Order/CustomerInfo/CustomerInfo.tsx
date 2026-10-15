@@ -57,7 +57,7 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ customer }) => {
       const chatUser = {
         _id: receiverId,
         name: customer.fullName,
-        avatar: customer.avatarUrl || "/default-avatar.png",
+        avatar: customer.avatarUrl || "/avatar-placeholder.svg",
       };
 
       // Lấy tin nhắn ban đầu
@@ -96,7 +96,7 @@ const CustomerInfo: React.FC<CustomerInfoProps> = ({ customer }) => {
           {/* Avatar */}
           <div className="relative flex-shrink-0">
             <img
-              src={customer.avatarUrl || "/avatar.png"}
+              src={customer.avatarUrl || "/avatar-placeholder.svg"}
               alt="Avatar"
               className="w-16 h-16 sm:w-20 sm:h-20 rounded-full object-cover border-3 sm:border-4 border-[#4B5563] shadow-lg"
             />

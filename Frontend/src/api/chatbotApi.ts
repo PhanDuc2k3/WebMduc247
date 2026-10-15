@@ -1,4 +1,6 @@
-import axios from "axios";
+import axios, { type AxiosResponse, type InternalAxiosRequestConfig } from "axios";
+import { USE_MOCK_DATA } from "../config/runtime";
+import { mockChatResponse } from "../mocks/mockApi";
 
 interface ChatRequest {
   message: string;
@@ -26,17 +28,24 @@ interface Product {
 interface ChatResponse {
   reply: string;
   products?: Product[];
-  stores?: any[];
-  orders?: any[];
+  stores?: unknown[];
+  orders?: unknown[];
 }
 
 const BASE_URL =
-  // import.meta.env.VITE_CHATBOT_API_URL
-  "http://localhost:5001/api/chatbot/chat"
-  ;
+  import.meta.env.VITE_CHATBOT_API_URL ||
+  "http://localhost:5001/api/chatbot/chat";
 
 const chatbotApi = {
-  sendMessage: (data: ChatRequest) => axios.post<ChatResponse>(BASE_URL, data),
+  sendMessage: (data: ChatRequest) => USE_MOCK_DATA
+    ? Promise.resolve({
+        data: mockChatResponse(data.message),
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config: {} as InternalAxiosRequestConfig,
+      } satisfies AxiosResponse<ChatResponse>)
+    : axios.post<ChatResponse>(BASE_URL, data),
 };
 
 export default chatbotApi;

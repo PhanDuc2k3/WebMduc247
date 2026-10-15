@@ -1,4 +1,5 @@
 import { io, type Socket } from "socket.io-client";
+import { USE_MOCK_DATA } from "./config/runtime";
 
 const SOCKET_URL =
   import.meta.env.VITE_SOCKET_URL || "http://localhost:5050";
@@ -6,8 +7,27 @@ const SOCKET_URL =
 
 let socket: Socket;
 
+const createMockSocket = (): Socket => {
+  const handlers = new Map<string, Set<(...args: unknown[]) => void>>();
+  const mock = {
+    id: "mock-socket",
+    connected: true,
+    connect() { this.connected = true; queueMicrotask(() => handlers.get("connect")?.forEach((handler) => handler())); return this; },
+    disconnect() { this.connected = false; handlers.get("disconnect")?.forEach((handler) => handler()); return this; },
+    emit(event: string, ...args: unknown[]) { handlers.get(event)?.forEach((handler) => handler(...args)); return this; },
+    on(event: string, handler: (...args: unknown[]) => void) { if (!handlers.has(event)) handlers.set(event, new Set()); handlers.get(event)?.add(handler); if (event === "connect") queueMicrotask(() => handler()); return this; },
+    once(event: string, handler: (...args: unknown[]) => void) { const wrapped = (...args: unknown[]) => { handler(...args); handlers.get(event)?.delete(wrapped); }; return this.on(event, wrapped); },
+    off(event: string, handler?: (...args: unknown[]) => void) { if (handler) handlers.get(event)?.delete(handler); else handlers.delete(event); return this; },
+  };
+  return mock as unknown as Socket;
+};
+
 export const getSocket = () => {
   if (!socket) {
+    if (USE_MOCK_DATA) {
+      socket = createMockSocket();
+      return socket;
+    }
     socket = io(SOCKET_URL, {
       autoConnect: true,
       transports: ["websocket"],

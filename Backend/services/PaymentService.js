@@ -9,7 +9,7 @@ class PaymentService {
     const partnerCode = 'MOMO';
     const accessKey = 'F8BBA842ECF85';
     const secretKey = 'K951B6PE1waDMi640xX08PD3vg6EkVlz';
-    const redirectUrl = 'http://localhost:3000/payment-success';
+    const redirectUrl = 'http://localhost:5173/payment-success';
     const ipnUrl = 'http://localhost:5000/api/payment/momo-callback';
     const requestType = 'payWithMethod';
     const orderInfo = 'Thanh toán MERN với Momo';

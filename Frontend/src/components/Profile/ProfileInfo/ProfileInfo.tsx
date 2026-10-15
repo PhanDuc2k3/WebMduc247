@@ -1,5 +1,7 @@
 import React from "react";
 import { User, Store, Crown, Mail, Phone, Calendar, Edit, LogOut } from "lucide-react";
+import { formatDisplayDate } from "../../../utils/formatDisplayDate";
+import { showAvatarFallback } from "../../../utils/imageFallback";
 
 interface ProfileInfoProps {
   user: any; // nhận user từ cha
@@ -23,7 +25,8 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
         {/* Avatar */}
         <div className="relative flex-shrink-0">
           <img
-            src={user.avatarUrl || "/default-avatar.png"}
+            src={user.avatarUrl || "/avatar-placeholder.svg"}
+            onError={showAvatarFallback}
             alt="avatar"
             className="w-24 h-24 md:w-28 md:h-28 lg:w-32 lg:h-32 rounded-full object-cover border-2 md:border-4 border-white shadow-2xl transform hover:scale-105 transition-transform duration-300"
           />
@@ -65,7 +68,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ user, onEdit }) => {
             )}
             <span className="flex items-center gap-1.5 md:gap-2 justify-center sm:justify-start">
               <Calendar size={14} className="text-[#4B5563]" /> <span className="hidden sm:inline">Tham gia </span>
-              {new Date(user.createdAt).toLocaleDateString("vi-VN")}
+              {formatDisplayDate(user.createdAt)}
             </span>
           </div>
 

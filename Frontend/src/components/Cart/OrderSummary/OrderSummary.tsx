@@ -1,26 +1,37 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-interface OrderSummaryProps {
-  selectedItems: string[]; // ✅ danh sách id sản phẩm được chọn
-  cart: any; // ✅ cart từ Cart.tsx
+interface SummaryItem {
+  _id: string;
+  storeId: string | { _id: string };
+  price: number;
+  salePrice?: number;
+  quantity: number;
+  variation?: { additionalPrice?: number };
 }
 
-const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
+interface OrderSummaryProps {
+  selectedItems: string[];
+  cart: { items: SummaryItem[] } | null;
+  discount?: number;
+}
+
+const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart, discount = 0 }) => {
   const navigate = useNavigate();
+  const [shippingMethod, setShippingMethod] = useState("standard");
 
   // ✅ Kiểm tra xem có nhiều cửa hàng được chọn không
-  const getStoreId = (item: any): string => {
+  const getStoreId = (item: SummaryItem): string => {
     return typeof item.storeId === "string" ? item.storeId : item.storeId?._id || "";
   };
 
   // ✅ Tính toán trực tiếp từ cart.items và selectedItems để đảm bảo luôn có dữ liệu mới nhất
-  const { selectedProducts, storeIds, subtotal, total } = useMemo(() => {
+  const { selectedProducts, storeIds, subtotal } = useMemo(() => {
     const safeCart = Array.isArray(cart?.items) ? cart.items : [];
-    const filtered = safeCart.filter((item: any) => selectedItems.includes(item._id));
+    const filtered = safeCart.filter((item) => selectedItems.includes(item._id));
     
     // Tính tổng tiền trực tiếp - luôn tính lại từ quantity để đảm bảo chính xác
     const calculatedSubtotal = filtered.reduce((sum, item) => {
@@ -32,17 +43,18 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
     }, 0);
 
     // Tính storeIds
-    const ids = new Set(filtered.map((item: any) => getStoreId(item)));
+    const ids = new Set(filtered.map((item) => getStoreId(item)));
     
     return {
       selectedProducts: filtered,
       storeIds: Array.from(ids),
-      subtotal: calculatedSubtotal,
-      total: calculatedSubtotal
+      subtotal: calculatedSubtotal
     };
   }, [cart?.items, selectedItems]); // ✅ Tính toán trực tiếp từ cart.items và selectedItems
 
   const hasMultipleStores = storeIds.length > 1;
+  const shippingFee = shippingMethod === "express" ? 49000 : subtotal >= 499000 || subtotal === 0 ? 0 : 30000;
+  const total = Math.max(0, subtotal + shippingFee - discount);
 
   // ✅ Thanh toán
   const handleCheckout = () => {
@@ -80,10 +92,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
   const formatPrice = (value: number) => (value || 0).toLocaleString("vi-VN") + "₫";
 
   return (
-    <div className="bg-gradient-to-br from-white to-gray-50 rounded-2xl shadow-2xl border-2 border-gray-200 p-6 lg:p-8 animate-fade-in-right">
-      <div className="flex items-center gap-3 mb-6">
-        <h2 className="text-2xl font-bold text-[#4B5563]">Tóm tắt đơn hàng</h2>
-      </div>
+    <div className="cart-summary animate-fade-in-right">
+      <div className="cart-summary__header"><h2>Tóm tắt đơn hàng</h2></div>
 
       {/* ✅ Cảnh báo nếu có nhiều cửa hàng */}
       {hasMultipleStores && (
@@ -97,21 +107,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
         </div>
       )}
 
-      {/* Total */}
-      <div className="mb-6">
-        <div className="flex justify-between items-center p-4 bg-[#4B5563]/5 rounded-xl border-2 border-[#4B5563]/40">
-          <span className="text-xl font-bold text-gray-900">Tổng cộng</span>
-          <span className="text-2xl font-extrabold text-red-600">
-            {formatPrice(total)}
-          </span>
-        </div>
-      </div>
+      <div className="cart-summary__rows"><div><span>Tạm tính</span><strong>{formatPrice(subtotal)}</strong></div><label>Phương thức vận chuyển<select value={shippingMethod} onChange={(event) => setShippingMethod(event.target.value)}><option value="standard">Tiêu chuẩn - miễn phí từ 499.000₫</option><option value="express">Giao nhanh - 49.000₫</option></select></label><div><span>Phí vận chuyển</span><strong>{shippingFee ? formatPrice(shippingFee) : "Miễn phí"}</strong></div><div><span>Giảm giá</span><strong className="is-discount">-{formatPrice(discount)}</strong></div></div>
+      <div className="cart-summary__total"><div><span>Tổng cộng</span><strong>{formatPrice(total)}</strong></div><small>Đã bao gồm VAT nếu có</small></div>
 
       {/* Checkout button */}
       <button
         onClick={handleCheckout}
         disabled={!selectedProducts || selectedProducts.length === 0 || hasMultipleStores}
-        className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform ${
+        className={`cart-summary__checkout ${
           selectedProducts && selectedProducts.length > 0 && !hasMultipleStores
             ? "bg-[#4B5563] text-white hover:bg-[#374151] hover:scale-105 active:scale-95"
             : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -126,12 +129,15 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ selectedItems, cart }) => {
         )}
       </button>
 
+      <p className="cart-summary__preview-note">◇ Bước thanh toán được hiển thị ở chế độ xem trước</p>
+
       {/* Additional info */}
       <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
         <p className="text-xs text-yellow-800">
           Vui lòng kiểm tra kỹ thông tin đơn hàng trước khi thanh toán.
         </p>
       </div>
+      <div className="cart-summary__payments"><span>VISA</span><span>Mastercard</span><span>Ví điện tử</span></div>
     </div>
   );
 };

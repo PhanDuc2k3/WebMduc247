@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { ShoppingCart, Loader2, ShoppingBag, AlertTriangle } from "lucide-react";
+import { ArrowLeft, CheckSquare2, Loader2, RotateCcw, ShieldCheck, ShoppingBag, ShoppingCart, Star, TicketPercent, Trash2, Truck } from "lucide-react";
 import CartStoreGroup from "../../components/Cart/CartStoreGroup/CartStoreGroup";
 import OrderSummary from "../../components/Cart/OrderSummary/OrderSummary";
 import { useNavigate } from "react-router-dom";
 import cartApi from "../../api/cartApi"; // ✅ dùng axiosClient
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "./Cart.css";
+import productApi from "../../api/productApi";
+import { showImageFallback } from "../../utils/imageFallback";
 
 interface CartItem {
   _id: string;
@@ -27,10 +30,27 @@ interface Cart {
   total: number;
 }
 
+interface CartGroup {
+  store: { _id?: string; name: string; logoUrl?: string };
+  items: CartItem[];
+}
+
+interface RecommendedProduct {
+  _id: string;
+  name: string;
+  price: number;
+  salePrice?: number;
+  images?: string[];
+  rating?: number;
+}
+
 export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState("");
+  const [recommended, setRecommended] = useState<RecommendedProduct[]>([]);
   const navigate = useNavigate();
 
   // Lấy giỏ hàng
@@ -38,6 +58,7 @@ export default function CartPage() {
     try {
       const res = await cartApi.getCart();
       setCart(res.data);
+      setSelectedItems(res.data.items?.map((item: CartItem) => item._id) || []);
     } catch (err) {
       console.error("Lỗi khi lấy giỏ hàng:", err);
     } finally {
@@ -47,6 +68,11 @@ export default function CartPage() {
 
   useEffect(() => {
     fetchCart();
+    productApi.getRecommendedProducts().then((res) => {
+      const payload = res.data as { data?: RecommendedProduct[]; products?: RecommendedProduct[] } | RecommendedProduct[];
+      const products = Array.isArray(payload) ? payload : payload.data || payload.products || [];
+      setRecommended(products.slice(0, 4));
+    }).catch(() => setRecommended([]));
   }, []);
 
   // ✅ Đồng bộ selectedItems khi cart thay đổi (đảm bảo không có item đã bị xóa)
@@ -139,12 +165,8 @@ export default function CartPage() {
     }
   };
 
-  // Tổng tiền các sản phẩm được chọn
-  const selectedTotal =
-    cart?.items.reduce((sum, i) => (selectedItems.includes(i._id) ? sum + i.subtotal : sum), 0) || 0;
-
   // Gom sản phẩm theo store
-  const groupedByStore = cart?.items.reduce((acc: any, item) => {
+  const groupedByStore = cart?.items.reduce<Record<string, CartGroup>>((acc, item) => {
     const storeKey = typeof item.storeId === "string" ? item.storeId : item.storeId._id;
     if (!acc[storeKey]) {
       acc[storeKey] = {
@@ -155,34 +177,24 @@ export default function CartPage() {
     acc[storeKey].items.push(item);
     return acc;
   }, {});
+  const allSelected = Boolean(cart?.items.length) && selectedItems.length === cart?.items.length;
+  const selectedSubtotal = cart?.items.reduce((sum, item) => selectedItems.includes(item._id) ? sum + item.subtotal : sum, 0) || 0;
+  const discount = appliedCoupon === "MDUC10" ? Math.round(selectedSubtotal * 0.1) : appliedCoupon === "MDUC50" ? Math.min(50000, selectedSubtotal) : 0;
 
-  // Checkout
-  const handleCheckout = () => {
-    if (selectedItems.length === 0) {
-      toast.warning(
-        "Vui lòng chọn ít nhất 1 sản phẩm để thanh toán",
-        { containerId: "general-toast" }
-      );
+  const toggleSelectAll = () => setSelectedItems(allSelected ? [] : cart?.items.map((item) => item._id) || []);
+  const removeSelected = async () => {
+    if (!selectedItems.length) return;
+    for (const itemId of selectedItems) await cartApi.removeFromCart(itemId);
+    await fetchCart();
+  };
+  const applyCoupon = () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!["MDUC10", "MDUC50"].includes(code)) {
+      toast.error("Mã giảm giá không hợp lệ", { containerId: "general-toast" });
       return;
     }
-    
-    // Lưu toàn bộ sản phẩm được chọn thay vì chỉ ID
-    const selectedProducts = cart?.items.filter((item) =>
-      selectedItems.includes(item._id)
-    ) || [];
-    
-    // ✅ Kiểm tra tất cả sản phẩm phải từ cùng 1 cửa hàng
-    const storeIds = new Set(selectedProducts.map((item) => getStoreId(item)));
-    if (storeIds.size > 1) {
-      toast.error(
-        "Chỉ có thể thanh toán sản phẩm từ cùng một cửa hàng!",
-        { containerId: "general-toast" }
-      );
-      return;
-    }
-    
-    localStorage.setItem("checkoutItems", JSON.stringify(selectedProducts));
-    navigate("/checkout");
+    setAppliedCoupon(code);
+    toast.success(`Đã áp dụng mã ${code}`, { containerId: "general-toast" });
   };
 
   if (loading) {
@@ -199,22 +211,17 @@ export default function CartPage() {
   }
 
   return (
-    <div className="w-full py-6 sm:py-8 md:py-12 px-4 sm:px-6">
-      <div className="mb-6 sm:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-[#4B5563] flex items-center gap-2 sm:gap-3">
-          <ShoppingCart className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
-          <span>Giỏ hàng của tôi</span>
-        </h1>
-        <p className="text-gray-600 text-sm sm:text-base md:text-lg">
-          {cart?.items.length || 0} sản phẩm trong giỏ hàng
-        </p>
+    <div className="cart-page">
+      <div className="cart-page__header animate-fade-in-down">
+        <nav className="cart-page__breadcrumb"><button type="button" onClick={() => navigate("/")}>Trang chủ</button><span>/</span><strong>Giỏ hàng</strong></nav>
       </div>
 
-      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+      <div className="cart-page__layout">
         {/* Left: Cart Items */}
-        <div className="flex-1 space-y-4 sm:space-y-6 animate-fade-in-up delay-200">
+        <div className="cart-page__list animate-fade-in-up delay-200">
+          {cart && cart.items.length > 0 && <div className="cart-page__toolbar"><button type="button" onClick={toggleSelectAll}><CheckSquare2 /> <strong>{allSelected ? "Bỏ chọn tất cả" : "Chọn tất cả"}</strong><span>({selectedItems.length} đã chọn)</span></button><div><button type="button" className="is-danger" onClick={removeSelected} disabled={!selectedItems.length}><Trash2 /> Xóa sản phẩm đã chọn</button><button type="button" onClick={() => navigate("/products")}><ArrowLeft /> Tiếp tục mua sắm</button></div></div>}
           {!cart || cart.items.length === 0 ? (
-            <div className="bg-white rounded-xl md:rounded-2xl shadow-lg border-2 border-gray-200 p-8 sm:p-12 text-center animate-fade-in">
+            <div className="cart-page__empty animate-fade-in">
               <div className="flex justify-center mb-4 sm:mb-6">
                 <ShoppingCart className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-gray-300" />
               </div>
@@ -229,7 +236,7 @@ export default function CartPage() {
               </button>
             </div>
           ) : (
-            Object.entries(groupedByStore || {}).map(([storeId, group]: any, index) => (
+            Object.entries(groupedByStore || {}).map(([storeId, group], index) => (
               <div
                 key={storeId}
                 className="animate-slide-up"
@@ -247,20 +254,27 @@ export default function CartPage() {
               </div>
             ))
           )}
+
+          {cart && cart.items.length > 0 && <section className="cart-coupon"><h2><TicketPercent /> Mã giảm giá</h2><div className="cart-coupon__form"><input value={couponInput} onChange={(event) => setCouponInput(event.target.value)} placeholder="NHẬP MÃ GIẢM GIÁ" /><button type="button" onClick={applyCoupon}>Áp dụng</button></div><div className="cart-coupon__suggestions"><span>Thử mã:</span>{["MDUC10", "MDUC50"].map((code) => <button type="button" key={code} onClick={() => setCouponInput(code)}>{code}</button>)}</div>{appliedCoupon && <p>Mã {appliedCoupon} đã được áp dụng cho đơn hàng.</p>}</section>}
+
+          <section className="cart-benefits"><article><Truck /><span><strong>Phí vận chuyển rõ ràng</strong><small>Kiểm tra trước khi đặt hàng</small></span></article><article><ShieldCheck /><span><strong>Thanh toán an toàn</strong><small>An tâm trong từng bước</small></span></article><article><RotateCcw /><span><strong>Hỗ trợ đổi trả</strong><small>Xem điều kiện tại trung tâm trợ giúp</small></span></article></section>
         </div>
 
         {/* Right: Order Summary - Sticky */}
         {cart && cart.items.length > 0 && (
-          <div className="lg:w-[400px] space-y-4 animate-fade-in-right delay-300">
-            <div className="sticky top-[180px]">
+          <aside className="cart-page__aside animate-fade-in-right delay-300">
+            <div className="sticky top-[150px]">
               <OrderSummary
                 selectedItems={selectedItems}
                 cart={cart}
+                discount={discount}
               />
             </div>
-          </div>
+          </aside>
         )}
       </div>
+
+      {recommended.length > 0 && <section className="cart-recommendations"><header><h2>Có thể bạn cũng thích</h2><span>Khám phá thêm từ MDUC247</span></header><div>{recommended.map((product) => <button type="button" key={product._id} onClick={() => navigate(`/products/${product._id}`)}><img src={product.images?.[0] || "/visual-placeholder.svg"} alt={product.name} onError={showImageFallback} /><span><strong>{product.name}</strong><em>{(product.salePrice || product.price).toLocaleString("vi-VN")}₫</em><small><Star /> {typeof product.rating === "number" ? product.rating.toFixed(1) : "Chưa có đánh giá"}</small></span></button>)}</div></section>}
     </div>
   );
 }

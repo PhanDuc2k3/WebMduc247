@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { useParams } from "react-router-dom";
-import { Star, Package, FileText, X, XCircle, CheckCircle, ArrowRight } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import { Star, Package, X, XCircle, CheckCircle, ArrowRight } from "lucide-react";
 import { toast } from "react-toastify";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import OrderStatus from "../../components/Order/OrderStatus/OrderStatus";
@@ -170,7 +170,7 @@ export default function OrderPage() {
                 name: storeRes.data.store.name,
                 email: owner?.email || storeRes.data.store.contactEmail || "",
                 phone: owner?.phone || storeRes.data.store.contactPhone || "",
-                logoUrl: storeRes.data.store.logoUrl || "/avatar.png",
+                logoUrl: storeRes.data.store.logoUrl || "/visual-placeholder.svg",
                 ownerId: owner?._id || owner?.id || null, // Lưu ownerId để nhắn tin
               });
             } catch (err) {
@@ -235,7 +235,7 @@ export default function OrderPage() {
     );
   }
 
-  const currentStatus = order.statusHistory[order.statusHistory.length - 1].status;
+  const currentStatus = order.statusHistory.at(-1)?.status || "pending";
 
   // Kiểm tra xem có phải là chủ hàng của order này không
   const orderStoreIdRaw = order.items[0]?.storeId;
@@ -323,7 +323,7 @@ export default function OrderPage() {
         email: order.userInfo?.email || "",
         phone: order.userInfo?.phone || "",
         role: "Khách hàng",
-        avatarUrl: order.userInfo?.avatarUrl || "/avatar.png",
+        avatarUrl: order.userInfo?.avatarUrl || "/avatar-placeholder.svg",
         userId: order.userInfo?._id || order.userId || "", // ID người mua để nhắn tin
       }
     : {
@@ -332,27 +332,18 @@ export default function OrderPage() {
         email: storeInfo?.email || "",
         phone: storeInfo?.phone || "",
         role: "Chủ cửa hàng",
-        avatarUrl: storeInfo?.logoUrl || "/avatar.png",
+        avatarUrl: storeInfo?.logoUrl || "/visual-placeholder.svg",
         userId: storeInfo?.ownerId || "", // ID chủ cửa hàng để nhắn tin
       };
 
   return (
-    <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6 bg-gray-50 min-h-screen">
-      <div className="mb-4 sm:mb-6 md:mb-8 animate-fade-in-down">
-        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-[#4B5563] flex items-center gap-2 sm:gap-3">
-          <Package className="w-6 h-6 sm:w-7 sm:h-7 lg:w-8 lg:h-8" />
-          Chi tiết đơn hàng
-        </h1>
-        <p className="text-gray-600 text-base sm:text-lg flex items-center gap-2">
-          <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
-          Mã đơn hàng: <span className="font-bold text-[#4B5563] break-all">{order.orderCode}</span>
-        </p>
-      </div>
+    <div className="order-live-page w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6 bg-gray-50 min-h-screen">
+      <nav className="order-live-breadcrumb" aria-label="Đường dẫn trang"><Link to="/">Trang chủ</Link><span>/</span><Link to="/profile">Đơn hàng của tôi</Link><span>/</span><strong>Chi tiết đơn hàng</strong></nav>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[68%_32%] gap-4 sm:gap-6 animate-fade-in-up">
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,2.55fr)_minmax(260px,1fr)] gap-4 sm:gap-6 animate-fade-in-up">
         {/* Cột trái */}
         <div className="space-y-4 sm:space-y-6">
-          <OrderStatus statusHistory={order.statusHistory} />
+          <OrderStatus statusHistory={order.statusHistory} orderCode={order.orderCode} orderDate={order.statusHistory[0]?.timestamp} />
           <OrderProduct items={order.items} />
           <PaymentInfo 
             order={order} 

@@ -8,6 +8,7 @@ import FeaturedProduct from "../../components/Store/FeaturedProduct/FeaturedProd
 import Categories from "../../components/Store/Categories/Categories";
 import storeApi from "../../api/storeApi";
 import type { StoreType } from "../../types/store";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 const tabs = [
   { id: "info", label: "Thông tin cửa hàng" },
@@ -66,6 +67,7 @@ const StorePage: React.FC = () => {
 
   return (
     <div className="w-full p-3 md:p-4 lg:p-6">
+      <ContentBreadcrumb items={[{ label: "Cửa hàng", to: "/store" }, { label: store.name }]} />
       {/* Header */}
       <div className="pb-4 md:pb-6 animate-fade-in-up">
         <StoreHeader store={store} />

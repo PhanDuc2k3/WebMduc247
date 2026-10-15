@@ -259,7 +259,7 @@ const UserManagement: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="relative">
                         <img
-                          src={user.avatarUrl || "/default-avatar.png"}
+                          src={user.avatarUrl || "/avatar-placeholder.svg"}
                           alt={user.fullName}
                           className="w-12 h-12 rounded-full object-cover border-3 border-white shadow-lg hover:scale-110 transition-transform duration-300"
                         />
@@ -338,7 +338,7 @@ const UserManagement: React.FC = () => {
                 {/* Header: User Info */}
                 <div className="flex items-center gap-3 mb-4 border-b pb-3">
                   <img
-                    src={user.avatarUrl || "/default-avatar.png"}
+                    src={user.avatarUrl || "/avatar-placeholder.svg"}
                     alt={user.fullName}
                     className="w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-md"
                   />

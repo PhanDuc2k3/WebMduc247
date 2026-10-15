@@ -1,39 +1,18 @@
 import React from "react";
-import { Shield, ArrowLeft } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 const Privacy: React.FC = () => {
-  const navigate = useNavigate();
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
+    <div className="policy-page min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Quay lại</span>
-          </button>
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
-              <Shield className="text-white w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">Chính sách bảo mật</h1>
-              <p className="text-gray-600 mt-1">Cập nhật lần cuối: {new Date().toLocaleDateString('vi-VN')}</p>
-            </div>
-          </div>
-        </div>
+        <ContentBreadcrumb items={[{ label: "Chính sách bảo mật" }]} />
 
         {/* Content */}
         <div className="bg-white rounded-2xl shadow-xl p-6 md:p-10 space-y-6">
           <section>
             <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Giới thiệu</h2>
             <p className="text-gray-700 leading-relaxed">
-              ShopMDuc247 ("chúng tôi", "của chúng tôi" hoặc "nền tảng") cam kết bảo vệ quyền riêng tư và thông tin cá nhân của người dùng. 
+              MDUC247 ("chúng tôi", "của chúng tôi" hoặc "nền tảng") cam kết bảo vệ quyền riêng tư và thông tin cá nhân của người dùng. 
               Chính sách bảo mật này mô tả cách chúng tôi thu thập, sử dụng, lưu trữ và bảo vệ thông tin của bạn khi sử dụng dịch vụ của chúng tôi.
             </p>
           </section>

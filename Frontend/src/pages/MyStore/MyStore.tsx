@@ -8,6 +8,7 @@ import Statistics from "../../components/MyStore/Statistics/Statistics";
 import VoucherManagement from "../../components/MyStore/VoucherManagement/VoucherManagement";
 import ManageStore from "../../components/MyStore/ManageStore/ManageStore"; // import component mới
 import axiosClient from "../../api/axiosClient";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 const tabs = [
   { key: "manageStore", label: "Quản lý cửa hàng", icon: "" },
@@ -67,24 +68,8 @@ const MyStore: React.FC = () => {
   if (role === "buyer" && !hasStore && (sellerRequestStatus === "none" || sellerRequestStatus === "rejected")) {
     return (
       <div className="w-full py-8 md:py-12">
-        <div className="mb-8 animate-fade-in-down">
-          <h1 className="text-3xl lg:text-4xl font-bold mb-3 text-[#4B5563] flex items-center gap-3">
-            {sellerRequestStatus === "rejected" ? "Đăng ký lại mở cửa hàng" : "Đăng ký mở cửa hàng"}
-          </h1>
-          <p className="text-gray-600 text-lg">
-            {sellerRequestStatus === "rejected" 
-              ? "Yêu cầu trước đó của bạn đã bị từ chối. Vui lòng cập nhật thông tin và gửi lại yêu cầu mới."
-              : "Bắt đầu hành trình bán hàng của bạn ngay hôm nay"
-            }
-          </p>
-          {sellerRequestStatus === "rejected" && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-xl">
-              <p className="text-sm text-red-800">
-                ⚠️ Yêu cầu trước đó của bạn đã bị từ chối. Vui lòng kiểm tra và cập nhật thông tin cửa hàng trước khi gửi lại.
-              </p>
-            </div>
-          )}
-        </div>
+        <ContentBreadcrumb items={[{ label: sellerRequestStatus === "rejected" ? "Đăng ký lại cửa hàng" : "Đăng ký cửa hàng" }]} />
+        {sellerRequestStatus === "rejected" && <p className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">Yêu cầu trước đó đã bị từ chối. Vui lòng kiểm tra và cập nhật thông tin cửa hàng trước khi gửi lại.</p>}
         <div className="animate-fade-in-up delay-200">
           <StoreRegisterForm onSuccess={() => {
             setSellerRequestStatus("pending");
@@ -98,8 +83,9 @@ const MyStore: React.FC = () => {
 
   if (role === "buyer" && sellerRequestStatus === "pending") {
     return (
-      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
-        <div className="text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
+      <div className="w-full py-8 px-4 animate-fade-in">
+        <ContentBreadcrumb items={[{ label: "Đăng ký cửa hàng" }]} />
+        <div className="mx-auto text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
           <div className="flex justify-center mb-4">
             <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-[#4B5563]" />
           </div>
@@ -118,12 +104,7 @@ const MyStore: React.FC = () => {
   if (role === "seller" && hasStore) {
     return (
       <div className="w-full py-4 sm:py-6 md:py-8 lg:py-12 px-4 sm:px-6">
-        <div className="mb-6 md:mb-8 animate-fade-in-down">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-3 text-[#4B5563]">
-            Quản lý cửa hàng
-          </h1>
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg">Dashboard người bán - Quản lý cửa hàng và sản phẩm</p>
-        </div>
+        <ContentBreadcrumb items={[{ label: "Quản lý cửa hàng" }]} />
 
         <div className="mb-4 sm:mb-6 animate-fade-in-up delay-200">
           {/* Mobile: Horizontal scroll, Desktop: Wrap */}
@@ -169,8 +150,9 @@ const MyStore: React.FC = () => {
 
   if (role === "seller" && !hasStore) {
     return (
-      <div className="w-full py-16 flex items-center justify-center animate-fade-in">
-        <div className="text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
+      <div className="w-full py-8 px-4 animate-fade-in">
+        <ContentBreadcrumb items={[{ label: "Quản lý cửa hàng" }]} />
+        <div className="mx-auto text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
           <div className="text-6xl mb-4">🏪</div>
           <h2 className="text-2xl font-bold mb-2 text-gray-900">Chưa có cửa hàng</h2>
           <p className="text-gray-600 mb-6">Bạn là seller nhưng chưa có cửa hàng nào</p>
@@ -186,8 +168,9 @@ const MyStore: React.FC = () => {
   }
 
   return (
-    <div className="w-full py-16 flex items-center justify-center animate-fade-in">
-      <div className="text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
+    <div className="w-full py-8 px-4 animate-fade-in">
+      <ContentBreadcrumb items={[{ label: "Quản lý cửa hàng" }]} />
+      <div className="mx-auto text-center bg-white rounded-2xl shadow-lg border-2 border-gray-200 p-12 max-w-md">
         <div className="text-6xl mb-4">🚫</div>
         <h2 className="text-2xl font-bold mb-2 text-gray-900">Không có quyền truy cập</h2>
         <p className="text-gray-600">Bạn không có quyền truy cập trang này</p>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { Bell, X, Package, Gift, Newspaper, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -40,7 +40,7 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
   }, []);
 
   // Fetch notifications
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!userId) return;
     try {
       setLoading(true);
@@ -51,10 +51,10 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId]);
 
   // Fetch unread count
-  const fetchUnreadCount = async () => {
+  const fetchUnreadCount = useCallback(async () => {
     if (!userId) return;
     try {
       const res = await notificationApi.getUnreadCount();
@@ -62,7 +62,7 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
     } catch (error) {
       console.error("Lỗi fetch unread count:", error);
     }
-  };
+  }, [userId]);
 
   // Initial fetch
   useEffect(() => {
@@ -70,7 +70,7 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
       fetchNotifications();
       fetchUnreadCount();
     }
-  }, [userId]);
+  }, [userId, fetchNotifications, fetchUnreadCount]);
 
   // Polling để cập nhật notifications mới (mỗi 30 giây)
   useEffect(() => {
@@ -83,7 +83,7 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
     }, 30000); // 30 seconds
 
     return () => clearInterval(interval);
-  }, [userId, showDropdown]);
+  }, [userId, showDropdown, fetchNotifications, fetchUnreadCount]);
 
   // Đóng dropdown khi click ra ngoài (chỉ desktop)
   useEffect(() => {
@@ -111,7 +111,7 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
       // Restore body scroll
       document.body.style.overflow = "";
     };
-  }, [showDropdown, userId, isMobile]);
+  }, [showDropdown, userId, isMobile, fetchNotifications]);
 
   // Xử lý click notification
   const handleNotificationClick = async (notification: Notification) => {
@@ -210,7 +210,7 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
   if (!userId) return null;
 
   // Render dropdown content
-  const renderDropdownContent = (isPortal: boolean = false) => (
+  const renderDropdownContent = () => (
     <>
       {/* Backdrop for mobile - chỉ hiển thị trên mobile */}
       {isMobile && (
@@ -378,27 +378,23 @@ const NotificationButton: React.FC<NotificationButtonProps> = ({ userId }) => {
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setShowDropdown(!showDropdown)}
-          className="relative flex items-center gap-1 hover:text-[#4B5563] transition-all duration-300 group p-1 sm:p-1.5 rounded-lg hover:bg-[#4B5563]/5 active:scale-95"
+          className="canva-header__icon-button"
+          aria-label="Thông báo"
+          aria-expanded={showDropdown}
         >
-          <div className="relative">
-            <div className="absolute inset-0 bg-[#4B5563]/20 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            <Bell size={14} className="sm:w-4 sm:h-4 md:w-[18px] md:h-[18px] relative z-10 group-hover:scale-110 transition-transform duration-300" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 sm:-top-1.5 sm:-right-1.5 bg-gradient-to-r from-red-500 to-pink-600 text-white text-[10px] sm:text-xs w-3.5 h-3.5 sm:w-4 sm:h-4 flex items-center justify-center rounded-full font-black animate-pulse">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
-            )}
+          <div className="flex items-center justify-center">
+            <Bell size={19} />
           </div>
-          <span className="hidden xl:inline text-xs sm:text-sm font-semibold">Thông báo</span>
+          {unreadCount > 0 && <span className="canva-header__count">{unreadCount > 99 ? "99+" : unreadCount}</span>}
         </button>
 
         {/* Desktop Dropdown - render inline */}
-        {showDropdown && !isMobile && renderDropdownContent(false)}
+        {showDropdown && !isMobile && renderDropdownContent()}
       </div>
 
       {/* Mobile Dropdown - render via Portal to body for full screen */}
       {showDropdown && isMobile && typeof document !== 'undefined' && createPortal(
-        renderDropdownContent(true),
+        renderDropdownContent(),
         document.body
       )}
     </>

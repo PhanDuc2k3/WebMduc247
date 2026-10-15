@@ -90,7 +90,7 @@ const handleUpdateQuantity = async (newQuantity: number) => {
   const discountPercent = item.salePrice ? Math.round((1 - item.salePrice / item.price) * 100) : 0;
 
   return (
-    <div className={`bg-white rounded-xl md:rounded-2xl border-2 transition-all duration-300 hover:shadow-lg group overflow-hidden ${
+    <div className={`cart-product group ${
       selected ? "bg-gradient-to-br from-blue-50/50 to-purple-50/50 border-blue-400 shadow-md" : "border-gray-200 hover:border-gray-300"
     } animate-fade-in-up`}>
       <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-5 md:p-6">
@@ -112,7 +112,7 @@ const handleUpdateQuantity = async (newQuantity: number) => {
           </div>
 
           {/* Product image */}
-          <div className="relative w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 flex-shrink-0 rounded-lg md:rounded-xl overflow-hidden border-2 border-gray-200 group-hover:border-blue-400 transition-all duration-300 bg-gray-100">
+          <div className="cart-product__image">
             <img
               src={getFullUrl(item.imageUrl)}
               alt={item.name}
@@ -128,9 +128,9 @@ const handleUpdateQuantity = async (newQuantity: number) => {
         </div>
 
         {/* Middle Section: Product Info */}
-        <div className="flex-1 min-w-0 space-y-3 sm:space-y-4">
+        <div className="cart-product__info flex-1 min-w-0 space-y-3">
           {/* Product name */}
-          <h3 className="font-bold text-base sm:text-lg md:text-xl text-gray-900 line-clamp-2 group-hover:text-blue-600 transition-colors duration-300">
+          <h3 className="cart-product__name line-clamp-2">
             {item.name}
           </h3>
           
@@ -179,7 +179,7 @@ const handleUpdateQuantity = async (newQuantity: number) => {
         </div>
 
         {/* Right Section: Quantity + Remove */}
-        <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-start gap-4 sm:gap-3 border-t sm:border-t-0 sm:border-l border-gray-200 pt-4 sm:pt-0 sm:pl-4 sm:ml-4">
+        <div className="cart-product__actions">
           {/* Quantity controls */}
           <div className="flex flex-col items-center gap-2">
             <div className="flex items-center gap-1 sm:gap-2 border-2 border-gray-200 rounded-lg md:rounded-xl bg-white shadow-sm">

@@ -145,7 +145,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
   }, []);
 
   const menuItems: MenuItem[] = [
-    { label: 'Dashboard', key: 'dashboard', icon: LayoutDashboard },
+    { label: 'Tổng quan', key: 'dashboard', icon: LayoutDashboard },
     { label: 'Người dùng', key: 'users', icon: Users },
     { label: 'Duyệt đơn bán', key: 'sellerRequest', icon: CheckCircle2, badge: pendingCount },
     { label: 'Banner', key: 'banner', icon: ImageIcon },
@@ -201,7 +201,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeMenu, onMenuChange, o
               </div>
               <div>
                 <h1 className="text-xl font-bold text-white">Admin</h1>
-                <p className="text-xs text-slate-300">Dashboard</p>
+                <p className="text-xs text-slate-300">Tổng quan</p>
               </div>
             </div>
           )}
