@@ -36,7 +36,7 @@ const PromotionDetail: React.FC = () => {
       } catch (error) {
         console.error("Error fetching promotion:", error);
         toast.error("Không tìm thấy tin tức khuyến mãi");
-        navigate("/new");
+        navigate("/flash-sale");
       } finally {
         setLoading(false);
       }
@@ -82,7 +82,7 @@ const PromotionDetail: React.FC = () => {
   return (
     <div className="w-full py-8 md:py-12">
       <div className="max-w-4xl mx-auto">
-        <ContentBreadcrumb items={[{ label: "Khuyến mãi", to: "/new" }, { label: promotion.title }]} />
+        <ContentBreadcrumb items={[{ label: "Khuyến mãi", to: "/flash-sale" }, { label: promotion.title }]} />
 
         {/* Image */}
         {promotion.imageUrl && (

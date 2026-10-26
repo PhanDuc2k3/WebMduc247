@@ -1,36 +1,44 @@
 {
-  "dependencies": {
-    "@google/genai": "^1.26.0",
-    "axios": "^1.12.2",
-    "bcrypt": "^6.0.0",
-    "bcryptjs": "^3.0.2",
-    "cloudinary": "^1.41.3",
-    "connect-history-api-fallback": "^2.0.0",
-    "cors": "^2.8.5",
-    "cosine-similarity": "^1.0.1",
-    "dotenv": "^17.2.3",
-    "express": "^5.1.0",
-    "fuse.js": "^7.1.0",
-    "groq-sdk": "^0.36.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.19.2",
-    "multer": "^2.0.2",
-    "multer-storage-cloudinary": "^4.0.0",
-    "nodemailer": "^7.0.10",
-    "qrcode": "^1.5.4",
-    "resend": "^6.4.1",
-    "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
-    "speakeasy": "^2.0.0",
-    "string-similarity": "^4.0.4"
-  },
-  "devDependencies": {
-    "@types/connect-history-api-fallback": "^1.5.4",
-    "mongoose-erd-generator": "^0.0.5",
-    "nodemon": "^3.1.10"
-  },
+  "name": "backend-v2",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "node scripts/dev.mjs",
+    "dev:stop": "node scripts/dev.mjs --stop",
+    "dev:identity": "node --env-file=.env node_modules/nodemon/bin/nodemon.js --config nodemon.json",
+    "identity:start": "npm --workspace @backend-v2/identity-service run start",
+    "identity:test": "npm --workspace @backend-v2/identity-service run test",
+    "identity:migrate": "npm --workspace @backend-v2/identity-service run migrate",
+    "identity:test:e2e": "node --test tests/e2e/*.test.js",
+    "catalog:start": "npm --workspace @backend-v2/catalog-service run start",
+    "catalog:migrate": "npm --workspace @backend-v2/catalog-service run migrate",
+    "catalog:test": "npm --workspace @backend-v2/catalog-service run test",
+    "catalog:seed": "node services/catalog-service/scripts/seed.js",
+    "catalog:seed:reset": "node services/catalog-service/scripts/seed.js --reset",
+    "order:start": "npm --workspace @backend-v2/order-service run start",
+    "order:migrate": "npm --workspace @backend-v2/order-service run migrate",
+    "order:test": "npm --workspace @backend-v2/order-service run test",
+    "payment:start": "npm --workspace @backend-v2/payment-service run start",
+    "payment:migrate": "npm --workspace @backend-v2/payment-service run migrate",
+    "payment:test": "npm --workspace @backend-v2/payment-service run test",
+    "engagement:start": "npm --workspace @backend-v2/engagement-service run start",
+    "engagement:migrate": "npm --workspace @backend-v2/engagement-service run migrate",
+    "engagement:test": "npm --workspace @backend-v2/engagement-service run test",
+    "chat:start": "npm --workspace @backend-v2/chat-service run start",
+    "chat:test": "npm --workspace @backend-v2/chat-service run test"
+  },
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "overrides": {
+    "nodemon": {
+      "chokidar": "4.0.3"
+    }
   }
 }

@@ -1,0 +1,169 @@
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import React, { useEffect, useState, useMemo } from "react";
+import userApi from "../../../api/userApi";
+import { Search, Lock, Unlock, Calendar, User as UserIcon, Loader2 } from "lucide-react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
+import { toast } from "react-toastify";
+import Pagination from "../Pagination";
+// Đồng nhất CSS cho status badges
+const getStatusBadgeClass = (status) => {
+    const statusMap = {
+        "Chưa xác minh": "bg-yellow-100 text-yellow-700",
+        "Đã xác minh": "bg-green-100 text-green-700",
+        "Bị ban": "bg-red-100 text-red-700",
+        "unverified": "bg-yellow-100 text-yellow-700",
+        "verified": "bg-green-100 text-green-700",
+        "banned": "bg-red-100 text-red-700",
+    };
+    return `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${statusMap[status] || "bg-gray-100 text-gray-700"}`;
+};
+// Hàm để format status
+const formatStatus = (status, isVerified) => {
+    // Ưu tiên kiểm tra status banned trước
+    if (status === "banned" || status === "Bị ban") {
+        return "Bị ban";
+    }
+    // Nếu status là active hoặc không có status, kiểm tra isVerified
+    if (status === "active" || !status) {
+        if (isVerified === true) {
+            return "Đã xác minh";
+        }
+        if (isVerified === false) {
+            return "Chưa xác minh";
+        }
+    }
+    // Mặc định nếu không có thông tin
+    return "Chưa xác minh";
+};
+const getLatestStatus = (order) => {
+    if (order.statusHistory && order.statusHistory.length > 0) {
+        // Sắp xếp giảm dần theo timestamp
+        const sorted = [...order.statusHistory].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        return sorted[0].status.toLowerCase();
+    }
+    return (order.status || 'pending').toLowerCase();
+};
+const UserManagement = () => {
+    // HOOKS
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [banConfirm, setBanConfirm] = useState({ open: false, userId: null, userName: null });
+    const [unbanConfirm, setUnbanConfirm] = useState({ open: false, userId: null, userName: null });
+    const itemsPerPage = 20;
+    const fetchUsers = async () => {
+        try {
+            console.log("🔄 Đang gọi API lấy danh sách người dùng...");
+            const response = await userApi.getAllUsers();
+            const payload = (response && response.data !== undefined) ? response.data : response;
+            console.log("✅ Dữ liệu trả về từ API:", payload);
+            const userList = Array.isArray(payload)
+                ? payload
+                : payload?.users || [];
+            setUsers(userList);
+        }
+        catch (error) {
+            console.error("❌ Lỗi khi fetch users:", error?.response || error);
+        }
+        finally {
+            setLoading(false);
+        }
+    };
+    useEffect(() => {
+        fetchUsers();
+    }, []);
+    // Auto-refresh mỗi 30 giây
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchUsers();
+        }, 30000); // 30 giây
+        return () => clearInterval(interval);
+    }, []);
+    const filteredAndSortedUsers = useMemo(() => {
+        let filtered = users.filter(user => user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.role.toLowerCase().includes(searchTerm.toLowerCase()));
+        // Sắp xếp theo createdAt desc (mới nhất lên trước)
+        filtered.sort((a, b) => {
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+            return dateB - dateA;
+        });
+        return filtered;
+    }, [users, searchTerm]);
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
+    const handleBanUserClick = (userId, userName) => {
+        setBanConfirm({ open: true, userId, userName });
+    };
+    const handleBanUser = async () => {
+        if (!banConfirm.userId || !banConfirm.userName)
+            return;
+        const userId = banConfirm.userId;
+        const userName = banConfirm.userName;
+        setBanConfirm({ open: false, userId: null, userName: null });
+        try {
+            await userApi.banUser(userId);
+            toast.success(`Đã khóa tài khoản của ${userName}`, {
+                containerId: "general-toast",
+            });
+            await fetchUsers();
+        }
+        catch (error) {
+            console.error("❌ Lỗi khi khóa tài khoản:", error?.response || error);
+            toast.error(error?.response?.data?.message || "Không thể khóa tài khoản. Vui lòng thử lại!", {
+                containerId: "general-toast",
+            });
+        }
+    };
+    const handleUnbanUserClick = (userId, userName) => {
+        setUnbanConfirm({ open: true, userId, userName });
+    };
+    const handleUnbanUser = async () => {
+        if (!unbanConfirm.userId || !unbanConfirm.userName)
+            return;
+        const userId = unbanConfirm.userId;
+        const userName = unbanConfirm.userName;
+        setUnbanConfirm({ open: false, userId: null, userName: null });
+        try {
+            await userApi.unbanUser(userId);
+            toast.success(`Đã gỡ khóa tài khoản của ${userName}`, {
+                containerId: "general-toast",
+            });
+            await fetchUsers();
+        }
+        catch (error) {
+            console.error("❌ Lỗi khi gỡ khóa tài khoản:", error?.response || error);
+            toast.error(error?.response?.data?.message || "Không thể gỡ khóa tài khoản. Vui lòng thử lại!", {
+                containerId: "general-toast",
+            });
+        }
+    };
+    if (loading)
+        return (_jsxs("div", { className: "flex flex-col items-center justify-center py-20", children: [_jsx(Loader2, { className: "w-16 h-16 text-blue-500 animate-spin mb-4" }), _jsx("p", { className: "text-gray-600 text-lg font-medium", children: "\u0110ang t\u1EA3i danh s\u00E1ch ng\u01B0\u1EDDi d\u00F9ng..." })] }));
+    // Pagination logic
+    const totalPages = Math.ceil(filteredAndSortedUsers.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedUsers = filteredAndSortedUsers.slice(startIndex, endIndex);
+    return (_jsxs("div", { className: "p-4 lg:p-8", children: [" ", _jsxs("div", { className: "mb-4 md:mb-6 animate-fade-in-down", children: [_jsxs("h2", { className: "text-xl md:text-2xl font-bold mb-1 md:mb-2 gradient-text flex items-center gap-2", children: [_jsx(UserIcon, { size: 20, className: "md:w-6 md:h-6 text-blue-600" }), _jsx("span", { className: "text-base md:text-2xl", children: "Qu\u1EA3n l\u00FD ng\u01B0\u1EDDi d\u00F9ng" })] }), _jsx("p", { className: "text-gray-600 text-xs md:text-sm", children: "Danh s\u00E1ch v\u00E0 qu\u1EA3n l\u00FD t\u00E0i kho\u1EA3n ng\u01B0\u1EDDi d\u00F9ng trong h\u1EC7 th\u1ED1ng" })] }), _jsx("div", { className: "mb-4 md:mb-6 animate-fade-in-up", children: _jsx("div", { className: "bg-blue-600 rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg", children: _jsxs("div", { className: "flex items-center justify-between", children: [_jsxs("div", { children: [_jsx("p", { className: "text-white text-xs md:text-sm font-medium mb-1", children: "T\u1ED5ng s\u1ED1 ng\u01B0\u1EDDi d\u00F9ng" }), _jsx("p", { className: "text-white text-2xl md:text-4xl font-bold", children: filteredAndSortedUsers.length.toLocaleString('vi-VN') })] }), _jsx(UserIcon, { className: "w-12 h-12 md:w-16 md:h-16 text-white opacity-80" })] }) }) }), _jsx("div", { className: "mb-6 animate-fade-in-up", children: _jsxs("div", { className: "relative max-w-full md:max-w-md", children: [" ", _jsx(Search, { className: "absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" }), _jsx("input", { type: "text", placeholder: "T\u00ECm ki\u1EBFm ng\u01B0\u1EDDi d\u00F9ng...", value: searchTerm, onChange: (e) => setSearchTerm(e.target.value), className: "w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 font-medium" })] }) }), filteredAndSortedUsers.length > 0 ? (_jsxs(_Fragment, { children: [_jsx("div", { className: "hidden md:block overflow-x-auto", children: _jsxs("table", { className: "min-w-full", children: [_jsx("thead", { children: _jsxs("tr", { className: "bg-gray-100 border-b-2 border-gray-200", children: [_jsx("th", { className: "px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider", children: "Ng\u01B0\u1EDDi d\u00F9ng" }), _jsx("th", { className: "px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider", children: "Email" }), _jsx("th", { className: "px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider", children: "Vai tr\u00F2" }), _jsx("th", { className: "px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider", children: "Ng\u00E0y tham gia" }), _jsx("th", { className: "px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider", children: "Tr\u1EA1ng th\u00E1i" }), _jsx("th", { className: "px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider", children: "Thao t\u00E1c" })] }) }), _jsx("tbody", { className: "bg-white divide-y divide-gray-200", children: paginatedUsers.map((user, index) => (_jsxs("tr", { className: "hover:bg-gray-50 transition-all duration-300 animate-fade-in-up", style: { animationDelay: `${index * 0.05}s` }, children: [_jsx("td", { className: "px-6 py-4 whitespace-nowrap", children: _jsxs("div", { className: "flex items-center gap-3", children: [_jsxs("div", { className: "relative", children: [_jsx("img", { src: user.avatarUrl || "/avatar-placeholder.svg", alt: user.fullName, className: "w-12 h-12 rounded-full object-cover border-3 border-white shadow-lg hover:scale-110 transition-transform duration-300" }), _jsx("div", { className: "absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full" })] }), _jsxs("div", { children: [_jsx("div", { className: "font-bold text-gray-900", children: user.fullName }), _jsx("div", { className: "text-xs text-gray-500", children: user._id.slice(-6) })] })] }) }), _jsx("td", { className: "px-6 py-4 whitespace-nowrap", children: _jsx("div", { className: "text-sm font-medium text-gray-900", children: user.email }) }), _jsx("td", { className: "px-6 py-4 whitespace-nowrap", children: _jsx("span", { className: `px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full ${user.role === "seller"
+                                                        ? "bg-purple-500 text-white shadow-lg"
+                                                        : user.role === "admin"
+                                                            ? "bg-red-500 text-white shadow-lg"
+                                                            : "bg-blue-500 text-white shadow-lg"}`, children: user.role === "buyer"
+                                                        ? "Khách hàng"
+                                                        : user.role === "seller"
+                                                            ? "Người bán"
+                                                            : "Quản trị viên" }) }), _jsx("td", { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-500", children: _jsxs("div", { className: "flex items-center gap-2", children: [_jsx(Calendar, { size: 14, className: "text-gray-400" }), new Date(user.createdAt).toLocaleDateString("vi-VN")] }) }), _jsx("td", { className: "px-6 py-4 whitespace-nowrap", children: _jsx("span", { className: getStatusBadgeClass(formatStatus(user.status, user.isVerified)), children: formatStatus(user.status, user.isVerified) }) }), _jsx("td", { className: "px-6 py-4 whitespace-nowrap text-sm font-medium", children: user.status === "banned" ? (_jsxs("button", { onClick: () => handleUnbanUserClick(user._id, user.fullName), className: "text-green-600 hover:text-green-900 hover:bg-green-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1", children: [_jsx(Unlock, { size: 16 }), "G\u1EE1 kh\u00F3a t\u00E0i kho\u1EA3n"] })) : (_jsxs("button", { onClick: () => handleBanUserClick(user._id, user.fullName), className: "text-orange-600 hover:text-orange-900 hover:bg-orange-50 px-3 py-2 rounded-lg transition-all duration-300 transform hover:scale-110 flex items-center gap-1", children: [_jsx(Lock, { size: 16 }), "Kh\u00F3a t\u00E0i kho\u1EA3n"] })) })] }, user._id))) })] }) }), _jsx("div", { className: "md:hidden space-y-4", children: paginatedUsers.map((user, index) => (_jsxs("div", { className: "bg-white p-4 shadow-xl rounded-xl border border-gray-100 transition-shadow duration-300 hover:shadow-2xl animate-fade-in-up", style: { animationDelay: `${index * 0.05}s` }, children: [_jsxs("div", { className: "flex items-center gap-3 mb-4 border-b pb-3", children: [_jsx("img", { src: user.avatarUrl || "/avatar-placeholder.svg", alt: user.fullName, className: "w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-md" }), _jsxs("div", { children: [_jsx("div", { className: "font-bold text-lg text-gray-900", children: user.fullName }), _jsx("div", { className: "text-sm text-gray-500", children: user.email })] })] }), _jsxs("div", { className: "grid grid-cols-2 gap-y-3 text-sm", children: [_jsx("div", { className: "text-gray-500 font-medium", children: "Vai tr\u00F2:" }), _jsx("div", { className: "text-right", children: _jsx("span", { className: `px-3 py-1 text-xs leading-5 font-bold rounded-full ${user.role === "seller"
+                                                    ? "bg-indigo-500 text-white"
+                                                    : user.role === "admin"
+                                                        ? "bg-red-500 text-white"
+                                                        : "bg-blue-500 text-white"}`, children: user.role === "buyer"
+                                                    ? "Khách hàng"
+                                                    : user.role === "seller"
+                                                        ? "Người bán"
+                                                        : "Quản trị viên" }) }), _jsx("div", { className: "text-gray-500 font-medium", children: "Ng\u00E0y tham gia:" }), _jsxs("div", { className: "text-right text-gray-700 flex justify-end items-center gap-2", children: [_jsx(Calendar, { size: 14, className: "text-gray-400" }), new Date(user.createdAt).toLocaleDateString("vi-VN")] }), _jsx("div", { className: "text-gray-500 font-medium", children: "Tr\u1EA1ng th\u00E1i:" }), _jsx("div", { className: "text-right", children: _jsx("span", { className: getStatusBadgeClass(formatStatus(user.status, user.isVerified)), children: formatStatus(user.status, user.isVerified) }) })] }), _jsx("div", { className: "flex justify-end gap-2 pt-4 mt-4 border-t", children: user.status === "banned" ? (_jsxs("button", { onClick: () => handleUnbanUser(user._id, user.fullName), className: "text-green-600 hover:text-green-900 hover:bg-green-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm", children: [_jsx(Unlock, { size: 16 }), "G\u1EE1 kh\u00F3a t\u00E0i kho\u1EA3n"] })) : (_jsxs("button", { onClick: () => handleBanUser(user._id, user.fullName), className: "text-orange-600 hover:text-orange-900 hover:bg-orange-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm", children: [_jsx(Lock, { size: 16 }), "Kh\u00F3a t\u00E0i kho\u1EA3n"] })) })] }, user._id))) }), totalPages > 1 && (_jsx(Pagination, { currentPage: currentPage, totalPages: totalPages, onPageChange: setCurrentPage, itemsPerPage: itemsPerPage, totalItems: filteredAndSortedUsers.length }))] })) : (_jsxs("div", { className: "text-center py-20 animate-fade-in-up", children: [_jsx(UserIcon, { size: 64, className: "mx-auto mb-4 text-gray-400" }), _jsx("p", { className: "text-gray-500 text-lg font-medium", children: searchTerm ? "Không tìm thấy người dùng nào" : "Không có người dùng nào" })] })), _jsx(ConfirmDialog, { open: banConfirm.open, onClose: () => setBanConfirm({ open: false, userId: null, userName: null }), onConfirm: handleBanUser, title: "X\u00E1c nh\u1EADn kh\u00F3a t\u00E0i kho\u1EA3n", message: banConfirm.userName ? `Bạn có chắc muốn khóa tài khoản của ${banConfirm.userName}?` : "", type: "danger", confirmText: "Kh\u00F3a t\u00E0i kho\u1EA3n" }), _jsx(ConfirmDialog, { open: unbanConfirm.open, onClose: () => setUnbanConfirm({ open: false, userId: null, userName: null }), onConfirm: handleUnbanUser, title: "X\u00E1c nh\u1EADn g\u1EE1 kh\u00F3a t\u00E0i kho\u1EA3n", message: unbanConfirm.userName ? `Bạn có chắc muốn gỡ khóa tài khoản của ${unbanConfirm.userName}?` : "", type: "info", confirmText: "G\u1EE1 kh\u00F3a" })] }));
+};
+export default UserManagement;

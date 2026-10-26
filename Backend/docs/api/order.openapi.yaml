@@ -1,0 +1,537 @@
+openapi: 3.0.3
+info:
+  title: MDUC247 Cart and Checkout API
+  version: 2.0.0
+servers:
+  - url: http://localhost:5103/api/v2
+security:
+  - bearerAuth: []
+paths:
+  /cart:
+    get:
+      summary: Read buyer cart with live Catalog price, sellability and available stock
+      responses:
+        '200':
+          description: Cart and line level errors; invalid lines remain in cart
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Cart' }
+  /cart/items:
+    post:
+      summary: Add or merge a SKU into the authenticated cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variantId, quantity]
+              properties:
+                variantId: { type: string, format: uuid }
+                quantity: { type: integer, minimum: 1, maximum: 99 }
+      responses:
+        '201': { description: Updated cart }
+        '409': { description: SKU not sellable or insufficient stock }
+  /cart/items/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    patch:
+      summary: Update quantity or selection for one owned cart line
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                quantity: { type: integer, minimum: 1, maximum: 99 }
+                selected: { type: boolean }
+      responses:
+        '200': { description: Updated cart }
+        '404': { description: Line does not belong to buyer }
+    delete:
+      summary: Remove one owned cart line
+      responses:
+        '200': { description: Updated cart }
+        '404': { description: Line does not belong to buyer }
+  /cart/merge:
+    post:
+      summary: Merge explicit guest SKU lines after login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [items]
+              properties:
+                items:
+                  type: array
+                  maxItems: 50
+                  items:
+                    type: object
+                    required: [variantId, quantity]
+                    properties:
+                      variantId: { type: string, format: uuid }
+                      quantity: { type: integer, minimum: 1, maximum: 99 }
+      responses:
+        '200': { description: Merged cart }
+  /checkout/preview:
+    post:
+      summary: Calculate expiring checkout quote without reserving stock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [addressId, paymentMethod]
+              properties:
+                addressId: { type: string, format: uuid }
+                paymentMethod: { type: string, enum: [COD, MOMO, VIETQR], description: Online methods require Order and Payment provider configuration }
+                itemIds:
+                  type: array
+                  items: { type: string, format: uuid }
+                voucherCode: { type: string, minLength: 4, maxLength: 32, description: Legacy single voucher field }
+                storeVoucherCode: { type: string, minLength: 4, maxLength: 32, description: Optional seller-funded voucher; one per checkout }
+                platformVoucherCode: { type: string, minLength: 4, maxLength: 32, description: Optional platform-funded voucher; one per checkout }
+      responses:
+        '200':
+          description: Per store totals, item errors, expiry and shipping estimates
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Quote' }
+  /checkout/place-order:
+    post:
+      summary: Revalidate Catalog, Promotion and Inventory; create one shop order per store
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quoteId, addressId, paymentMethod, idempotencyKey]
+              properties:
+                quoteId: { type: string, format: uuid }
+                addressId: { type: string, format: uuid }
+                paymentMethod: { type: string, enum: [COD, MOMO, VIETQR] }
+                voucherCode: { type: string, minLength: 4, maxLength: 32 }
+                storeVoucherCode: { type: string, minLength: 4, maxLength: 32 }
+                platformVoucherCode: { type: string, minLength: 4, maxLength: 32 }
+                idempotencyKey: { type: string, minLength: 8, maxLength: 120 }
+                expectedTotalMinor: { type: integer, minimum: 0, description: Optional comparison only; never used to calculate totals }
+      responses:
+        '201': { description: Order group ID, PLACED shop order IDs and server calculated totals }
+        '409': { description: Stale quote, invalid line, changed total or idempotency conflict }
+  /orders:
+    post:
+      summary: Create an order group from a validated checkout quote
+      description: Same request and response as /checkout/place-order. A three-store checkout returns one groupId and three shop orders.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PlaceOrder' }
+      responses:
+        '201':
+          description: Created groupId and PLACED shop orders
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlacedResult' }
+        '409': { description: Stale quote, changed total or idempotency conflict }
+    get:
+      summary: List the current buyer's order groups
+      parameters:
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+        - { in: query, name: status, schema: { type: string } }
+        - { in: query, name: from, schema: { type: string, format: date-time } }
+        - { in: query, name: to, schema: { type: string, format: date-time } }
+      responses:
+        '200':
+          description: Paginated groups with per-shop status and allocated totals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page: { type: integer }
+                  limit: { type: integer }
+                  total: { type: integer }
+                  groups: { type: array, items: { $ref: '#/components/schemas/OrderGroup' } }
+  /orders/{groupId}:
+    get:
+      summary: Buyer order group detail with immutable item, store and address snapshots
+      parameters:
+        - { in: path, name: groupId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Group, shop orders, items and status history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  group: { $ref: '#/components/schemas/OrderGroup' }
+        '404': { description: Group does not belong to buyer or does not exist }
+  /orders/{groupId}/cancel:
+    post:
+      summary: Cancel one PLACED shop order in the buyer's group
+      parameters:
+        - { in: path, name: groupId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/OrderCommand' }
+                - type: object
+                  required: [shopOrderId, reason]
+                  properties:
+                    shopOrderId: { type: string, format: uuid }
+                    reason: { type: string, minLength: 3, maxLength: 200 }
+      responses:
+        '200': { description: Cancelled shop order; committed stock restocked once }
+        '409': { description: Invalid state, version or idempotency conflict }
+  /orders/{groupId}/shop-orders/{shopOrderId}/complete:
+    post:
+      summary: Buyer confirms receipt after verified delivery
+      parameters:
+        - { in: path, name: groupId, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: shopOrderId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderCommand' }
+      responses:
+        '200': { description: COMPLETED shop order }
+  /seller/stores/{storeId}/orders:
+    get:
+      summary: List only orders belonging to a store where actor is an active member
+      parameters:
+        - { in: path, name: storeId, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+        - { in: query, name: status, schema: { type: string } }
+        - { in: query, name: from, schema: { type: string, format: date-time } }
+        - { in: query, name: to, schema: { type: string, format: date-time } }
+      responses:
+        '200':
+          description: Paginated shop orders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page: { type: integer }
+                  limit: { type: integer }
+                  total: { type: integer }
+                  orders: { type: array, items: { $ref: '#/components/schemas/ShopOrder' } }
+        '403': { description: Store membership required }
+  /seller/orders/{shopOrderId}:
+    get:
+      summary: Seller detail of only their shop order, without other shops in the group
+      parameters:
+        - { in: path, name: shopOrderId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Shop order snapshot and timeline
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order: { $ref: '#/components/schemas/ShopOrder' }
+        '403': { description: Store membership required }
+  /seller/orders/{shopOrderId}/confirm:
+    post:
+      summary: PLACED to CONFIRMED
+      parameters:
+        - { in: path, name: shopOrderId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderCommand' }
+      responses:
+        '200': { description: Confirmed shop order }
+        '409': { description: Invalid state, version or idempotency conflict }
+  /seller/orders/{shopOrderId}/prepare:
+    post:
+      summary: CONFIRMED to PREPARING
+      parameters:
+        - { in: path, name: shopOrderId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderCommand' }
+      responses:
+        '200': { description: Preparing shop order }
+  /seller/orders/{shopOrderId}/ready-to-ship:
+    post:
+      summary: PREPARING to READY_TO_SHIP and outbox OrderReadyForShipment.v1
+      parameters:
+        - { in: path, name: shopOrderId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrderCommand' }
+      responses:
+        '200': { description: Ready shop order }
+  /seller/orders/{shopOrderId}/reject:
+    post:
+      summary: Reject a PLACED or CONFIRMED shop order and restock once
+      parameters:
+        - { in: path, name: shopOrderId, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/OrderCommand' }
+                - type: object
+                  required: [reason]
+                  properties:
+                    reason: { type: string, enum: [OUT_OF_STOCK, STORE_CLOSED, CANNOT_FULFILL] }
+      responses:
+        '200': { description: Cancelled shop order }
+  /internal/delivery-events:
+    post:
+      security: [{ deliveryToken: [] }]
+      summary: Verified delivery event inbox with source and event ID deduplication
+      description: ShipmentAccepted.v1 moves READY_TO_SHIP to SHIPPING; ShipmentDelivered.v1 moves SHIPPING to DELIVERED.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventId, shopOrderId, type]
+              properties:
+                eventId: { type: string, minLength: 8, maxLength: 120 }
+                shopOrderId: { type: string, format: uuid }
+                type: { type: string, enum: [ShipmentAccepted.v1, ShipmentDelivered.v1] }
+                shipmentRef: { type: string, maxLength: 120 }
+      responses:
+        '200': { description: Updated order or idempotent duplicate }
+        '409': { description: Invalid transition or event ID reused with different payload }
+  /internal/payment/groups/{groupId}:
+    get:
+      security: [{ orderPaymentToken: [] }]
+      summary: Server-authoritative group amount, buyer and shop allocation for Payment Service
+      parameters:
+        - { in: path, name: groupId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Immutable amount/currency and current payment state }
+  /internal/payment/refund-candidates:
+    get:
+      security: [{ orderPaymentToken: [] }]
+      summary: Cancelled paid online shop orders with outstanding refundable amounts
+      responses:
+        '200': { description: Candidate shop orders for Payment Service reconciliation }
+  /internal/payment/events:
+    post:
+      security: [{ orderPaymentToken: [] }]
+      summary: Apply idempotent verified PaymentSucceeded, PaymentFailed, PaymentExpired, CODCollected or RefundSucceeded events
+      responses:
+        '200': { description: Payment state applied or duplicate event acknowledged }
+        '409': { description: Amount, provider, group or state mismatch }
+  /internal/promotion/buyers/{buyerId}/context:
+    get:
+      security: [{ promotionToken: [] }]
+      summary: Server-sourced selected cart and first-order eligibility for Promotion Service
+      parameters:
+        - { in: path, name: buyerId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Buyer eligibility and live Catalog lines }
+  /internal/promotion/orders/{shopOrderId}/status:
+    get:
+      security: [{ promotionToken: [] }]
+      summary: Verify cancellation when reconciling committed voucher and Flash Sale quota
+      parameters:
+        - { in: path, name: shopOrderId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Shop order status }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    deliveryToken: { type: apiKey, in: header, name: X-Delivery-Token }
+    orderPaymentToken: { type: apiKey, in: header, name: X-Order-Payment-Token }
+    promotionToken: { type: apiKey, in: header, name: X-Promotion-Token }
+  schemas:
+    PlaceOrder:
+      type: object
+      required: [quoteId, addressId, paymentMethod, idempotencyKey]
+      properties:
+        quoteId: { type: string, format: uuid }
+        addressId: { type: string, format: uuid }
+        paymentMethod: { type: string, enum: [COD, MOMO, VIETQR] }
+        voucherCode: { type: string, minLength: 4, maxLength: 32 }
+        storeVoucherCode: { type: string, minLength: 4, maxLength: 32 }
+        platformVoucherCode: { type: string, minLength: 4, maxLength: 32 }
+        idempotencyKey: { type: string, minLength: 8, maxLength: 120 }
+        expectedTotalMinor: { type: integer, minimum: 0 }
+    OrderCommand:
+      type: object
+      required: [expectedVersion, idempotencyKey]
+      properties:
+        expectedVersion: { type: integer, minimum: 1 }
+        idempotencyKey: { type: string, minLength: 8, maxLength: 120 }
+    PlacedResult:
+      type: object
+      required: [groupId, orders]
+      properties:
+        groupId: { type: string, format: uuid }
+        orders:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string, format: uuid }
+              storeId: { type: string, format: uuid }
+              payableTotalMinor: { type: integer }
+              status: { type: string, enum: [PLACED, PENDING_PAYMENT] }
+    OrderGroup:
+      type: object
+      required: [id, status, currency, grandTotalMinor, currentTotalMinor, cancelledTotalMinor, orders]
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string }
+        currency: { type: string, enum: [VND] }
+        paymentMethod: { type: string, enum: [COD, MOMO, VIETQR] }
+        paymentStatus: { type: string, enum: [UNPAID, PARTIALLY_PAID, PAID, FAILED, PARTIALLY_REFUNDED, REFUNDED] }
+        grandTotalMinor: { type: integer }
+        currentTotalMinor: { type: integer }
+        cancelledTotalMinor: { type: integer }
+        createdAt: { type: string, format: date-time }
+        orders: { type: array, items: { $ref: '#/components/schemas/ShopOrder' } }
+    ShopOrder:
+      type: object
+      required: [id, groupId, storeId, status, version, subtotalMinor, discountMinor, shippingMinor, totalMinor]
+      properties:
+        id: { type: string, format: uuid }
+        groupId: { type: string, format: uuid }
+        storeId: { type: string, format: uuid }
+        store: { type: object, description: Immutable seller snapshot }
+        status:
+          type: string
+          enum: [PENDING_INVENTORY, PENDING_PAYMENT, PLACED, CONFIRMED, PREPARING,
+            READY_TO_SHIP, SHIPPING, DELIVERED, COMPLETED, CANCEL_PENDING, CANCELLED]
+        version: { type: integer, minimum: 1 }
+        paymentMethod: { type: string, enum: [COD, MOMO, VIETQR] }
+        paymentStatus: { type: string, enum: [UNPAID, PAID, FAILED, REFUNDED] }
+        refundedMinor: { type: integer, minimum: 0 }
+        currency: { type: string, enum: [VND] }
+        subtotalMinor: { type: integer, description: Sum of original prices }
+        discountMinor: { type: integer, description: Sum of line discounts }
+        shippingMinor: { type: integer, description: Estimated shipping charged for the shop }
+        totalMinor: { type: integer, description: subtotalMinor - discountMinor + shippingMinor }
+        address: { type: object, description: Immutable recipient and address snapshot }
+        shipmentRef: { type: string, nullable: true }
+        items: { type: array, items: { $ref: '#/components/schemas/OrderItem' } }
+        history: { type: array, items: { $ref: '#/components/schemas/StatusHistory' } }
+    OrderItem:
+      type: object
+      required: [id, productId, variantId, sku, name, snapshot, quantity, unitPriceMinor, discountMinor, lineTotalMinor]
+      properties:
+        id: { type: string, format: uuid }
+        productId: { type: string, format: uuid }
+        variantId: { type: string, format: uuid }
+        sku: { type: string }
+        name: { type: string }
+        snapshot: { type: object, description: Original price, attributes, media and title at purchase time }
+        quantity: { type: integer }
+        unitPriceMinor: { type: integer, description: Effective unit price after product sale }
+        discountMinor: { type: integer, description: Catalog sale plus Flash Sale plus allocated voucher }
+        lineTotalMinor: { type: integer, description: unitPriceMinor times quantity minus allocated voucher }
+    StatusHistory:
+      type: object
+      required: [toStatus, actorType, occurredAt]
+      properties:
+        fromStatus: { type: string, nullable: true }
+        toStatus: { type: string }
+        actorId: { type: string, format: uuid, nullable: true }
+        actorType: { type: string, enum: [buyer, seller, delivery, system] }
+        reason: { type: string, nullable: true }
+        correlationId: { type: string, nullable: true }
+        occurredAt: { type: string, format: date-time }
+    Cart:
+      type: object
+      required: [id, version, items]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+        promotionUnavailable: { type: boolean }
+        items:
+          type: array
+          items:
+            type: object
+            required: [id, variantId, quantity, selected]
+            properties:
+              id: { type: string, format: uuid }
+              variantId: { type: string, format: uuid }
+              quantity: { type: integer }
+              selected: { type: boolean }
+              storeId: { type: string, format: uuid }
+              productName: { type: string }
+              priceMinor: { type: integer }
+              flashCampaignId: { type: string, format: uuid, nullable: true }
+              flashDiscountMinor: { type: integer }
+              flashEndsAt: { type: string, format: date-time, nullable: true }
+              available: { type: integer }
+              error: { type: object, nullable: true }
+    Quote:
+      type: object
+      required: [quoteId, expiresAt, stores, errors, payableTotalMinor, shippingFeeIsEstimate]
+      properties:
+        quoteId: { type: string, format: uuid }
+        expiresAt: { type: string, format: date-time }
+        cartVersion: { type: integer }
+        serverTime: { type: string, format: date-time }
+        voucherCode: { type: string, nullable: true }
+        storeVoucherCode: { type: string, nullable: true }
+        platformVoucherCode: { type: string, nullable: true }
+        voucher: { type: object, nullable: true, description: Validated code, funding source and discount }
+        vouchers: { type: array, items: { type: object }, description: Seller and platform voucher details in discount order }
+        promotionUnavailable: { type: boolean, description: Catalog-only fallback when Promotion is temporarily unavailable and no voucher was requested }
+        stores:
+          type: array
+          items:
+            type: object
+            properties:
+              storeId: { type: string, format: uuid }
+              lines:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    variantId: { type: string, format: uuid }
+                    quantity: { type: integer }
+                    listPriceMinor: { type: integer, description: Original unit price }
+                    unitPriceMinor: { type: integer, description: Current effective unit price }
+                    catalogDiscountMinor: { type: integer }
+                    flashDiscountMinor: { type: integer }
+                    voucherDiscountMinor: { type: integer }
+                    shopVoucherDiscountMinor: { type: integer }
+                    platformVoucherDiscountMinor: { type: integer }
+                    flashCampaignId: { type: string, format: uuid, nullable: true }
+                    discountMinor: { type: integer, description: Sum of all sources }
+                    lineTotalMinor: { type: integer, description: Effective unit price times quantity minus voucher allocation }
+              subtotalMinor: { type: integer }
+              discountMinor: { type: integer }
+              shippingEstimateMinor: { type: integer }
+              payableTotalMinor: { type: integer }
+        errors: { type: array, items: { type: object } }
+        subtotalMinor: { type: integer }
+        discountMinor: { type: integer }
+        shippingEstimateMinor: { type: integer }
+        payableTotalMinor: { type: integer }
+        shippingFeeIsEstimate: { type: boolean, enum: [true] }

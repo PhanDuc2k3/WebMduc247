@@ -1,0 +1,17 @@
+services:
+  identity-db:
+    ports:
+      - "127.0.0.1:${IDENTITY_DB_PORT:-56434}:5432"
+  identity-mail:
+    ports:
+      - "127.0.0.1:1026:1025"
+  identity-objects:
+    ports:
+      - "127.0.0.1:9002:9000"
+      - "127.0.0.1:9003:9001"
+  identity-scanner:
+    ports:
+      - "127.0.0.1:3311:3310"
+  chat-mongo:
+    ports:
+      - "127.0.0.1:27018:27017"

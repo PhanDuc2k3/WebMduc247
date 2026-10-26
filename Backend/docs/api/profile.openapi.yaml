@@ -1,0 +1,230 @@
+openapi: 3.0.3
+info:
+  title: User & Profile API
+  version: 2.0.0
+servers:
+  - url: /api/v2
+security:
+  - bearerAuth: []
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  schemas:
+    Profile:
+      type: object
+      properties:
+        userId: { type: string, format: uuid }
+        displayName: { type: string }
+        avatarUrl: { type: string, format: uri, nullable: true, description: Five-minute signed URL }
+        email: { type: string, format: email }
+        emailVerified: { type: boolean }
+        phoneMasked: { type: string, nullable: true }
+        phoneVerified: { type: boolean }
+        phoneEmailConfirmed: { type: boolean, description: The account email confirmed adding this phone; phone possession is not verified }
+        status: { type: string }
+        roles: { type: array, items: { type: string } }
+        marketingOptIn: { type: boolean }
+    Address:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        receiverName: { type: string }
+        receiverPhoneMasked: { type: string, description: List response only }
+        receiverPhone: { type: string, description: Owner detail response only }
+        provinceCode: { type: string }
+        districtCode: { type: string, description: Empty for addresses without a district }
+        wardCode: { type: string }
+        addressLine: { type: string }
+        note: { type: string, nullable: true }
+        isDefault: { type: boolean }
+    AddressInput:
+      type: object
+      required: [receiverName, receiverPhone, provinceCode, wardCode, addressLine]
+      properties:
+        receiverName: { type: string, minLength: 2, maxLength: 120 }
+        receiverPhone: { type: string, pattern: '^\+[1-9][0-9]{7,14}$' }
+        provinceCode: { type: string, description: Province code or name }
+        districtCode: { type: string, description: Optional legacy district; empty when omitted }
+        wardCode: { type: string, description: Ward code or name }
+        addressLine: { type: string, minLength: 5, maxLength: 250 }
+        note: { type: string, maxLength: 300, nullable: true }
+        isDefault: { type: boolean }
+    AddressPatch:
+      type: object
+      minProperties: 1
+      properties:
+        receiverName: { type: string, minLength: 2, maxLength: 120 }
+        receiverPhone: { type: string, pattern: '^\+[1-9][0-9]{7,14}$' }
+        provinceCode: { type: string }
+        districtCode: { type: string, description: Optional legacy district; may be empty }
+        wardCode: { type: string }
+        addressLine: { type: string, minLength: 5, maxLength: 250 }
+        note: { type: string, maxLength: 300, nullable: true }
+paths:
+  /users/me:
+    get:
+      summary: Get the signed-in user's public profile
+      responses:
+        '200': { description: Profile, content: { application/json: { schema: { $ref: '#/components/schemas/Profile' } } } }
+        '401': { description: No valid session }
+    patch:
+      summary: Update display name; userId is derived from the access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [displayName]
+              properties:
+                displayName: { type: string, minLength: 2, maxLength: 120 }
+      responses:
+        '200': { description: Updated profile }
+        '400': { description: Invalid fields }
+  /users/me/avatar:
+    post:
+      summary: Scan, resize and store avatar in object storage
+      description: Raw JPEG, PNG or WebP body up to 2 MiB. MIME must match decoded image. Scanner and object store must be configured.
+      requestBody:
+        required: true
+        content:
+          image/jpeg: { schema: { type: string, format: binary } }
+          image/png: { schema: { type: string, format: binary } }
+          image/webp: { schema: { type: string, format: binary } }
+      responses:
+        '200': { description: Updated profile with a signed avatar URL }
+        '413': { description: Too large }
+        '415': { description: MIME or image contents invalid }
+        '422': { description: Malware detected }
+        '503': { description: Scanner or object store unavailable }
+  /users/me/data-export:
+    get:
+      summary: Export the signed-in user's Identity data
+      description: Includes account, profile, active and deleted addresses, phone challenge metadata, session metadata, and security events. Excludes password hashes, tokens, and data owned by Order, Payment, Catalog, Chat, or Engagement services.
+      responses:
+        '200': { description: JSON export scoped to Identity Service }
+        '401': { description: No valid session }
+  /users/me/deletion-request:
+    get:
+      summary: View the latest account deletion request
+      responses:
+        '200': { description: Latest request or null }
+        '401': { description: No valid session }
+    post:
+      summary: Submit an account deletion request for manual review
+      description: Requires the current password. The account remains active while related service data and retention obligations are reviewed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string, format: password }
+      responses:
+        '202': { description: Request recorded; duplicate pending requests return the same ID }
+        '401': { description: No valid session or wrong password }
+        '429': { description: Rate limited }
+    delete:
+      summary: Cancel a pending account deletion request
+      responses:
+        '200': { description: Request cancelled }
+        '404': { description: No pending request }
+  /users/me/phone/challenge:
+    post:
+      summary: Request a six-digit phone-change OTP
+      description: Email mode delivers the OTP to the account email. Confirming it authorizes adding the phone to this account but does not verify possession of that phone. Optional SMS mode can verify phone possession.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone]
+              properties:
+                phone: { type: string, example: '+84901234567' }
+      responses:
+        '202': { description: OTP sent; response includes deliveryChannel (email or sms); valid for five minutes }
+        '429': { description: Cooldown or rate limit }
+        '503': { description: Email transport or configured provider unavailable }
+  /users/me/phone/verify:
+    post:
+      summary: Consume phone-change OTP and add the phone to the account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code: { type: string, pattern: '^[0-9]{6}$' }
+      responses:
+        '200': { description: Updated profile with masked phone }
+        '400': { description: Invalid or expired code }
+        '409': { description: Phone already in use }
+  /users/me/preferences:
+    patch:
+      summary: Update marketing opt-in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [marketingOptIn]
+              properties:
+                marketingOptIn: { type: boolean }
+      responses:
+        '200': { description: Updated profile }
+  /users/me/addresses:
+    get:
+      summary: List own active addresses with masked recipient phone
+      responses:
+        '200': { description: Address list }
+    post:
+      summary: Add own address; first address becomes default
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/AddressInput' } }
+      responses:
+        '201': { description: Created address }
+        '409': { description: Maximum of 20 addresses reached }
+  /users/me/addresses/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    get:
+      summary: Get own address with full recipient phone
+      responses:
+        '200': { description: Address detail }
+        '404': { description: Missing or belongs to another user }
+    patch:
+      summary: Update own address fields; use default endpoint to change default
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/AddressPatch' } }
+      responses:
+        '200': { description: Updated address }
+        '404': { description: Missing or belongs to another user }
+    delete:
+      summary: Soft-delete own address
+      responses:
+        '200': { description: Deleted }
+        '404': { description: Missing or belongs to another user }
+  /users/me/addresses/{id}/default:
+    put:
+      summary: Set one own active address as default atomically
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200': { description: Default changed }
+        '404': { description: Missing or belongs to another user }

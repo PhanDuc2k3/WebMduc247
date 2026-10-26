@@ -1,0 +1,199 @@
+openapi: 3.1.0
+info:
+  title: MDUC247 Inventory API
+  version: 0.1.0
+servers:
+  - url: http://localhost:5102/api/v2
+components:
+  securitySchemes:
+    orderInternal:
+      type: apiKey
+      in: header
+      name: X-Inventory-Token
+    sellerBearer:
+      type: http
+      scheme: bearer
+  schemas:
+    Balance:
+      type: object
+      required: [variantId, onHand, reserved, available, version]
+      properties:
+        variantId: { type: string, format: uuid }
+        onHand: { type: integer, minimum: 0 }
+        reserved: { type: integer, minimum: 0 }
+        available: { type: integer, minimum: 0, description: onHand - reserved }
+        version: { type: integer, minimum: 1 }
+    Reservation:
+      type: object
+      required: [id, variantId, orderRef, quantity, status, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        variantId: { type: string, format: uuid }
+        orderRef: { type: string }
+        quantity: { type: integer, minimum: 1 }
+        status: { type: string, enum: [ACTIVE, COMMITTED, RELEASED, EXPIRED] }
+        expiresAt: { type: string, format: date-time }
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+        available: { type: integer, minimum: 0 }
+paths:
+  /inventory/variants/{id}/availability:
+    get:
+      security: [{ orderInternal: [] }]
+      summary: Check sellable SKU availability; this does not reserve stock
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: quantity, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        '200': { description: Balance, sellable and canFulfill }
+        '403': { description: Invalid internal token }
+  /inventory/variants/{id}/quote:
+    get:
+      security: [{ orderInternal: [] }]
+      summary: Current SKU, product, store, VND price, image and available stock for Order Service
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: quantity, schema: { type: integer, minimum: 1, default: 1 } }
+      responses:
+        '200': { description: Live product and store snapshot with sellable and canFulfill flags }
+        '404': { description: SKU not found }
+  /inventory/reservations:
+    post:
+      security: [{ orderInternal: [] }]
+      summary: Atomically reserve SKU stock with TTL and idempotency key
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [variantId, orderRef, quantity, idempotencyKey]
+              properties:
+                variantId: { type: string, format: uuid }
+                orderRef: { type: string, maxLength: 120 }
+                quantity: { type: integer, minimum: 1 }
+                idempotencyKey: { type: string, maxLength: 120 }
+                ttlSeconds: { type: integer, minimum: 30, maximum: 1800, default: 900 }
+      responses:
+        '201': { description: Reservation and idempotent flag }
+        '409': { description: INSUFFICIENT_STOCK, SKU_NOT_SELLABLE or IDEMPOTENCY_CONFLICT }
+  /inventory/reservations/{id}/commit:
+    post:
+      security: [{ orderInternal: [] }]
+      summary: Move ACTIVE to COMMITTED and subtract onHand once
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Reservation and idempotent flag }
+        '409': { description: INVALID_RESERVATION_STATE }
+  /inventory/reservations/{id}:
+    get:
+      security: [{ orderInternal: [] }]
+      summary: Read reservation state for Order reconciliation
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Reservation snapshot }
+        '404': { description: Reservation not found }
+  /inventory/restock-batch:
+    post:
+      security: [{ orderInternal: [] }]
+      summary: Idempotently restore committed stock for a cancelled shop order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reservationIds, cancellationKey]
+              properties:
+                reservationIds:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  uniqueItems: true
+                  items: { type: string, format: uuid }
+                cancellationKey: { type: string, minLength: 8, maxLength: 120 }
+      responses:
+        '200': { description: Restocked or idempotent retry }
+        '409': { description: Reservation not committed or key conflict }
+  /inventory/stores/{id}/membership:
+    get:
+      security: [{ orderInternal: [] }]
+      summary: Verify active store membership for an authenticated actor passed by Order Service
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: userId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Store member role }
+        '403': { description: Actor is not an active member }
+  /inventory/reservations/commit-batch:
+    post:
+      security: [{ orderInternal: [] }]
+      summary: Atomically commit all reservations for one checkout reference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reservationIds]
+              properties:
+                reservationIds:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  uniqueItems: true
+                  items: { type: string, format: uuid }
+      responses:
+        '200': { description: All committed or all already committed }
+        '409': { description: At least one reservation cannot be committed; none is changed }
+  /inventory/reservations/{id}/release:
+    post:
+      security: [{ orderInternal: [] }]
+      summary: Move ACTIVE to RELEASED; repeated release is idempotent
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: RELEASED or EXPIRED reservation }
+        '409': { description: Cannot release COMMITTED reservation }
+  /inventory/reconcile:
+    post:
+      security: [{ orderInternal: [] }]
+      summary: Trigger expiry sweep and reserved-balance reconciliation
+      responses:
+        '200': { description: Expired, anomaly, repaired, pending-event and dead-letter counts }
+  /seller/variants/{id}/inventory:
+    get:
+      security: [{ sellerBearer: [] }]
+      summary: Store member sees balance and paginated movements
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 50, default: 20 } }
+      responses:
+        '200': { description: Balance and movement history }
+        '403': { description: STORE_FORBIDDEN }
+  /seller/variants/{id}/inventory-adjustments:
+    post:
+      security: [{ sellerBearer: [] }]
+      summary: Adjust onHand with reason and actor audit; cannot go below reserved
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [delta, reason]
+              properties:
+                delta: { type: integer, description: Signed nonzero stock change }
+                reason: { type: string, minLength: 3, maxLength: 300 }
+                reference: { type: string, maxLength: 120 }
+      responses:
+        '200': { description: New balance }
+        '409': { description: STOCK_BELOW_RESERVED with available quantity }

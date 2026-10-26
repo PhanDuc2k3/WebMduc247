@@ -1,0 +1,6 @@
+{
+  "watch": ["services/catalog-service/src", "services/catalog-service/database/migrations"],
+  "ext": "js,json,sql",
+  "ignore": ["**/node_modules/**"],
+  "exec": "node services/catalog-service/scripts/start-dev.js"
+}

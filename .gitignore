@@ -8,6 +8,9 @@ node_modules/
 .env.*.local
 */.env
 
+# Local demo account passwords
+user.md
+
 # Logs
 logs
 *.log

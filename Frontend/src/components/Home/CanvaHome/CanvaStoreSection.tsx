@@ -10,7 +10,7 @@ const CanvaStoreSection = ({ stores }: { stores: HomeStore[] }) => {
       <div className="canva-home__store-grid">
         {stores.map((store) => (
           <button type="button" className="canva-home__store-card" key={store._id} onClick={() => navigate(store.demo ? "/store" : `/store/${store._id}`)}>
-            <img src={store.logoUrl || "/visual-placeholder.svg"} alt="" /><span><strong>{store.name}</strong><small>{store.category || "Cửa hàng"}</small><em><Star /> {typeof store.rating === "number" ? store.rating.toFixed(1) : "Chưa có đánh giá"} · {store.products ?? 0} sản phẩm</em></span><ArrowRight aria-hidden="true" />
+            <img src={store.logoUrl || "/visual-placeholder.svg"} alt="" /><span><strong>{store.name}</strong><small>{store.category || "Cửa hàng"}</small><em><Star /> {typeof store.rating === "number" ? store.rating.toFixed(1) : "Chưa có đánh giá"}{typeof store.products === "number" ? ` · ${store.products} sản phẩm` : ""}</em></span><ArrowRight aria-hidden="true" />
           </button>
         ))}
       </div>

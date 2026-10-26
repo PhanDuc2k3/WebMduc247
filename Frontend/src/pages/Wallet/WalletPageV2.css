@@ -1,0 +1,61 @@
+.container-wrapper > .wallet-v2-page.wallet-v2-page {
+  width: 100%;
+  max-width: var(--shell-width) !important;
+  margin: 0 auto !important;
+  padding: 26px var(--shell-gutter) 62px !important;
+  background: #f4f7fb;
+}
+.wallet-v2-page * { box-sizing: border-box; }
+.wallet-v2-page .content-breadcrumb { margin-bottom: 23px; }
+.wallet-v2-page .wallet-layout { grid-template-columns: minmax(320px, 28%) minmax(0, 1fr); gap: 22px; }
+.wallet-v2-page .wallet-left { min-width: 0; gap: 22px; }
+.wallet-v2-page .wallet-section-title { margin-bottom: 13px; font-size: 18px; }
+.wallet-v2-page .wallet-balance-card { display: flex; min-height: 227px; flex-direction: column; padding: 24px 25px; }
+.wallet-v2-page .wallet-balance-card > strong { margin: 15px 0 0; font-size: 34px; line-height: 1; }
+.wallet-v2-unavailable { position: relative; z-index: 1; margin: 10px 0 0; color: #fff; font-size: 12px; font-weight: 700; }
+.wallet-v2-page .wallet-balance-card__stats { margin-top: auto; }
+.wallet-v2-page .wallet-actions { margin-top: 12px; }
+.wallet-v2-page .wallet-actions button { cursor: not-allowed; opacity: .6; }
+.wallet-v2-page .wallet-actions button:first-child { border-color: #476de4; background: #476de4; color: #fff; }
+.wallet-v2-page .wallet-methods { min-height: 119px; padding: 20px; }
+.wallet-v2-page .wallet-methods h2 { font-size: 17px; }
+.wallet-v2-page .wallet-methods-empty { margin: 8px 0 0; color: #718099; font-size: 11px; line-height: 1.5; }
+.wallet-v2-method-list { display: grid; gap: 7px; }
+.wallet-v2-method-list > div { display: flex; align-items: center; gap: 9px; padding: 8px; border: 1px solid #e8edf5; border-radius: 9px; color: #52647e; font-size: 11px; }
+.wallet-v2-method-list svg { color: #476de4; }
+.wallet-v2-page .wallet-history { min-width: 0; min-height: 457px; padding: 22px; }
+.wallet-v2-page .wallet-history h2 { font-size: 18px; }
+.wallet-v2-page .wallet-history > header button:disabled { cursor: not-allowed; opacity: .45; }
+.wallet-v2-page .wallet-tabs { margin-top: 20px; }
+.wallet-v2-page .wallet-tabs button { cursor: pointer; }
+.wallet-v2-page .wallet-tabs button:disabled { cursor: not-allowed; opacity: .45; }
+.wallet-v2-page .wallet-filters { margin: 16px 0; }
+.wallet-v2-page .wallet-transactions { min-height: 156px; }
+.wallet-v2-page .wallet-transactions article { min-height: 80px; }
+.wallet-v2-page .wallet-transactions article div > a { display: block; color: #172b49; font-size: 12px; font-weight: 800; text-decoration: none; }
+.wallet-v2-page .wallet-transactions article div > a:hover { color: #476de4; }
+.wallet-v2-page .wallet-transactions article div em.is-failed { background: #fff0ed; color: #d9534f; }
+.wallet-v2-page .wallet-transactions article > b { white-space: nowrap; }
+.wallet-v2-page .wallet-pagination { margin-top: 8px; }
+.wallet-v2-page .wallet-pagination button { cursor: pointer; }
+.wallet-v2-page .wallet-pagination button:disabled { cursor: not-allowed; }
+.wallet-v2-state { display: grid; min-height: 150px; place-content: center; justify-items: center; gap: 9px; color: #718099; font-size: 12px; text-align: center; }
+.wallet-v2-state p { margin: 0; }
+.wallet-v2-state button, .wallet-v2-state a { padding: 7px 11px; border: 1px solid #d3dcfb; border-radius: 8px; background: #eef2ff; color: #476de4; cursor: pointer; font-size: 11px; font-weight: 800; text-decoration: none; }
+.wallet-v2-page .wallet-offers { margin-top: 40px; }
+.wallet-v2-page .wallet-offers h2 { font-size: 19px; }
+.wallet-v2-page .wallet-offers article { min-height: 182px; }
+.wallet-v2-page .wallet-offers article a:hover { background: #dfe7ff; }
+.wallet-v2-page .wallet-security { margin-top: 28px; }
+
+@media (max-width: 1000px) {
+  .wallet-v2-page .wallet-layout { grid-template-columns: 1fr; }
+  .wallet-v2-page .wallet-left { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, .8fr); align-items: end; }
+  .wallet-v2-page .wallet-left > section:first-child { grid-column: auto; }
+}
+@media (max-width: 700px) {
+  .container-wrapper > .wallet-v2-page.wallet-v2-page { padding: 20px var(--shell-gutter) 46px !important; }
+  .wallet-v2-page .wallet-left { display: flex; }
+  .wallet-v2-page .wallet-filters { grid-template-columns: 1fr; }
+  .wallet-v2-page .wallet-offers > div, .wallet-v2-page .wallet-security > div { grid-template-columns: 1fr; }
+}

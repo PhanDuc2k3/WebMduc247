@@ -44,7 +44,7 @@ const photoUrl = (photo: string, width = 900) =>
   photo.startsWith("/") ? photo : `https://images.pexels.com/photos/${photo}/pexels-photo-${photo}.jpeg?auto=compress&cs=tinysrgb&w=${width}`;
 
 const storeSeeds: StoreSeed[] = [
-  { _id: "store-nova", name: "Nova Tech", description: "Thiết bị công nghệ và phụ kiện cho công việc mỗi ngày.", storeAddress: "Ba Đình, Hà Nội", category: "electronics", customCategory: "Điện tử", rating: 4.9, photo: "8858287", banner: "18105" },
+  { _id: "store-nova", name: "Nova Tech", description: "Thiết bị công nghệ và phụ kiện cho công việc mỗi ngày.", storeAddress: "Ba Đình, Hà Nội", category: "electronics", customCategory: "Điện tử", rating: 4.9, photo: "8858287", banner: "/macbook.jfif" },
   { _id: "store-pixel", name: "Pixel Hub", description: "Không gian dành cho người yêu máy tính và thiết bị số.", storeAddress: "Đà Nẵng", category: "electronics", customCategory: "Điện tử", rating: 4.7, photo: "17895080", banner: "5624999" },
   { _id: "store-may", name: "Mây Studio", description: "Thời trang tối giản, dễ phối cho mọi ngày.", storeAddress: "Quận 1, TP. Hồ Chí Minh", category: "fashion", customCategory: "Thời trang", rating: 4.8, photo: "9327156", banner: "994523" },
   { _id: "store-urban", name: "Urban Mode", description: "Giày, túi và trang phục mang cảm hứng thành thị.", storeAddress: "Cần Thơ", category: "fashion", customCategory: "Thời trang", rating: 4.6, photo: "27204251", banner: "9327156" },
@@ -62,10 +62,10 @@ const productSeeds: ProductSeed[] = [
   { id: "p-keyboard", name: "Bàn phím cơ RGB Compact", price: 1090000, salePrice: 899000, category: "electronics", subCategory: "Phụ kiện máy tính", storeId: "store-pixel", brand: "Pixel", photo: "17895080" },
   { id: "p-speaker", name: "Loa Bluetooth Mini Beat", price: 529000, salePrice: 429000, category: "electronics", subCategory: "Âm thanh", storeId: "store-nova", brand: "Nova", photo: "11764413" },
   { id: "p-headphones", name: "Tai nghe chụp tai Wave Pro", price: 1290000, salePrice: 1090000, category: "electronics", subCategory: "Âm thanh", storeId: "store-pixel", brand: "Pixel", photo: "8858287" },
-  { id: "p-laptop", name: "Laptop văn phòng UrbanBook 14", price: 15990000, salePrice: 14490000, category: "electronics", subCategory: "Laptop", storeId: "store-pixel", brand: "UrbanBook", photo: "18105" },
+  { id: "p-laptop", name: "Laptop văn phòng UrbanBook 14", price: 15990000, salePrice: 14490000, category: "electronics", subCategory: "Laptop", storeId: "store-pixel", brand: "UrbanBook", photo: "/macbook.jfif" },
   { id: "p-webcam", name: "Webcam họp trực tuyến ClearView", price: 790000, category: "electronics", subCategory: "Phụ kiện máy tính", storeId: "store-pixel", brand: "Pixel", photo: "5624999" },
   { id: "p-mouse", name: "Chuột không dây Silent Click", price: 390000, salePrice: 319000, category: "electronics", subCategory: "Phụ kiện máy tính", storeId: "store-nova", brand: "Nova", photo: "17895080" },
-  { id: "p-monitor", name: "Màn hình 24 inch sắc nét", price: 3290000, salePrice: 2990000, category: "electronics", subCategory: "Màn hình", storeId: "store-pixel", brand: "Pixel", photo: "18105" },
+  { id: "p-monitor", name: "Màn hình 24 inch sắc nét", price: 3290000, salePrice: 2990000, category: "electronics", subCategory: "Màn hình", storeId: "store-pixel", brand: "Pixel", photo: "/visual-placeholder.svg" },
   { id: "p-charger", name: "Sạc nhanh USB-C 65W", price: 490000, category: "electronics", subCategory: "Phụ kiện điện thoại", storeId: "store-nova", brand: "Nova", photo: "5624999" },
   { id: "p-sneaker", name: "Sneaker trắng Everyday", price: 1190000, salePrice: 890000, category: "fashion", subCategory: "Giày", storeId: "store-may", brand: "Mây", photo: "27204251" },
   { id: "p-backpack", name: "Balo laptop Urban Pack", price: 799000, salePrice: 679000, category: "fashion", subCategory: "Balo", storeId: "store-urban", brand: "Urban Mode", photo: "15059375" },

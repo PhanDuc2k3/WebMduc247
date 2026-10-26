@@ -1,0 +1,167 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { MessageCircle } from "lucide-react";
+import messageApi from "../../../api/messageApi";
+import { useChat } from "../../../context/chatContext";
+import axiosClient from "../../../api/axiosClient";
+// Format message time
+const formatMessageTime = (time) => {
+    if (!time)
+        return "";
+    const messageDate = new Date(time);
+    const now = new Date();
+    const diffInMs = now.getTime() - messageDate.getTime();
+    const diffInMinutes = Math.floor(diffInMs / 60000);
+    const diffInHours = Math.floor(diffInMs / 3600000);
+    const diffInDays = Math.floor(diffInMs / 86400000);
+    // Same day - show time
+    if (diffInDays === 0) {
+        if (diffInMinutes < 1)
+            return "Vừa xong";
+        if (diffInMinutes < 60)
+            return `${diffInMinutes} phút`;
+        if (diffInHours < 24)
+            return `${diffInHours} giờ`;
+        return messageDate.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    }
+    // Yesterday
+    if (diffInDays === 1)
+        return "Hôm qua";
+    // This week
+    if (diffInDays < 7) {
+        return messageDate.toLocaleDateString("vi-VN", { weekday: "short" });
+    }
+    // Older - show date
+    return messageDate.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+};
+export default function ChatList({ currentUserId, selectedChat, onSelectChat, disabled, }) {
+    const [chats, setChats] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const { unreadMessages, setUnreadMessages, onlineUsers } = useChat();
+    const navigate = useNavigate();
+    // 📥 Fetch danh sách chat
+    useEffect(() => {
+        const fetchChats = async () => {
+            try {
+                if (!currentUserId)
+                    return;
+                console.log("[ChatList] Fetching conversations for user:", currentUserId);
+                const res = await messageApi.getUserConversations(currentUserId);
+                console.log("[ChatList] API response:", res.data);
+                // Helper function để fetch thông tin user từ API
+                const fetchUserInfo = async (participantId) => {
+                    try {
+                        const userRes = await axiosClient.get(`/api/users/${participantId}`);
+                        const user = userRes.data?.user || userRes.data;
+                        return {
+                            name: user?.fullName || user?.name || "",
+                            avatarUrl: user?.avatarUrl || "",
+                        };
+                    }
+                    catch (err) {
+                        console.warn("[ChatList] Không thể fetch thông tin user:", err);
+                        return null;
+                    }
+                };
+                const mappedChats = await Promise.all(res.data.map(async (conv) => {
+                    console.log("[ChatList] Raw conversation:", conv);
+                    const participants = conv.participants || [];
+                    // ép kiểu về string để so sánh an toàn
+                    const participant = participants.find((p) => String(p._id) !== String(currentUserId)) ||
+                        participants[0]; // fallback
+                    if (!participant) {
+                        console.warn("[ChatList] ⚠️ Không tìm thấy participant trong conv:", conv._id);
+                        return null;
+                    }
+                    const lastMsg = conv.lastMessage?.text ||
+                        conv.lastMessage?.content ||
+                        (conv.lastMessage?.attachments?.length ? "[Đính kèm]" : "") ||
+                        conv.lastMessage ||
+                        "";
+                    // Fetch thông tin user từ API để đảm bảo lấy đúng fullName và avatarUrl (đặc biệt cho seller/owner)
+                    let displayName = participant.fullName || participant.name || "Người dùng ẩn danh";
+                    let displayAvatar = participant.avatarUrl || "/avatar-placeholder.svg";
+                    // Fetch từ API để đảm bảo có thông tin mới nhất (quan trọng cho seller để hiển thị tên owner thay vì tên store)
+                    const userInfo = await fetchUserInfo(participant._id);
+                    if (userInfo) {
+                        if (userInfo.name) {
+                            displayName = userInfo.name;
+                        }
+                        if (userInfo.avatarUrl) {
+                            displayAvatar = userInfo.avatarUrl;
+                        }
+                    }
+                    const chat = {
+                        conversationId: conv._id?.toString() || conv.conversationId,
+                        name: displayName,
+                        avatarUrl: displayAvatar,
+                        lastMessage: lastMsg,
+                        lastMessageTime: conv.lastMessageTime,
+                        participantId: participant._id,
+                        online: Array.isArray(onlineUsers)
+                            ? onlineUsers.includes(String(participant._id))
+                            : false,
+                    };
+                    return chat;
+                }));
+                const filteredChats = mappedChats.filter((c) => Boolean(c?.conversationId));
+                console.log("[ChatList] Mapped chats:", filteredChats);
+                // ✅ Giữ lại trạng thái online từ danh sách cũ
+                setChats((prev) => {
+                    const prevMap = new Map(prev.map((c) => [c.conversationId, c]));
+                    const merged = filteredChats.map((chat) => {
+                        const old = prevMap.get(chat.conversationId);
+                        return old ? { ...chat, online: old.online } : chat;
+                    });
+                    return merged;
+                });
+                // ✅ Cập nhật tin chưa đọc
+                const unreadData = {};
+                res.data.forEach((conv) => {
+                    const convId = conv.conversationId || conv._id?.toString();
+                    if (convId && conv.unreadCount > 0) {
+                        unreadData[convId] = conv.unreadCount;
+                    }
+                });
+                setUnreadMessages((prev) => ({ ...prev, ...unreadData }));
+            }
+            catch (err) {
+                console.error("[ChatList] Fetch chats error:", err);
+            }
+            finally {
+                setLoading(false);
+            }
+        };
+        fetchChats();
+    }, [currentUserId]);
+    // 🔁 Cập nhật trạng thái online realtime
+    useEffect(() => {
+        if (!onlineUsers)
+            return;
+        console.log("[ChatList] Updating chat online status, online users:", onlineUsers);
+        setChats((prev) => prev.map((c) => ({
+            ...c,
+            online: c.participantId ? onlineUsers.includes(c.participantId) : false,
+        })));
+    }, [onlineUsers]);
+    // 🖱 Chọn chat
+    const handleSelectChat = (chat) => {
+        if (!chat.conversationId)
+            return;
+        console.log("[ChatList] 🖱 Chọn chat:", chat);
+        onSelectChat(chat);
+        navigate(`/messages/${chat.conversationId}`);
+        // reset tin chưa đọc
+        setUnreadMessages((prev) => ({
+            ...prev,
+            [chat.conversationId]: 0,
+        }));
+    };
+    // 🧩 UI
+    return (_jsxs("div", { className: "w-full h-full bg-white border-r-0 md:border-r-2 border-gray-200 overflow-hidden flex flex-col shadow-lg md:shadow-xl", children: [_jsxs("div", { className: "bg-[#4B5563] p-3 sm:p-4 md:p-5 lg:p-6 border-b-2 border-gray-200 flex-shrink-0", children: [_jsxs("h2", { className: "text-lg sm:text-xl md:text-2xl font-bold text-white flex items-center gap-2 md:gap-3", children: [_jsx(MessageCircle, { className: "w-5 h-5 md:w-6 md:h-6" }), " Tin nh\u1EAFn"] }), _jsxs("p", { className: "text-white/90 text-xs md:text-sm mt-1", children: [chats.length, " cu\u1ED9c tr\u00F2 chuy\u1EC7n"] })] }), _jsx("div", { className: "flex-1 overflow-y-auto custom-scrollbar", children: loading ? (_jsxs("div", { className: "p-4 sm:p-6 md:p-8 text-center animate-fade-in", children: [_jsx(MessageCircle, { className: "w-10 h-10 md:w-12 md:h-12 mx-auto mb-3 md:mb-4 text-[#4B5563] animate-pulse" }), _jsx("p", { className: "text-gray-600 text-sm sm:text-base md:text-lg font-medium", children: "\u0110ang t\u1EA3i..." })] })) : chats.length === 0 ? (_jsxs("div", { className: "p-4 sm:p-6 md:p-8 text-center animate-fade-in", children: [_jsx(MessageCircle, { className: "w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 mx-auto mb-3 md:mb-4 text-[#4B5563]" }), _jsx("p", { className: "text-gray-500 text-sm sm:text-base md:text-lg font-medium mb-2", children: "Ch\u01B0a c\u00F3 cu\u1ED9c tr\u00F2 chuy\u1EC7n" }), _jsx("p", { className: "text-gray-400 text-xs md:text-sm", children: "B\u1EAFt \u0111\u1EA7u cu\u1ED9c tr\u00F2 chuy\u1EC7n m\u1EDBi" })] })) : (chats.map((chat, index) => (_jsxs("div", { onClick: () => !disabled && handleSelectChat(chat), className: `flex items-center gap-2 sm:gap-3 md:gap-4 p-3 sm:p-4 md:p-4 lg:p-5 cursor-pointer transition-all duration-300 animate-fade-in-up border-b border-gray-100 ${selectedChat?.conversationId === chat.conversationId
+                        ? "bg-[#4B5563]/5 border-l-4 border-[#4B5563] shadow-md"
+                        : "hover:bg-[#4B5563]/5 active:bg-[#4B5563]/10"} ${disabled ? "opacity-50 cursor-not-allowed" : ""}`, style: { animationDelay: `${index * 0.05}s` }, children: [_jsxs("div", { className: "relative flex-shrink-0", children: [_jsx("img", { src: chat.avatarUrl || "/avatar-placeholder.svg", alt: chat.name, className: "w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-full object-cover border-2 md:border-3 border-white shadow-md md:shadow-lg", onError: (e) => {
+                                        e.target.src = "/avatar-placeholder.svg";
+                                    } }), _jsx("span", { className: `absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 border-2 border-white rounded-full shadow-md md:shadow-lg ${chat.online ? "bg-green-500" : "bg-gray-400"}` })] }), _jsxs("div", { className: "flex-1 min-w-0 relative", children: [_jsxs("div", { className: "flex items-center justify-between gap-2 mb-1", children: [_jsx("div", { className: "font-bold text-sm sm:text-base md:text-lg text-gray-900 truncate flex-1", children: chat.name || "Người dùng ẩn danh" }), chat.lastMessageTime && (_jsx("span", { className: "text-[9px] sm:text-[10px] md:text-xs text-gray-500 whitespace-nowrap flex-shrink-0", children: formatMessageTime(chat.lastMessageTime) }))] }), _jsx("div", { className: "text-xs sm:text-xs md:text-sm text-gray-600 truncate flex items-center gap-2", children: _jsx("span", { className: "truncate flex-1", children: chat.lastMessage || "Chưa có tin nhắn" }) }), unreadMessages[chat.conversationId] > 0 && (_jsx("span", { className: "absolute top-0 right-0 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-full px-1.5 sm:px-2 py-0.5 md:px-3 md:py-1 text-[9px] sm:text-[10px] md:text-xs font-bold shadow-md md:shadow-lg animate-pulse", children: unreadMessages[chat.conversationId] }))] })] }, chat.conversationId)))) })] }));
+}

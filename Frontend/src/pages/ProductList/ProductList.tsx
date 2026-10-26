@@ -1,152 +1,234 @@
-import { useEffect, useMemo, useState } from "react";
-import { ChevronDown, Grid2X2, Heart, List, PackageSearch, Star } from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import cartApi from "../../api/cartApi";
-import productApi from "../../api/productApi";
-import { useCart } from "../../context/CartContext";
-import type { ProductType } from "../../types/product";
-import "./ProductList.css";
+import { Grid2X2, List, PackageSearch, Star } from "lucide-react";
+import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
+import { catalogApi, type CatalogItem, type CatalogStore, type CategoryNode, type ProductQuery } from "../../api/catalogApi";
+import { notifyCartChanged, orderV2Api, vnd } from "../../api/orderV2Api";
 import { showImageFallback } from "../../utils/imageFallback";
+import "./ProductList.css";
+import "./ProductList.layout.css";
 
-const categoryOptions = [
-  ["electronics", "Điện tử", "electronics"],
-  ["fashion", "Thời trang", "fashion"],
-  ["home", "Nhà cửa & Đời sống", "home"],
-  ["beauty", "Làm đẹp", "beauty"],
-  ["sports", "Thể thao", "sports"],
-  ["food", "Thực phẩm", "food"],
-  ["books", "Sách & Văn phòng phẩm", "books"],
-] as const;
+const PAGE_SIZE = 12;
+const PRICE_CEILING = 20_000_000;
 
-const categoryNames: Record<string, string> = {
-  electronics: "Điện tử",
-  fashion: "Thời trang",
-  home: "Nhà cửa & Đời sống",
-  beauty: "Làm đẹp",
-  sports: "Thể thao",
-  food: "Thực phẩm",
-  books: "Sách & Văn phòng phẩm",
-};
+function flattenCategories(items: CategoryNode[]): CategoryNode[] {
+  return items.flatMap(item => [item, ...flattenCategories(item.children)]);
+}
 
-const ProductList = () => {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { fetchCart } = useCart();
-  const [products, setProducts] = useState<ProductType[]>([]);
+function CatalogProductCard({ product }: { product: CatalogItem }) {
+  const [adding, setAdding] = useState(false);
+  const onSale = product.priceOriginalMinor > product.priceMinor;
+  const discount = onSale ? Math.round((1 - product.priceMinor / product.priceOriginalMinor) * 100) : 0;
+
+  async function addToCart() {
+    setAdding(true);
+    try {
+      const detail = await catalogApi.product(product.id);
+      const variant = detail.product.variants
+        ?.filter(item => item.status === "active" && item.stock > 0)
+        .sort((a, b) => a.priceMinor - b.priceMinor)[0];
+      if (!variant) throw new Error("Sản phẩm hiện không còn hàng.");
+      await orderV2Api.add(variant.id, 1);
+      notifyCartChanged();
+      toast.success(`Đã thêm ${product.name} vào giỏ.`, { containerId: "general-toast" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể thêm sản phẩm vào giỏ.", { containerId: "general-toast" });
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  return <article className="catalog-card">
+    <div className="catalog-card__media">
+      <Link to={`/products/${product.id}`} aria-label={`Xem ${product.name}`}>
+        <img src={product.imageUrl || "/visual-placeholder.svg"} alt={product.name} loading="lazy" onError={showImageFallback} />
+      </Link>
+      {onSale && <span>-{discount}%</span>}
+    </div>
+    <div className="catalog-card__body">
+      <small>{product.store?.name || product.brand || "MDUC247"}</small>
+      <h2><Link to={`/products/${product.id}`}>{product.name}</Link></h2>
+      <p className="catalog-card__rating">
+        {product.rating != null ? <><Star aria-hidden="true" /> {product.rating.toFixed(1)}{product.reviewCount != null && product.reviewCount > 0 && <span>({product.reviewCount})</span>}</> : <span>Chưa có đánh giá</span>}
+      </p>
+      <p className="catalog-card__price"><strong>{vnd(product.priceMinor)}</strong>{onSale && <del>{vnd(product.priceOriginalMinor)}</del>}</p>
+      <div className="catalog-card__meta"><span className={product.inStock ? "" : "is-out"}>{product.inStock ? "Còn hàng" : "Hết hàng"}</span>{product.soldCount != null && <small>Đã bán {product.soldCount.toLocaleString("vi-VN")}</small>}</div>
+      <button type="button" disabled={!product.inStock || adding} onClick={() => void addToCart()}>{adding ? "Đang thêm..." : product.inStock ? "Thêm vào giỏ" : "Hết hàng"}</button>
+    </div>
+  </article>;
+}
+
+export default function ProductList() {
+  const [params, setParams] = useSearchParams();
+  const filterKey = params.toString();
+  const page = Math.max(1, Number(params.get("page")) || 1);
+  const [categories, setCategories] = useState<CategoryNode[]>([]);
+  const [stores, setStores] = useState<CatalogStore[]>([]);
+  const [products, setProducts] = useState<CatalogItem[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [brandQuery, setBrandQuery] = useState("");
-  const [minPrice, setMinPrice] = useState(0);
-  const [maxPrice, setMaxPrice] = useState(30000000);
-  const [minRating, setMinRating] = useState(0);
-  const [saleOnly, setSaleOnly] = useState(searchParams.get("sale") === "true");
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [freeShipOnly, setFreeShipOnly] = useState(false);
-  const [sort, setSort] = useState("relevant");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [favorites, setFavorites] = useState<Set<string>>(new Set());
-
-  const urlCategory = searchParams.get("category") || "";
-  const searchTerm = searchParams.get("search") || "";
-  const saleParam = searchParams.get("sale") === "true";
-
-  useEffect(() => setSaleOnly(saleParam), [saleParam]);
+  const [search, setSearch] = useState(params.get("search") || "");
+  const [minPrice, setMinPrice] = useState(params.get("minPrice") || "");
+  const [maxPrice, setMaxPrice] = useState(params.get("maxPrice") || "");
+  const [storeSearch, setStoreSearch] = useState("");
 
   useEffect(() => {
     let active = true;
-    const loadProducts = async () => {
-      setLoading(true);
-      try {
-        const response = searchTerm
-          ? await productApi.searchProducts(searchTerm, 100)
-          : await productApi.getProducts({ limit: 100, ...(urlCategory ? { category: urlCategory } : {}) });
-        const payload = response.data as { data?: ProductType[]; products?: ProductType[] } | ProductType[];
-        const list = Array.isArray(payload) ? payload : payload.data || payload.products || [];
-        if (active) setProducts(list);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-    void loadProducts();
+    catalogApi.categories()
+      .then(tree => { if (active) setCategories(tree.categories); })
+      .catch(() => { /* The product grid can still load when filter metadata is unavailable. */ });
     return () => { active = false; };
-  }, [searchTerm, urlCategory]);
+  }, []);
 
   useEffect(() => {
-      if (urlCategory) setSelectedCategories([urlCategory]);
-      else setSelectedCategories([]);
-  }, [urlCategory]);
+    let active = true;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      const search = storeSearch.trim();
+      catalogApi.list(`?limit=${search ? 20 : 50}${search ? `&search=${encodeURIComponent(search)}` : ""}`, controller.signal)
+        .then(result => { if (active) setStores(result.stores); })
+        .catch(() => { if (active) setStores([]); });
+    }, storeSearch ? 300 : 0);
+    return () => { active = false; controller.abort(); window.clearTimeout(timer); };
+  }, [storeSearch]);
 
-  const getBrand = (product: ProductType) => typeof product.store === "object" ? product.store.name || product.brand : product.brand;
-  const brands = useMemo(() => Array.from(new Set(products.map(getBrand).filter(Boolean))), [products]);
+  useEffect(() => {
+    const current = new URLSearchParams(filterKey);
+    setSearch(current.get("search") || "");
+    setMinPrice(current.get("minPrice") || "");
+    setMaxPrice(current.get("maxPrice") || "");
+  }, [filterKey]);
 
-  const filteredProducts = useMemo(() => {
-    const result = products.filter((product) => {
-      const price = product.salePrice ?? product.price;
-      const categoryMatch = selectedCategories.length === 0 || selectedCategories.some((selected) => (categoryOptions.find((option) => option[0] === selected)?.[2] || selected) === product.category);
-      const brandMatch = selectedBrands.length === 0 || selectedBrands.includes(getBrand(product));
-      return categoryMatch && brandMatch && price >= minPrice && price <= maxPrice && (product.rating || 0) >= minRating && (!saleOnly || Boolean(product.salePrice && product.salePrice < product.price)) && (!inStockOnly || product.quantity > 0);
+  useEffect(() => {
+    let active = true;
+    setLoading(true);
+    const current = new URLSearchParams(filterKey);
+    const options: ProductQuery = {
+      page,
+      limit: PAGE_SIZE,
+      search: current.get("search") || undefined,
+      category: current.get("category") || undefined,
+      store: current.get("store") || undefined,
+      minPrice: current.has("minPrice") ? Number(current.get("minPrice")) : undefined,
+      maxPrice: current.has("maxPrice") ? Number(current.get("maxPrice")) : undefined,
+      minRating: current.has("minRating") ? Number(current.get("minRating")) : undefined,
+      inStock: current.get("inStock") === "true" ? true : undefined,
+      sale: current.get("sale") === "true" ? true : undefined,
+      sort: (current.get("sort") || "relevance") as ProductQuery["sort"],
+    };
+    const { search: keyword, ...filters } = options;
+    (keyword
+      ? catalogApi.searchProducts({ ...filters, q: keyword })
+      : catalogApi.listProducts(options))
+      .then(result => { if (active) { setProducts(result.products); setTotal(result.total); } })
+      .catch(error => {
+        if (active) {
+          setProducts([]); setTotal(0);
+          toast.error(error instanceof Error ? error.message : "Không thể tải sản phẩm.", { containerId: "general-toast", toastId: "catalog-list-error" });
+        }
+      })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [filterKey, page]);
+
+  function updateFilters(changes: Record<string, string>) {
+    const next = new URLSearchParams(params);
+    Object.entries(changes).forEach(([key, value]) => {
+      if (value) next.set(key, value);
+      else next.delete(key);
     });
-    return [...result].sort((a, b) => {
-      if (sort === "price-low") return (a.salePrice ?? a.price) - (b.salePrice ?? b.price);
-      if (sort === "price-high") return (b.salePrice ?? b.price) - (a.salePrice ?? a.price);
-      if (sort === "newest") return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-      if (sort === "bestselling") return (b.soldCount || 0) - (a.soldCount || 0);
-      return Number(b.isFeatured) - Number(a.isFeatured) || (b.rating || 0) - (a.rating || 0);
-    });
-  }, [inStockOnly, maxPrice, minPrice, minRating, products, saleOnly, selectedBrands, selectedCategories, sort]);
+    next.delete("page");
+    setParams(next);
+  }
 
-  const pageSize = 12;
-  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
-  const visibleProducts = filteredProducts.slice((page - 1) * pageSize, page * pageSize);
+  function submitFilters(event: FormEvent) {
+    event.preventDefault();
+    const min = minPrice.trim() === "" ? "" : String(Math.max(0, Number(minPrice) || 0));
+    const max = maxPrice.trim() === "" ? "" : String(Math.max(0, Number(maxPrice) || 0));
+    if (min && max && Number(min) > Number(max)) {
+      toast.error("Giá từ không được lớn hơn giá đến.", { containerId: "general-toast" });
+      return;
+    }
+    updateFilters({ search: search.trim(), minPrice: min, maxPrice: max });
+  }
 
-  useEffect(() => setPage(1), [selectedCategories, selectedBrands, minPrice, maxPrice, minRating, saleOnly, inStockOnly, freeShipOnly, sort]);
+  function selectPrice(min: string, max: string) {
+    setMinPrice(min); setMaxPrice(max);
+    updateFilters({ minPrice: min, maxPrice: max });
+  }
 
-  const toggleValue = (value: string, setter: React.Dispatch<React.SetStateAction<string[]>>) => setter((current) => current.includes(value) ? current.filter((item) => item !== value) : [...current, value]);
-  const clearFilters = () => { setSelectedCategories([]); setSelectedBrands([]); setMinPrice(0); setMaxPrice(30000000); setMinRating(0); setSaleOnly(false); setInStockOnly(false); setFreeShipOnly(false); };
+  function goToPage(nextPage: number) {
+    const next = new URLSearchParams(params);
+    if (nextPage <= 1) next.delete("page");
+    else next.set("page", String(nextPage));
+    setParams(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
-  const addToCart = async (product: ProductType) => {
-    await cartApi.addToCart({ productId: product._id, quantity: 1, variation: { color: "Đen", size: "Tiêu chuẩn", additionalPrice: 0 } });
-    await fetchCart();
-    toast.success(`Đã thêm ${product.name} vào giỏ`, { containerId: "general-toast" });
-  };
+  const categoryOptions = flattenCategories(categories);
+  const visibleStores = stores;
+  const pageCount = Math.ceil(total / PAGE_SIZE);
+  const firstPageButton = Math.max(1, Math.min(page - 2, pageCount - 4));
+  const pageButtons = Array.from({ length: Math.min(pageCount, 5) }, (_, index) => firstPageButton + index);
+  const first = total ? (page - 1) * PAGE_SIZE + 1 : 0;
+  const last = Math.min(page * PAGE_SIZE, total);
+  const hasFilters = ["search", "category", "store", "minPrice", "maxPrice", "minRating", "inStock", "sale"].some(key => params.has(key));
 
-  const title = searchTerm ? `Kết quả cho “${searchTerm}”` : urlCategory ? categoryNames[urlCategory] || urlCategory : "Tất cả sản phẩm";
-  return (
-    <div className="catalog-page">
-      <nav className="catalog-breadcrumb"><Link to="/">Trang chủ</Link><span>/</span><strong>{title}</strong></nav>
-      <section className="catalog-promo"><div><p>Gợi ý từ MDUC247</p><h2>Khám phá sản phẩm đang giảm giá</h2><Link to="/products?sale=true">Xem sản phẩm</Link></div></section>
+  return <div className="catalog-page">
+    <ContentBreadcrumb items={[{ label: "Tất cả sản phẩm" }]} />
+    <section className="catalog-promo" aria-labelledby="catalog-promo-title">
+      <p>Gợi ý từ MDUC247</p>
+      <h1 id="catalog-promo-title">Khám phá sản phẩm từ các gian hàng</h1>
+      <a href="#catalog-results">Xem sản phẩm</a>
+    </section>
 
-      <div className="catalog-layout">
-        <aside className={`catalog-filter ${filtersOpen ? "is-open" : ""}`}>
-          <h2>Bộ lọc</h2>
-          <button className="catalog-filter-toggle" type="button" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>Bộ lọc sản phẩm <ChevronDown size={18} /></button>
-          <section><h3>Danh mục <span>⌄</span></h3>{categoryOptions.map(([value, label]) => <label key={value}><input type="checkbox" checked={selectedCategories.includes(value)} onChange={() => toggleValue(value, setSelectedCategories)} />{label}</label>)}</section>
-          <section><h3>Khoảng giá <span>⌄</span></h3><input className="catalog-range" type="range" min="0" max="30000000" step="100000" value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} /><div className="catalog-price-inputs"><label>Từ giá<input type="number" value={minPrice} onChange={(event) => setMinPrice(Number(event.target.value))} /></label><span>đ</span><label>Đến giá<input type="number" value={maxPrice} onChange={(event) => setMaxPrice(Number(event.target.value))} /></label><span>đ</span></div><div className="catalog-price-links"><button type="button" onClick={() => { setMinPrice(0); setMaxPrice(500000); }}>Dưới 500.000đ</button><button type="button" onClick={() => { setMinPrice(500000); setMaxPrice(2000000); }}>500.000đ–2.000.000đ</button><button type="button" onClick={() => { setMinPrice(2000000); setMaxPrice(5000000); }}>2.000.000đ–5.000.000đ</button><button type="button" onClick={() => { setMinPrice(5000000); setMaxPrice(30000000); }}>Trên 5.000.000đ</button></div></section>
-          <section><h3>Thương hiệu <span>⌄</span></h3><input className="catalog-brand-search" value={brandQuery} onChange={(event) => setBrandQuery(event.target.value)} placeholder="Tìm thương hiệu..." />{brands.filter((brand) => brand.toLowerCase().includes(brandQuery.toLowerCase())).map((brand) => <label key={brand}><input type="checkbox" checked={selectedBrands.includes(brand)} onChange={() => toggleValue(brand, setSelectedBrands)} />{brand}<small>{products.filter((product) => getBrand(product) === brand).length}</small></label>)}</section>
-          <section><h3>Đánh giá <span>⌄</span></h3>{[5, 4, 3].map((rating) => <label key={rating}><input type="radio" name="rating" checked={minRating === rating} onChange={() => setMinRating(rating)} /><span className="catalog-stars">{"★".repeat(rating)}{"☆".repeat(5 - rating)}</span> từ {rating} sao</label>)}</section>
-          <section><h3>Tình trạng <span>⌄</span></h3><label><input type="checkbox" checked={inStockOnly} onChange={(event) => setInStockOnly(event.target.checked)} />Còn hàng</label><label><input type="checkbox" checked={saleOnly} onChange={(event) => setSaleOnly(event.target.checked)} />Đang giảm giá</label><label><input type="checkbox" checked={freeShipOnly} onChange={(event) => setFreeShipOnly(event.target.checked)} />Miễn phí vận chuyển</label></section>
-          <button className="catalog-clear" type="button" onClick={clearFilters}>Xóa tất cả</button>
-        </aside>
+    <div className="catalog-layout">
+      <aside className="catalog-filter" aria-label="Bộ lọc sản phẩm">
+        <h2>Bộ lọc</h2>
+        <form onSubmit={submitFilters}>
+          <section>
+            <h3>Tìm kiếm</h3>
+            <input className="catalog-brand-search" value={search} maxLength={100} onChange={event => setSearch(event.target.value)} placeholder="Tên sản phẩm, thương hiệu..." aria-label="Tìm kiếm sản phẩm" />
+          </section>
+          <section>
+            <h3>Danh mục <span aria-hidden="true">⌄</span></h3>
+            {categoryOptions.map(category => <label key={category.id}><input type="checkbox" checked={params.get("category") === category.slug} onChange={event => updateFilters({ category: event.target.checked ? category.slug : "" })} />{category.name}</label>)}
+          </section>
+          <section>
+            <h3>Khoảng giá <span aria-hidden="true">⌄</span></h3>
+            <input className="catalog-range" type="range" min="0" max={PRICE_CEILING} step="100000" value={maxPrice === "" ? PRICE_CEILING : Math.min(PRICE_CEILING, Number(maxPrice))} onChange={event => setMaxPrice(event.target.value)} onPointerUp={event => updateFilters({ maxPrice: event.currentTarget.value })} onKeyUp={event => updateFilters({ maxPrice: event.currentTarget.value })} aria-label="Giá tối đa" />
+            <div className="catalog-price-inputs"><label>Từ giá<input type="number" min="0" value={minPrice} onChange={event => setMinPrice(event.target.value)} /></label><span>đ</span><label>Đến giá<input type="number" min="0" value={maxPrice} onChange={event => setMaxPrice(event.target.value)} /></label><span>đ</span></div>
+            <div className="catalog-price-links"><button type="button" onClick={() => selectPrice("", "500000")}>Dưới 500.000đ</button><button type="button" onClick={() => selectPrice("500000", "2000000")}>500.000đ–2.000.000đ</button><button type="button" onClick={() => selectPrice("2000000", "5000000")}>2.000.000đ–5.000.000đ</button><button type="button" onClick={() => selectPrice("5000000", "")}>Trên 5.000.000đ</button></div>
+          </section>
+          <section>
+            <h3>Cửa hàng <span aria-hidden="true">⌄</span></h3>
+            <input className="catalog-brand-search" value={storeSearch} maxLength={100} onChange={event => setStoreSearch(event.target.value)} placeholder="Tìm cửa hàng..." aria-label="Tìm cửa hàng" />
+            {visibleStores.map(store => <label key={store.id}><input type="checkbox" checked={params.get("store") === store.slug} onChange={event => updateFilters({ store: event.target.checked ? store.slug : "" })} />{store.name}{store.productCount != null && <small>{store.productCount}</small>}</label>)}
+          </section>
+          <section>
+            <h3>Đánh giá <span aria-hidden="true">⌄</span></h3>
+            {[5, 4, 3].map(stars => <label key={stars}><input type="radio" name="rating" checked={params.get("minRating") === String(stars)} onChange={() => updateFilters({ minRating: String(stars) })} /><span className="catalog-stars">{"★".repeat(stars)}</span> từ {stars} sao</label>)}
+            {params.has("minRating") && <button className="catalog-text-action" type="button" onClick={() => updateFilters({ minRating: "" })}>Bỏ lọc đánh giá</button>}
+          </section>
+          <section>
+            <h3>Tình trạng <span aria-hidden="true">⌄</span></h3>
+            <label><input type="checkbox" checked={params.get("inStock") === "true"} onChange={event => updateFilters({ inStock: event.target.checked ? "true" : "" })} />Còn hàng</label>
+            <label><input type="checkbox" checked={params.get("sale") === "true"} onChange={event => updateFilters({ sale: event.target.checked ? "true" : "" })} />Đang giảm giá</label>
+          </section>
+          <button className="catalog-apply" type="submit">Áp dụng tìm kiếm và giá</button>
+          {hasFilters && <button className="catalog-clear" type="button" onClick={() => setParams(new URLSearchParams())}>Xóa tất cả</button>}
+        </form>
+      </aside>
 
-        <main className="catalog-results">
-          <div className="catalog-toolbar"><div><strong>{filteredProducts.length} sản phẩm</strong>{(selectedCategories.length > 0 || selectedBrands.length > 0 || minRating > 0 || saleOnly) && <button type="button" onClick={clearFilters}>Xóa tất cả</button>}</div><div><span>Sắp xếp</span><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="relevant">Liên quan nhất</option><option value="newest">Mới nhất</option><option value="bestselling">Bán chạy</option><option value="price-low">Giá thấp đến cao</option><option value="price-high">Giá cao đến thấp</option></select><button type="button" className={view === "grid" ? "is-active" : ""} onClick={() => setView("grid")} aria-label="Dạng lưới"><Grid2X2 /></button><button type="button" className={view === "list" ? "is-active" : ""} onClick={() => setView("list")} aria-label="Dạng danh sách"><List /></button></div></div>
-          {loading ? <div className="catalog-loading"><PackageSearch /><span>Đang tải sản phẩm...</span></div> : visibleProducts.length ? <div className={`catalog-grid is-${view}`}>{visibleProducts.map((product) => {
-            const currentPrice = product.salePrice ?? product.price;
-            const discount = product.salePrice ? Math.round((1 - product.salePrice / product.price) * 100) : 0;
-            const favorite = favorites.has(product._id);
-            return <article className="catalog-card" key={product._id}><div className="catalog-card__media" onClick={() => navigate(`/products/${product._id}`)}><img src={product.images?.[0] || "/visual-placeholder.svg"} alt={product.name} onError={showImageFallback} />{discount > 0 && <span>-{discount}%</span>}<button type="button" className={favorite ? "is-active" : ""} onClick={(event) => { event.stopPropagation(); setFavorites((current) => { const next = new Set(current); if (next.has(product._id)) next.delete(product._id); else next.add(product._id); return next; }); }} aria-label="Yêu thích"><Heart /></button></div><div className="catalog-card__body"><small>{getBrand(product)}</small><h2 onClick={() => navigate(`/products/${product._id}`)}>{product.name}</h2><p className="catalog-card__rating"><Star /> {typeof product.rating === "number" ? product.rating.toFixed(1) : "Chưa có đánh giá"} {typeof product.rating === "number" && <span>({product.reviewsCount || 0})</span>}</p><p className="catalog-card__price"><strong>{currentPrice.toLocaleString("vi-VN")}₫</strong>{product.salePrice && <del>{product.price.toLocaleString("vi-VN")}₫</del>}</p><div className="catalog-card__meta"><span>Ưu đãi vận chuyển</span><small>Đã bán {(product.soldCount || 0).toLocaleString("vi-VN")}</small></div><button type="button" onClick={() => void addToCart(product)}>Thêm vào giỏ</button></div></article>;
-          })}</div> : <div className="catalog-empty"><PackageSearch /><h2>Không tìm thấy sản phẩm</h2><p>Hãy thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p></div>}
-          {pageCount > 1 && <footer className="catalog-pagination"><span>Hiển thị {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filteredProducts.length)} trong {filteredProducts.length} sản phẩm</span><div>{Array.from({ length: pageCount }, (_, index) => index + 1).slice(0, 4).map((number) => <button type="button" key={number} className={page === number ? "is-active" : ""} onClick={() => setPage(number)}>{number}</button>)}<button type="button" disabled={page === pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))}>Tiếp theo →</button></div></footer>}
-        </main>
-      </div>
-
-      <section className="catalog-interests"><h2>Bạn có thể quan tâm</h2><div>{["Âm thanh", "Laptop", "Thiết bị thông minh", "Phụ kiện máy tính"].map((item) => <button type="button" key={item} onClick={() => navigate(`/products?search=${encodeURIComponent(item)}`)}>{item}</button>)}</div></section>
+      <main className="catalog-results" id="catalog-results">
+        <div className="catalog-toolbar"><div><strong>{loading ? "Đang tải..." : `${total.toLocaleString("vi-VN")} sản phẩm`}</strong></div><div><span>Sắp xếp</span><select aria-label="Sắp xếp sản phẩm" value={params.get("sort") || "relevance"} onChange={event => updateFilters({ sort: event.target.value })}><option value="relevance">Liên quan nhất</option><option value="newest">Mới nhất</option><option value="price_asc">Giá tăng dần</option><option value="price_desc">Giá giảm dần</option></select><button type="button" className={view === "grid" ? "is-active" : ""} aria-label="Xem dạng lưới" aria-pressed={view === "grid"} onClick={() => setView("grid")}><Grid2X2 /></button><button type="button" className={view === "list" ? "is-active" : ""} aria-label="Xem dạng danh sách" aria-pressed={view === "list"} onClick={() => setView("list")}><List /></button></div></div>
+        {loading ? <div className="catalog-loading" role="status"><PackageSearch /><span>Đang tải sản phẩm...</span></div> : products.length ? <div className={`catalog-grid${view === "list" ? " is-list" : ""}`}>{products.map(product => <CatalogProductCard key={product.id} product={product} />)}</div> : <div className="catalog-empty"><PackageSearch /><h2>Không có sản phẩm phù hợp</h2><p>Hãy thử điều chỉnh bộ lọc hoặc tìm kiếm khác.</p></div>}
+        {!loading && <div className="catalog-pagination"><span>Hiển thị {first}–{last} trong {total.toLocaleString("vi-VN")} sản phẩm</span>{pageCount > 1 && <div>{pageButtons.map(number => <button type="button" key={number} className={number === page ? "is-active" : ""} aria-current={number === page ? "page" : undefined} onClick={() => goToPage(number)}>{number}</button>)}<button type="button" disabled={page >= pageCount} onClick={() => goToPage(page + 1)}>Tiếp theo →</button></div>}</div>}
+      </main>
     </div>
-  );
-};
 
-export default ProductList;
+    {categoryOptions.length > 0 && <section className="catalog-interests"><h2>Bạn có thể quan tâm</h2><div>{categoryOptions.slice(0, 6).map(category => <button type="button" key={category.id} onClick={() => { updateFilters({ category: category.slug }); document.getElementById("catalog-results")?.scrollIntoView({ behavior: "smooth" }); }}>{category.name}</button>)}</div></section>}
+  </div>;
+}

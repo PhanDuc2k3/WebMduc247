@@ -1,99 +1,61 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, RotateCcw, ShieldCheck, Truck } from "lucide-react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
-import productApi from "../../api/productApi";
-import CanvaProductSection from "../../components/Home/CanvaHome/CanvaProductSection";
-import { demoProducts, type HomeProduct } from "../../components/Home/CanvaHome/homeData";
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import { ArrowRight, BatteryCharging, Cable, Headphones, Package, RotateCcw, ShieldCheck, Smartphone, Truck, Watch } from "lucide-react";
 import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
-import type { ProductType } from "../../types/product";
+import LiveProductCard from "../../components/Home/CanvaHome/LiveProductCard";
+import { catalogApi, type CatalogItem, type CategoryNode } from "../../api/catalogApi";
 import { categoryPages } from "./categoryData";
 import "../../components/Home/CanvaHome/CanvaHome.css";
 import "./CategoryPage.css";
 
-const extractProducts = (payload: unknown): ProductType[] => {
-  if (Array.isArray(payload)) return payload as ProductType[];
-  if (typeof payload !== "object" || payload === null) return [];
-  const data = payload as { data?: unknown; products?: unknown };
-  if (Array.isArray(data.products)) return data.products as ProductType[];
-  if (Array.isArray(data.data)) return data.data as ProductType[];
-  return [];
+const findCategory = (items: CategoryNode[], slug: string): CategoryNode | null => {
+  for (const item of items) {
+    if (item.slug === slug) return item;
+    const nested = findCategory(item.children, slug);
+    if (nested) return nested;
+  }
+  return null;
 };
+const phoneIcons = [Smartphone, Smartphone, Headphones, Cable, BatteryCharging, Watch];
 
-const toHomeProduct = (product: ProductType): HomeProduct => ({
-  _id: product._id,
-  name: product.name,
-  price: product.price,
-  salePrice: product.salePrice,
-  images: product.images || [],
-  rating: product.rating,
-  soldCount: product.soldCount,
-  category: product.category,
-  isFeatured: product.isFeatured,
-  createdAt: product.createdAt,
-});
-
-const CategoryPage = () => {
+export default function CategoryPage() {
   const { slug = "" } = useParams();
-  const navigate = useNavigate();
   const config = categoryPages[slug];
-  const fallbackProducts = useMemo(() => {
-    if (!config) return demoProducts.slice(0, 10);
-    const matching = demoProducts.filter((product) => product.category === config.apiCategory);
-    return [...matching, ...demoProducts.filter((product) => product.category !== config.apiCategory)].slice(0, 10);
-  }, [config]);
-  const [products, setProducts] = useState<HomeProduct[]>(fallbackProducts);
-
+  const actualSlug = config?.apiCategory || slug;
+  const [category, setCategory] = useState<CategoryNode | null>(null);
+  const [products, setProducts] = useState<CatalogItem[]>([]);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    setProducts(fallbackProducts);
-    if (!config) return;
     let active = true;
-    const loadProducts = async () => {
-      try {
-        const response = await productApi.getProducts({ category: config.apiCategory, limit: 20 });
-        const liveProducts = extractProducts(response.data).filter((product) => product.isActive !== false).map(toHomeProduct);
-        if (active && liveProducts.length) setProducts(liveProducts);
-      } catch {
-        if (active) setProducts(fallbackProducts);
-      }
-    };
-    void loadProducts();
+    setLoading(true); setCategory(null); setProducts([]);
+    Promise.all([catalogApi.categories(), catalogApi.listProducts({ category: actualSlug, page: 1, limit: 50 })])
+      .then(([tree, listing]) => { if (active) { setCategory(findCategory(tree.categories, actualSlug)); setProducts(listing.products); } })
+      .catch(error => { if (active) toast.error(error instanceof Error ? error.message : "Không thể tải danh mục.", { containerId: "general-toast" }); })
+      .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [config, fallbackProducts]);
+  }, [actualSlug]);
 
-  if (!config) return <Navigate to="/products" replace />;
-  const Icon = config.icon;
+  const title = config?.title || category?.name || slug;
+  const shortcuts = config?.subcategories || category?.children.map(item => item.name) || [];
+  const catalogLink = `/products?category=${actualSlug}`;
+  return <div className="category-page">
+    <ContentBreadcrumb items={[{ label: "Danh mục", to: "/products" }, { label: title }]} />
+    {loading ? <p className="category-page__state">Đang tải danh mục và sản phẩm...</p> : !category ?
+      <div className="category-page__state"><h1>Không tìm thấy danh mục</h1><Link to="/products">Xem tất cả sản phẩm</Link></div> : <>
+        {!!shortcuts.length && <section className="category-page__subcategories" aria-labelledby="category-quick-title"><header><div><p>Khám phá nhanh</p><h1 id="category-quick-title">Bạn đang tìm gì?</h1></div><Link to={catalogLink}>Xem toàn bộ <ArrowRight size={17} /></Link></header><div>{shortcuts.slice(0, 6).map((name, index) => {
+          const child = category.children.find(item => item.name === name);
+          const Icon = slug === "phone" ? phoneIcons[index] : config?.icon || Package;
+          return <Link key={name} to={child ? `/category/${child.slug}` : `${catalogLink}&search=${encodeURIComponent(name)}`}><span className={`category-page__sub-icon category-page__sub-icon--${index % 4}`}><Icon size={24} /></span><strong>{name}</strong><small>Khám phá ngay</small></Link>;
+        })}</div></section>}
 
-  return (
-    <div className="canva-public-page category-page">
-      <ContentBreadcrumb items={[{ label: "Danh mục", to: "/products" }, { label: config.title }]} />
+        <section className={`category-page__promo category-page__promo--${config?.tone || "blue"}`} aria-label={`Gợi ý ${title}`}><div><p>Gợi ý từ MDUC247</p><h2>{config?.promoTitle || `Khám phá ${title}`}</h2><span>{config?.promoDescription || "Xem các sản phẩm đang được bán trong danh mục này."}</span><Link className="category-page__promo-action" to={catalogLink}>Mua sắm ngay <ArrowRight size={17} /></Link></div><img src={config?.image || category.imageUrl || "/home/shopping-hero.png"} alt={config?.imageAlt || title} /></section>
 
-      <div className="canva-public-page__content">
-        <section className="category-page__subcategories" aria-labelledby="subcategory-title">
-          <header><div><p>Khám phá nhanh</p><h2 id="subcategory-title">Bạn đang tìm gì?</h2></div><button type="button" onClick={() => navigate(`/products?category=${encodeURIComponent(config.apiCategory)}`)}>Xem toàn bộ <ArrowRight /></button></header>
-          <div>
-            {config.subcategories.map((subcategory, index) => (
-              <button type="button" key={subcategory} onClick={() => navigate(`/products?category=${encodeURIComponent(config.apiCategory)}&search=${encodeURIComponent(subcategory)}`)}>
-                <span className={`category-page__sub-icon category-page__sub-icon--${index % 4}`}><Icon /></span><strong>{subcategory}</strong><small>Khám phá ngay</small>
-              </button>
-            ))}
-          </div>
+        <section className="canva-home__section category-page__products" aria-labelledby="category-products-title"><header className="canva-home__section-header"><div><p className="canva-home__eyebrow">Được quan tâm nhiều</p><h2 id="category-products-title">Nổi bật trong {title}</h2></div><Link to={catalogLink}>Xem tất cả <ArrowRight size={17} /></Link></header>
+          {products.length ? <div className="canva-home__product-grid">{products.slice(0, 10).map(product => <LiveProductCard product={product} key={product.id} />)}</div> : <p className="category-page__state">Chưa có sản phẩm đang bán trong danh mục này.</p>}
         </section>
 
-        <section className={`category-page__promo category-page__promo--${config.tone}`}>
-          <div><p>Gợi ý từ MDUC247</p><h2>{config.promoTitle}</h2><span>{config.promoDescription}</span><button type="button" onClick={() => navigate(`/products?category=${encodeURIComponent(config.apiCategory)}`)}>Mua sắm ngay <ArrowRight /></button></div>
-          <img src={config.image} alt="" />
-        </section>
-      </div>
-
-      <CanvaProductSection kicker="Được quan tâm nhiều" title={`Nổi bật trong ${config.title}`} products={products.slice(0, 10)} viewAllTo={`/products?category=${encodeURIComponent(config.apiCategory)}`} />
-
-      <section className="category-page__benefits" aria-label="Lợi ích mua sắm">
-        <article><Truck /><span><strong>Giao hàng thuận tiện</strong><small>Theo dõi đơn hàng dễ dàng</small></span></article>
-        <article><ShieldCheck /><span><strong>Mua sắm an tâm</strong><small>Thông tin cửa hàng rõ ràng</small></span></article>
-        <article><RotateCcw /><span><strong>Hỗ trợ đổi trả</strong><small>Quy trình minh bạch</small></span></article>
-      </section>
-    </div>
-  );
-};
-
-export default CategoryPage;
+        <div className="category-page__benefits"><article><Truck aria-hidden="true" /><span><strong>Giao hàng thuận tiện</strong><small>Theo dõi đơn hàng dễ dàng</small></span></article><article><ShieldCheck aria-hidden="true" /><span><strong>Mua sắm an tâm</strong><small>Thông tin cửa hàng rõ ràng</small></span></article><article><RotateCcw aria-hidden="true" /><span><strong>Hỗ trợ đổi trả</strong><small>Quy trình minh bạch</small></span></article></div>
+      </>}
+  </div>;
+}

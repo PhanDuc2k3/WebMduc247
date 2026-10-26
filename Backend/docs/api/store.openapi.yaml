@@ -1,0 +1,184 @@
+openapi: 3.1.0
+info:
+  title: MDUC247 Store & Seller API
+  version: 0.1.0
+servers:
+  - url: http://localhost:5102/api/v2
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+  schemas:
+    Store:
+      type: object
+      required: [id, slug, name, description, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [active, paused] }
+        logoUrl: { type: [string, 'null'], format: uri }
+        bannerUrl: { type: [string, 'null'], format: uri }
+        category: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        productCount: { type: [integer, 'null'], description: Count of published products with positive stock on public responses }
+        rating: { type: [number, 'null'], description: Null until Review Service provides a real rating }
+        followers: { type: [integer, 'null'], description: Null until Engagement Service provides a real count }
+        contactInfo: { type: object, additionalProperties: false, properties: { email: { type: string }, phone: { type: string } } }
+        businessHours: { type: object }
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+paths:
+  /stores:
+    get:
+      summary: List active public shops
+      parameters:
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 50, default: 12 } }
+        - { in: query, name: search, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: sort, schema: { type: string, enum: [newest, name] } }
+      responses:
+        '200': { description: Paginated active shops }
+  /stores/featured:
+    get:
+      summary: Recently created active shops; no invented popularity metric
+      responses:
+        '200': { description: Public shops, at most eight }
+  /stores/{slug}:
+    get:
+      summary: Public profile of an active shop
+      parameters:
+        - { in: path, name: slug, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Shop profile }
+        '404': { description: Shop missing or paused }
+  /stores/{slug}/products:
+    get:
+      summary: Published, in-stock products of an active shop
+      parameters:
+        - { in: path, name: slug, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Public products }
+        '404': { description: Shop missing or paused }
+  /stores/by-id/{id}/checkout-policy:
+    get:
+      summary: Read current order acceptance for integration with Order Service
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Store ID and acceptingOrders boolean }
+        '404': { description: Store missing }
+  /seller/stores:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: List stores where current user has an active membership
+      responses:
+        '200': { description: Managed shops }
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Create an auto-activated shop and owner membership
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, contactEmail, contactPhone, pickupAddress]
+              properties:
+                name: { type: string, minLength: 3, maxLength: 120 }
+                slug: { type: string, pattern: '^[a-z0-9]+(-[a-z0-9]+)*$', minLength: 3, maxLength: 60 }
+                description: { type: string, maxLength: 4000 }
+                logoUrl: { type: string, format: uri, description: HTTPS only }
+                bannerUrl: { type: string, format: uri, description: HTTPS only }
+                category: { type: string }
+                contactEmail: { type: string, format: email }
+                contactPhone: { type: string }
+                pickupAddress: { type: string }
+                returnAddress: { type: string }
+      responses:
+        '201': { description: Created shop }
+        '400': { description: INVALID_SLUG or INVALID_STORE }
+        '409': { description: SLUG_TAKEN }
+  /seller/stores/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: View shop as member
+      responses:
+        '200': { description: Shop management details }
+        '403': { description: STORE_FORBIDDEN }
+    patch:
+      security: [{ bearerAuth: [] }]
+      summary: Owner updates profile; slug and owner ID are immutable
+      responses:
+        '200': { description: Updated shop }
+        '403': { description: OWNER_REQUIRED }
+  /seller/stores/{id}/settings:
+    patch:
+      security: [{ bearerAuth: [] }]
+      summary: Owner changes contact, business hours, or order acceptance
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                acceptingOrders: { type: boolean }
+                businessHours: { type: object }
+                contactInfo:
+                  type: object
+                  properties:
+                    email: { type: string, format: email }
+                    phone: { type: string }
+      responses:
+        '200': { description: Updated shop and StoreStatusChanged event }
+        '403': { description: OWNER_REQUIRED }
+  /seller/stores/{id}/overview:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Shop overview; unavailable metrics are null
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Product count from Catalog; order and revenue metrics null until Order Service integration }
+  /seller/stores/{id}/members:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: List active members
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Owner and staff memberships }
+  /seller/stores/{id}/invitations:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Owner creates seven-day staff invitation for an email
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '201': { description: One-time invitation token }
+        '403': { description: OWNER_REQUIRED }
+  /seller/invitations/accept:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Invitee accepts token when authenticated email matches
+      responses:
+        '200': { description: Staff membership created }
+        '400': { description: INVALID_INVITATION }
+  /seller/stores/{id}/members/{userId}:
+    delete:
+      security: [{ bearerAuth: [] }]
+      summary: Owner removes staff membership
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: userId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Staff removed }
+        '403': { description: OWNER_REQUIRED }

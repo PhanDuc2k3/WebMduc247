@@ -1,0 +1,18 @@
+FROM node:22-bookworm-slim
+
+WORKDIR /app
+
+# Keep dependency installation cached when only JavaScript source changes.
+COPY package.json package-lock.json ./
+COPY apps/api-gateway/package.json ./apps/api-gateway/package.json
+COPY services/identity-service/package.json ./services/identity-service/package.json
+COPY services/catalog-service/package.json ./services/catalog-service/package.json
+COPY services/order-service/package.json ./services/order-service/package.json
+COPY services/payment-service/package.json ./services/payment-service/package.json
+COPY services/engagement-service/package.json ./services/engagement-service/package.json
+COPY services/chat-service/package.json ./services/chat-service/package.json
+RUN npm ci --no-audit --no-fund
+
+COPY scripts/docker-dev.mjs ./scripts/docker-dev.mjs
+
+CMD ["node", "scripts/docker-dev.mjs", "identity-service"]

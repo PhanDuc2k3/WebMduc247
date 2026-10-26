@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ShippingSnapshot.v1",
+  "description": "Order Service must copy this data into each order at creation time; later profile/address edits must not mutate it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["buyerId", "buyerName", "recipientName", "recipientPhone", "provinceCode", "districtCode", "wardCode", "addressLine", "note"],
+  "properties": {
+    "buyerId": { "type": "string", "format": "uuid" },
+    "buyerName": { "type": "string" },
+    "recipientName": { "type": "string" },
+    "recipientPhone": { "type": "string" },
+    "provinceCode": { "type": "string" },
+    "districtCode": { "type": "string", "description": "Empty for addresses without a district" },
+    "wardCode": { "type": "string" },
+    "addressLine": { "type": "string" },
+    "note": { "type": ["string", "null"] }
+  }
+}

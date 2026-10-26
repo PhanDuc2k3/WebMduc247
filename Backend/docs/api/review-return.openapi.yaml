@@ -1,0 +1,283 @@
+openapi: 3.0.3
+info:
+  title: Review and Return API v2
+  version: 0.1.0
+  description: Reviews are served by Engagement (5105); returns are served by Order (5103). JSON requests are origin checked and require a bearer token except public review reads.
+servers:
+  - url: http://localhost:5105/api/v2
+    description: Engagement Service
+  - url: http://localhost:5103/api/v2
+    description: Order Service
+  - url: http://localhost:5102/api/v2
+    description: Catalog Service internal rating projection
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    ReviewInput:
+      type: object
+      required: [orderItemId, rating, title, content]
+      properties:
+        orderItemId: { type: string, format: uuid }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        title: { type: string, minLength: 3, maxLength: 120 }
+        content: { type: string, minLength: 10, maxLength: 2000 }
+    ReturnInput:
+      type: object
+      required: [reasonCode, reason, resolution, items]
+      properties:
+        reasonCode:
+          type: string
+          enum: [DAMAGED, WRONG_ITEM, NOT_AS_DESCRIBED, OTHER]
+        reason: { type: string, minLength: 10, maxLength: 1000 }
+        resolution: { type: string, enum: [REFUND] }
+        items:
+          type: array
+          minItems: 1
+          maxItems: 30
+          items:
+            type: object
+            required: [orderItemId, quantity]
+            properties:
+              orderItemId: { type: string, format: uuid }
+              quantity: { type: integer, minimum: 1 }
+    ReturnCommand:
+      type: object
+      required: [expectedVersion]
+      properties:
+        expectedVersion: { type: integer, minimum: 1 }
+        response: { type: string, minLength: 10, maxLength: 1000 }
+paths:
+  /reviews:
+    post:
+      summary: Publish one verified purchase review per order item
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewInput' }
+      responses:
+        '201': { description: Published }
+        '409': { description: Already reviewed or not delivered }
+  /reviews/mine:
+    get:
+      summary: List buyer's own reviews for a product
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: productId, in: query, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Own reviews }
+  /reviews/{id}:
+    patch:
+      summary: Edit own review using expectedVersion
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expectedVersion, rating, title, content]
+              properties:
+                expectedVersion: { type: integer, minimum: 1 }
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                title: { type: string, minLength: 3, maxLength: 120 }
+                content: { type: string, minLength: 10, maxLength: 2000 }
+      responses:
+        '200': { description: Updated }
+        '409': { description: Version conflict }
+  /reviews/{id}/images:
+    post:
+      summary: Upload one reviewed image; maximum three per review
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          image/png: { schema: { type: string, format: binary } }
+          image/jpeg: { schema: { type: string, format: binary } }
+          image/webp: { schema: { type: string, format: binary } }
+      responses:
+        '201': { description: Stored after malware scan, maximum 2 MB }
+  /reviews/{id}/helpful:
+    post:
+      summary: Vote helpful once per account
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Vote count }
+  /reviews/images/{id}:
+    get:
+      summary: Public image of a published review
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: WebP image }
+  /products/{id}/reviews:
+    get:
+      summary: Public reviews and rating summary
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: page, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50 } }
+        - { name: rating, in: query, schema: { type: integer, minimum: 1, maximum: 5 } }
+        - { name: sort, in: query, schema: { type: string, enum: [newest, helpful] } }
+      responses:
+        '200': { description: Published reviews only }
+  /seller/stores/{storeId}/reviews:
+    get:
+      summary: Seller's shop reviews
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Shop reviews }
+  /seller/reviews/{id}/reply:
+    post:
+      summary: Reply once as a member of the product shop
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content: { type: string, minLength: 3, maxLength: 1000 }
+      responses:
+        '201': { description: Reply created }
+  /orders/{id}/returns:
+    post:
+      summary: Request return within seven days after delivery
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReturnInput' }
+      responses:
+        '201': { description: Return requested }
+        '409': { description: Quantity or return window exceeded }
+  /returns:
+    get:
+      summary: Buyer return requests
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: shopOrderId, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Return list }
+  /returns/{id}:
+    get:
+      summary: Buyer or shop member reads return and private evidence metadata
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Return detail and history }
+  /returns/{id}/evidence:
+    post:
+      summary: Upload private evidence; maximum six images per request, 2 MB each
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          image/png: { schema: { type: string, format: binary } }
+          image/jpeg: { schema: { type: string, format: binary } }
+          image/webp: { schema: { type: string, format: binary } }
+      responses:
+        '201': { description: Evidence stored after malware scan }
+  /returns/{id}/ship:
+    post:
+      summary: Buyer confirms return shipment after approval
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReturnCommand' }
+      responses:
+        '200': { description: Returning }
+  /returns/{id}/close:
+    post:
+      summary: Buyer closes a rejected or refunded request
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReturnCommand' }
+      responses:
+        '200': { description: Closed }
+  /returns/{id}/evidence/{imageId}:
+    get:
+      summary: Private evidence image for buyer or shop member
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: imageId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: WebP image }
+  /seller/stores/{storeId}/returns:
+    get:
+      summary: Seller's shop return requests
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: storeId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: shopOrderId, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Shop return list }
+  /seller/returns/{id}/{action}:
+    post:
+      summary: Seller reviews, approves, rejects or confirms receipt
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: action, in: path, required: true, schema: { type: string, enum: [review, approve, reject, receive] } }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReturnCommand' }
+      responses:
+        '200': { description: Updated return state }
+  /internal/payment/returns/{id}/refund-context:
+    get:
+      summary: Payment checks that the return reached REFUND_PENDING
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Order-Payment-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Return status and exact eligible amount }
+  /inventory/products/{id}/rating-summary:
+    post:
+      summary: Engagement projects reconciled rating into Catalog
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Inventory-Token, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [averageRating, reviewCount]
+              properties:
+                averageRating: { type: number, minimum: 0, maximum: 5 }
+                reviewCount: { type: integer, minimum: 0 }
+      responses:
+        '200': { description: Projection updated }

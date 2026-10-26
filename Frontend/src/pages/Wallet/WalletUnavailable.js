@@ -1,0 +1,5 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { Link } from "react-router-dom";
+export default function WalletUnavailable() {
+    return _jsx("div", { className: "mx-auto max-w-2xl py-16", children: _jsxs("div", { className: "rounded-2xl border border-[#e6ebf5] bg-white p-8 text-center", children: [_jsx("h1", { className: "text-3xl font-extrabold text-[#172a49]", children: "V\u00ED n\u1ED9i b\u1ED9 ch\u01B0a kh\u1EA3 d\u1EE5ng" }), _jsx("p", { className: "mt-4 text-[#70819d]", children: "MDUC247 hi\u1EC7n h\u1ED7 tr\u1EE3 COD v\u00E0 c\u00E1c ph\u01B0\u01A1ng th\u1EE9c online \u0111\u01B0\u1EE3c hi\u1EC3n th\u1ECB khi \u0111\u00E3 k\u1EBFt n\u1ED1i nh\u00E0 cung c\u1EA5p thanh to\u00E1n. Kh\u00F4ng c\u00F3 s\u1ED1 d\u01B0 v\u00ED n\u1ED9i b\u1ED9 ho\u1EB7c ch\u1EE9c n\u0103ng n\u1EA1p/r\u00FAt ti\u1EC1n." }), _jsx(Link, { to: "/orders", className: "mt-6 inline-block font-bold text-[#476de4]", children: "Xem \u0111\u01A1n h\u00E0ng c\u1EE7a t\u00F4i" })] }) });
+}

@@ -1,0 +1,199 @@
+openapi: 3.0.3
+info:
+  title: MDUC247 Payment Service
+  version: 2.0.0
+  description: COD is always available. MoMo and VietQR Payment Kit appear only when provider credentials and verified callbacks are configured. Wallet is not implemented.
+servers:
+  - url: http://localhost:5104/api/v2
+security:
+  - bearerAuth: []
+paths:
+  /payments/methods:
+    get:
+      summary: Available methods for an authenticated buyer
+      responses:
+        '200':
+          description: COD and configured online providers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  methods:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        code: { type: string, enum: [COD, MOMO, VIETQR] }
+                        name: { type: string }
+                        available: { type: boolean }
+  /payments/intents:
+    post:
+      summary: Create or retry a provider intent from an authenticated buyer's pending payment order group
+      description: Amount and currency always come from Order Service. Creating a QR or checkout URL never records payment.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [orderGroupId, method, idempotencyKey]
+              properties:
+                orderGroupId: { type: string, format: uuid }
+                method: { type: string, enum: [MOMO, VIETQR] }
+                idempotencyKey: { type: string, minLength: 8, maxLength: 120 }
+      responses:
+        '201':
+          description: PENDING payment intent and hosted checkout URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  intent: { $ref: '#/components/schemas/Intent' }
+        '409': { description: Provider unavailable, order mismatch or idempotency conflict }
+  /payments/intents/{id}:
+    get:
+      summary: Read only the buyer's server-verified payment state
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Intent state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  intent: { $ref: '#/components/schemas/Intent' }
+                  refunds: { type: array, items: { $ref: '#/components/schemas/Refund' } }
+        '404': { description: Missing or not owned }
+  /orders/{groupId}/payments:
+    get:
+      summary: Buyer payment state for an order group
+      parameters:
+        - { in: path, name: groupId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: COD is lazily initialized as UNPAID; online state is verified from providers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orderGroupId: { type: string, format: uuid }
+                  paymentMethod: { type: string, enum: [COD, MOMO, VIETQR] }
+                  orderPaymentStatus: { type: string }
+                  intents: { type: array, items: { $ref: '#/components/schemas/Intent' } }
+                  refunds: { type: array, items: { $ref: '#/components/schemas/Refund' } }
+  /payments/webhooks/momo:
+    post:
+      security: []
+      summary: MoMo captureWallet IPN with HMAC-SHA256 signature, order/ref and amount verification
+      responses:
+        '200': { description: Authenticated and deduplicated provider result }
+        '403': { description: Invalid signature }
+        '409': { description: Amount, request ID or provider order mismatch }
+  /payments/webhooks/bank:
+    post:
+      security: [{ bankWebhook: [] }]
+      summary: VietQR Payment Kit secure-token callback from verified bank connection
+      responses:
+        '200': { description: Verified and deduplicated transfer records }
+        '403': { description: Invalid secure-token }
+        '409': { description: Order code, amount or transfer reference mismatch }
+  /internal/cod-collections:
+    post:
+      security: [{ internalToken: [] }]
+      summary: Record delivery-confirmed COD collection for one delivered shop order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [eventId, groupId, shopOrderId, amountMinor, providerTransactionId]
+              properties:
+                eventId: { type: string, minLength: 8, maxLength: 120 }
+                groupId: { type: string, format: uuid }
+                shopOrderId: { type: string, format: uuid }
+                amountMinor: { type: integer, minimum: 1 }
+                providerTransactionId: { type: string }
+      responses:
+        '200': { description: One verified collection or idempotent retry }
+        '409': { description: Undelivered, duplicate collection or amount mismatch }
+  /internal/refunds:
+    post:
+      security: [{ internalToken: [] }]
+      summary: Reserve refundable amount for one shop order and submit to provider
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [groupId, shopOrderId, amountMinor, reason, idempotencyKey]
+              properties:
+                groupId: { type: string, format: uuid }
+                shopOrderId: { type: string, format: uuid }
+                amountMinor: { type: integer, minimum: 1 }
+                reason: { type: string, minLength: 3, maxLength: 200 }
+                idempotencyKey: { type: string, minLength: 8, maxLength: 120 }
+      responses:
+        '202': { description: Provider refund result or pending bank settlement }
+        '409': { description: Already refunded, not paid or amount exceeds captured shop total }
+  /internal/refunds/{id}/settle:
+    post:
+      security: [{ settlementToken: [] }]
+      summary: Apply trusted bank refund settlement to a pending VietQR refund
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Reconciled refund }
+  /internal/reconciliation:
+    get:
+      security: [{ internalToken: [] }]
+      summary: Stale pending intents and manual review discrepancies
+      responses:
+        '200': { description: Pending counts and discrepancy rows }
+  /internal/reconcile:
+    post:
+      security: [{ internalToken: [] }]
+      summary: Run one payment and refund provider query cycle
+      responses:
+        '200': { description: Payment query, refund query and cancelled-order refund catch-up result }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    internalToken: { type: apiKey, in: header, name: X-Payment-Internal-Token }
+    settlementToken: { type: apiKey, in: header, name: X-Payment-Settlement-Token }
+    bankWebhook: { type: apiKey, in: header, name: secure-token }
+  schemas:
+    Intent:
+      type: object
+      required: [id, orderGroupId, method, provider, amountMinor, currency, status]
+      properties:
+        id: { type: string, format: uuid }
+        orderGroupId: { type: string, format: uuid }
+        method: { type: string, enum: [COD, MOMO, VIETQR] }
+        provider: { type: string }
+        amountMinor: { type: integer, description: Server-sourced integer VND }
+        currency: { type: string, enum: [VND] }
+        status:
+          type: string
+          enum: [UNPAID, INITIATED, PENDING, SUCCEEDED, FAILED, EXPIRED, REFUNDED, PARTIALLY_REFUNDED]
+        checkoutUrl: { type: string, nullable: true }
+        qrData: { type: string, nullable: true }
+        expiresAt: { type: string, format: date-time, nullable: true }
+        needsReview: { type: boolean }
+    Refund:
+      type: object
+      required: [id, shopOrderId, amountMinor, currency, status, reason]
+      properties:
+        id: { type: string, format: uuid }
+        shopOrderId: { type: string, format: uuid }
+        amountMinor: { type: integer, minimum: 1 }
+        currency: { type: string, enum: [VND] }
+        status: { type: string, enum: [INITIATED, PENDING, SUCCEEDED, FAILED] }
+        reason: { type: string }
+        createdAt: { type: string, format: date-time }

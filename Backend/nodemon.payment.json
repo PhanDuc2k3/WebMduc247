@@ -1,0 +1,6 @@
+{
+  "watch": ["services/payment-service/src", "services/payment-service/database/migrations"],
+  "ext": "js,json,sql",
+  "ignore": ["**/node_modules/**"],
+  "exec": "node services/payment-service/scripts/start-dev.js"
+}

@@ -1,0 +1,6 @@
+{
+  "watch": ["services/engagement-service/src", "services/engagement-service/database/migrations"],
+  "ext": "js,json,sql",
+  "ignore": ["**/node_modules/**"],
+  "exec": "node services/engagement-service/scripts/start-dev.js"
+}

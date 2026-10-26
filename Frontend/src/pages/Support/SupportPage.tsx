@@ -88,7 +88,7 @@ const faqCategories = [
         },
         {
           q: "Tôi quên mật khẩu, phải làm sao?",
-          a: "Tại trang đăng nhập, nhấn 'Quên mật khẩu', nhập email/số điện thoại đã đăng ký. Chúng tôi sẽ gửi link đặt lại mật khẩu qua email hoặc mã OTP qua SMS."
+          a: "Tại trang đăng nhập, nhấn 'Quên mật khẩu' và nhập email đã đăng ký. Chúng tôi sẽ gửi mã OTP qua email để bạn đặt lại mật khẩu."
         },
         {
           q: "Làm sao để bảo vệ tài khoản của tôi?",

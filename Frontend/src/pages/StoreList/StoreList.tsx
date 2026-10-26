@@ -1,341 +1,116 @@
-import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Store, ChevronLeft, ChevronRight } from "lucide-react";
-import StoreFilters from "../../components/StoreList/StoreFilters";
-import StoreGrid from "../../components/StoreList/StoreGrid";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowDownAZ, CalendarDays, ChevronLeft, ChevronRight, MessageCircle, Package, Search, Store as StoreIcon, Tag } from "lucide-react";
+import { toast } from "react-toastify";
 import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
-import StoreLoading from "../../components/StoreList/StoreLoading";
-import type { StoreType } from "../../types/store";
-import storeApi from "../../api/storeApi"; // dùng API đã tách
-import { useChat } from "../../context/chatContext";
+import { catalogApi, type CatalogStore } from "../../api/catalogApi";
+import { chatV2Api } from "../../api/chatV2Api";
+import { showImageFallback } from "../../utils/imageFallback";
+import "./StoreList.css";
 
-const ITEMS_PER_PAGE = 9;
+const PAGE_SIZE = 9;
 
-interface StoreApiItem extends StoreType {
-  created_at?: string;
-  created?: string;
-  responseRate?: number;
-  responseTime?: string;
+function StoreCard({ store, cover }: { store: CatalogStore; cover?: string | null }) {
+  const navigate = useNavigate();
+  const [openingChat, setOpeningChat] = useState(false);
+
+  async function openChat() {
+    setOpeningChat(true);
+    try {
+      const result = await chatV2Api.create(store.id);
+      navigate(`/messages/${result.conversation.id}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể mở tin nhắn với cửa hàng.", { containerId: "general-toast" });
+    } finally { setOpeningChat(false); }
+  }
+
+  return <article className="store-directory-card">
+    <Link className="store-directory-card__banner" to={`/store/${store.slug}`} aria-label={`Xem ${store.name}`}>
+      {store.bannerUrl || cover ? <img src={store.bannerUrl || cover || ""} alt="" loading="lazy" onError={showImageFallback} /> : <span><Package size={52} strokeWidth={1.5} /></span>}
+    </Link>
+    <div className="store-directory-card__body">
+      <div className="store-directory-card__identity"><span className="store-directory-card__logo">{store.logoUrl ? <img src={store.logoUrl} alt="" loading="lazy" onError={showImageFallback} /> : <StoreIcon size={23} />}</span><div><Link to={`/store/${store.slug}`}>{store.name}</Link><small><CalendarDays size={13} /> Tham gia {new Date(store.createdAt).toLocaleDateString("vi-VN")}</small></div></div>
+      <p className="store-directory-card__description">{store.description || "Khám phá sản phẩm đang bán tại cửa hàng."}</p>
+      <div className="store-directory-card__tags">{store.category && <span>{store.category}</span>}{store.productCount != null && <span>{store.productCount} sản phẩm</span>}</div>
+      <div className="store-directory-card__actions"><Link to={`/store/${store.slug}`}><StoreIcon size={16} /> Xem cửa hàng</Link><button type="button" disabled={openingChat} onClick={() => void openChat()}><MessageCircle size={16} /> {openingChat ? "Đang mở..." : "Chat"}</button></div>
+    </div>
+  </article>;
 }
 
-const StoreList: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const searchKeyword = searchParams.get("search");
-  const pageParam = searchParams.get("page");
-  const [stores, setStores] = useState<StoreType[]>([]);
+export default function StoreList() {
+  const [params, setParams] = useSearchParams();
+  const filterKey = params.toString();
+  const rawPage = Number(params.get("page"));
+  const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
+  const keyword = params.get("search") || "";
+  const category = params.get("category") || "";
+  const sort = params.get("sort") === "name" ? "name" : "newest";
+  const [search, setSearch] = useState(keyword);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [stores, setStores] = useState<CatalogStore[]>([]);
+  const [covers, setCovers] = useState<Record<string, string | null>>({});
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({
-    rating: "Đánh giá cao nhất",
-    region: "Tất cả khu vực",
-    category: "Tất cả ngành hàng",
-  });
-  const [currentPage, setCurrentPage] = useState(1);
-  const { onlineStores } = useChat();
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
 
-  // Khởi tạo currentPage từ URL params
+  useEffect(() => { setSearch(keyword); }, [keyword]);
   useEffect(() => {
-    const page = parseInt(pageParam || "1", 10);
-    if (page > 0) {
-      setCurrentPage(page);
-    } else {
-      setCurrentPage(1);
-    }
-  }, [pageParam]);
-
-  // Reset về trang 1 khi search keyword thay đổi
+    let active = true;
+    catalogApi.storeCategories().then(result => { if (active) setCategories(result.categories); }).catch(() => {});
+    return () => { active = false; };
+  }, []);
   useEffect(() => {
-    setCurrentPage(1);
-    setSearchParams((current) => {
-      const newParams = new URLSearchParams(current);
-      newParams.delete("page");
-      return newParams;
-    }, { replace: true });
-  }, [searchKeyword, setSearchParams]);
+    let active = true;
+    setLoading(true); setError(""); setCovers({});
+    const query = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE), sort });
+    if (keyword) query.set("search", keyword);
+    if (category) query.set("category", category);
+    catalogApi.list(`?${query}`).then(result => {
+      if (!active) return;
+      setStores(result.stores); setTotal(result.total); setLoading(false);
+      const missingCover = result.stores.filter(store => !store.bannerUrl && (store.productCount ?? 0) > 0);
+      void Promise.allSettled(missingCover.map(store => catalogApi.listProducts({ store: store.slug, page: 1, limit: 1 }))).then(results => {
+        if (!active) return;
+        const next: Record<string, string | null> = {};
+        results.forEach((item, index) => { if (item.status === "fulfilled") next[missingCover[index].id] = item.value.products[0]?.imageUrl || null; });
+        setCovers(next);
+      });
+    }).catch(cause => {
+      if (active) { setStores([]); setTotal(0); setError(cause instanceof Error ? cause.message : "Không thể tải cửa hàng."); setLoading(false); }
+    });
+    return () => { active = false; };
+  }, [filterKey, page, sort, keyword, category, retry]);
 
-  useEffect(() => {
-    const fetchStores = async () => {
-      try {
-        setLoading(true);
-        let data;
-        
-        // Nếu có search keyword, tìm kiếm stores
-        if (searchKeyword && searchKeyword.trim()) {
-          const res = await storeApi.searchStores(searchKeyword.trim(), 100);
-          data = { stores: res.data.stores || [] };
-        } else {
-          // Nếu không có search, lấy tất cả stores
-          const res = await storeApi.getAllActiveStores();
-          data = res.data;
-        }
-
-        // Giống hệt FeaturedStores để đảm bảo consistency
-        const mappedStores: StoreType[] = ((data.stores || []) as StoreApiItem[]).map((s) => {
-          // Đảm bảo createdAt được truyền đúng format - giống FeaturedStores
-          const createdAtValue = s.createdAt || s.created_at || s.created;
-          
-          return {
-            ...s, // ✅ Spread tất cả properties từ API response (giống FeaturedStores)
-            rating: s.rating ?? 0,
-            products: s.products ?? 0,
-            followers: s.followers ?? 0,
-            responseRate: s.responseRate ?? 0,
-            responseTime: s.responseTime ?? "—",
-            joinDate: createdAtValue ? new Date(createdAtValue).toLocaleDateString() : "—",
-            createdAt: createdAtValue, // ✅ Đảm bảo createdAt được truyền vào (giống FeaturedStores)
-            isActive: s.isActive ?? true,
-            customCategory: s.customCategory || s.category,
-            // Giữ lại các field khác từ API response
-            _id: s._id,
-            owner: typeof s.owner === 'object' ? s.owner : { _id: s.owner || "" },
-            name: s.name,
-            description: s.description,
-            logoUrl: s.logoUrl,
-            bannerUrl: s.bannerUrl,
-          };
-        });
-
-        setStores(mappedStores);
-      } catch (err) {
-        console.error("Lỗi khi fetch stores:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchStores();
-  }, [searchKeyword]);
-
-  // Filter stores dựa trên filters
-  let filteredStores = stores.filter((s) => {
-    // Filter theo region (khu vực) - hỗ trợ cả tiếng Việt và tiếng Anh
-    const matchesRegion = filters.region === "Tất cả khu vực" || 
-                         (s.storeAddress && (() => {
-                           const address = s.storeAddress.toLowerCase();
-                           
-                           // Map các khu vực với các biến thể tên
-                           const regionVariants: { [key: string]: string[] } = {
-                             "hà nội": ["hà nội", "hanoi", "ha noi", "ha noi city"],
-                             "tp. hồ chí minh": ["hồ chí minh", "ho chi minh", "hcm", "tp. hồ chí minh", "tp hcm", "sài gòn", "saigon"],
-                             "đà nẵng": ["đà nẵng", "da nang", "danang"],
-                             "cần thơ": ["cần thơ", "can tho", "cantho"],
-                             "huế": ["huế", "hue"]
-                           };
-                           
-                           const selectedRegion = filters.region.toLowerCase();
-                           const variants = regionVariants[selectedRegion];
-                           
-                           if (variants) {
-                             // Kiểm tra xem address có chứa bất kỳ biến thể nào không
-                             return variants.some(variant => address.includes(variant));
-                           }
-                           
-                           // Fallback: tìm kiếm trực tiếp
-                           return address.includes(selectedRegion);
-                         })());
-
-    // Filter theo category (ngành hàng)
-    // Map category tiếng Việt sang tiếng Anh
-    const categoryMap: { [key: string]: string } = {
-      "Tất cả ngành hàng": "",
-      "Điện tử": "electronics",
-      "Thời trang": "fashion",
-      "Hoa quả": "other",
-      "Thực phẩm": "other",
-      "Gia dụng": "home",
-      "Mỹ phẩm": "other",
-      "Thể thao": "other",
-      "Sách": "books",
-      "Đồ chơi": "other",
-      "Khác": "other",
-    };
-
-    const selectedCategory = categoryMap[filters.category] || "";
-    const matchesCategory = filters.category === "Tất cả ngành hàng" ||
-      (s.customCategory
-        ? s.customCategory.toLowerCase().includes(filters.category.toLowerCase())
-        : s.category?.toLowerCase() === selectedCategory.toLowerCase());
-
-    return matchesRegion && matchesCategory;
-  });
-
-  // Sort stores dựa trên rating filter
-  filteredStores = [...filteredStores].sort((a, b) => {
-    switch (filters.rating) {
-      case "Đánh giá cao nhất":
-        return (b.rating || 0) - (a.rating || 0);
-      case "Đánh giá trung bình": {
-        // Sắp xếp theo rating gần với trung bình (3.5)
-        const avgA = Math.abs((a.rating || 0) - 3.5);
-        const avgB = Math.abs((b.rating || 0) - 3.5);
-        return avgA - avgB;
-      }
-      default:
-        return 0;
-    }
-  });
-
-  // Tính toán phân trang
-  const totalPages = Math.ceil(filteredStores.length / ITEMS_PER_PAGE);
-  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const paginatedStores = filteredStores.slice(startIndex, endIndex);
-
-  // Reset về trang 1 nếu currentPage vượt quá totalPages (khi filter thay đổi)
-  useEffect(() => {
-    if (currentPage > totalPages && totalPages > 0) {
-      setCurrentPage(1);
-      const newParams = new URLSearchParams(searchParams);
-      newParams.delete("page");
-      setSearchParams(newParams, { replace: true });
-    }
-  }, [totalPages, currentPage, searchParams, setSearchParams]);
-
-  // Early return sau khi tất cả hooks đã được gọi
-  if (loading) return <StoreLoading />;
-
-  // Xử lý chuyển trang
-  const handlePageChange = (newPage: number) => {
-    if (newPage < 1 || newPage > totalPages) return;
-    
-    setCurrentPage(newPage);
-    const newParams = new URLSearchParams(searchParams);
-    if (newPage === 1) {
-      newParams.delete("page");
-    } else {
-      newParams.set("page", newPage.toString());
-    }
-    setSearchParams(newParams);
-    
-    // Scroll to top khi chuyển trang
+  function updateFilters(changes: Record<string, string>) {
+    const next = new URLSearchParams(params);
+    Object.entries(changes).forEach(([key, value]) => { if (value) next.set(key, value); else next.delete(key); });
+    next.delete("page");
+    setParams(next);
+  }
+  function submitSearch(event: FormEvent) { event.preventDefault(); updateFilters({ search: search.trim() }); }
+  function goToPage(nextPage: number) {
+    const next = new URLSearchParams(params);
+    if (nextPage <= 1) next.delete("page"); else next.set("page", String(nextPage));
+    setParams(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }
 
-  return (
-    <div className="canva-public-page">
-      <ContentBreadcrumb items={[{ label: searchKeyword ? `Cửa hàng cho “${searchKeyword}”` : "Cửa hàng" }]} />
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const start = total ? (page - 1) * PAGE_SIZE + 1 : 0;
+  const end = Math.min(page * PAGE_SIZE, total);
+  const firstPageButton = Math.max(1, Math.min(page - 2, pageCount - 4));
+  const pageButtons = Array.from({ length: Math.min(pageCount, 5) }, (_, index) => firstPageButton + index);
 
-      <div className="canva-public-page__content">
-
-      {/* Filter Section - ở trên */}
-      <div className="canva-public-page__toolbar mb-6" style={{ position: 'relative', zIndex: 50 }}>
-        <StoreFilters onFilterChange={setFilters} />
-      </div>
-
-      {/* List Section - ở dưới filter */}
-      <div>
-        {filteredStores.length > 0 && (
-          <div className="mb-4 md:mb-6 animate-fade-in-up delay-300">
-            <p className="text-gray-600 font-medium text-sm md:text-base">
-              Tìm thấy <span className="text-[#4B5563] font-bold">{filteredStores.length}</span> cửa hàng
-            </p>
-          </div>
-        )}
-
-        <div className="animate-fade-in-up delay-300" style={{ position: 'relative', zIndex: 1 }}>
-          {filteredStores.length > 0 ? (
-            <>
-              <StoreGrid stores={paginatedStores} onlineStores={onlineStores} />
-              
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="mt-6 md:mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in-up delay-400">
-                  <div className="text-gray-600 text-sm md:text-base">
-                    Hiển thị <span className="font-bold text-[#4B5563]">{startIndex + 1}</span> -{" "}
-                    <span className="font-bold text-[#4B5563]">
-                      {Math.min(endIndex, filteredStores.length)}
-                    </span>{" "}
-                    trong tổng số <span className="font-bold text-[#4B5563]">{filteredStores.length}</span> cửa hàng
-                  </div>
-                  
-                  <div className="flex items-center gap-2 md:gap-4">
-                    <span className="text-gray-700 text-xs md:text-sm">
-                      Trang <span className="text-[#4B5563] font-bold">{currentPage}</span> /{" "}
-                      <span className="text-gray-600">{totalPages}</span>
-                    </span>
-                    
-                    <div className="flex items-center bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        className={`px-3 py-2 md:px-4 md:py-2.5 border-r border-gray-200 transition-colors ${
-                          currentPage === 1
-                            ? "text-gray-300 cursor-not-allowed bg-gray-50"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-[#4B5563]"
-                        }`}
-                        aria-label="Trang trước"
-                      >
-                        <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />
-                      </button>
-                      
-                      {/* Page numbers */}
-                      <div className="flex items-center gap-1 px-2">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1)
-                          .filter((page) => {
-                            // Hiển thị trang đầu, cuối, trang hiện tại và các trang xung quanh
-                            return (
-                              page === 1 ||
-                              page === totalPages ||
-                              (page >= currentPage - 1 && page <= currentPage + 1)
-                            );
-                          })
-                          .map((page, index, array) => {
-                            // Thêm dấu ... nếu có khoảng trống
-                            const showEllipsis = index > 0 && array[index] - array[index - 1] > 1;
-                            return (
-                              <React.Fragment key={page}>
-                                {showEllipsis && (
-                                  <span className="px-2 text-gray-400">...</span>
-                                )}
-                                <button
-                                  onClick={() => handlePageChange(page)}
-                                  className={`px-3 py-2 md:px-4 md:py-2 text-xs md:text-sm font-medium transition-colors ${
-                                    currentPage === page
-                                      ? "bg-[#4B5563] text-white"
-                                      : "text-gray-600 hover:bg-gray-50 hover:text-[#4B5563]"
-                                  }`}
-                                >
-                                  {page}
-                                </button>
-                              </React.Fragment>
-                            );
-                          })}
-                      </div>
-                      
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                        className={`px-3 py-2 md:px-4 md:py-2.5 border-l border-gray-200 transition-colors ${
-                          currentPage === totalPages
-                            ? "text-gray-300 cursor-not-allowed bg-gray-50"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-[#4B5563]"
-                        }`}
-                        aria-label="Trang sau"
-                      >
-                        <ChevronRight className="w-4 h-4 md:w-5 md:h-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-8 md:py-12 lg:py-16 animate-fade-in">
-              <div className="flex justify-center mb-3 md:mb-4">
-                <Store className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 text-gray-300" />
-              </div>
-              <p className="text-gray-500 text-base md:text-lg font-medium mb-2">
-                Không tìm thấy cửa hàng nào
-              </p>
-              <p className="text-gray-400 text-xs md:text-sm">
-                Hãy thử thay đổi bộ lọc
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-      </div>
+  return <div className="store-directory">
+    <ContentBreadcrumb items={[{ label: "Cửa hàng" }]} />
+    <h1 className="sr-only">Cửa hàng</h1>
+    <div className="store-directory-filters">
+      <label className="store-directory-filter"><ArrowDownAZ size={17} /><span>Sắp xếp</span><select value={sort} onChange={event => updateFilters({ sort: event.target.value === "newest" ? "" : event.target.value })} aria-label="Sắp xếp cửa hàng"><option value="newest">Mới nhất</option><option value="name">Tên A–Z</option></select></label>
+      <form onSubmit={submitSearch} className="store-directory-filter store-directory-search"><Search size={17} /><input value={search} maxLength={100} onChange={event => setSearch(event.target.value)} placeholder="Tìm tên cửa hàng" aria-label="Tìm tên cửa hàng" /><button type="submit" aria-label="Tìm kiếm cửa hàng"><Search size={15} /></button></form>
+      <label className="store-directory-filter"><Tag size={17} /><span>Ngành hàng</span><select value={category} onChange={event => updateFilters({ category: event.target.value })} aria-label="Lọc ngành hàng"><option value="">Tất cả ngành hàng</option>{categories.map(item => <option key={item} value={item}>{item}</option>)}</select></label>
     </div>
-  );
-};
-
-export default StoreList;
+    <p className="store-directory-count">Tìm thấy <strong>{total.toLocaleString("vi-VN")}</strong> cửa hàng</p>
+    {error ? <div className="store-directory-state"><StoreIcon size={32} /><h2>Không thể tải cửa hàng</h2><p>{error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Thử lại</button></div> : loading ? <div className="store-directory-state" role="status"><StoreIcon size={32} /><p>Đang tải cửa hàng...</p></div> : stores.length ? <><div className="store-directory-grid">{stores.map(store => <StoreCard key={store.id} store={store} cover={covers[store.id]} />)}</div><nav className="store-directory-pagination" aria-label="Phân trang cửa hàng"><span>Hiển thị <strong>{start} – {end}</strong> trong tổng số <strong>{total.toLocaleString("vi-VN")}</strong> cửa hàng</span>{pageCount > 1 && <div><span>Trang {page} / {pageCount}</span><button type="button" disabled={page <= 1} onClick={() => goToPage(page - 1)} aria-label="Trang trước"><ChevronLeft size={16} /></button>{pageButtons.map(number => <button type="button" key={number} className={number === page ? "is-active" : ""} aria-current={number === page ? "page" : undefined} onClick={() => goToPage(number)}>{number}</button>)}<button type="button" disabled={page >= pageCount} onClick={() => goToPage(page + 1)} aria-label="Trang sau"><ChevronRight size={16} /></button></div>}</nav></> : <div className="store-directory-state"><StoreIcon size={32} /><h2>Không tìm thấy cửa hàng</h2><p>Thử tìm tên khác hoặc chọn tất cả ngành hàng.</p><button type="button" onClick={() => setParams(new URLSearchParams())}>Xóa bộ lọc</button></div>}
+  </div>;
+}

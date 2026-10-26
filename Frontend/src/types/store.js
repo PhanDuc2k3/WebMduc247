@@ -1,0 +1,2 @@
+// types/store.ts
+export {};

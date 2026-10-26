@@ -1,0 +1,251 @@
+openapi: 3.1.0
+info:
+  title: MDUC247 Catalog API
+  version: 0.2.0
+servers:
+  - url: http://localhost:5102/api/v2
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+  schemas:
+    Category:
+      type: object
+      required: [id, name, slug, sortOrder, children]
+      properties:
+        id: { type: string, format: uuid }
+        parentId: { type: [string, 'null'], format: uuid }
+        name: { type: string }
+        slug: { type: string }
+        sortOrder: { type: integer }
+        iconKey: { type: [string, 'null'] }
+        imageKey: { type: [string, 'null'] }
+        iconUrl: { type: [string, 'null'], format: uri }
+        imageUrl: { type: [string, 'null'], format: uri }
+        children: { type: array, items: { $ref: '#/components/schemas/Category' } }
+    VariantInput:
+      type: object
+      required: [sku, priceMinor, stock]
+      properties:
+        sku: { type: string, minLength: 2, maxLength: 80 }
+        attributes: { type: object, additionalProperties: { type: string } }
+        priceMinor: { type: integer, minimum: 0, description: Whole VND }
+        salePriceMinor: { type: [integer, 'null'], minimum: 0 }
+        saleStartsAt: { type: [string, 'null'], format: date-time }
+        saleEndsAt: { type: [string, 'null'], format: date-time }
+        stock: { type: integer, minimum: 0, description: Initial on-hand when creating a SKU; later changes use Inventory adjustments }
+        status: { type: string, enum: [active, inactive] }
+    ProductInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 3, maxLength: 200 }
+        slug: { type: string, description: Unique only within the store }
+        description: { type: string }
+        brand: { type: string }
+        categoryId: { type: [string, 'null'], format: uuid }
+        priceMinor: { type: integer, minimum: 0, description: Required when variants are omitted }
+        stock: { type: integer, minimum: 0 }
+        attributes: { type: object, additionalProperties: { type: array, items: { type: string } } }
+        variants: { type: array, maxItems: 50, items: { $ref: '#/components/schemas/VariantInput' } }
+    Product:
+      type: object
+      required: [id, storeId, name, status, currency, priceMinor, priceOriginalMinor, stock, inStock]
+      properties:
+        id: { type: string, format: uuid }
+        storeId: { type: string, format: uuid }
+        name: { type: string }
+        slug: { type: [string, 'null'] }
+        status: { type: string, enum: [draft, active, hidden, discontinued] }
+        currency: { type: string, const: VND }
+        priceMinor: { type: integer, description: Effective whole VND price evaluated on the server }
+        priceOriginalMinor: { type: integer }
+        stock: { type: integer, description: Available units summed across active SKUs }
+        inStock: { type: boolean }
+        imageUrl: { type: [string, 'null'], format: uri }
+        rating: { type: [number, 'null'], description: Average of published reviews; null when no reviews exist }
+        soldCount: { type: [integer, 'null'], description: Null until Order Service supplies data }
+        variants: { type: array, items: { type: object } }
+        images: { type: array, items: { type: object } }
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+paths:
+  /categories:
+    get:
+      summary: Active categories as a parent-child tree
+      responses:
+        '200': { description: Category tree }
+  /products:
+    get:
+      summary: Only active products from active, order-accepting shops
+      parameters:
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 50, default: 12 } }
+        - { in: query, name: search, schema: { type: string, maxLength: 100 } }
+        - { in: query, name: category, schema: { type: string }, description: Category slug; includes active descendants }
+        - { in: query, name: store, schema: { type: string }, description: Store UUID or slug }
+        - { in: query, name: minPrice, schema: { type: integer, minimum: 0 }, description: Whole VND }
+        - { in: query, name: maxPrice, schema: { type: integer, minimum: 0 }, description: Whole VND }
+        - { in: query, name: minRating, schema: { type: number, minimum: 0, maximum: 5 }, description: Filters by projected rating from published reviews }
+        - { in: query, name: inStock, schema: { type: boolean } }
+        - { in: query, name: sale, schema: { type: boolean } }
+        - { in: query, name: sort, schema: { type: string, enum: [relevance, newest, price_asc, price_desc] } }
+      responses:
+        '200': { description: Stable page, total and products }
+        '400': { description: INVALID_FILTER }
+  /products/{id}:
+    get:
+      summary: Public product detail with variant-specific price and stock
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Product, media, options, variants and shop }
+        '404': { description: Hidden/draft product or paused shop }
+  /search:
+    get:
+      summary: Accent-insensitive ranked search across products, stores and categories
+      parameters:
+        - { in: query, name: q, required: true, schema: { type: string, minLength: 2, maxLength: 100 } }
+      responses:
+        '200': { description: Mixed suggestions }
+  /home:
+    get:
+      summary: Categories, featured/new products, stores and active banners
+      responses:
+        '200': { description: Best sellers empty until Order Service provides aggregates }
+  /seller/stores/{id}/products:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Member creates a draft product and one or more SKUs
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductInput' }
+      responses:
+        '201': { description: Draft product }
+        '403': { description: STORE_FORBIDDEN }
+        '409': { description: SKU_TAKEN or PRODUCT_SLUG_TAKEN }
+  /seller/products/{id}:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Store member sees any product state
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Full product }
+    patch:
+      security: [{ bearerAuth: [] }]
+      summary: Update title, description, brand or category
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Updated product }
+  /seller/products/{id}/duplicate:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Copy product metadata and SKUs into a new draft; images are not copied
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '201': { description: New draft product }
+  /seller/products/{id}/publish:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Publish a product with at least one active variant
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Active product; emits ProductPublished.v1 }
+  /seller/products/{id}/status:
+    patch:
+      security: [{ bearerAuth: [] }]
+      summary: Set draft, active, hidden or discontinued without hard delete
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Updated product }
+  /seller/products/{id}/variants:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Add SKU with separate price and stock
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VariantInput' }
+      responses:
+        '201': { description: Updated product; emits ProductPriceChanged.v1 }
+  /seller/products/{id}/variants/{variantId}:
+    patch:
+      security: [{ bearerAuth: [] }]
+      summary: Update SKU or sale window; stock changes require the Inventory adjustment API
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: variantId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Updated product }
+  /seller/products/{id}/images:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Scan JPEG/PNG/WebP bytes, resize to WebP, save object key
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: header, name: X-Variant-Id, schema: { type: string, format: uuid } }
+        - { in: header, name: X-Position, schema: { type: integer, minimum: 0 } }
+        - { in: header, name: X-Primary, schema: { type: boolean } }
+      requestBody:
+        required: true
+        content:
+          image/jpeg: { schema: { type: string, format: binary } }
+          image/png: { schema: { type: string, format: binary } }
+          image/webp: { schema: { type: string, format: binary } }
+      responses:
+        '201': { description: Stored image }
+        '413': { description: Over 5 MB }
+        '415': { description: Invalid or mismatched image type }
+    patch:
+      security: [{ bearerAuth: [] }]
+      summary: Reorder images and set the primary image
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Updated product }
+  /seller/products/{id}/images/{imageId}:
+    delete:
+      security: [{ bearerAuth: [] }]
+      summary: Remove only an image of the member's product
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+        - { in: path, name: imageId, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Removed }
+  /internal/categories:
+    post:
+      summary: Internal category creation; requires X-Catalog-Secret
+      parameters:
+        - { in: header, name: X-Catalog-Secret, required: true, schema: { type: string } }
+      responses:
+        '201': { description: Created category }
+  /internal/categories/{id}:
+    patch:
+      summary: Internal category update with cycle guard
+      parameters:
+        - { in: header, name: X-Catalog-Secret, required: true, schema: { type: string } }
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Updated category }
+        '400': { description: CATEGORY_CYCLE or invalid fields }
+  /internal/banners:
+    post:
+      summary: Internal banner creation with object key and active window
+      parameters:
+        - { in: header, name: X-Catalog-Secret, required: true, schema: { type: string } }
+      responses:
+        '201': { description: Created banner }

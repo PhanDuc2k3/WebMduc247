@@ -1,0 +1,286 @@
+name: backend-v2
+services:
+  identity-mail:
+    image: axllent/mailpit:latest
+    profiles: [dev]
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "127.0.0.1:8025:8025"
+  identity-objects:
+    image: quay.io/minio/minio:RELEASE.2025-06-13T11-33-47Z
+    profiles: [dev]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-local-avatar-user}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-local-avatar-password-change-me}
+    volumes:
+      - identity_objects:/data
+  identity-scanner:
+    image: clamav/clamav:stable
+    profiles: [dev]
+  identity-db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: identity
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: identity
+    volumes:
+      - identity_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U identity -d identity"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  chat-mongo:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${CHAT_MONGO_USER:-chatdev}
+      MONGO_INITDB_ROOT_PASSWORD: ${CHAT_MONGO_PASSWORD:-local-chat-password-change-me}
+    volumes:
+      - chat_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet -u \"$${MONGO_INITDB_ROOT_USERNAME}\" -p \"$${MONGO_INITDB_ROOT_PASSWORD}\" --authenticationDatabase admin --eval \"db.adminCommand('ping').ok\""]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  identity-service:
+    build:
+      context: .
+      dockerfile: services/identity-service/Dockerfile
+    depends_on:
+      identity-db:
+        condition: service_healthy
+    environment:
+      IDENTITY_DATABASE_URL: postgresql://identity:${POSTGRES_PASSWORD}@identity-db:5432/identity
+      IDENTITY_JWT_SECRET: ${IDENTITY_JWT_SECRET:?Set IDENTITY_JWT_SECRET in .env}
+      IDENTITY_MAIL_KEY: ${IDENTITY_MAIL_KEY:?Set IDENTITY_MAIL_KEY in .env}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?Set FRONTEND_ORIGIN in .env}
+      REQUIRE_EMAIL_VERIFICATION: ${REQUIRE_EMAIL_VERIFICATION:-true}
+      SMTP_HOST: ${SMTP_HOST_DOCKER:-identity-mail}
+      SMTP_PORT: ${SMTP_PORT_DOCKER:-1025}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:?Set SMTP_USER in .env}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:?Set SMTP_PASSWORD in .env}
+      MAIL_FROM: ${MAIL_FROM:?Set MAIL_FROM in .env}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ENDPOINT: ${S3_ENDPOINT_DOCKER:-}
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_AUTO_CREATE_BUCKET: ${S3_AUTO_CREATE_BUCKET:-false}
+      CLAMAV_HOST: ${CLAMAV_HOST_DOCKER:-}
+      CLAMAV_PORT: ${CLAMAV_PORT_DOCKER:-3310}
+      PHONE_OTP_MODE: ${PHONE_OTP_MODE:-email}
+      SMS_WEBHOOK_URL: ${SMS_WEBHOOK_URL:-}
+      SMS_WEBHOOK_TOKEN: ${SMS_WEBHOOK_TOKEN:-}
+      NODE_ENV: ${NODE_ENV:-development}
+      CATALOG_SYNC_SECRET: ${CATALOG_SYNC_SECRET:?Set CATALOG_SYNC_SECRET in .env}
+      NOTIFICATION_IDENTITY_TOKEN: ${NOTIFICATION_IDENTITY_TOKEN:-}
+      IDENTITY_EVENT_WEBHOOK_URL: http://engagement-service:5105/api/v2/internal/notifications/identity-events
+      IDENTITY_EVENT_WEBHOOK_TOKEN: ${IDENTITY_EVENT_WEBHOOK_TOKEN:?Set IDENTITY_EVENT_WEBHOOK_TOKEN in .env}
+    ports:
+      - "${IDENTITY_PORT:-5101}:5101"
+    command: ["sh", "-c", "npm run identity:migrate && npm run identity:start"]
+  catalog-service:
+    build:
+      context: .
+      dockerfile: services/identity-service/Dockerfile
+    depends_on:
+      identity-db:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+    environment:
+      CATALOG_DATABASE_URL: ${CATALOG_DATABASE_URL:?Set CATALOG_DATABASE_URL in .env}
+      CATALOG_IDENTITY_URL: http://identity-service:5101
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?Set FRONTEND_ORIGIN in .env}
+      CATALOG_PORT: 5102
+      CATALOG_SYNC_SECRET: ${CATALOG_SYNC_SECRET:?Set CATALOG_SYNC_SECRET in .env}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ENDPOINT: ${S3_ENDPOINT_DOCKER:-}
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_AUTO_CREATE_BUCKET: ${S3_AUTO_CREATE_BUCKET:-false}
+      CLAMAV_HOST: ${CLAMAV_HOST_DOCKER:-}
+      CLAMAV_PORT: ${CLAMAV_PORT_DOCKER:-3310}
+      NODE_ENV: ${NODE_ENV:-development}
+      INVENTORY_INTERNAL_TOKEN: ${INVENTORY_INTERNAL_TOKEN:?Set INVENTORY_INTERNAL_TOKEN in .env}
+      INVENTORY_EVENT_WEBHOOK_URL: ${INVENTORY_EVENT_WEBHOOK_URL:-}
+      INVENTORY_EVENT_WEBHOOK_TOKEN: ${INVENTORY_EVENT_WEBHOOK_TOKEN:-}
+    ports:
+      - "${CATALOG_PORT:-5102}:5102"
+    command: ["sh", "-c", "npm run catalog:migrate && npm run catalog:start"]
+  order-service:
+    build:
+      context: .
+      dockerfile: services/identity-service/Dockerfile
+    depends_on:
+      identity-db:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+    environment:
+      ORDER_DATABASE_URL: postgresql://identity:${POSTGRES_PASSWORD}@identity-db:5432/identity
+      ORDER_IDENTITY_URL: http://identity-service:5101
+      ORDER_CATALOG_URL: http://catalog-service:5102
+      ORDER_PAYMENT_URL: http://payment-service:5104
+      ORDER_ENGAGEMENT_URL: http://engagement-service:5105
+      ORDER_PORT: 5103
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?Set FRONTEND_ORIGIN in .env}
+      INVENTORY_INTERNAL_TOKEN: ${INVENTORY_INTERNAL_TOKEN:?Set INVENTORY_INTERNAL_TOKEN in .env}
+      ORDER_DELIVERY_TOKEN: ${ORDER_DELIVERY_TOKEN:?Set ORDER_DELIVERY_TOKEN in .env}
+      ORDER_PAYMENT_TOKEN: ${ORDER_PAYMENT_TOKEN:?Set ORDER_PAYMENT_TOKEN in .env}
+      CHAT_ORDER_TOKEN: ${CHAT_ORDER_TOKEN:-}
+      PAYMENT_INTERNAL_TOKEN: ${PAYMENT_INTERNAL_TOKEN:?Set PAYMENT_INTERNAL_TOKEN in .env}
+      CLAMAV_HOST: ${CLAMAV_HOST_DOCKER:-}
+      CLAMAV_PORT: ${CLAMAV_PORT_DOCKER:-3310}
+      NODE_ENV: ${NODE_ENV:-development}
+      PROMOTION_INTERNAL_TOKEN: ${PROMOTION_INTERNAL_TOKEN:?Set PROMOTION_INTERNAL_TOKEN in .env}
+      ORDER_ONLINE_METHODS: ${ORDER_ONLINE_METHODS:-}
+      ORDER_EVENT_WEBHOOK_URL: ${ORDER_EVENT_WEBHOOK_URL:-}
+      ORDER_EVENT_WEBHOOK_TOKEN: ${ORDER_EVENT_WEBHOOK_TOKEN:-}
+      NOTIFICATION_ORDER_TOKEN: ${NOTIFICATION_ORDER_TOKEN:-}
+      ORDER_NOTIFICATION_WEBHOOK_URL: http://engagement-service:5105/api/v2/internal/notifications/order-events
+    ports:
+      - "${ORDER_PORT:-5103}:5103"
+    command: ["sh", "-c", "npm run order:migrate && npm run order:start"]
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/identity-service/Dockerfile
+    depends_on:
+      identity-db:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    environment:
+      PAYMENT_DATABASE_URL: postgresql://identity:${POSTGRES_PASSWORD}@identity-db:5432/identity
+      PAYMENT_IDENTITY_URL: http://identity-service:5101
+      PAYMENT_ORDER_URL: http://order-service:5103
+      PAYMENT_PUBLIC_URL: ${PAYMENT_PUBLIC_URL:-http://localhost:5104}
+      PAYMENT_PORT: 5104
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?Set FRONTEND_ORIGIN in .env}
+      ORDER_PAYMENT_TOKEN: ${ORDER_PAYMENT_TOKEN:?Set ORDER_PAYMENT_TOKEN in .env}
+      PAYMENT_INTERNAL_TOKEN: ${PAYMENT_INTERNAL_TOKEN:?Set PAYMENT_INTERNAL_TOKEN in .env}
+      PAYMENT_SETTLEMENT_TOKEN: ${PAYMENT_SETTLEMENT_TOKEN:?Set PAYMENT_SETTLEMENT_TOKEN in .env}
+      NOTIFICATION_PAYMENT_TOKEN: ${NOTIFICATION_PAYMENT_TOKEN:-}
+      PAYMENT_NOTIFICATION_WEBHOOK_URL: http://engagement-service:5105/api/v2/internal/notifications/payment-events
+      MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:-}
+      MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:-}
+      MOMO_SECRET_KEY: ${MOMO_SECRET_KEY:-}
+      MOMO_API_BASE_URL: ${MOMO_API_BASE_URL:-https://test-payment.momo.vn}
+      MOMO_IPN_URL: ${MOMO_IPN_URL:-}
+      MOMO_REDIRECT_URL: ${MOMO_REDIRECT_URL:-}
+      VIETQR_CLIENT_ID: ${VIETQR_CLIENT_ID:-}
+      VIETQR_API_KEY: ${VIETQR_API_KEY:-}
+      VIETQR_WEBHOOK_TOKEN: ${VIETQR_WEBHOOK_TOKEN:-}
+      VIETQR_API_BASE_URL: ${VIETQR_API_BASE_URL:-https://api.vietqr.io}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "${PAYMENT_PORT:-5104}:5104"
+    command: ["sh", "-c", "npm run payment:migrate && npm run payment:start"]
+  engagement-service:
+    build:
+      context: .
+      dockerfile: services/identity-service/Dockerfile
+    depends_on:
+      identity-db:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    environment:
+      ENGAGEMENT_DATABASE_URL: postgresql://identity:${POSTGRES_PASSWORD}@identity-db:5432/identity
+      ENGAGEMENT_IDENTITY_URL: http://identity-service:5101
+      ENGAGEMENT_CATALOG_URL: http://catalog-service:5102
+      ENGAGEMENT_ORDER_URL: http://order-service:5103
+      ENGAGEMENT_PAYMENT_URL: http://payment-service:5104
+      ENGAGEMENT_CHAT_URL: http://chat-service:5106
+      ENGAGEMENT_PORT: 5105
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?Set FRONTEND_ORIGIN in .env}
+      INVENTORY_INTERNAL_TOKEN: ${INVENTORY_INTERNAL_TOKEN:?Set INVENTORY_INTERNAL_TOKEN in .env}
+      PROMOTION_INTERNAL_TOKEN: ${PROMOTION_INTERNAL_TOKEN:?Set PROMOTION_INTERNAL_TOKEN in .env}
+      PROMOTION_ADMIN_TOKEN: ${PROMOTION_ADMIN_TOKEN:-}
+      NOTIFICATION_ORDER_TOKEN: ${NOTIFICATION_ORDER_TOKEN:-}
+      NOTIFICATION_PAYMENT_TOKEN: ${NOTIFICATION_PAYMENT_TOKEN:-}
+      NOTIFICATION_CHAT_TOKEN: ${NOTIFICATION_CHAT_TOKEN:-}
+      NOTIFICATION_IDENTITY_TOKEN: ${NOTIFICATION_IDENTITY_TOKEN:-}
+      IDENTITY_EVENT_WEBHOOK_TOKEN: ${IDENTITY_EVENT_WEBHOOK_TOKEN:?Set IDENTITY_EVENT_WEBHOOK_TOKEN in .env}
+      NOTIFICATION_ADMIN_TOKEN: ${NOTIFICATION_ADMIN_TOKEN:-}
+      SMTP_HOST: ${SMTP_HOST_DOCKER:-identity-mail}
+      SMTP_PORT: ${SMTP_PORT_DOCKER:-1025}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-}
+      CLAMAV_HOST: ${CLAMAV_HOST_DOCKER:-}
+      CLAMAV_PORT: ${CLAMAV_PORT_DOCKER:-3310}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "${ENGAGEMENT_PORT:-5105}:5105"
+    command: ["sh", "-c", "npm run engagement:migrate && npm run engagement:start"]
+  chat-service:
+    build:
+      context: .
+      dockerfile: services/identity-service/Dockerfile
+    depends_on:
+      chat-mongo:
+        condition: service_healthy
+      identity-service:
+        condition: service_started
+      catalog-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+    environment:
+      CHAT_MONGO_URL: mongodb://${CHAT_MONGO_USER:-chatdev}:${CHAT_MONGO_PASSWORD:-local-chat-password-change-me}@chat-mongo:27017/mduc247_chat?authSource=admin
+      CHAT_IDENTITY_URL: http://identity-service:5101
+      CHAT_CATALOG_URL: http://catalog-service:5102
+      CHAT_ORDER_URL: http://order-service:5103
+      CHAT_ENGAGEMENT_URL: http://engagement-service:5105
+      CHAT_PORT: 5106
+      CHAT_PUBLIC_URL: ${CHAT_PUBLIC_URL:-http://localhost:5106}
+      CHAT_ATTACHMENT_SECRET: ${CHAT_ATTACHMENT_SECRET:-}
+      CHAT_ORDER_TOKEN: ${CHAT_ORDER_TOKEN:-}
+      CHAT_RETENTION_DAYS: ${CHAT_RETENTION_DAYS:-365}
+      CHAT_S3_BUCKET: ${CHAT_S3_BUCKET:-}
+      CHAT_INTENT_URL: ${CHAT_INTENT_URL:-}
+      CHAT_INTENT_TOKEN: ${CHAT_INTENT_TOKEN:-}
+      CHAT_CLAUDE_API_KEY: ${CHAT_CLAUDE_API_KEY:-}
+      CHAT_CLAUDE_BASE_URL: ${CHAT_CLAUDE_BASE_URL:-https://1gw.gwai.cloud}
+      CHAT_CLAUDE_MODEL: ${CHAT_CLAUDE_MODEL:-claude-haiku-5-5}
+      CHAT_CLAUDE_MODE: ${CHAT_CLAUDE_MODE:-selective}
+      CHAT_CLAUDE_MAX_TOKENS: ${CHAT_CLAUDE_MAX_TOKENS:-160}
+      CHAT_CLAUDE_DAILY_LIMIT: ${CHAT_CLAUDE_DAILY_LIMIT:-20}
+      CHAT_NOTIFICATION_WEBHOOK_URL: http://engagement-service:5105/api/v2/internal/notifications/chat-events
+      CHAT_NOTIFICATION_WEBHOOK_TOKEN: ${NOTIFICATION_CHAT_TOKEN:-}
+      INVENTORY_INTERNAL_TOKEN: ${INVENTORY_INTERNAL_TOKEN:?Set INVENTORY_INTERNAL_TOKEN in .env}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?Set FRONTEND_ORIGIN in .env}
+      S3_BUCKET: ${S3_BUCKET:-}
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_ENDPOINT: ${S3_ENDPOINT_DOCKER:-}
+      S3_PUBLIC_ENDPOINT: ${S3_PUBLIC_ENDPOINT:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      CLAMAV_HOST: ${CLAMAV_HOST_DOCKER:-}
+      CLAMAV_PORT: ${CLAMAV_PORT_DOCKER:-3310}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "${CHAT_PORT:-5106}:5106"
+    command: ["npm", "run", "chat:start"]
+volumes:
+  identity_data:
+  identity_objects:
+  chat_data:

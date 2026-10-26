@@ -1,0 +1,101 @@
+# Compose overlay for running the Node services from VS Code source mounts.
+# Use with docker-compose.yml and docker-compose.dev.yml under the same project name.
+x-dev-source-mounts: &dev-source-mounts
+  - &services-mount
+    type: bind
+    source: ./services
+    target: /app/services
+    read_only: true
+  - &packages-mount
+    type: bind
+    source: ./packages
+    target: /app/packages
+    read_only: true
+  - &runner-mount
+    type: bind
+    source: ./scripts/docker-dev.mjs
+    target: /app/scripts/docker-dev.mjs
+    read_only: true
+
+x-dev-build: &dev-build
+  context: .
+  dockerfile: Dockerfile.dev
+
+services:
+  identity-service:
+    build: *dev-build
+    image: mduc247/backend-v2-dev:local
+    volumes:
+      - *services-mount
+      - *packages-mount
+      - *runner-mount
+      - type: bind
+        source: ./.local-avatars
+        target: /app/.local-avatars
+        bind:
+          create_host_path: true
+    environment:
+      NODE_ENV: development
+      # Local file fallback is immediate when optional MinIO is not running.
+      S3_BUCKET: ${DEV_S3_BUCKET:-}
+    command: ["node", "scripts/docker-dev.mjs", "identity-service"]
+
+  catalog-service:
+    build: *dev-build
+    image: mduc247/backend-v2-dev:local
+    volumes:
+      - *services-mount
+      - *packages-mount
+      - *runner-mount
+      - type: bind
+        source: ./.local-catalog-images
+        target: /app/.local-catalog-images
+        bind:
+          create_host_path: true
+    environment:
+      NODE_ENV: development
+      S3_BUCKET: ${DEV_S3_BUCKET:-}
+      # The host URL in .env.development.local is not reachable from a container.
+      CATALOG_DATABASE_URL: postgresql://identity:${POSTGRES_PASSWORD}@identity-db:5432/identity
+    command: ["node", "scripts/docker-dev.mjs", "catalog-service"]
+
+  order-service:
+    build: *dev-build
+    image: mduc247/backend-v2-dev:local
+    volumes: *dev-source-mounts
+    environment:
+      NODE_ENV: development
+    command: ["node", "scripts/docker-dev.mjs", "order-service"]
+
+  payment-service:
+    build: *dev-build
+    image: mduc247/backend-v2-dev:local
+    volumes: *dev-source-mounts
+    environment:
+      NODE_ENV: development
+    command: ["node", "scripts/docker-dev.mjs", "payment-service"]
+
+  engagement-service:
+    build: *dev-build
+    image: mduc247/backend-v2-dev:local
+    volumes: *dev-source-mounts
+    environment:
+      NODE_ENV: development
+    command: ["node", "scripts/docker-dev.mjs", "engagement-service"]
+
+  chat-service:
+    build: *dev-build
+    image: mduc247/backend-v2-dev:local
+    volumes:
+      - *services-mount
+      - *packages-mount
+      - *runner-mount
+      - type: bind
+        source: ./.local-chat-files
+        target: /app/.local-chat-files
+        bind:
+          create_host_path: true
+    environment:
+      NODE_ENV: development
+      S3_BUCKET: ${DEV_S3_BUCKET:-}
+    command: ["node", "scripts/docker-dev.mjs", "chat-service"]

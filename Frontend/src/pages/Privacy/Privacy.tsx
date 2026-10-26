@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 
 const Privacy: React.FC = () => {
@@ -63,8 +64,8 @@ const Privacy: React.FC = () => {
             </p>
             <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4 mt-3">
               <li>Mã hóa dữ liệu trong quá trình truyền (SSL/TLS)</li>
-              <li>Mã hóa mật khẩu bằng thuật toán bcrypt</li>
-              <li>Xác thực hai yếu tố (2FA) cho tài khoản</li>
+              <li>Mật khẩu được lưu dưới dạng hash Argon2id</li>
+              <li>Xác minh email và mã một lần khi cập nhật số điện thoại</li>
               <li>Giới hạn quyền truy cập vào thông tin cá nhân</li>
               <li>Giám sát và kiểm tra bảo mật thường xuyên</li>
             </ul>
@@ -99,7 +100,7 @@ const Privacy: React.FC = () => {
             <ul className="list-disc list-inside text-gray-700 space-y-2 ml-4">
               <li>Truy cập và xem thông tin cá nhân của mình</li>
               <li>Yêu cầu chỉnh sửa hoặc cập nhật thông tin không chính xác</li>
-              <li>Yêu cầu xóa thông tin cá nhân (theo quy định pháp luật)</li>
+              <li>Tải dữ liệu tài khoản Identity và gửi yêu cầu xóa tài khoản để được xem xét tại <Link className="underline" to="/profile">hồ sơ cá nhân</Link></li>
               <li>Từ chối nhận thông tin marketing</li>
               <li>Rút lại sự đồng ý về xử lý dữ liệu</li>
             </ul>

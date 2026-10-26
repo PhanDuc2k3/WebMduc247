@@ -1,0 +1,5 @@
+{
+  "watch": ["services/chat-service/src"],
+  "ext": "js,json",
+  "exec": "node services/chat-service/src/server.js"
+}

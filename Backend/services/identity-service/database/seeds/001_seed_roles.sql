@@ -1,0 +1,3 @@
+-- Roles are constrained by user_roles.role; each new user receives buyer.
+-- Seller is granted only by a trusted store onboarding flow together with
+-- an active store_memberships row. No global role rows are required.

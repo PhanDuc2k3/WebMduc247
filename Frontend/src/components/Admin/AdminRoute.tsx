@@ -1,103 +1,36 @@
-import React, { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
-import { Loader2, ShieldX } from "lucide-react";
-import axiosClient from "../../api/axiosClient";
+import { useEffect, useState, type ReactNode } from 'react';
+import { Link, Navigate, useLocation } from 'react-router-dom';
+import { LoaderCircle, ShieldX } from 'lucide-react';
+import { identityApi, IdentityApiError, type IdentityUser } from '../../api/identityApi';
+import { isPlatformAdmin } from '../../pages/Admin/adminPolicy';
+import { AdminSessionContext } from '../../pages/Admin/AdminSession';
 
-interface AdminRouteProps {
-  children: React.ReactNode;
-}
-
-const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-
+export default function AdminRoute({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const [state, setState] = useState<{ loading: boolean; user: IdentityUser | null; error: string }>({ loading: true, user: null, error: '' });
+  const [version, setVersion] = useState(0);
   useEffect(() => {
-    const checkAdmin = async () => {
-      try {
-        // ✅ Kiểm tra từ localStorage trước
-        const userStr = localStorage.getItem("user");
-        const user = userStr ? JSON.parse(userStr) : null;
-        
-        // ✅ Nếu localStorage có role và là admin, cho phép truy cập ngay
-        if (user && user.role === "admin") {
-          setIsAdmin(true);
-          setIsLoading(false);
-          return;
-        }
-
-        // ✅ Nếu localStorage không có role hoặc role không phải admin, lấy từ API
-        const token = localStorage.getItem("token");
-        if (!token) {
-          setIsAdmin(false);
-          setIsLoading(false);
-          return;
-        }
-
-        try {
-          const res = await axiosClient.get("/api/users/profile", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          const profile = res.data.user || res.data;
-          
-          if (profile.role === "admin") {
-            setIsAdmin(true);
-            // ✅ Cập nhật role vào localStorage
-            if (userStr) {
-              const userData = JSON.parse(userStr);
-              userData.role = profile.role;
-              localStorage.setItem("user", JSON.stringify(userData));
-            }
-          } else {
-            setIsAdmin(false);
-          }
-        } catch (apiError) {
-          console.error("Error fetching profile from API:", apiError);
-          setIsAdmin(false);
-        }
-      } catch (error) {
-        console.error("Error checking admin:", error);
-        setIsAdmin(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkAdmin();
+    const refresh = () => { setState({ loading: true, user: null, error: '' }); setVersion(value => value + 1); };
+    window.addEventListener('identityUpdated', refresh);
+    return () => window.removeEventListener('identityUpdated', refresh);
   }, []);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Đang kiểm tra quyền truy cập...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center bg-white rounded-2xl shadow-xl border-2 border-red-200 p-8 max-w-md mx-4">
-          <ShieldX className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Không có quyền truy cập</h2>
-          <p className="text-gray-600 mb-6">
-            Bạn không có quyền truy cập trang quản trị. Chỉ có quản trị viên mới có thể truy cập trang này.
-          </p>
-          <button
-            onClick={() => window.location.href = "/"}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
-          >
-            Về trang chủ
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
-};
-
-export default AdminRoute;
-
+  useEffect(() => {
+    let active = true;
+    identityApi.me().then(user => { if (active) setState({ loading: false, user, error: '' }); }).catch(error => {
+      if (active) setState({ loading: false, user: null, error: error instanceof IdentityApiError && error.status === 401 ? '' :
+        error instanceof IdentityApiError && error.status === 429 ?
+          `Có quá nhiều yêu cầu làm mới phiên. Vui lòng thử lại sau ${Math.ceil((error.retryAfterSeconds ?? 900) / 60)} phút hoặc đăng nhập lại.` :
+          'Chưa thể xác minh phiên đăng nhập. Vui lòng kiểm tra kết nối và thử lại.' });
+    });
+    return () => { active = false; };
+  }, [version]);
+  if (state.loading) return <div className="pa-access"><LoaderCircle className="animate-spin" size={28} /><p>Đang xác minh quyền quản trị…</p></div>;
+  if (state.error) return <div className="pa-access"><ShieldX size={38} /><h1>Chưa thể xác minh phiên</h1><p role="alert">{state.error}</p>
+    <button className="pa-button" onClick={() => { setState(value => ({ ...value, loading: true })); setVersion(value => value + 1); }}>Thử lại</button>
+    <Link to="/admin/login">Đăng nhập lại</Link></div>;
+  if (!state.user) return <Navigate to={`/admin/login?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
+  if (!isPlatformAdmin(state.user)) return <div className="pa-access"><ShieldX size={44} /><h1>Tài khoản chưa có quyền quản trị</h1>
+    <p>Bạn đang đăng nhập bằng {state.user.email}. Khu vực này dành cho quản trị viên sàn MDUC247.</p>
+    <Link className="pa-button" to="/admin/login">Dùng tài khoản quản trị</Link><Link to="/">Về cửa hàng</Link></div>;
+  return <AdminSessionContext.Provider value={state.user}>{children}</AdminSessionContext.Provider>;
+}

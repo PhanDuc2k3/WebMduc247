@@ -1,0 +1,194 @@
+openapi: 3.0.3
+info:
+  title: Identity Service API
+  version: 2.0.0
+servers:
+  - url: /api/v2
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        code: { type: string }
+        message: { type: string }
+    User:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        fullName: { type: string }
+        emailVerifiedAt: { type: string, format: date-time, nullable: true }
+        roles:
+          type: array
+          items: { type: string, enum: [buyer, seller] }
+    Session:
+      type: object
+      required: [accessToken]
+      properties:
+        accessToken: { type: string, description: Ten-minute Bearer JWT }
+        user: { $ref: '#/components/schemas/User' }
+    Message:
+      type: object
+      properties:
+        message: { type: string }
+paths:
+  /auth/register:
+    post:
+      summary: Register a Buyer account pending email verification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, fullName, password, confirmPassword]
+              properties:
+                email: { type: string, format: email }
+                fullName: { type: string }
+                password: { type: string, format: password, minLength: 8, maxLength: 128, description: Requires at least one lowercase letter and one special character }
+                confirmPassword: { type: string, format: password }
+      responses:
+        '201':
+          description: Account created; check requiresEmailVerification before directing the user to verification
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+                  requiresEmailVerification: { type: boolean }
+                  message: { type: string }
+        '409': { description: Email already exists }
+        '429': { description: Rate limited }
+  /auth/resend-verification:
+    post:
+      summary: Resend a verification link for an unverified account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200':
+          description: Generic response
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Message' }
+  /auth/verify-email:
+    post:
+      summary: Consume a one-time verification link token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, token]
+              properties:
+                email: { type: string, format: email }
+                token: { type: string }
+      responses:
+        '200': { description: Email verified }
+        '400': { description: Invalid or expired token }
+  /auth/login:
+    post:
+      summary: Issue a ten-minute access token and set a refresh cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        '200':
+          description: Access token and public user; refresh token is only in an HttpOnly SameSite=Strict cookie
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        '401': { description: Invalid credentials or unavailable account }
+        '429': { description: Rate limited }
+  /auth/refresh:
+    post:
+      summary: Rotate refresh cookie and issue new access token
+      responses:
+        '200':
+          description: New access token and rotated HttpOnly refresh cookie
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Session' }
+        '401': { description: Invalid, revoked, expired, or reused token }
+  /auth/logout:
+    post:
+      summary: Revoke this device or all devices
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allDevices: { type: boolean, default: false }
+      responses:
+        '200': { description: Session revoked and cookie cleared }
+        '401': { description: Invalid access token }
+  /auth/forgot-password:
+    post:
+      summary: Email a six-digit password reset OTP when an active account exists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200': { description: Generic response regardless of account existence; OTP valid for ten minutes }
+        '429': { description: Too many requests }
+  /auth/reset-password:
+    post:
+      summary: Consume a six-digit email OTP, set a new password, and revoke all sessions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code, newPassword, confirmPassword]
+              properties:
+                email: { type: string, format: email }
+                code: { type: string, pattern: '^[0-9]{6}$', description: One-time code; five incorrect attempts invalidate it }
+                newPassword: { type: string, format: password, minLength: 8, maxLength: 128, description: Requires at least one lowercase letter and one special character }
+                confirmPassword: { type: string, format: password }
+      responses:
+        '200': { description: Password changed }
+        '400': { description: Invalid, expired, consumed, or exhausted OTP }
+        '429': { description: Too many attempts in the rate-limit window }
+  /auth/me:
+    get:
+      summary: Get current Buyer or Seller identity
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200':
+          description: Public user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user: { $ref: '#/components/schemas/User' }
+        '401': { description: Invalid access token or revoked session }

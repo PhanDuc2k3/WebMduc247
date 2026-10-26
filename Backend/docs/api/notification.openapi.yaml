@@ -1,0 +1,201 @@
+openapi: 3.0.3
+info:
+  title: Notification API v2
+  version: 0.1.0
+  description: Engagement Service inbox and independent event consumers. Email delivery is asynchronous.
+servers:
+  - url: http://localhost:5105/api/v2
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+  schemas:
+    Notification:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        type: { type: string, enum: [order, payment, chat, seller, system, marketing] }
+        title: { type: string }
+        body: { type: string }
+        deepLink: { type: string, description: Internal path to the order, shop order or chat }
+        isRead: { type: boolean }
+        createdAt: { type: string, format: date-time }
+    Preferences:
+      type: object
+      properties:
+        marketingOptIn: { type: boolean, description: Stored by Identity }
+        emailChat: { type: boolean }
+        emailSeller: { type: boolean }
+        webChat: { type: boolean }
+        essentialEmail: { type: boolean, enum: [true], readOnly: true }
+paths:
+  /notifications:
+    get:
+      summary: Inbox of the authenticated user
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50 } }
+        - { name: type, in: query, schema: { type: string, enum: [order, payment, chat, seller, system, marketing] } }
+        - { name: unreadOnly, in: query, schema: { type: boolean } }
+      responses:
+        '200': { description: notifications and nextCursor }
+  /notifications/unread-count:
+    get:
+      summary: Unread count for the authenticated user
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Count }
+  /notifications/{id}/read:
+    patch:
+      summary: Mark one owned notification read, idempotently
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Notification }
+        '404': { description: Missing or foreign notification }
+  /notifications/read-many:
+    post:
+      summary: Mark up to 100 owned notifications read
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  maxItems: 100
+                  items: { type: string, format: uuid }
+      responses:
+        '200': { description: Updated count }
+  /notifications/mark-all-read:
+    post:
+      summary: Mark all owned notifications read
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Updated count }
+  /notifications/{id}:
+    delete:
+      summary: Delete one owned notification
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200': { description: Deleted }
+  /notifications/preferences:
+    get:
+      summary: Marketing and optional channel preferences
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Preferences }
+    patch:
+      summary: Update marketing or optional channels; essential email remains enabled
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                marketingOptIn: { type: boolean }
+                emailChat: { type: boolean }
+                emailSeller: { type: boolean }
+                webChat: { type: boolean }
+      responses:
+        '200': { description: Updated preferences }
+        '400': { description: Unsupported or invalid preference }
+  /internal/notifications/identity-events:
+    post:
+      summary: Signed Identity outbox event, deduplicated by X-Event-Id
+      parameters:
+        - { name: X-Event-Id, in: header, required: true, schema: { type: string } }
+        - { name: X-Identity-Event-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Event accepted or previously processed }
+        '403': { description: Invalid internal token }
+  /internal/notifications/order-events:
+    post:
+      summary: Signed Order outbox event, deduplicated by X-Event-Id
+      parameters:
+        - { name: X-Event-Id, in: header, required: true, schema: { type: string } }
+        - { name: X-Order-Notification-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Event accepted or previously processed }
+  /internal/notifications/payment-events:
+    post:
+      summary: Signed Payment outbox event
+      parameters:
+        - { name: X-Event-Id, in: header, required: true, schema: { type: string } }
+        - { name: X-Payment-Notification-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Event accepted or previously processed }
+  /internal/notifications/chat-events:
+    post:
+      summary: Signed Chat outbox event, with no message content
+      parameters:
+        - { name: X-Event-Id, in: header, required: true, schema: { type: string } }
+        - { name: X-Chat-Event-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Event accepted or previously processed }
+  /internal/notifications/metrics:
+    get:
+      summary: Email pending/dead counts and Order/Payment/Chat outbox backlog
+      parameters:
+        - { name: X-Notification-Admin-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Delivery counts and oldest pending timestamp }
+  /internal/notification/shop-orders/{id}:
+    get:
+      summary: Order returns buyer, store and group context without address or payment details
+      servers:
+        - url: http://localhost:5103/api/v2
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Notification-Order-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Shop order context }
+  /internal/notification/groups/{id}:
+    get:
+      summary: Order returns buyer and shop IDs for a paid group
+      servers:
+        - url: http://localhost:5103/api/v2
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Notification-Order-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Group context }
+  /inventory/stores/{id}/notification-members:
+    get:
+      summary: Catalog returns active members of one shop
+      servers:
+        - url: http://localhost:5102/api/v2
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Inventory-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Active user IDs and roles }
+  /internal/notification/users/{id}:
+    get:
+      summary: Identity supplies email, account status and marketing preference to the email worker
+      servers:
+        - url: http://localhost:5101/api/v2
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Notification-Identity-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Minimal recipient contact context }
+x-socket-io:
+  handshake: Access token in auth.token, verified through Identity.
+  room: Server joins only notification:user:{authenticatedUserId}; client room names are ignored.
+  event:
+    notification:new: Persisted notification sent after database commit to that user room only.
+x-source-metrics:
+  order: GET http://localhost:5103/api/v2/internal/notification/metrics with X-Notification-Order-Token
+  payment: GET http://localhost:5104/api/v2/internal/notification/metrics with X-Payment-Notification-Token
+  chat: GET http://localhost:5106/api/v2/internal/notification/metrics with X-Chat-Event-Token

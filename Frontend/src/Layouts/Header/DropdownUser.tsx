@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { UserCircle, Store, LogOut, Gift, Wallet, MessageCircle, Settings } from "lucide-react";
-import walletApi from "../../api/walletApi";
+import { UserCircle, Store, LogOut, Gift, MessageCircle, Settings, Package } from "lucide-react";
 import { useChat } from "../../context/chatContext";
 
 interface Props {
@@ -9,54 +8,20 @@ interface Props {
   online: boolean;
   lastSeen: string | null;
   handleLogout: () => void;
+  handleLogoutAll: () => void;
   setShowDropdown: (v: boolean) => void;
   userRole?: string; // ✅ role để kiểm tra admin
 }
 
-const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, setShowDropdown, userRole }) => {
+const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, handleLogoutAll, setShowDropdown, userRole }) => {
   const navigate = useNavigate();
   const { unreadMessages } = useChat();
-  const [walletBalance, setWalletBalance] = useState<number>(0);
   
   const totalUnreadMessages = Object.values(unreadMessages).reduce((sum, count) => sum + count, 0);
-
-  useEffect(() => {
-    const fetchWallet = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        
-        const res = await walletApi.getWallet();
-        setWalletBalance(res.data.wallet.balance);
-      } catch (err: unknown) {
-        const requestError = err as { response?: { status?: number }; code?: string };
-        if (requestError.response?.status !== 401 && requestError.code !== 'ERR_NETWORK') {
-          console.error('Lỗi lấy ví:', err);
-        }
-      }
-    };
-
-    fetchWallet();
-  }, []);
 
   return (
     <div className="canva-user-menu absolute right-0 mt-2 bg-white border border-[#e8edf5] rounded-2xl shadow-xl w-64 p-2 z-50">
       <div className="border-b border-gray-200 pb-2 mb-2">
-        <button
-          onClick={() => {
-            setShowDropdown(false);
-            navigate("/wallet");
-          }}
-          className="flex items-center justify-between w-full px-3 py-2 rounded-md hover:bg-gray-100"
-        >
-          <div className="flex items-center">
-            <Wallet className="mr-2" size={18} />
-            <span>Ví của tôi</span>
-          </div>
-          <span className="text-sm font-bold text-purple-600">
-            {walletBalance.toLocaleString('vi-VN')}₫
-          </span>
-        </button>
         <button
           onClick={() => {
             setShowDropdown(false);
@@ -96,6 +61,10 @@ const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, setShow
       >
         <UserCircle className="mr-2" size={18} /> Trang cá nhân
       </button>
+      <button onClick={() => { setShowDropdown(false); navigate("/orders"); }}
+        className="flex items-center w-full px-3 py-2 rounded-md hover:bg-gray-100">
+        <Package className="mr-2" size={18} /> Đơn hàng của tôi
+      </button>
       {/* Chỉ hiển thị "Cửa hàng của tôi" nếu user là seller hoặc admin */}
       {(userRole === "seller" || userRole === "admin") && (
         <button
@@ -125,6 +94,12 @@ const DropdownUser: React.FC<Props> = ({ online, lastSeen, handleLogout, setShow
         className="flex items-center w-full px-3 py-2 rounded-md hover:bg-gray-100 text-red-600"
       >
         <LogOut className="mr-2" size={18} /> Đăng xuất
+      </button>
+      <button
+        onClick={handleLogoutAll}
+        className="flex items-center w-full px-3 py-2 rounded-md hover:bg-gray-100 text-red-600"
+      >
+        <LogOut className="mr-2" size={18} /> Đăng xuất tất cả thiết bị
       </button>
       {!online && lastSeen && (
         <span className="block text-xs text-gray-500 mt-2 px-3">

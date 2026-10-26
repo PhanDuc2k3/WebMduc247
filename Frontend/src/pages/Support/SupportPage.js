@@ -1,0 +1,154 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import React from 'react';
+import ContactInfoCard from '../../components/Support/ContactInfoCard';
+import QuickGuideCard from '../../components/Support/QuickGuideCard';
+import SupportForm from '../../components/Support/SupportForm';
+import AdditionalInfoCard from '../../components/Support/AdditionalInfoCard';
+import { Phone, Mail, MessageSquare, MapPin, ShoppingCart, Eye, CreditCard, Gift, Truck, HelpCircle, Zap, Edit3, ChevronDown } from 'lucide-react';
+import ContentBreadcrumb from '../../components/ui/ContentBreadcrumb';
+import { SITE_CONTENT } from '../../config/siteContent';
+const faqCategories = [
+    {
+        id: "order",
+        title: "Đặt hàng & Thanh toán",
+        icon: ShoppingCart,
+        questions: [
+            {
+                q: "Làm thế nào để đặt hàng trên MDUC247?",
+                a: "Để đặt hàng, bạn chỉ cần: 1) Tìm kiếm sản phẩm muốn mua, 2) Thêm vào giỏ hàng, 3) Chọn phương thức thanh toán và điền thông tin giao hàng, 4) Xác nhận đơn hàng. Bạn sẽ nhận được email xác nhận ngay sau đó."
+            },
+            {
+                q: "Có những phương thức thanh toán nào?",
+                a: "Chúng tôi hỗ trợ nhiều phương thức thanh toán: Thanh toán khi nhận hàng (COD), Thẻ tín dụng/ghi nợ (Visa, Mastercard), Ví điện tử (Momo, ZaloPay), Thanh toán QR (VietQR), Chuyển khoản ngân hàng."
+            },
+            {
+                q: "Tôi có thể hủy đơn hàng không?",
+                a: "Bạn có thể hủy đơn hàng miễn phí nếu đơn hàng chưa được xác nhận hoặc chưa được giao cho đơn vị vận chuyển. Sau khi đơn hàng đã được giao cho vận chuyển, bạn cần liên hệ bộ phận chăm sóc khách hàng."
+            },
+            {
+                q: "Làm sao để áp dụng mã giảm giá?",
+                a: "Tại trang thanh toán, bạn sẽ thấy ô 'Mã giảm giá' hoặc 'Voucher'. Nhập mã của bạn vào đó và nhấn 'Áp dụng'. Số tiền giảm giá sẽ được tự động trừ vào tổng đơn hàng."
+            }
+        ]
+    },
+    {
+        id: "shipping",
+        title: "Vận chuyển & Giao hàng",
+        icon: Truck,
+        questions: [
+            {
+                q: "Thời gian giao hàng là bao lâu?",
+                a: "Thời gian giao hàng phụ thuộc vào khu vực và phương thức vận chuyển. Ngày nhận dự kiến được hiển thị khi đặt hàng; bạn có thể theo dõi tiến trình trong mục 'Đơn hàng của tôi'."
+            },
+            {
+                q: "Phí vận chuyển được tính như thế nào?",
+                a: "Phí vận chuyển và ưu đãi áp dụng cho từng đơn hàng được hiển thị trong giỏ hàng và bước thanh toán. Vui lòng kiểm tra tổng tiền trước khi xác nhận đặt hàng."
+            },
+            {
+                q: "Tôi có thể thay đổi địa chỉ giao hàng không?",
+                a: "Bạn có thể thay đổi địa chỉ giao hàng trước khi đơn hàng được giao cho đơn vị vận chuyển. Vui lòng liên hệ ngay với bộ phận chăm sóc khách hàng hoặc cập nhật trong phần 'Đơn hàng của tôi'."
+            },
+            {
+                q: "Điều gì xảy ra nếu tôi không có nhà khi giao hàng?",
+                a: "Đơn vị vận chuyển sẽ liên hệ với bạn trước khi giao hàng. Nếu bạn không có nhà, họ sẽ thử giao lại lần 2. Bạn cũng có thể liên hệ đơn vị vận chuyển để sắp xếp lại thời gian giao hàng phù hợp."
+            }
+        ]
+    },
+    {
+        id: "return",
+        title: "Đổi trả & Hoàn tiền",
+        icon: CreditCard,
+        questions: [
+            {
+                q: "Chính sách đổi trả hàng như thế nào?",
+                a: "Bạn có thể đổi trả hàng trong vòng 7 ngày kể từ ngày nhận hàng nếu sản phẩm còn nguyên tem mác, chưa qua sử dụng và có đầy đủ hóa đơn. Một số sản phẩm đặc biệt như đồ lót, mỹ phẩm đã mở seal không được đổi trả."
+            },
+            {
+                q: "Tôi được hoàn tiền sau bao lâu?",
+                a: "Sau khi chúng tôi nhận được hàng trả và xác nhận hợp lệ, tiền sẽ được hoàn lại trong vòng 5-7 ngày làm việc. Nếu bạn thanh toán bằng thẻ/ví điện tử, tiền sẽ được hoàn về tài khoản gốc. Nếu thanh toán COD, bạn sẽ nhận tiền qua chuyển khoản."
+            },
+            {
+                q: "Chi phí vận chuyển đổi trả do ai chịu?",
+                a: "Nếu lỗi do nhà bán hàng (sản phẩm lỗi, sai hàng), chúng tôi sẽ chịu toàn bộ phí vận chuyển. Nếu lỗi do người mua (đổi ý, chọn nhầm size), người mua sẽ chịu phí vận chuyển."
+            },
+            {
+                q: "Làm thế nào để yêu cầu đổi trả?",
+                a: "Vào 'Đơn hàng của tôi', chọn đơn hàng cần đổi trả, nhấn 'Yêu cầu đổi trả/hoàn tiền', chọn lý do và tải lên hình ảnh sản phẩm (nếu có). Bộ phận chăm sóc khách hàng sẽ xử lý trong vòng 24h."
+            }
+        ]
+    },
+    {
+        id: "account",
+        title: "Tài khoản & Bảo mật",
+        icon: HelpCircle,
+        questions: [
+            {
+                q: "Làm thế nào để đăng ký tài khoản?",
+                a: "Nhấn vào 'Đăng ký' ở góc trên bên phải, điền email/số điện thoại và mật khẩu, xác nhận qua OTP được gửi đến. Bạn cũng có thể đăng ký nhanh qua Facebook hoặc Google."
+            },
+            {
+                q: "Tôi quên mật khẩu, phải làm sao?",
+                a: "Tại trang đăng nhập, nhấn 'Quên mật khẩu' và nhập email đã đăng ký. Chúng tôi sẽ gửi mã OTP qua email để bạn đặt lại mật khẩu."
+            },
+            {
+                q: "Làm sao để bảo vệ tài khoản của tôi?",
+                a: "Sử dụng mật khẩu mạnh (ít nhất 8 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt), không chia sẻ mật khẩu với người khác, cập nhật thông tin bảo mật thường xuyên."
+            },
+            {
+                q: "Thông tin cá nhân của tôi có được bảo mật không?",
+                a: "Chúng tôi cam kết bảo mật tuyệt đối thông tin cá nhân của khách hàng theo chính sách bảo mật. Thông tin của bạn được mã hóa và chỉ sử dụng cho mục đích giao dịch, không chia sẻ với bên thứ ba."
+            }
+        ]
+    },
+    {
+        id: "voucher",
+        title: "Voucher & Khuyến mãi",
+        icon: Gift,
+        questions: [
+            {
+                q: "Làm thế nào để nhận voucher?",
+                a: "Bạn có thể xem các mã đang có tại trang Voucher và trong các chương trình khuyến mãi của MDUC247. Điều kiện áp dụng được hiển thị trên từng mã."
+            },
+            {
+                q: "Tại sao voucher của tôi không áp dụng được?",
+                a: "Voucher có thể không áp dụng được do: Đã hết hạn sử dụng, không đủ điều kiện đơn hàng tối thiểu, không áp dụng cho sản phẩm/danh mục bạn mua, đã sử dụng hết lượt, hoặc xung đột với chương trình khuyến mãi khác."
+            },
+            {
+                q: "Tôi có thể dùng nhiều voucher cùng lúc không?",
+                a: "Các mã có thể kết hợp hay không phụ thuộc vào điều kiện của từng chương trình. Trang thanh toán sẽ hiển thị những ưu đãi được áp dụng cho đơn hàng của bạn."
+            },
+            {
+                q: "Voucher có được hoàn lại khi tôi hủy đơn?",
+                a: "Nếu bạn hủy đơn hàng trước khi xác nhận, voucher sẽ được hoàn lại vào tài khoản. Nếu hủy sau khi xác nhận, voucher có thể không được hoàn lại tùy theo điều kiện cụ thể của từng voucher."
+            }
+        ]
+    }
+];
+const SupportPage = () => {
+    const [selectedTab, setSelectedTab] = React.useState(faqCategories[0].id);
+    const [openAnswers, setOpenAnswers] = React.useState({});
+    const toggleAnswer = (tabId, index) => {
+        setOpenAnswers(prev => {
+            const current = prev[tabId] || [];
+            return {
+                ...prev,
+                [tabId]: current.includes(index) ? current.filter(i => i !== index) : [...current, index],
+            };
+        });
+    };
+    const activeFaq = faqCategories.find((group) => group.id === selectedTab);
+    return (_jsxs("div", { className: "canva-public-page", children: [_jsx(ContentBreadcrumb, { items: [{ label: "Hỗ trợ" }] }), _jsxs("div", { className: "canva-public-page__content space-y-10", children: [_jsx("section", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in-up", children: [
+                            { title: 'Hotline', content: SITE_CONTENT.supportPhone, note: SITE_CONTENT.supportHours, icon: _jsx(Phone, { size: 28, className: "text-blue-700" }), iconBgColor: 'rgba(59,130,246,0.2)', iconBorderColor: 'rgba(59,130,246,0.5)' },
+                            { title: 'Email', content: SITE_CONTENT.supportEmail, note: 'Gửi yêu cầu bất cứ lúc nào', icon: _jsx(Mail, { size: 28, className: "text-green-700" }), iconBgColor: 'rgba(34,197,94,0.2)', iconBorderColor: 'rgba(34,197,94,0.5)' },
+                            { title: 'Trò chuyện trực tuyến', content: 'Nhắn tin ngay', note: SITE_CONTENT.supportHours, icon: _jsx(MessageSquare, { size: 28, className: "text-purple-700" }), iconBgColor: 'rgba(139,92,246,0.2)', iconBorderColor: 'rgba(139,92,246,0.5)' },
+                            { title: 'Địa chỉ', content: SITE_CONTENT.supportAddress, note: '', icon: _jsx(MapPin, { size: 28, className: "text-orange-500" }), iconBgColor: 'rgba(251,146,60,0.2)', iconBorderColor: 'rgba(251,146,60,0.5)' },
+                        ].map((item, idx) => (_jsx(ContactInfoCard, { ...item }, idx))) }), _jsxs("section", { className: "animate-fade-in-up delay-200", children: [_jsxs("h2", { className: "text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900", children: [_jsx(Zap, { className: "w-6 h-6 text-[#4B5563]" }), _jsx("span", { className: "text-[#4B5563]", children: "H\u01B0\u1EDBng d\u1EABn nhanh" })] }), _jsx("div", { className: "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4", children: [
+                                    { title: 'Hướng dẫn đặt hàng', icon: _jsx(ShoppingCart, { size: 24 }), description: 'Cách đặt hàng nhanh chóng và dễ dàng' },
+                                    { title: 'Theo dõi đơn hàng', icon: _jsx(Eye, { size: 24 }), description: 'Kiểm tra tình trạng giao hàng' },
+                                    { title: 'Phương thức thanh toán', icon: _jsx(CreditCard, { size: 24 }), description: 'Các phương thức thanh toán' },
+                                    { title: 'Sử dụng voucher', icon: _jsx(Gift, { size: 24 }), description: 'Cách sử dụng mã giảm giá' },
+                                ].map((item, idx) => (_jsx(QuickGuideCard, { ...item }, idx))) })] }), _jsxs("section", { className: "canva-public-page__panel p-5 md:p-8 animate-fade-in-up delay-300", children: [_jsxs("h2", { className: "text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900", children: [_jsx(HelpCircle, { className: "w-6 h-6 text-[#4B5563]" }), _jsx("span", { className: "text-[#4B5563]", children: "C\u00E2u h\u1ECFi th\u01B0\u1EDDng g\u1EB7p" })] }), _jsx("div", { className: "flex flex-wrap gap-3 mb-6", children: faqCategories.map((group) => (_jsx("button", { className: `px-6 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 ${selectedTab === group.id
+                                        ? "bg-[#4B5563] text-white shadow-lg scale-105"
+                                        : "bg-gradient-to-r from-gray-100 to-gray-50 text-gray-700 border-2 border-gray-200 hover:border-[#4B5563] hover:bg-[#4B5563]/5"}`, onClick: () => setSelectedTab(group.id), children: group.title }, group.id))) }), _jsx("div", { className: "border-2 border-gray-200 rounded-2xl shadow-lg overflow-hidden", children: activeFaq?.questions.map((item, idx) => (_jsxs("div", { className: `p-6 cursor-pointer transition-all duration-300 ${idx !== activeFaq.questions.length - 1 ? "border-b border-gray-200" : ""} ${openAnswers[selectedTab]?.includes(idx) ? "bg-[#4B5563]/10" : "hover:bg-[#4B5563]/5"}`, onClick: () => toggleAnswer(selectedTab, idx), children: [_jsxs("div", { className: "flex justify-between items-center", children: [_jsx("p", { className: "font-bold text-gray-900 text-lg", children: item.q }), _jsx(ChevronDown, { className: `w-5 h-5 text-gray-500 transition-transform duration-300 ${openAnswers[selectedTab]?.includes(idx) ? "rotate-180 text-[#4B5563]" : ""}` })] }), openAnswers[selectedTab]?.includes(idx) && (_jsx("p", { className: "mt-4 text-gray-700 leading-relaxed animate-fade-in", children: item.a }))] }, idx))) })] }), _jsxs("section", { className: "animate-fade-in-up delay-400", children: [_jsxs("h2", { className: "text-xl lg:text-2xl font-bold mb-6 flex items-center gap-3 text-gray-900", children: [_jsx(Edit3, { className: "w-6 h-6 text-[#4B5563]" }), _jsx("span", { className: "text-[#4B5563]", children: "G\u1EEDi y\u00EAu c\u1EA7u h\u1ED7 tr\u1EE3" })] }), _jsx(SupportForm, {})] }), _jsx("section", { className: "animate-fade-in-up delay-500", children: _jsx(AdditionalInfoCard, {}) })] })] }));
+};
+export default SupportPage;

@@ -11,7 +11,7 @@ const customerLinks = [
 
 const aboutLinks = [
   ["Cửa hàng", "/store"],
-  ["Khuyến mãi", "/new"],
+  ["Khuyến mãi", "/flash-sale"],
   ["Điều khoản", "/terms"],
   ["Chính sách bảo mật", "/privacy"],
 ];

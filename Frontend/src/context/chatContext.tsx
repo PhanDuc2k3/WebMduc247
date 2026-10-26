@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from "react";
 import { getSocket } from "../socket";
 import { toast } from "react-toastify";
+import { chatV2Api } from "../api/chatV2Api";
 
 // Global navigate helper - sẽ được set từ component có useNavigate
 let globalNavigate: ((path: string) => void) | null = null;
@@ -85,6 +86,17 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   const [onlineStores, setOnlineStores] = useState<string[]>([]);
   const [canPlayAudio, setCanPlayAudio] = useState(false);
+  useEffect(()=>{
+    let active=true;
+    const refresh=()=>{void chatV2Api.conversations().then(result=>{
+      if(active)setUnreadMessages(Object.fromEntries(result.conversations.map(item=>[item.id,item.unreadCount])));
+    }).catch(()=>{if(active)setUnreadMessages({});});};
+    refresh();window.addEventListener('identityUpdated',refresh);
+    window.addEventListener('chatV2Changed',refresh);
+    const timer=window.setInterval(refresh,30000);
+    return()=>{active=false;window.clearInterval(timer);
+      window.removeEventListener('identityUpdated',refresh);window.removeEventListener('chatV2Changed',refresh);};
+  },[]);
 
   const [audio] = useState(() => new Audio("/sound/poppop.mp3"));
 

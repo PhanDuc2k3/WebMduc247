@@ -67,3 +67,14 @@
 .canva-home>.canva-home__hero,.canva-home>.canva-home__section{width:100%!important;max-width:none!important;padding-right:10%!important;padding-left:10%!important}
 @media(max-width:760px){.canva-home>.canva-home__hero,.canva-home>.canva-home__section{padding-right:16px!important;padding-left:16px!important}}
 @media(prefers-reduced-motion:reduce){.canva-home *,.canva-home *::before,.canva-home *::after{scroll-behavior:auto!important;transition-duration:.01ms!important}}
+.canva-home__category{display:flex;flex-direction:column;align-items:center;justify-content:center;text-decoration:none}
+.canva-home__store-card{text-decoration:none}
+.canva-home__store-logo{display:grid;width:58px;height:58px;place-items:center;overflow:hidden;border-radius:14px;background:#edf1ff;color:#476de4}
+.canva-home__store-logo img{width:100%;height:100%;object-fit:cover}
+.canva-home__product-media>a{display:block;width:100%;height:100%}
+.canva-home__product-name{text-decoration:none}
+.canva-home__product-name:hover{color:#476de4}
+.canva-home__empty{padding:25px;border:1px solid #e8edf5;border-radius:16px;background:#fff;color:#718099;font-size:14px}
+.canva-home__empty--flash{display:flex;min-height:175px;align-items:center;justify-content:center;flex-direction:column;gap:8px;text-align:center}
+.canva-home__empty--flash strong{color:#172b49;font-size:17px}
+.canva-home__empty--flash a{display:inline-flex;align-items:center;gap:6px;margin-top:5px;color:#476de4;font-weight:800;text-decoration:none}

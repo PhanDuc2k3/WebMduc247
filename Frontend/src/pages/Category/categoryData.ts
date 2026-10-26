@@ -19,22 +19,22 @@ export interface CategoryPageConfig {
 export const categoryPages: Record<string, CategoryPageConfig> = {
   phone: {
     slug: "phone", apiCategory: "electronics", eyebrow: "Kết nối mọi khoảnh khắc", title: "Điện thoại & Phụ kiện", description: "Khám phá smartphone, tai nghe, sạc và phụ kiện giúp bạn kết nối theo cách riêng.",
-    image: "https://images.pexels.com/photos/788946/pexels-photo-788946.jpeg?auto=compress&cs=tinysrgb&w=1100", imageAlt: "Điện thoại thông minh hiện đại", tone: "blue", icon: Smartphone,
-    subcategories: ["Điện thoại", "Ốp lưng", "Tai nghe", "Sạc & Cáp", "Pin dự phòng", "Thiết bị đeo"], promoTitle: "Nâng cấp thiết bị, mở rộng trải nghiệm", promoDescription: "Ưu đãi phụ kiện khi mua cùng điện thoại và nhiều lựa chọn giao nhanh.",
+    image: "/category/phone-banner.png", imageAlt: "Điện thoại và tai nghe không dây", tone: "blue", icon: Smartphone,
+    subcategories: ["Điện thoại", "Ốp lưng", "Tai nghe", "Sạc & Cáp", "Pin dự phòng", "Thiết bị đeo"], promoTitle: "Nâng cấp thiết bị, mở rộng trải nghiệm", promoDescription: "Khám phá tai nghe và phụ kiện đang bán từ các gian hàng công nghệ.",
   },
   electronics: {
     slug: "electronics", apiCategory: "electronics", eyebrow: "Công nghệ cho cuộc sống", title: "Điện tử & Công nghệ", description: "Thiết bị thông minh cho công việc, giải trí và không gian sống hiện đại.",
-    image: "https://images.pexels.com/photos/18105/pexels-photo.jpg?auto=compress&cs=tinysrgb&w=1100", imageAlt: "Laptop và thiết bị công nghệ", tone: "cyan", icon: Laptop,
+    image: "/home/shopping-hero.png", imageAlt: "Laptop và hộp quà công nghệ", tone: "cyan", icon: Laptop,
     subcategories: ["Laptop", "Máy tính bảng", "Âm thanh", "Màn hình", "Bàn phím", "Thiết bị mạng"], promoTitle: "Góc làm việc thông minh hơn", promoDescription: "Kết hợp thiết bị hiệu quả để học tập, sáng tạo và làm việc liền mạch.",
   },
   fashion: {
     slug: "fashion", apiCategory: "fashion", eyebrow: "Phong cách của riêng bạn", title: "Thời trang", description: "Làm mới tủ đồ với những thiết kế dễ mặc, hiện đại và đầy cảm hứng.",
-    image: "https://images.pexels.com/photos/994523/pexels-photo-994523.jpeg?auto=compress&cs=tinysrgb&w=1100", imageAlt: "Không gian thời trang hiện đại", tone: "purple", icon: Shirt,
+    image: "/home/fashion-hero.png", imageAlt: "Túi tote vải canvas", tone: "purple", icon: Shirt,
     subcategories: ["Thời trang nữ", "Thời trang nam", "Giày dép", "Túi xách", "Phụ kiện", "Đồng hồ"], promoTitle: "Phối đồ mới cho mỗi ngày", promoDescription: "Khám phá các gợi ý dễ phối và sản phẩm đang được yêu thích.",
   },
   home: {
     slug: "home", apiCategory: "home", eyebrow: "Chăm chút tổ ấm", title: "Nhà cửa & Đời sống", description: "Những sản phẩm tiện nghi giúp căn nhà gọn gàng, ấm áp và nhiều cảm hứng hơn.",
-    image: "https://images.pexels.com/photos/1643383/pexels-photo-1643383.jpeg?auto=compress&cs=tinysrgb&w=1100", imageAlt: "Không gian phòng khách ấm cúng", tone: "cyan", icon: House,
+    image: "/home/home-hero.png", imageAlt: "Đèn bàn LED", tone: "cyan", icon: House,
     subcategories: ["Đồ gia dụng", "Nhà bếp", "Trang trí", "Nội thất", "Chăn ga", "Dọn dẹp"], promoTitle: "Tiện ích nhỏ, thay đổi lớn", promoDescription: "Lựa chọn thông minh để tiết kiệm thời gian và tận hưởng căn nhà của bạn.",
   },
   beauty: {

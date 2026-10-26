@@ -1,0 +1,25 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import React from "react";
+import { User, Package, Heart, Settings } from "lucide-react";
+const tabs = [
+    { key: "info", label: "Hồ sơ", icon: User },
+    { key: "orders", label: "Đơn hàng", icon: Package },
+    { key: "favorites", label: "Yêu thích", icon: Heart },
+    { key: "settings", label: "Cài đặt", icon: Settings },
+];
+const ProfileTabs = ({ activeTab, setActiveTab }) => {
+    return (_jsxs("div", { className: "w-full overflow-x-auto pb-2 md:pb-0 profile-tabs-scroll", style: {
+            scrollbarWidth: 'none', /* Firefox */
+            msOverflowStyle: 'none', /* IE and Edge */
+        }, children: [_jsx("style", { children: `
+        .profile-tabs-scroll::-webkit-scrollbar {
+          display: none; /* Chrome, Safari, Opera */
+        }
+      ` }), _jsx("div", { className: "flex gap-2 md:gap-3 justify-center sm:justify-start min-w-max md:min-w-0 md:flex-wrap", children: tabs.map((tab, index) => {
+                    const Icon = tab.icon;
+                    return (_jsxs("button", { className: `px-3 py-2 md:px-6 md:py-3 rounded-lg md:rounded-xl text-xs sm:text-sm md:text-base font-bold transition-all duration-300 transform hover:scale-105 flex items-center gap-1.5 md:gap-2 whitespace-nowrap flex-shrink-0 ${activeTab === tab.key
+                            ? "bg-[#4B5563] text-white shadow-lg scale-105"
+                            : "bg-white text-gray-600 hover:bg-[#4B5563]/5 hover:text-[#4B5563] border-2 border-gray-200 hover:border-[#4B5563]"} animate-fade-in-up`, style: { animationDelay: `${index * 0.1}s` }, onClick: () => setActiveTab(tab.key), children: [_jsx(Icon, { size: 16, className: "md:w-5 md:h-5" }), _jsx("span", { children: tab.label })] }, tab.key));
+                }) })] }));
+};
+export default ProfileTabs;

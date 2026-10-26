@@ -1,277 +1,129 @@
-import React, { useEffect, useState } from "react";
-import { XCircle, Gift } from "lucide-react";
-import voucherApi, { type VoucherType } from "../../api/voucherApi";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { formatDisplayDate } from "../../utils/formatDisplayDate";
 import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
+import { catalogApi, type CategoryNode } from "../../api/catalogApi";
+import { engagementApi, type Campaign, type Voucher } from "../../api/engagementApi";
+import { vnd } from "../../api/orderV2Api";
+import { USE_MOCK_DATA } from "../../config/runtime";
+import "./Voucher.css";
 
-export type Voucher = VoucherType & {
-  title: string;
-  condition: string;
-  usagePercent?: number;
-  used?: boolean;       // chỉ boolean, không nhận 0
-  categories?: string[]; // mở rộng từ API nếu cần
-  global?: boolean;
-  storeCategory?: string; // category của store
-  voucherType?: "product" | "freeship"; // loại voucher
-};
-
-type Category = {
-  name: string;
-  count: number;
-};
-
-const categories: Category[] = [
-  { name: "Tất cả", count: 0 },
-  { name: "Công nghệ", count: 0 },
-  { name: "Thời trang", count: 0 },
-  { name: "Nhà cửa", count: 0 },
-  { name: "Sách", count: 0 },
-  { name: "Miễn ship", count: 0 },
+type Entry = { campaign: Campaign; voucher: Voucher };
+type Tab = "all" | "tech" | "fashion" | "home" | "books" | "shipping";
+const tabs: Array<{ value: Tab; label: string }> = [
+  { value: "all", label: "Tất cả" }, { value: "tech", label: "Công nghệ" },
+  { value: "fashion", label: "Thời trang" }, { value: "home", label: "Nhà cửa" },
+  { value: "books", label: "Sách" }, { value: "shipping", label: "Miễn ship" },
 ];
+const flatten = (items: CategoryNode[]): CategoryNode[] => items.flatMap(item => [item, ...flatten(item.children)]);
+const formatDate = (value: string) => new Date(value).toLocaleDateString("vi-VN");
+
+function previewEntries(): Entry[] {
+  const startsAt = new Date(Date.now() - 86_400_000).toISOString();
+  const endsAt = new Date(Date.now() + 30 * 86_400_000).toISOString();
+  const campaign = (id: string, title: string): Campaign => ({ id, storeId: null, type: "VOUCHER",
+    status: "ACTIVE", fundingSource: "PLATFORM", title, startsAt, endsAt, createdAt: startsAt });
+  const voucher = (id: string, code: string, discountValue: number, minSpendMinor: number, usedCount: number): Voucher => ({
+    id, code, discountType: "FIXED", discountValue, maxDiscountMinor: null, minSpendMinor,
+    totalLimit: 100, perUserLimit: 1, usedCount, reservedCount: 0, scopeType: "PLATFORM",
+    scopeId: null, segment: code === "WELCOME50" ? "FIRST_ORDER" : "ALL", stackable: false,
+  });
+  return [
+    { campaign: campaign("preview-welcome", "Chào thành viên mới"), voucher: voucher("preview-welcome", "WELCOME50", 50_000, 299_000, 13) },
+    { campaign: campaign("preview-shipping", "Miễn phí vận chuyển"), voucher: voucher("preview-shipping", "FREESHIP", 30_000, 199_000, 15) },
+  ];
+}
+
+function VoucherCard({ entry, preview, scopeLabel, onCopy }: {
+  entry: Entry; preview: boolean; scopeLabel: string; onCopy: (code: string) => void;
+}) {
+  const { campaign, voucher } = entry;
+  const available = Math.max(0, voucher.totalLimit - voucher.usedCount - voucher.reservedCount);
+  const usedPercent = voucher.totalLimit ? Math.min(100, Math.round((voucher.usedCount / voucher.totalLimit) * 100)) : 0;
+  const remainingPercent = voucher.totalLimit ? Math.round((available / voucher.totalLimit) * 100) : 0;
+  const summary = voucher.discountType === "FIXED" ? `Giảm tối đa ${vnd(voucher.discountValue)}` :
+    `Giảm ${voucher.discountValue / 100}%${voucher.maxDiscountMinor != null ? `, tối đa ${vnd(voucher.maxDiscountMinor)}` : ""}`;
+
+  return <article className={`voucher-card${preview ? " is-preview" : ""}`}>
+    <header><h2>{campaign.title}</h2>{preview ? <span className="voucher-card__code" title="Mã mẫu, chưa áp dụng được">{voucher.code}</span> : <button type="button" className="voucher-card__code" onClick={() => onCopy(voucher.code)} title="Sao chép mã voucher" aria-label={`Sao chép mã ${voucher.code}`}>{voucher.code}</button>}</header>
+    <p className="voucher-card__summary">{summary}</p>
+    <div className="voucher-card__details"><p><strong>Điều kiện:</strong> {voucher.minSpendMinor ? `Đơn từ ${vnd(voucher.minSpendMinor)}` : "Không yêu cầu giá trị đơn tối thiểu"}</p><p><strong>Ngày áp dụng:</strong> {formatDate(campaign.startsAt)} → {formatDate(campaign.endsAt)}</p><p>{scopeLabel}{voucher.segment === "FIRST_ORDER" ? " · Chỉ áp dụng cho đơn đầu tiên" : ""}</p></div>
+    <div className="voucher-card__usage"><span>Đã sử dụng: {usedPercent}%</span><span>Còn lại: {remainingPercent}%</span></div><div className="voucher-card__progress" role="progressbar" aria-label={`Đã sử dụng ${usedPercent}%`} aria-valuenow={usedPercent} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${usedPercent}%` }} /></div>
+    {preview && <p className="voucher-card__preview-note">Mẫu giao diện · Không thể áp dụng tại thanh toán</p>}
+  </article>;
+}
 
 export default function VoucherPage() {
-  const [activeCategory, setActiveCategory] = useState<string>("Tất cả");
+  const [items, setItems] = useState<Entry[]>([]);
+  const [categoryNames, setCategoryNames] = useState<Record<string, string>>({});
+  const [storeCategories, setStoreCategories] = useState<Record<string, string>>({});
+  const [storeNames, setStoreNames] = useState<Record<string, string>>({});
+  const [activeTab, setActiveTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
-  const [vouchers, setVouchers] = useState<Voucher[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [categoryCounts, setCategoryCounts] = useState<{ [key: string]: number }>({
-    "Tất cả": 0,
-    "Công nghệ": 0,
-    "Thời trang": 0,
-    "Nhà cửa": 0,
-    "Sách": 0,
-    "Miễn ship": 0,
-  });
-
-  const fetchVouchers = async () => {
-    setLoading(true);
-    try {
-      const res = await voucherApi.getAvailableVouchers();
-      const mapped: Voucher[] = res.data.map((v) => ({
-        ...v,
-        title: (v as any).title || v.code,
-        condition: (v as any).condition || "",
-        usagePercent:
-          v.usedCount && v.usageLimit ? Math.round((v.usedCount / v.usageLimit) * 100) : undefined,
-        used: Boolean((v as any).used), // Sử dụng field 'used' từ API (đã được kiểm tra user hiện tại)
-        categories: (v as any).categories || [],
-        global: (v as any).global || false,
-        storeCategory: (v as any).storeCategory || "",
-        voucherType: (v as any).voucherType || "product",
-      }));
-
-      setVouchers(mapped);
-    } catch (err) {
-      console.error("Lỗi khi fetch vouchers:", err);
-      toast.error(
-        <div className="flex items-center gap-2">
-          <XCircle className="text-red-500" size={18} />
-          <span>Lỗi khi lấy voucher</span>
-        </div>
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
+  const [examples] = useState(previewEntries);
 
   useEffect(() => {
-    fetchVouchers();
+    let active = true;
+    setLoading(true); setError("");
+    engagementApi.active().then(result => {
+      if (active) setItems(result.promotions.filter(item => item.campaign.storeId === null));
+    })
+      .catch(cause => { if (active) setError(cause instanceof Error ? cause.message : "Không thể tải voucher."); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [retry]);
+  useEffect(() => {
+    let active = true;
+    Promise.allSettled([catalogApi.categories(), catalogApi.list("?limit=50")]).then(results => {
+      if (!active) return;
+      if (results[0].status === "fulfilled") setCategoryNames(Object.fromEntries(flatten(results[0].value.categories).map(item => [item.id, item.name])));
+      if (results[1].status === "fulfilled") {
+        setStoreCategories(Object.fromEntries(results[1].value.stores.map(item => [item.id, item.category || ""])));
+        setStoreNames(Object.fromEntries(results[1].value.stores.map(item => [item.id, item.name])));
+      }
+    });
+    return () => { active = false; };
   }, []);
 
-  // Filter vouchers theo category
-  const getFilteredVouchers = () => {
-    let filtered = vouchers;
-
-    // Filter theo category
-    if (activeCategory !== "Tất cả") {
-      if (activeCategory === "Miễn ship") {
-        filtered = filtered.filter((v) => v.voucherType === "freeship");
-      } else {
-        // Map category tiếng Việt sang tiếng Anh
-        const categoryMap: { [key: string]: string } = {
-          "Công nghệ": "electronics",
-          "Thời trang": "fashion",
-          "Nhà cửa": "home",
-          "Sách": "books",
-        };
-
-        const categoryValue = categoryMap[activeCategory] || activeCategory.toLowerCase();
-        filtered = filtered.filter((v) => {
-          // Check storeCategory
-          if (v.storeCategory && v.storeCategory.toLowerCase() === categoryValue) {
-            return true;
-          }
-          // Check categories array
-          if (v.categories && v.categories.length > 0) {
-            return v.categories.some(
-              (cat) => cat.toLowerCase() === categoryValue || cat.toLowerCase().includes(categoryValue)
-            );
-          }
-          return false;
-        });
-      }
-    }
-
-    // Filter theo search
-    if (search) {
-      filtered = filtered.filter(
-        (v) =>
-          v.title.toLowerCase().includes(search.toLowerCase()) ||
-          v.code.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    return filtered;
+  const preview = USE_MOCK_DATA && !loading && !error && !items.length;
+  const source = preview ? examples : items;
+  const classify = (entry: Entry): Tab | "other" => {
+    const text = `${entry.campaign.title} ${entry.voucher.code}`.toLocaleLowerCase("vi-VN");
+    if (/miễn.*ship|free.*ship|vận chuyển/.test(text)) return "shipping";
+    const scope = entry.voucher.scopeType === "CATEGORY" ? categoryNames[entry.voucher.scopeId || ""] :
+      entry.voucher.scopeType === "STORE" ? storeCategories[entry.campaign.storeId || ""] : "";
+    if (/điện tử|công nghệ|thiết bị/.test(scope.toLocaleLowerCase("vi-VN"))) return "tech";
+    if (/thời trang/.test(scope.toLocaleLowerCase("vi-VN"))) return "fashion";
+    if (/nhà cửa|gia dụng/.test(scope.toLocaleLowerCase("vi-VN"))) return "home";
+    if (/sách|văn phòng phẩm/.test(scope.toLocaleLowerCase("vi-VN"))) return "books";
+    return "other";
   };
+  const counts = Object.fromEntries(tabs.map(tab => [tab.value, tab.value === "all" ? source.length : source.filter(entry => classify(entry) === tab.value).length]));
+  const visible = source.filter(entry => {
+    if (activeTab !== "all" && classify(entry) !== activeTab) return false;
+    const keyword = search.trim().toLocaleLowerCase("vi-VN");
+    return !keyword || `${entry.campaign.title} ${entry.voucher.code}`.toLocaleLowerCase("vi-VN").includes(keyword);
+  });
 
-  const filteredVouchers = getFilteredVouchers();
+  function scopeLabel(entry: Entry) {
+    const { campaign, voucher } = entry;
+    if (voucher.scopeType === "PLATFORM") return "Áp dụng toàn hệ thống";
+    if (voucher.scopeType === "CATEGORY") return `Áp dụng cho ${categoryNames[voucher.scopeId || ""] || "danh mục phù hợp"}`;
+    if (voucher.scopeType === "STORE") return `Áp dụng tại ${storeNames[campaign.storeId || ""] || "cửa hàng phát hành"}`;
+    return "Áp dụng cho sản phẩm phù hợp";
+  }
+  async function copy(code: string) {
+    try { await navigator.clipboard.writeText(code); toast.success("Đã sao chép mã voucher.", { containerId: "general-toast" }); }
+    catch { toast.error("Không thể sao chép mã.", { containerId: "general-toast" }); }
+  }
 
-  // Update category counts
-  useEffect(() => {
-    const allCount = vouchers.length;
-    const techCount = vouchers.filter((v) => {
-      const cat = v.storeCategory?.toLowerCase() || "";
-      return cat === "electronics" || v.categories?.some((c) => c.toLowerCase() === "electronics");
-    }).length;
-    const fashionCount = vouchers.filter((v) => {
-      const cat = v.storeCategory?.toLowerCase() || "";
-      return cat === "fashion" || v.categories?.some((c) => c.toLowerCase() === "fashion");
-    }).length;
-    const homeCount = vouchers.filter((v) => {
-      const cat = v.storeCategory?.toLowerCase() || "";
-      return cat === "home" || v.categories?.some((c) => c.toLowerCase() === "home");
-    }).length;
-    const booksCount = vouchers.filter((v) => {
-      const cat = v.storeCategory?.toLowerCase() || "";
-      return cat === "books" || v.categories?.some((c) => c.toLowerCase() === "books");
-    }).length;
-    const freeshipCount = vouchers.filter((v) => v.voucherType === "freeship").length;
-
-    setCategoryCounts({
-      "Tất cả": allCount,
-      "Công nghệ": techCount,
-      "Thời trang": fashionCount,
-      "Nhà cửa": homeCount,
-      "Sách": booksCount,
-      "Miễn ship": freeshipCount,
-    });
-  }, [vouchers]);
-
-  const getStoreLabel = (v: Voucher) => {
-    if (v.categories && v.categories.length > 0)
-      return `Áp dụng cho các danh mục: ${v.categories.join(", ")}`;
-    if (v.global) return `Áp dụng toàn hệ thống`;
-    return "Áp dụng cho toàn bộ cửa hàng";
-  };
-
-  return (
-    <div className="voucher-page w-full p-3 md:p-4 lg:p-6 xl:p-8">
-      <ContentBreadcrumb items={[{ label: "Kho voucher" }]} />
-
-      {/* Category Tabs */}
-      <div className="flex flex-wrap gap-2 md:gap-3 mb-4 md:mb-6 animate-fade-in-up delay-200 overflow-x-auto pb-2">
-        {categories.map((cat, index) => (
-          <button
-            key={cat.name}
-            onClick={() => setActiveCategory(cat.name)}
-            className={`px-4 py-2 md:px-5 md:py-2.5 rounded-lg md:rounded-xl text-xs sm:text-sm font-bold transition-all duration-300 transform hover:scale-105 whitespace-nowrap flex-shrink-0 ${
-              activeCategory === cat.name
-                ? "bg-[#4B5563] text-white shadow-lg scale-105"
-                : "bg-white text-gray-600 border-2 border-gray-200 hover:border-[#4B5563] hover:bg-[#4B5563]/5"
-            } animate-fade-in-up`}
-            style={{ animationDelay: `${index * 0.05}s` }}
-          >
-            {cat.name} ({categoryCounts[cat.name] || 0})
-          </button>
-        ))}
-      </div>
-
-      <div className="mb-4 md:mb-6 animate-fade-in-up delay-300">
-        <div className="relative">
-          <input
-            type="text"
-            placeholder="Tìm kiếm voucher..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full px-4 py-2.5 md:px-5 md:py-3 border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] outline-none transition-all duration-300 text-sm md:text-base"
-          />
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="p-6 md:p-8 text-center animate-fade-in">
-          <p className="text-gray-600 text-sm md:text-base lg:text-lg font-medium">Đang tải voucher...</p>
-        </div>
-      ) : filteredVouchers.length === 0 ? (
-        <div className="p-6 md:p-8 text-center animate-fade-in">
-          <div className="flex justify-center mb-3 md:mb-4">
-            <Gift className="w-10 h-10 md:w-12 md:h-12 text-gray-300" />
-          </div>
-          <p className="text-gray-500 text-base md:text-lg font-medium mb-2">Không tìm thấy voucher nào</p>
-          <p className="text-gray-400 text-xs md:text-sm">Thử lại với từ khóa khác hoặc chọn danh mục khác</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 lg:gap-6">
-          {filteredVouchers.map((v, index) => (
-            <div
-              key={v._id}
-              className="voucher-card border-2 border-gray-200 rounded-xl md:rounded-2xl p-4 md:p-6 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 bg-gradient-to-br from-white to-gray-50 animate-fade-in-up"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className="flex justify-between items-start mb-3 md:mb-4 gap-2">
-                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-[#4B5563] flex items-center gap-1 md:gap-2 flex-1 min-w-0">
-                  <span className="truncate">{v.title}</span>
-                </h2>
-                <span className="px-2 py-1 md:px-4 md:py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg md:rounded-xl font-bold text-[10px] sm:text-xs md:text-sm shadow-lg flex-shrink-0">
-                  {v.code}
-                </span>
-              </div>
-              
-                <p className="text-xs sm:text-sm text-gray-700 mb-3 md:mb-4 bg-[#4B5563]/5 p-2 md:p-3 rounded-lg md:rounded-xl line-clamp-2">{v.description}</p>
-              
-              <div className="text-xs sm:text-sm text-gray-700 space-y-1.5 md:space-y-2 mb-3 md:mb-4">
-                <p className="flex items-center gap-1 md:gap-2 flex-wrap">
-                  <span className="font-semibold">Điều kiện:</span> <span className="break-words">{v.condition}</span>
-                </p>
-                <p className="flex items-center gap-1 md:gap-2 flex-wrap">
-                  <span className="font-semibold">Ngày áp dụng:</span>
-                  <span className="font-bold text-xs md:text-sm">{formatDisplayDate(v.startDate)}</span>
-                  <span>→</span>
-                  <span className="font-bold text-xs md:text-sm">{formatDisplayDate(v.endDate)}</span>
-                </p>
-                <p className="flex items-center gap-1 md:gap-2 flex-wrap">
-                  <span className="font-semibold">{getStoreLabel(v)}</span>
-                </p>
-                {v.used && (
-                  <p className="text-red-600 font-bold px-2 py-1.5 md:px-3 md:py-2 bg-red-50 border-2 border-red-200 rounded-lg md:rounded-xl mt-2 flex items-center gap-1 md:gap-2 text-xs sm:text-sm">
-                    ⚠️ Bạn đã dùng voucher này
-                  </p>
-                )}
-              </div>
-
-              {v.usagePercent !== undefined && (
-                <div className="mt-3 md:mt-4">
-                  <div className="flex justify-between text-[10px] sm:text-xs font-bold text-gray-700 mb-1.5 md:mb-2">
-                    <span className="flex items-center gap-1">
-                      Đã sử dụng: {v.usagePercent}%
-                    </span>
-                    <span className="flex items-center gap-1">
-                      Còn lại: {100 - v.usagePercent}%
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 md:h-3 overflow-hidden">
-                    <div
-                      className="bg-[#4B5563] h-2 md:h-3 rounded-full transition-all duration-1000"
-                      style={{ width: `${v.usagePercent}%` }}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <div className="voucher-page"><ContentBreadcrumb items={[{ label: "Kho voucher" }]} /><h1 className="sr-only">Kho voucher</h1>
+    {preview && <p className="voucher-preview-banner">Bản xem trước giao diện · Hiện chưa có voucher đang hoạt động để sử dụng.</p>}
+    <div className="voucher-tabs" role="group" aria-label="Lọc voucher theo ngành hàng">{tabs.map(tab => <button type="button" key={tab.value} className={activeTab === tab.value ? "is-active" : ""} aria-pressed={activeTab === tab.value} onClick={() => setActiveTab(tab.value)}>{tab.label} ({counts[tab.value]})</button>)}</div>
+    <input className="voucher-search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Tìm kiếm voucher..." aria-label="Tìm kiếm voucher" />
+    {error ? <div className="voucher-state"><h2>Không thể tải voucher</h2><p>{error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Thử lại</button></div> : loading ? <div className="voucher-state" role="status">Đang tải voucher...</div> : visible.length ? <div className="voucher-grid">{visible.map(entry => <VoucherCard key={entry.voucher.id} entry={entry} preview={preview} scopeLabel={scopeLabel(entry)} onCopy={code => void copy(code)} />)}</div> : <div className="voucher-state"><h2>Chưa có voucher phù hợp</h2><p>{source.length ? "Thử tìm tên hoặc chọn danh mục khác." : "Hiện chưa có voucher đang hoạt động."}</p></div>}
+    {!preview && items.length > 0 && <p className="voucher-footnote">Điều kiện và số lượt sử dụng sẽ được kiểm tra lại khi thanh toán.</p>}
+  </div>;
 }

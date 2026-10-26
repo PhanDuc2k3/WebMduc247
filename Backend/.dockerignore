@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+node_modules
+**/node_modules
+**/dist
+**/.git
+services/identity-service/tests
+**/tests
+docs
+README.md
+.local-avatars
+.local-catalog-images
+.local-chat-files
+assets/demo-products
+*.log

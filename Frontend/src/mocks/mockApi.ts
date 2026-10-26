@@ -37,7 +37,7 @@ const mockVouchers = [
 
 const mockNotifications = [
   { _id: "notification-1", userId: mockUser._id, type: "voucher", title: "Voucher mới dành cho bạn", message: "WELCOME50 đã sẵn sàng trong kho voucher.", isRead: false, link: "/voucher", createdAt: iso },
-  { _id: "notification-2", userId: mockUser._id, type: "news", title: "Flash Sale đang diễn ra", message: "Khám phá những sản phẩm đang giảm giá hôm nay.", isRead: true, link: "/new", createdAt: new Date(now.getTime() - day).toISOString() },
+  { _id: "notification-2", userId: mockUser._id, type: "news", title: "Flash Sale đang diễn ra", message: "Khám phá những sản phẩm đang giảm giá hôm nay.", isRead: true, link: "/flash-sale", createdAt: new Date(now.getTime() - day).toISOString() },
 ];
 
 const mockTransactions = [

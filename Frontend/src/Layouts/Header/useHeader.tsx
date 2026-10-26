@@ -1,171 +1,79 @@
-import React, { createContext, useState, useEffect, useContext, type ReactNode } from "react";
+import React, { useState, useEffect, useRef, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosClient from "../../api/axiosClient";
+import { toast } from "react-toastify";
+import { identityApi } from "../../api/identityApi";
+import { profileApi } from "../../api/profileApi";
 import { getSocket } from "../../socket";
+import { UserContext, type UserType } from "./userContext";
 
-// --- fix _id optional
-interface UserType {
-  _id?: string;    // ✅ optional để user mặc định "Khách" không lỗi TS
-  fullName: string;
-  avatarUrl: string;
-  role?: string;   // ✅ role để kiểm tra admin
-}
+const guest: UserType = { fullName: "Khách", avatarUrl: "" };
 
-interface UserContextType {
-  user: UserType;
-  online: boolean;
-  lastSeen: string | null;
-  showDropdown: boolean;
-  setShowDropdown: React.Dispatch<React.SetStateAction<boolean>>;
-  handleLogout: () => void;
-}
-
-const UserContext = createContext<UserContextType | undefined>(undefined);
-
-interface Props {
-  children: ReactNode;
-}
-
-export const UserProvider: React.FC<Props> = ({ children }) => {
-  const [user, setUser] = useState<UserType>({ fullName: "Khách", avatarUrl: "", role: undefined });
+export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<UserType>(guest);
   const [online, setOnline] = useState(false);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const requestId = useRef(0);
   const navigate = useNavigate();
 
-  // --- fetch user profile
-  const fetchUser = async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
-      setOnline(false);
-      setLastSeen(null);
-      return;
-    }
-
-    try {
-      const res = await axiosClient.get("/api/users/profile", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const profile = res.data.user || res.data;
-
-      // Kiểm tra nếu tài khoản bị ban
-      if (profile.status === 'banned') {
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("user");
-        setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
-        setOnline(false);
-        setLastSeen(null);
-        if (window.location.pathname !== "/login") {
-          window.location.href = "/login";
-        }
-        return;
-      }
-
-      setUser({
-        _id: profile._id,                // ✅ luôn set _id
-        fullName: profile.fullName || "Khách",
-        avatarUrl: profile.avatarUrl || "",
-        role: profile.role || undefined, // ✅ lấy role từ profile
-      });
-
-      setOnline(profile.online ?? false);
-      setLastSeen(profile.lastSeen ?? null);
-
-      // ✅ Cập nhật role vào localStorage để AdminRoute có thể kiểm tra
-      try {
-        const userStr = localStorage.getItem("user");
-        if (userStr) {
-          const userData = JSON.parse(userStr);
-          userData.role = profile.role || undefined;
-          localStorage.setItem("user", JSON.stringify(userData));
-        }
-      } catch (err) {
-        console.warn("[UserContext] Failed to update localStorage role:", err);
-      }
-    } catch (err: any) {
-      // Nếu lỗi là do tài khoản bị ban, đã được xử lý ở axiosClient interceptor
-      if (err?.response?.data?.isBanned) {
-        return;
-      }
-      console.warn("[UserContext] fetchUser failed", err);
-      setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
-      setOnline(false);
-      setLastSeen(null);
-    }
-  };
-
-  // --- Listen userUpdated
   useEffect(() => {
-    fetchUser();
-    window.addEventListener("userUpdated", fetchUser);
-    return () => window.removeEventListener("userUpdated", fetchUser);
+    let alive = true;
+    const load = async () => {
+      const id = ++requestId.current;
+      try {
+        const profile = await profileApi.me();
+        if (!alive || id !== requestId.current) return;
+        const current = { _id: profile.userId, fullName: profile.displayName, avatarUrl: profile.avatarUrl || "", role: profile.roles.includes("platform_admin") ? "admin" : profile.roles.includes("seller") ? "seller" : undefined };
+        setUser(current);
+        setOnline(true);
+        localStorage.setItem("user", JSON.stringify(current));
+      } catch {
+        try {
+          const identity = await identityApi.me();
+          if (!alive || id !== requestId.current) return;
+          const current = { _id: identity.id, fullName: identity.fullName, avatarUrl: "", role: identity.roles.includes("platform_admin") ? "admin" : identity.roles.includes("seller") ? "seller" : undefined };
+          setUser(current);
+          setOnline(true);
+          localStorage.setItem("user", JSON.stringify(current));
+        } catch {
+          if (!alive || id !== requestId.current) return;
+          setUser(guest);
+          setOnline(false);
+          setLastSeen(null);
+          localStorage.removeItem("user");
+        }
+      }
+    };
+    void load();
+    window.addEventListener("identityUpdated", load);
+    return () => { alive = false; window.removeEventListener("identityUpdated", load); };
   }, []);
 
-  // --- Socket online status
   useEffect(() => {
     if (!user._id) return;
-
     const socket = getSocket();
     if (!socket.connected) socket.connect();
     socket.emit("user_connected", user._id);
-
-    const handler = (data: { online: boolean; lastSeen: string }) => {
-      setOnline(data.online);
-      setLastSeen(data.lastSeen);
-    };
-
+    const handler = (data: { online: boolean; lastSeen: string }) => { setOnline(data.online); setLastSeen(data.lastSeen); };
     socket.on("userOnlineStatus", handler);
-    return () => {
-      if (socket && typeof socket.off === "function") socket.off("userOnlineStatus", handler);
-    };
+    return () => { socket.off("userOnlineStatus", handler); };
   }, [user._id]);
 
-  // --- Logout
-  const handleLogout = () => {
-    const userLocal = JSON.parse(localStorage.getItem("user") || "{}");
-    const userId = userLocal._id || userLocal.id;
-
-    const socket = getSocket();
-    if (socket && socket.connected && userId) socket.emit("user_disconnected", userId);
-    setTimeout(() => socket.disconnect(), 300);
-
-    localStorage.removeItem("token");
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("user");
-
-    setUser({ fullName: "Khách", avatarUrl: "", role: undefined });
-    setShowDropdown(false);
-    setOnline(false);
-    setLastSeen(null);
-
-    window.dispatchEvent(new Event("userUpdated"));
-    navigate("/login");
+  const logout = (allDevices: boolean) => {
+    void identityApi.logout(allDevices).then(() => {
+      const socket = getSocket();
+      if (socket.connected && user._id) socket.emit("user_disconnected", user._id);
+      socket.disconnect();
+      localStorage.removeItem("user");
+      setUser(guest);
+      setOnline(false);
+      setLastSeen(null);
+      setShowDropdown(false);
+      navigate("/login");
+    }).catch(() => toast.error("Không thể đăng xuất. Vui lòng thử lại.", { containerId: "general-toast" }));
   };
+  const handleLogout = () => logout(false);
+  const handleLogoutAll = () => logout(true);
 
-  return (
-    <UserContext.Provider
-      value={{
-        user,
-        online,
-        lastSeen,
-        showDropdown,
-        setShowDropdown,
-        handleLogout,
-      }}
-    >
-      {children}
-    </UserContext.Provider>
-  );
+  return <UserContext.Provider value={{ user, online, lastSeen, showDropdown, setShowDropdown, handleLogout, handleLogoutAll }}>{children}</UserContext.Provider>;
 };
-
-// --- Hook để dùng context
-export const useUser = () => {
-  const context = useContext(UserContext);
-  if (!context) throw new Error("useUser must be used within UserProvider");
-  return context;
-};
-
-// --- Alias cho useHeader
-export const useHeader = useUser;

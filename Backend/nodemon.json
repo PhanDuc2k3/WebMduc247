@@ -1,0 +1,6 @@
+{
+  "watch": ["services/identity-service/src", "services/identity-service/database/migrations"],
+  "ext": "js,json,sql",
+  "ignore": ["**/node_modules/**"],
+  "exec": "node services/identity-service/scripts/start-dev.js"
+}

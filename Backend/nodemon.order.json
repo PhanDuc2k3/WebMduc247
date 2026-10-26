@@ -1,0 +1,6 @@
+{
+  "watch": ["services/order-service/src", "services/order-service/database/migrations"],
+  "ext": "js,json,sql",
+  "ignore": ["**/node_modules/**"],
+  "exec": "node services/order-service/scripts/start-dev.js"
+}

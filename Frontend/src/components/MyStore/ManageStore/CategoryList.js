@@ -1,0 +1,28 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import React, { useState } from "react";
+import ConfirmDialog from "../../ui/ConfirmDialog";
+const CategoryList = ({ categories, newCategoryName, setNewCategoryName, selectedCategory, setSelectedCategory, handleAddCategory, handleEditCategory, handleDeleteCategory, }) => {
+    // Local state để lưu tạm tên khi sửa
+    const [editingNames, setEditingNames] = useState({});
+    const [deleteConfirm, setDeleteConfirm] = useState({ open: false, category: null });
+    const handleChange = (id, value) => {
+        setEditingNames({ ...editingNames, [id]: value });
+    };
+    const handleSave = (id) => {
+        if (editingNames[id]?.trim()) {
+            handleEditCategory(id, editingNames[id].trim());
+            setEditingNames((prev) => {
+                const newState = { ...prev };
+                delete newState[id];
+                return newState;
+            });
+        }
+    };
+    return (_jsxs("div", { className: "bg-white rounded-xl sm:rounded-2xl shadow-lg border border-[#4B5563]/30 p-4 sm:p-6 lg:p-8 animate-fade-in-up delay-100", children: [_jsxs("div", { className: "mb-4 sm:mb-6", children: [_jsx("h2", { className: "text-xl sm:text-2xl font-bold text-[#4B5563] mb-1", children: "Danh m\u1EE5c s\u1EA3n ph\u1EA9m" }), _jsx("p", { className: "text-gray-600 text-xs sm:text-sm", children: "Qu\u1EA3n l\u00FD c\u00E1c danh m\u1EE5c s\u1EA3n ph\u1EA9m c\u1EE7a c\u1EEDa h\u00E0ng" })] }), _jsxs("div", { className: "flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6 p-3 sm:p-4 bg-[#4B5563]/5 rounded-lg sm:rounded-xl border border-[#4B5563]/20", children: [_jsx("input", { type: "text", className: "flex-1 px-3 sm:px-4 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg sm:rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-300 font-medium text-gray-900", placeholder: "Nh\u1EADp t\u00EAn danh m\u1EE5c m\u1EDBi", value: newCategoryName, onChange: (e) => setNewCategoryName(e.target.value), onKeyPress: (e) => e.key === 'Enter' && handleAddCategory() }), _jsx("button", { className: "px-4 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base bg-[#4B5563] text-white rounded-lg sm:rounded-xl font-bold shadow-lg hover:shadow-xl active:scale-95 sm:hover:scale-105 hover:bg-[#374151] transition-all duration-300 whitespace-nowrap touch-manipulation", onClick: handleAddCategory, children: "Th\u00EAm danh m\u1EE5c" })] }), categories.length === 0 ? (_jsxs("div", { className: "text-center py-8 sm:py-12 bg-[#4B5563]/5 rounded-lg sm:rounded-xl border-2 border-dashed border-[#4B5563]/30", children: [_jsx("p", { className: "text-gray-500 text-base sm:text-lg font-medium", children: "Ch\u01B0a c\u00F3 danh m\u1EE5c n\u00E0o" }), _jsx("p", { className: "text-gray-400 text-xs sm:text-sm mt-1", children: "Th\u00EAm danh m\u1EE5c m\u1EDBi \u0111\u1EC3 b\u1EAFt \u0111\u1EA7u" })] })) : (_jsx("div", { className: "space-y-2 sm:space-y-3", children: categories.map((cat, index) => (_jsxs("div", { className: "flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-[#F5F7FF] rounded-lg sm:rounded-xl border-2 border-[#E0E7FF] hover:border-[#4B5563] hover:shadow-md transition-all duration-300 animate-fade-in-up", style: { animationDelay: `${index * 0.05}s` }, children: [_jsx("input", { type: "text", className: "flex-1 w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4B5563] focus:border-[#4B5563] transition-all duration-300 font-medium text-gray-900 bg-white", value: editingNames[cat._id] ?? cat.name, onChange: (e) => handleChange(cat._id, e.target.value), onKeyPress: (e) => e.key === 'Enter' && handleSave(cat._id) }), _jsxs("div", { className: "flex flex-wrap gap-2 w-full sm:w-auto", children: [editingNames[cat._id] !== undefined && editingNames[cat._id] !== cat.name && (_jsx("button", { className: "flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-[#4B5563] text-white rounded-lg font-semibold hover:bg-[#374151] active:scale-95 sm:hover:scale-105 shadow-md transition-all duration-300 whitespace-nowrap touch-manipulation", onClick: () => handleSave(cat._id), children: "L\u01B0u" })), _jsx("button", { className: "flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-[#4B5563] text-white rounded-lg font-semibold active:scale-95 sm:hover:scale-105 hover:shadow-lg hover:bg-[#374151] transition-all duration-300 whitespace-nowrap touch-manipulation", onClick: () => setSelectedCategory(cat._id), children: "Qu\u1EA3n l\u00FD s\u1EA3n ph\u1EA9m" }), _jsx("button", { className: "flex-1 sm:flex-none px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 active:scale-95 sm:hover:scale-105 shadow-md transition-all duration-300 whitespace-nowrap touch-manipulation", onClick: () => setDeleteConfirm({ open: true, category: cat }), children: "X\u00F3a" })] })] }, cat._id))) })), _jsx(ConfirmDialog, { open: deleteConfirm.open, onClose: () => setDeleteConfirm({ open: false, category: null }), onConfirm: () => {
+                    if (deleteConfirm.category) {
+                        handleDeleteCategory(deleteConfirm.category._id);
+                        setDeleteConfirm({ open: false, category: null });
+                    }
+                }, title: "X\u00E1c nh\u1EADn x\u00F3a danh m\u1EE5c", message: deleteConfirm.category ? `Bạn có chắc muốn xóa danh mục "${deleteConfirm.category.name}"?` : "", type: "danger", confirmText: "X\u00F3a" })] }));
+};
+export default CategoryList;

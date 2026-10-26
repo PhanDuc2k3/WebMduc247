@@ -1,0 +1,234 @@
+openapi: 3.0.3
+info:
+  title: Chat Service API v2
+  version: 0.1.0
+  description: MongoDB stores conversations and messages. Identity and Catalog authorize each operation. Transaction state remains in Order.
+servers:
+  - url: http://localhost:5106/api/v2
+    description: Chat Service
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }
+  schemas:
+    Conversation:
+      type: object
+      properties:
+        id: { type: string, description: MongoDB ObjectId }
+        buyerId: { type: string, format: uuid }
+        storeId: { type: string, format: uuid }
+        storeName: { type: string }
+        storeSlug: { type: string }
+        status: { type: string, enum: [ACTIVE] }
+        unreadCount: { type: integer }
+    Message:
+      type: object
+      properties:
+        id: { type: string, description: MongoDB ObjectId }
+        conversationId: { type: string }
+        senderId: { type: string, format: uuid }
+        senderRole: { type: string, enum: [buyer, seller] }
+        clientMessageId: { type: string }
+        type: { type: string, enum: [text, image, file] }
+        content: { type: string }
+        attachmentId: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+    MessageInput:
+      type: object
+      required: [clientMessageId, type, content]
+      properties:
+        clientMessageId: { type: string, minLength: 8, maxLength: 120 }
+        type: { type: string, enum: [text, image, file] }
+        content: { type: string, maxLength: 2000 }
+        attachmentId: { type: string, description: Required for image/file }
+paths:
+  /conversations:
+    get:
+      summary: List buyer or seller member conversations with unread counts
+      security: [{ bearerAuth: [] }]
+      responses:
+        '200': { description: Conversations }
+    post:
+      summary: Create or find the unique buyer and shop conversation
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [storeId]
+              properties:
+                storeId: { type: string, format: uuid }
+      responses:
+        '201': { description: Created or found }
+  /conversations/{id}/messages:
+    get:
+      summary: Read participant history with stable cursor pagination
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: cursor, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50 } }
+      responses:
+        '200': { description: messages and nextCursor }
+    post:
+      summary: Send a persisted message with idempotent clientMessageId
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MessageInput' }
+      responses:
+        '201': { description: Stored message }
+        '200': { description: Duplicate request returned original message }
+        '409': { description: Same clientMessageId with different payload }
+  /conversations/{id}/read:
+    post:
+      summary: Advance participant read cursor
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [messageId]
+              properties:
+                messageId: { type: string }
+      responses:
+        '200': { description: Last read ID and unread count }
+  /conversations/{id}/reports:
+    post:
+      summary: File a private abuse report; no administrative decision in this module
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason: { type: string, minLength: 10, maxLength: 1000 }
+                messageId: { type: string }
+      responses:
+        '201': { description: Report stored as OPEN }
+  /attachments:
+    post:
+      summary: Scan and upload private JPEG/PNG/WebP or PDF, maximum 5 MB; images maximum 2 MB
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          image/jpeg: { schema: { type: string, format: binary } }
+          image/png: { schema: { type: string, format: binary } }
+          image/webp: { schema: { type: string, format: binary } }
+          application/pdf: { schema: { type: string, format: binary } }
+      responses:
+        '201': { description: Attachment ID and MIME }
+        '503': { description: Scanner unavailable }
+  /attachments/{id}/url:
+    get:
+      summary: Participant obtains a five minute signed URL
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Signed URL and expiry }
+  /chatbot/sessions:
+    post:
+      summary: Start an authenticated or guest bot session
+      responses:
+        '201': { description: sessionId and guest sessionToken if anonymous }
+  /chatbot/sessions/{id}:
+    delete:
+      summary: Delete the caller's bot session and its messages
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: X-Bot-Session-Token, in: header, schema: { type: string }, description: Required for guest session }
+      responses:
+        '200': { description: Session deleted }
+        '403': { description: Session owner mismatch }
+  /chatbot/sessions/{id}/messages:
+    get:
+      summary: Read the caller's recent bot messages
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50 } }
+        - { name: X-Bot-Session-Token, in: header, schema: { type: string }, description: Required for guest session }
+      responses:
+        '200': { description: Ordered user and bot messages with redacted private values }
+        '403': { description: Session owner mismatch }
+    post:
+      summary: Ask the shopping assistant; tool calls read only verified Catalog, Order and Promotion data
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+        - { name: X-Bot-Session-Token, in: header, schema: { type: string }, description: Required for guest session }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [text]
+              properties:
+                text: { type: string, maxLength: 500 }
+                clientMessageId: { type: string, description: Stable ID for retry deduplication }
+                orderGroupId: { type: string, format: uuid }
+                storeSlug: { type: string }
+      responses:
+        '200':
+          description: Reply, structured recommendations/comparison, source references and safe usage metadata. Existing fields are preserved; suggestedQuestions, emptySearch and metadata.intent are additive. Internal shoppingContext is never returned.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reply: { type: string }
+                  products: { type: array, items: { type: object } }
+                  suggestedQuestions: { type: array, items: { type: string } }
+                  emptySearch: { type: boolean }
+                  metadata:
+                    type: object
+                    properties:
+                      aiUsed: { type: boolean }
+                      intent:
+                        type: string
+                        enum: [GENERAL_KNOWLEDGE, PRODUCT_DISCOVERY, PRODUCT_RECOMMENDATION, PRODUCT_COMPARISON, PRODUCT_DETAIL, ORDER_SUPPORT, VOUCHER_SUPPORT, GENERAL_CONVERSATION]
+        '403': { description: Session owner mismatch }
+  /internal/chat/orders/{id}:
+    get:
+      summary: Order Service returns minimal status only when buyerId owns the order
+      servers:
+        - url: http://localhost:5103/api/v2
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: buyerId, in: query, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Chat-Order-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Order ID and status, no address or payment details }
+        '404': { description: Missing or foreign order }
+  /inventory/stores/{id}/chat-profile:
+    get:
+      summary: Catalog Service supplies a store identity snapshot to Chat
+      servers:
+        - url: http://localhost:5102/api/v2
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: X-Inventory-Token, in: header, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Store name, slug and status }
+x-socket-io:
+  handshake: Bearer access token in auth.token; Identity verifies it before connection.
+  events:
+    chat:join: Conversation ID plus ack; service rechecks buyer or shop membership.
+    chat:send: MessageInput plus conversationId; ack and chat:ack include persisted message and duplicate flag.
+    chat:message: Persisted message emitted only to authorized room members.
+    chat:read: conversationId and messageId; read cursor update and ack.
