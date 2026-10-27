@@ -338,9 +338,10 @@ useEffect(() => {
             ))}
             <button
               onClick={clearPreview}
+              aria-label="Xóa ảnh đính kèm"
               className="absolute -top-1 -right-1 md:-top-2 md:-right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-all duration-300 transform hover:scale-110 shadow-lg"
             >
-              <XMarkIcon className="h-4 w-4 md:h-5 md:w-5" />
+              <X className="h-4 w-4 md:h-5 md:w-5" />
             </button>
           </div>
         )}

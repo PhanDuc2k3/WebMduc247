@@ -24,6 +24,8 @@ function fixture(roles = ['buyer','platform_admin']) {
   };
   const service = new IdentityService({ repository: repo, mailer: {}, config,
     password: { verify: async (_hash, value) => value === 'correct-password!' } });
+  // This suite isolates the password gate; real MFA/session persistence is exercised in admin-auth.integration.
+  service.adminAuth.beginLogin=async()=>({challengeToken:'password-stage-only',enrollmentRequired:true,expiresAt:new Date(Date.now()+300000).toISOString()});
   return { user, sessions, events, service, repo };
 }
 
@@ -31,7 +33,7 @@ test('admin login denies buyer/seller before creating a session; client roles ca
   for (const roles of [['buyer'], ['buyer','seller']]) {
     const f = fixture(roles);
     await assert.rejects(f.service.login({ email: f.user.email, password: 'correct-password!', roles: ['platform_admin'] }, context,
-      { platformAdmin: true }), { status: 403, code: 'PLATFORM_ADMIN_REQUIRED' });
+      { platformAdmin: true }), { status: 401, code: 'INVALID_CREDENTIALS' });
     assert.equal(f.sessions.length, 0);
     assert.ok(f.events.includes('admin_login_denied'));
     assert.ok((await f.service.login({ email: f.user.email, password: 'correct-password!' }, context)).accessToken);
@@ -49,8 +51,8 @@ test('admin login requires valid credentials, verified active account and server
   }
   assert.equal(f.sessions.length, 0);
   const result = await f.service.login({ email: f.user.email, password: 'correct-password!' }, context, { platformAdmin: true });
-  assert.ok(result.accessToken); assert.ok(result.refreshToken); assert.equal(result.user.password_hash, undefined);
-  assert.ok(f.events.includes('admin_login_success'));
+  assert.ok(result.challengeToken);assert.equal(result.accessToken,undefined);assert.equal(result.refreshToken,undefined);assert.equal(result.user,undefined);
+  assert.equal(f.sessions.length,0);assert.equal(f.events.includes('admin_login_success'),false);
 });
 
 test('public registration never forwards an admin role supplied by the client', async () => {
@@ -77,7 +79,7 @@ test('every dashboard data provider rejects absent and non-admin identity before
   assert.equal(queries, 0);
 });
 
-test('HTTP admin login sets HttpOnly refresh cookie and dashboard access follows current role', async t => {
+test('HTTP admin password stage sets only a device cookie and cannot enter the dashboard', async t => {
   const f = fixture();
   const server = http.createServer(createRequestHandler(f.service, {}, config));
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
@@ -91,10 +93,11 @@ test('HTTP admin login sets HttpOnly refresh cookie and dashboard access follows
   const cookie = response.headers.get('set-cookie');
   assert.match(cookie, /HttpOnly/); assert.match(cookie, /SameSite=Strict/); assert.match(cookie, /Path=\/api\/v2\/auth/);
   const result = await response.json(); assert.equal(result.refreshToken, undefined);
+  assert.ok(result.challengeToken);assert.equal(result.accessToken,undefined);assert.doesNotMatch(cookie,/identity_refresh=/);
   const headers = { Authorization: `Bearer ${result.accessToken}` };
   const summary = await fetch(`${base}/api/v2/admin/identity/summary`, { headers });
-  assert.equal(summary.status, 200); assert.equal((await summary.json()).users.total, 3);
+  assert.equal(summary.status,401);
   f.user.roles = ['buyer'];
   const revokedRole = await fetch(`${base}/api/v2/admin/identity/summary`, { headers });
-  assert.equal(revokedRole.status, 403);
+  assert.equal(revokedRole.status,401);
 });

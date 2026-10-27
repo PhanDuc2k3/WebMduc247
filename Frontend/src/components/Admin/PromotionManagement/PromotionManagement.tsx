@@ -539,7 +539,7 @@ const PromotionManagement: React.FC = () => {
                     Sửa
                   </button>
                   <button
-                    onClick={() => promo._id && handleDelete(promo._id)}
+                    onClick={() => promo._id && handleDeleteClick(promo._id)}
                     className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
                   >
                     <Trash2 size={14} />
@@ -567,6 +567,15 @@ const PromotionManagement: React.FC = () => {
           </p>
         </div>
       )}
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onClose={() => setDeleteConfirm({ open: false, promotionId: null })}
+        onConfirm={handleDelete}
+        title="Xác nhận xóa tin tức khuyến mãi"
+        message="Bạn có chắc muốn xóa tin tức khuyến mãi này không?"
+        type="danger"
+        confirmText="Xóa"
+      />
     </div>
   );
 };

@@ -29,5 +29,6 @@ try{
   await db.query('UPDATE refresh_sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL',[id]);
   await db.query(`INSERT INTO admin_access_events(actor_reference,target_reference,reason,before_roles,after_roles,read_version,result_version)
     VALUES($1,$2,$3,$4,$5,$6,$7)`,['operator:'+input.operator.trim(),id,input.reason.trim(),JSON.stringify(before),JSON.stringify(assignments),input.version,input.version+1]);
+  await db.query("INSERT INTO security_events(user_id,action,metadata) VALUES($1,'admin_permissions_changed',$2)",[id,{operator:input.operator.trim(),readVersion:input.version,resultVersion:input.version+1}]);
   await db.query('COMMIT');process.stdout.write(JSON.stringify({userId:id,version:input.version+1})+'\n');
 }catch(error){await db.query('ROLLBACK');throw error;}finally{await db.end();}

@@ -21,6 +21,12 @@ export function loadConfig(env = process.env) {
     trustedProxyIp: env.TRUSTED_PROXY_IP || null,
     catalogSyncSecret: env.CATALOG_SYNC_SECRET || null,
     adminAuthorizationToken: env.ADMIN_AUTHORIZATION_TOKEN || null,
+    adminMfaKey: env.ADMIN_MFA_KEY ? Buffer.from(env.ADMIN_MFA_KEY,'base64') : null,
+    adminSessionSeconds: Number(env.ADMIN_SESSION_SECONDS || 28800),
+    adminIdleSeconds: Number(env.ADMIN_IDLE_SECONDS || 1800),
+    adminReauthSeconds: Number(env.ADMIN_REAUTH_SECONDS || 300),
+    adminMfaLimit: Number(env.ADMIN_MFA_LIMIT || 8),
+    adminPasskeysEnabled: env.ADMIN_PASSKEYS_ENABLED === 'true',
     notificationIdentityToken: env.NOTIFICATION_IDENTITY_TOKEN || null,
     eventWebhookUrl: env.IDENTITY_EVENT_WEBHOOK_URL || null,
     eventWebhookToken: env.IDENTITY_EVENT_WEBHOOK_TOKEN || null,
@@ -52,11 +58,17 @@ export function loadConfig(env = process.env) {
   };
   if (config.jwtSecret.length < 32 || !Number.isInteger(config.loginLimit) || config.loginLimit < 1 || !Number.isInteger(config.refreshDays) || config.refreshDays < 1 || !Number.isInteger(config.port) || config.port < 1) throw new Error('Invalid identity configuration');
   if (config.mailKey.length !== 32) throw new Error('IDENTITY_MAIL_KEY must decode to 32 bytes');
+  if(config.adminMfaKey&&config.adminMfaKey.length!==32)throw new Error('ADMIN_MFA_KEY must decode to 32 bytes');
+  if(!Number.isSafeInteger(config.adminSessionSeconds)||config.adminSessionSeconds<300||config.adminSessionSeconds>86400||
+    !Number.isSafeInteger(config.adminIdleSeconds)||config.adminIdleSeconds<120||config.adminIdleSeconds>config.adminSessionSeconds||
+    !Number.isSafeInteger(config.adminReauthSeconds)||config.adminReauthSeconds<30||config.adminReauthSeconds>900||
+    !Number.isSafeInteger(config.adminMfaLimit)||config.adminMfaLimit<1||config.adminMfaLimit>20)throw new Error('Invalid administrator session policy');
   if (config.secureCookie && !config.frontendOrigin.startsWith('https://')) throw new Error('Production FRONTEND_ORIGIN must use HTTPS');
   if (!['disabled', 'email', 'sms-webhook'].includes(config.phoneSender.mode)) throw new Error('Invalid PHONE_OTP_MODE');
   if (config.phoneSender.mode === 'sms-webhook' && (!config.phoneSender.webhookUrl || !config.phoneSender.webhookToken)) throw new Error('SMS webhook URL and token are required');
   if (env.NODE_ENV === 'production' && !config.objectStorage) throw new Error('Production avatar storage is required');
   if (env.NODE_ENV === 'production' && !config.scanner) throw new Error('Production ClamAV scanner is required');
+  if(env.NODE_ENV==='production'&&!config.adminMfaKey)throw new Error('Production ADMIN_MFA_KEY is required');
   if (env.NODE_ENV === 'production' && config.objectStorage?.publicEndpoint && !config.objectStorage.publicEndpoint.startsWith('https://')) throw new Error('Production S3_PUBLIC_ENDPOINT must use HTTPS');
   if (env.NODE_ENV === 'production' && config.phoneSender.mode === 'sms-webhook' && !config.phoneSender.webhookUrl.startsWith('https://')) throw new Error('Production SMS_WEBHOOK_URL must use HTTPS');
   if (config.eventWebhookUrl && !config.eventWebhookToken) throw new Error('IDENTITY_EVENT_WEBHOOK_TOKEN is required');

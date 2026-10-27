@@ -1,4 +1,5 @@
 import {testAdmin,syncTestAdmin} from '../../order-service/tests/admin-fixture.js';
+import {newTotpSecret,sealSecret} from '../src/utils/admin-mfa.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -39,7 +40,7 @@ test('PostgreSQL admin management preserves permissions, moderation holds, audit
     const actor=testAdmin(adminId),buyer={id:buyerId,roles:['buyer','seller']};
     const email=`${buyerId}@example.test`,password='Admin-integration-test!';
     const config={jwtSecret:'integration-admin-secret-over-thirty-two-characters',issuer:'identity-service',audience:'backend-v2',refreshDays:30,
-      loginLimit:5,emailVerificationRequired:true,mailKey:Buffer.alloc(32)};
+      loginLimit:5,emailVerificationRequired:true,mailKey:Buffer.alloc(32),frontendOrigin:'http://localhost:5173'};
     const identity=new IdentityService({repository:repo,mailer:{},config});const context={ip:'127.0.0.9',userAgent:'admin-integration'};
     const userIds=[adminId,buyerId,pendingId,otherAdminId];
     try {
@@ -129,9 +130,14 @@ test('PostgreSQL admin management preserves permissions, moderation holds, audit
         const audit=await catalogAdmin.audit(actor,{kind:'product',q:productId});assert.equal(audit.total,2);
       });
       await t.test('CORE-001 current role revocation applies to an existing signed-in session',async()=>{
-        const login=await identity.login({email:`${otherAdminId}@example.test`,password},context);
+        const login=await repo.transaction(async db=>{
+          const row=(await db.query('SELECT * FROM users WHERE id=$1',[otherAdminId])).rows[0];
+          const factor=(await db.query('INSERT INTO admin_mfa_factors(user_id,secret) VALUES($1,$2) RETURNING version',[otherAdminId,sealSecret(newTotpSecret(),identity.adminAuth.key,otherAdminId)])).rows[0];
+          return identity.adminAuth.issueSession(db,row,factor.version,'totp',context);
+        });
         const bearer='Bearer '+login.accessToken;
         assert.equal((await identity.me(bearer)).user.roles.includes('platform_admin'),true);
+        assert.ok((await identityAdmin.list((await identity.me(bearer)).user,{})).items.length>0);
         await pool.query("DELETE FROM user_roles WHERE user_id=$1 AND role='platform_admin'",[otherAdminId]);
         try {
           const current=(await identity.me(bearer)).user;

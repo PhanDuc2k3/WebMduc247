@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ShieldCheck, XCircle } from "lucide-react";
 
 import cartApi from "../../../api/cartApi";
+import type { CartVariation } from "../../../api/cartApi";
 import addressApi from "../../../api/addressApi";
 import type { AddressType } from "../../../api/addressApi";
 import orderApi from "../../../api/orderApi";
@@ -32,7 +33,7 @@ interface CartResponse {
     subtotal: number;
     quantity: number;
     productId: string | { _id: string };
-    variation?: { color?: string; size?: string; additionalPrice?: number };
+    variation?: CartVariation;
   }[];
 }
 
@@ -280,12 +281,8 @@ const orderPayload: CreateOrderData = {
 
           // Kiểm tra stock cho sản phẩm có variation
           if (item.variation?.variationId && item.variation?.optionId) {
-            const variationId = typeof item.variation.variationId === 'string' 
-              ? item.variation.variationId 
-              : item.variation.variationId.toString();
-            const optionId = typeof item.variation.optionId === 'string'
-              ? item.variation.optionId
-              : item.variation.optionId.toString();
+            const variationId = String(item.variation.variationId);
+            const optionId = String(item.variation.optionId);
 
             const variation = product.variations?.find((v: any) => 
               v._id && v._id.toString() === variationId

@@ -194,19 +194,23 @@ Các ô CORE hoàn thành bên dưới xác nhận phạm vi hiện có; quy t�
 
 ## 5. Đăng nhập và quản lý phiên
 
-- [ ] **ADM-AUTH-001 — P0:** Bổ sung MFA cho tài khoản admin; có thể bắt đầu bằng TOTP, kèm luồng đăng ký, xác minh và mã khôi phục dùng một lần.
-- [ ] **ADM-AUTH-002 — P0:** Chỉ cấp phiên admin đầy đủ sau khi hoàn tất MFA; token bước xác thực phải ngắn hạn, đúng mục đích và không dùng gọi API nghiệp vụ.
-- [ ] **ADM-AUTH-003 — P0:** Có xác thực lại cho đổi quyền, đổi MFA, xem dữ liệu đặc biệt nhạy cảm và hành động tài chính theo chính sách.
-- [ ] **ADM-AUTH-004 — P0:** Giới hạn số lần thử đăng nhập, MFA và khôi phục; thông báo lỗi không làm lộ tài khoản tồn tại hay cấu hình xác thực.
-- [ ] **ADM-AUTH-005 — P0:** Định nghĩa thời hạn phiên và thời gian không hoạt động; frontend cảnh báo trước khi hết phiên và không tự gửi lại mutation sau đăng nhập.
-- [ ] **ADM-AUTH-006 — P0:** Admin xem được phiên/thiết bị của chính mình, thời điểm hoạt động và thu hồi từng phiên hoặc toàn bộ phiên.
-- [ ] **ADM-AUTH-007 — P0:** Đổi mật khẩu, khóa nhân sự hoặc thay đổi quyền quan trọng phải có chính sách thu hồi phiên đang tồn tại.
-- [ ] **ADM-AUTH-008 — P0:** Đăng xuất xóa phiên máy chủ/cookie theo cấu hình hiện có và xóa dữ liệu admin đã cache phía ứng dụng.
-- [ ] **ADM-AUTH-009 — P0:** Khôi phục MFA cần bằng chứng danh tính/quy trình phê duyệt, thu hồi phiên cũ và thông báo cho chủ tài khoản; CSKH không được đọc secret MFA.
-- [ ] **ADM-AUTH-010 — P1:** Ghi sự kiện đăng nhập thành công/thất bại, đăng nhập từ thiết bị mới và thay đổi bảo mật vào nhật ký an ninh.
-- [ ] **ADM-AUTH-011 — P1:** Hỗ trợ passkey hoặc SSO nội bộ khi đội vận hành cần, sau khi có thiết kế tương thích và phục hồi tài khoản.
+- [x] **ADM-AUTH-001 — P0:** Bổ sung MFA cho tài khoản admin; có thể bắt đầu bằng TOTP, kèm luồng đăng ký, xác minh và mã khôi phục dùng một lần.
+- [x] **ADM-AUTH-002 — P0:** Chỉ cấp phiên admin đầy đủ sau khi hoàn tất MFA; token bước xác thực phải ngắn hạn, đúng mục đích và không dùng gọi API nghiệp vụ.
+- [x] **ADM-AUTH-003 — P0:** Có xác thực lại cho đổi quyền, đổi MFA, xem dữ liệu đặc biệt nhạy cảm và hành động tài chính theo chính sách.
+- [x] **ADM-AUTH-004 — P0:** Giới hạn số lần thử đăng nhập, MFA và khôi phục; thông báo lỗi không làm lộ tài khoản tồn tại hay cấu hình xác thực.
+- [x] **ADM-AUTH-005 — P0:** Định nghĩa thời hạn phiên và thời gian không hoạt động; frontend cảnh báo trước khi hết phiên và không tự gửi lại mutation sau đăng nhập.
+- [x] **ADM-AUTH-006 — P0:** Admin xem được phiên/thiết bị của chính mình, thời điểm hoạt động và thu hồi từng phiên hoặc toàn bộ phiên.
+- [x] **ADM-AUTH-007 — P0:** Đổi mật khẩu, khóa nhân sự hoặc thay đổi quyền quan trọng phải có chính sách thu hồi phiên đang tồn tại.
+- [x] **ADM-AUTH-008 — P0:** Đăng xuất xóa phiên máy chủ/cookie theo cấu hình hiện có và xóa dữ liệu admin đã cache phía ứng dụng.
+- [x] **ADM-AUTH-009 — P0:** Khôi phục MFA cần bằng chứng danh tính/quy trình phê duyệt, thu hồi phiên cũ và thông báo cho chủ tài khoản; CSKH không được đọc secret MFA.
+- [x] **ADM-AUTH-010 — P1:** Ghi sự kiện đăng nhập thành công/thất bại, đăng nhập từ thiết bị mới và thay đổi bảo mật vào nhật ký an ninh.
+- [x] **ADM-AUTH-011 — P1:** Hỗ trợ passkey hoặc SSO nội bộ khi đội vận hành cần, sau khi có thiết kế tương thích và phục hồi tài khoản.
+
+**Cập nhật 27/10/2026:** Đã triển khai và nghiệm thu local MFA TOTP, mã khôi phục một lần, step-up, phiên 8 giờ/idle 30 phút, thu hồi phiên, recovery có phê duyệt và passkey tùy cấu hình. Phiên admin cũ phải đăng nhập lại và tự đăng ký MFA. Passkey đã thử bằng chữ ký WebAuthn và authenticator ảo trong Edge; chưa nghiệm thu khóa phần cứng/email production. Xem [chính sách, API, cấu hình và bằng chứng](Backend/docs/admin-auth.md).
 
 **Nghiệm thu:** token chưa qua MFA không vào `/admin`; mã khôi phục dùng lại bị từ chối; mất quyền có hiệu lực ở backend mà không cần chờ người dùng tải lại trang.
+
+**Bảo trì 27/10/2026:** Đã sửa 22 lỗi TypeScript có sẵn; typecheck và build frontend đạt. Audit đầy đủ backend/frontend đều còn 0 cảnh báo sau cập nhật dependency tương thích. Đã kiểm tra hồi quy backend/frontend, MFA với PostgreSQL, Mongoose với MongoDB test, Nodemailer qua stream và Edge desktop/mobile. Xem [biên bản bảo trì](Backend/docs/typecheck-dependency-maintenance.md).
 
 ## 6. Quản lý nhân sự quản trị
 

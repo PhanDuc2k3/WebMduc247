@@ -15,6 +15,8 @@ export function createMailQueue(repository, transport, { key, from, frontendOrig
     if (row.purpose === 'verify_email') {
       const url = `${frontendOrigin}/verify-email?email=${encodeURIComponent(row.recipient)}#token=${encodeURIComponent(value)}`;
       await transport.sendMail({ from, to: row.recipient, subject: 'Xác minh email', text: `Mở liên kết trong 15 phút: ${url}` });
+    } else if(row.purpose==='security_notice') {
+      await transport.sendMail({from,to:row.recipient,subject:'Thông báo bảo mật quản trị MDUC247',text:value});
     } else {
       const url = `${frontendOrigin}/reset-password?email=${encodeURIComponent(row.recipient)}`;
       await transport.sendMail({ from, to: row.recipient, subject: 'Mã OTP đặt lại mật khẩu',

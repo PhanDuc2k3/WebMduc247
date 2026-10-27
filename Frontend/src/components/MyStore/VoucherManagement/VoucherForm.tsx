@@ -7,14 +7,10 @@ import storeApi from "../../../api/storeApi";
 interface VoucherFormProps {
   onClose?: () => void;
   onSuccess?: () => void;
-  voucher?: VoucherType & { title?: string; condition?: string }; // Voucher để edit (nếu có)
+  voucher?: VoucherType; // Voucher để edit (nếu có)
 }
 
-// Mở rộng VoucherType để dùng trong form
-interface VoucherFormData extends VoucherType {
-  title?: string;
-  condition?: string;
-}
+type VoucherFormData = VoucherType;
 
 const VoucherForm: React.FC<VoucherFormProps> = ({ onClose, onSuccess, voucher }) => {
   // Khởi tạo form data từ voucher (nếu edit) hoặc giá trị mặc định (nếu tạo mới)
@@ -29,9 +25,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ onClose, onSuccess, voucher }
 
       return {
         code: voucher.code || "",
-        title: (voucher as any).title || "",
+        title: voucher.title || "",
         description: voucher.description || "",
-        condition: (voucher as any).condition || "",
+        condition: voucher.condition || "",
         discountType: voucher.discountType || "fixed",
         discountValue: voucher.discountValue || 0,
         minOrderValue: voucher.minOrderValue || 0,
@@ -89,9 +85,9 @@ const VoucherForm: React.FC<VoucherFormProps> = ({ onClose, onSuccess, voucher }
 
       setFormData({
         code: voucher.code || "",
-        title: (voucher as any).title || "",
+        title: voucher.title || "",
         description: voucher.description || "",
-        condition: (voucher as any).condition || "",
+        condition: voucher.condition || "",
         discountType: voucher.discountType || "fixed",
         discountValue: voucher.discountValue || 0,
         minOrderValue: voucher.minOrderValue || 0,

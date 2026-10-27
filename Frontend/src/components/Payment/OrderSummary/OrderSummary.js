@@ -200,12 +200,8 @@ const OrderSummary = ({ shippingFee, paymentMethod, addressId, discount, shippin
                         }
                         // Kiểm tra stock cho sản phẩm có variation
                         if (item.variation?.variationId && item.variation?.optionId) {
-                            const variationId = typeof item.variation.variationId === 'string'
-                                ? item.variation.variationId
-                                : item.variation.variationId.toString();
-                            const optionId = typeof item.variation.optionId === 'string'
-                                ? item.variation.optionId
-                                : item.variation.optionId.toString();
+                            const variationId = String(item.variation.variationId);
+                            const optionId = String(item.variation.optionId);
                             const variation = product.variations?.find((v) => v._id && v._id.toString() === variationId);
                             if (!variation) {
                                 stockErrors.push(`Không tìm thấy biến thể cho sản phẩm "${product.name}"`);

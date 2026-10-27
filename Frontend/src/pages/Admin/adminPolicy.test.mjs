@@ -4,7 +4,8 @@ import { isPlatformAdmin, adminDestination, canVisitAdminPath } from './adminPol
 test('UI access needs effective permissions; a generic platform role grants nothing', () => {
   for (const value of [null, {}, { role: 'admin' }, { roles: ['buyer'] }, { roles: ['seller'] }]) assert.equal(isPlatformAdmin(value), false);
   assert.equal(isPlatformAdmin({ roles: ['buyer','platform_admin'] }), false);
-  const editor={adminAccess:{permissions:['storefront.read','storefront.update']}};
+  const editor={adminAccess:{permissions:['storefront.read','storefront.update']},adminSession:{verifiedAt:new Date().toISOString()}};
+  assert.equal(isPlatformAdmin({...editor,adminSession:undefined}),false);
   assert.equal(isPlatformAdmin(editor),true);
   assert.equal(canVisitAdminPath(editor,'/admin/storefront'),true);
   assert.equal(canVisitAdminPath(editor,'/admin/users'),false);

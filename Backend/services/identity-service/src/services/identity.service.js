@@ -3,11 +3,13 @@ import { createHmac, randomInt } from 'node:crypto';
 import { hashToken, newId, normalizeEmail, randomToken, signAccessToken, verifyAccessToken } from '../utils/crypto.js';
 import { HttpError, invalid, unauthorized } from '../utils/errors.js';
 import { loadAdminAccess } from './admin-access.service.js';
+import { AdminAuthService } from './admin-auth.service.js';
+import {AdminPasskeyService} from './admin-passkey.service.js';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // A valid hash keeps unknown-email login checks close to the same cost as known users.
 const dummyPasswordHash = '$argon2id$v=19$m=19456,t=2,p=1$2N2oKv5QikTuvcJ21+bX6g$6Mw2Ei+O9auyJOrhufyEjrwzzwxvBbN6PXYBi22FD08';
-const publicUser = user => ({ id: user.id, email: user.email, fullName: user.full_name, emailVerifiedAt: user.email_verified_at, roles: user.roles ?? ['buyer'], adminAccess: user.adminAccess });
+const publicUser = user => ({ id: user.id, email: user.email, fullName: user.full_name, emailVerifiedAt: user.email_verified_at, roles: user.roles ?? ['buyer'], adminAccess: user.adminAccess, adminSession:user.adminSession });
 
 export class IdentityService {
   constructor({ repository, mailer, config, password = argon2 }) {
@@ -15,6 +17,8 @@ export class IdentityService {
     this.mailer = mailer;
     this.config = config;
     this.password = password;
+    this.adminAuth = new AdminAuthService(this);
+    this.adminPasskeys = new AdminPasskeyService(this.adminAuth);
   }
   async throttle(action, email, context, max = 5) {
     const ip = context.ip || 'unknown';
@@ -122,13 +126,14 @@ export class IdentityService {
     if (platformAdmin && !user.adminAccess?.grants?.length) {
       await this.throttle('login', email, context, this.config.loginLimit);
       await this.repo.event('admin_login_denied', { ...context, userId: user.id });
-      throw new HttpError(403, 'PLATFORM_ADMIN_REQUIRED', 'Tài khoản không có quyền quản trị sàn.');
+      throw new HttpError(401, 'INVALID_CREDENTIALS', 'Email hoặc mật khẩu không hợp lệ.');
     }
+    if(platformAdmin)return this.adminAuth.beginLogin(user,context);
     const familyId = newId();
     const refreshToken = randomToken();
     await this.repo.createSession({ userId: user.id, familyId, tokenHash: hashToken(refreshToken), device: context.userAgent?.slice(0, 500), expiresAt: new Date(Date.now() + this.config.refreshDays * 86400_000) });
     await this.repo.event(platformAdmin ? 'admin_login_success' : 'login_success', { ...context, userId: user.id });
-    return { user: publicUser(user), accessToken: this.access(user.id, familyId), refreshToken };
+    return { user: publicUser({...user,adminAccess:undefined,adminSession:undefined}), accessToken: this.access(user.id, familyId), refreshToken };
   }
   access(userId, familyId) {
     return signAccessToken({ userId, familyId, secret: this.config.jwtSecret, issuer: this.config.issuer, audience: this.config.audience });
@@ -136,11 +141,13 @@ export class IdentityService {
   async refresh(refreshToken, context) {
     if (typeof refreshToken !== 'string' || refreshToken.length < 40 || refreshToken.length > 128) throw unauthorized();
     await this.throttle('refresh', hashToken(refreshToken), context, 20);
+    let adminSession;
+    if(this.repo.sessionOwner){const owner=await this.repo.sessionOwner(hashToken(refreshToken));if(owner)adminSession=await this.adminAuth.sessionFor(owner.user_id,owner.family_id);}
     const next = randomToken();
     const result = await this.repo.rotateSession(hashToken(refreshToken), hashToken(next), new Date(Date.now() + this.config.refreshDays * 86400_000), this.config.emailVerificationRequired === true);
     if (result.kind === 'reuse') await this.repo.event('refresh_reuse', { ...context, userId: result.userId });
     if (result.kind !== 'ok') throw unauthorized();
-    return { accessToken: this.access(result.userId, result.familyId), refreshToken: next };
+    return { accessToken: this.access(result.userId, result.familyId), refreshToken: next, ...(adminSession?{adminSession}:{}) };
   }
   async authenticate(header) {
     const match = typeof header === 'string' && /^Bearer (\S+)$/i.exec(header);
@@ -148,7 +155,8 @@ export class IdentityService {
     if (!claims) throw unauthorized();
     const user = await this.repo.currentUser(claims.sub, claims.sid);
     if (!this.accountCanSignIn(user)) throw unauthorized();
-    user.adminAccess = user.roles?.includes('platform_admin') ? await loadAdminAccess(this.repo.pool, user.id) : undefined;
+    user.adminSession = user.roles?.includes('platform_admin') ? await this.adminAuth.sessionFor(user.id,claims.sid) : undefined;
+    user.adminAccess = user.adminSession ? await loadAdminAccess(this.repo.pool, user.id) : undefined;
     return { user, familyId: claims.sid };
   }
   async me(header) {
@@ -171,6 +179,16 @@ export class IdentityService {
     else await this.repo.revokeFamily(user.id, familyId);
     await this.repo.event(all ? 'logout_all' : 'logout', { ...context, userId: user.id });
     return { message: 'Đã đăng xuất.' };
+  }
+  async logoutAny(header,refreshToken,all,context){
+    let auth;
+    try{auth=await this.authenticate(header);}catch(error){if(error.status!==401)throw error;}
+    if(auth)return this.logoutAuthorized(auth,all,context);
+    if(this.repo.sessionOwner&&typeof refreshToken==='string'&&refreshToken.length<=128){
+      const owner=await this.repo.sessionOwner(hashToken(refreshToken));
+      if(owner)await this.repo.revokeFamily(owner.user_id,owner.family_id);
+    }
+    return {message:'Đã đăng xuất.'};
   }
   async forgotPassword(body, context) {
     const email = this.checkEmail(body.email);

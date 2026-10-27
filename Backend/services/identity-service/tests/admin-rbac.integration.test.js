@@ -14,6 +14,7 @@ import {ReturnAdminService} from '../../order-service/src/return-admin.service.j
 import {CaseService} from '../../order-service/src/case.service.js';
 import {AdminApprovalService} from '../../order-service/src/admin-approval.service.js';
 import {CatalogAdminService} from '../../catalog-service/src/platform-admin.service.js';
+import {newTotpSecret,sealSecret} from '../src/utils/admin-mfa.js';
 
 test('RBAC PostgreSQL/HTTP: live permissions, query scopes and independent approvals',
   {skip:!process.env.ADMIN_RBAC_TEST_DATABASE_URL},async t=>{
@@ -37,7 +38,11 @@ test('RBAC PostgreSQL/HTTP: live permissions, query scopes and independent appro
     return {id,roles:['platform_admin'],adminAccess:await loadAdminAccess(pool,id)};
   }
   async function refresh(actor){actor.adminAccess=await loadAdminAccess(pool,actor.id);return actor;}
-  async function token(actor){const familyId=randomUUID();await repo.createSession({userId:actor.id,familyId,tokenHash:randomUUID(),device:'RBAC Test',expiresAt:new Date(Date.now()+3600000)});return identity.access(actor.id,familyId);}
+  async function token(actor){return repo.transaction(async db=>{
+    const row=(await db.query('SELECT * FROM users WHERE id=$1',[actor.id])).rows[0];
+    const factor=(await db.query('INSERT INTO admin_mfa_factors(user_id,secret) VALUES($1,$2) ON CONFLICT(user_id) DO UPDATE SET disabled_at=NULL RETURNING version',[actor.id,sealSecret(newTotpSecret(),identity.adminAuth.key,actor.id)])).rows[0];
+    return (await identity.adminAuth.issueSession(db,row,factor.version,'totp',{ip:'127.0.0.1',userAgent:'RBAC Test'})).accessToken;
+  });}
   async function fixture(actor,{status='UNDER_REVIEW',storeId=randomUUID()}={}){
     const [id,orderId,quoteId,groupId,itemId]=Array.from({length:5},()=>randomUUID());
     const buyerId=randomUUID();fixtures.push({id,orderId,itemId});quoteIds.push(quoteId);groupIds.push(groupId);

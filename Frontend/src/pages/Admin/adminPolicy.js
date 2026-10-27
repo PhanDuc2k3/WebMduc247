@@ -1,5 +1,5 @@
 export function isPlatformAdmin(user) {
-    return Boolean(user?.adminAccess?.permissions?.length);
+    return Boolean(user?.adminAccess?.permissions?.length && user?.adminSession?.verifiedAt);
 }
 export function hasAdminPermission(user, permission) { return Boolean(user?.adminAccess?.permissions.includes(permission)); }
 const routePermissions = {
@@ -9,12 +9,16 @@ const routePermissions = {
     '/admin/audit': ['audit.read'], '/admin/staff-access': ['staff.read'], '/admin/approvals': ['refunds.read', 'orders.read', 'approval_policy.read'],
 };
 export function canVisitAdminPath(user, path) {
+    if (!isPlatformAdmin(user))
+        return false;
+    if (path === '/admin/security')
+        return isPlatformAdmin(user);
     if (path === '/admin')
         return isPlatformAdmin(user);
     return (routePermissions[path] || []).some(permission => hasAdminPermission(user, permission));
 }
 export function adminDestination(value) {
-    const paths = ['/admin', ...Object.keys(routePermissions)];
+    const paths = ['/admin', '/admin/security', ...Object.keys(routePermissions)];
     if (!value || !paths.includes(value.split('?')[0]))
         return '/admin';
     return value;

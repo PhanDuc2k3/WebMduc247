@@ -1,0 +1,4 @@
+export default function AdminRecoveryCodes({codes,onDone}:{codes:string[];onDone:()=>void}){
+  function download(){const url=URL.createObjectURL(new Blob(['MDUC247 Admin — Mã khôi phục dùng một lần\nGiữ riêng; không gửi cho nhân viên hỗ trợ.\n\n'+codes.join('\n')],{type:'text/plain;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='mduc247-admin-recovery-codes.txt';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  return <section className="pa-mfa-codes"><h3>Lưu mã khôi phục</h3><p>Mỗi mã chỉ dùng một lần cùng mật khẩu. Bộ mã này chỉ được hiển thị trong lần tạo; hãy lưu ở nơi riêng tư trước khi tiếp tục.</p><pre>{codes.join('\n')}</pre><div className="pa-dialog-actions"><button type="button" className="pa-button pa-button-light" onClick={download}>Tải mã về</button><button type="button" className="pa-button" onClick={onDone}>Tôi đã lưu mã</button></div></section>;
+}

@@ -59,6 +59,7 @@ export class AdminAccessService {
       await db.query('UPDATE refresh_sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL',[id]);
       await db.query(`INSERT INTO admin_access_events(actor_reference,target_reference,reason,before_roles,after_roles,read_version,result_version)
         VALUES($1,$2,$3,$4,$5,$6,$7)`,[actor.id,id,command.reason,JSON.stringify(before),JSON.stringify(assignments),command.version,command.version+1]);
+      await db.query("INSERT INTO security_events(user_id,action,metadata) VALUES($1,'admin_permissions_changed',$2)",[id,{actorId:actor.id,readVersion:command.version,resultVersion:command.version+1,requestId:command.requestId}]);
       return {id,version:command.version+1,access:effectiveAdminAccess(assignments,id)};
     });
   }

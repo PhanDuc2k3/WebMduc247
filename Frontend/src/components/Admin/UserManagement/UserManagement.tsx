@@ -390,7 +390,7 @@ const UserManagement: React.FC = () => {
                 <div className="flex justify-end gap-2 pt-4 mt-4 border-t">
                   {user.status === "banned" ? (
                     <button 
-                      onClick={() => handleUnbanUser(user._id, user.fullName)}
+                      onClick={() => handleUnbanUserClick(user._id, user.fullName)}
                       className="text-green-600 hover:text-green-900 hover:bg-green-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
                     >
                       <Unlock size={16} />
@@ -398,7 +398,7 @@ const UserManagement: React.FC = () => {
                     </button>
                   ) : (
                     <button 
-                      onClick={() => handleBanUser(user._id, user.fullName)}
+                      onClick={() => handleBanUserClick(user._id, user.fullName)}
                       className="text-orange-600 hover:text-orange-900 hover:bg-orange-50 px-3 py-2 rounded-lg transition-all duration-300 flex items-center gap-1 text-sm"
                     >
                       <Lock size={16} />

@@ -17,7 +17,8 @@ const deferred = () => {
 async function setup(t, handler) {
   const previous = { window: globalThis.window, localStorage: globalThis.localStorage };
   globalThis.window = new EventTarget();
-  globalThis.localStorage = { removeItem() {} };
+  const storage=new Map();
+  globalThis.localStorage = { removeItem:key=>storage.delete(key),getItem:key=>storage.get(key)||null,setItem:(key,value)=>storage.set(key,value) };
   t.after(() => {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) delete globalThis[key];
@@ -33,7 +34,7 @@ async function setup(t, handler) {
   // Execute the actual Vite module with only its build-time URL substituted.
   const js = stripTypeScriptTypes(source);
   const api = await import(`data:text/javascript;base64,${Buffer.from(`${js}\n// test ${moduleId++}`).toString('base64')}`);
-  return { ...api, calls };
+  return { ...api, calls,storage };
 }
 
 test('StrictMode/provider bootstrap shares one refresh and one concurrent me request', async t => {
@@ -62,7 +63,7 @@ test('expired cookie is not refreshed on every later poll; login recovers and lo
     await assert.rejects(api.identityApi.me(), { status: 401 });
   }
   assert.equal(api.calls.length, 1);
-  await api.identityApi.adminLogin('admin@example.test', 'test-only');
+  await api.identityApi.login('admin@example.test', 'test-only');
   assert.deepEqual(await api.identityApi.me(), user);
   await api.identityApi.logout();
   await assert.rejects(api.identityApi.me(), { status: 401 });
@@ -127,14 +128,14 @@ test('429 honors Retry-After seconds, HTTP dates, and a safe fallback before ret
   }
 });
 
-test('admin login recovers immediately during refresh cooldown without retrying refresh', async t => {
+test('explicit login recovers immediately during refresh cooldown without retrying refresh', async t => {
   const api = await setup(t, ({ path }) => {
     if (path.endsWith('/refresh')) return json({}, 429, { 'Retry-After': '900' });
     if (path.endsWith('/login')) return json({ accessToken: 'signed-in', user });
     return json({ user });
   });
   await assert.rejects(api.identityApi.me(), { status: 429, retryAfterSeconds: 900 });
-  await api.identityApi.adminLogin('admin@example.test', 'test-only');
+  await api.identityApi.login('admin@example.test', 'test-only');
   assert.deepEqual(await api.identityApi.me(), user);
   assert.equal(api.calls.filter(call => call.path.endsWith('/refresh')).length, 1);
 });
@@ -148,7 +149,7 @@ test('a failed old refresh cannot clear a newly logged-in session', async t => {
   });
   const old = assert.rejects(api.identityApi.me(), { code: 'SESSION_CHANGED' });
   await started.promise;
-  await api.identityApi.adminLogin('admin@example.test', 'test-only');
+  await api.identityApi.login('admin@example.test', 'test-only');
   finish.resolve(json({}, 401));
   await old;
   assert.equal(api.identityApi.getAccessToken(), 'signed-in');
@@ -187,4 +188,40 @@ test('repeated endpoint 401 retries once and a permission 403 never refreshes', 
   await assert.rejects(api.authorizedRequest('http://order.test/rejected'), { status: 401 });
   assert.equal(api.calls.filter(call => call.path.endsWith('/refresh')).length, 1);
   assert.equal(api.calls.filter(call => call.path === '/rejected').length, 2);
+});
+
+const mfaSession=()=>({familyId:'session-test',verifiedAt:new Date().toISOString(),reauthenticatedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+28800000).toISOString(),idleExpiresAt:new Date(Date.now()+1800000).toISOString(),reauthSeconds:300});
+test('password-stage admin login stores no token and only MFA completion creates the client session',async t=>{
+  const session=mfaSession(),api=await setup(t,({path})=>{
+    if(path.endsWith('/admin/login'))return json({challengeToken:'purpose-limited',enrollmentRequired:false});
+    if(path.endsWith('/mfa/verify'))return json({user:{...user,adminSession:session},accessToken:'verified-admin',adminSession:session});
+    return json({user});
+  });
+  let updates=0;window.addEventListener('identityUpdated',()=>updates++);
+  const challenge=await api.identityApi.adminLogin('admin@example.test','test-password');assert.equal(challenge.challengeToken,'purpose-limited');assert.equal(api.identityApi.getAccessToken(),null);assert.equal(updates,0);
+  await api.identityApi.adminVerify(challenge.challengeToken,{code:'123456'});assert.equal(api.identityApi.getAccessToken(),'verified-admin');assert.equal(api.identityApi.getAdminSession().familyId,session.familyId);assert.equal(updates,1);
+});
+test('an expired admin mutation is sent once, clears cached session state, and never replays after sign-in',async t=>{
+  const session=mfaSession(),api=await setup(t,({path})=>path.endsWith('/mfa/verify')?json({user,accessToken:'new-admin',adminSession:session}):json({},401));
+  api.acceptAdminSession({user,accessToken:'old-admin',adminSession:session});let clears=0;window.addEventListener('adminSessionCleared',()=>clears++);
+  const url='http://order.test/api/v2/admin/returns/test/decisions';
+  await assert.rejects(api.authorizedRequest(url,{method:'POST',body:{action:'approve'}}),{code:'ADMIN_SESSION_EXPIRED'});
+  assert.equal(api.calls.filter(c=>c.path.endsWith('/decisions')).length,1);assert.equal(api.calls.filter(c=>c.path.endsWith('/refresh')).length,0);
+  assert.equal(api.identityApi.getAccessToken(),null);assert.equal(api.identityApi.getAdminSession(),null);assert.equal(clears,1);assert.equal(api.storage.get('admin_signed_out'),'true');
+  await api.identityApi.adminVerify('new-challenge',{code:'123456'});assert.equal(api.calls.filter(c=>c.path.endsWith('/decisions')).length,1);
+});
+test('step-up requirements prompt the user and do not automatically retry the mutation',async t=>{
+  const api=await setup(t,()=>json({code:'ADMIN_REAUTH_REQUIRED',message:'Reauthenticate'},428));
+  api.acceptAdminSession({user,accessToken:'admin',adminSession:mfaSession()});let prompts=0;window.addEventListener('adminReauthRequired',()=>prompts++);
+  await assert.rejects(api.authorizedRequest('http://identity.test/api/v2/admin/staff/test/access',{method:'PUT',body:{}}),{status:428});assert.equal(prompts,1);assert.equal(api.calls.length,1);assert.equal(api.identityApi.getAccessToken(),'admin');
+});
+test('failed logout still removes client data, blocks refresh, and records a non-secret sign-out marker',async t=>{
+  const api=await setup(t,()=>{throw Error('Network unavailable');});api.acceptAdminSession({user,accessToken:'admin',adminSession:mfaSession()});
+  await assert.rejects(api.identityApi.logout(),/Network unavailable/);assert.equal(api.identityApi.getAccessToken(),null);assert.equal(api.identityApi.getAdminSession(),null);assert.equal(api.storage.get('admin_signed_out'),'true');
+  await assert.rejects(api.identityApi.me(),{status:401});assert.equal(api.calls.length,1);assert.ok(!JSON.stringify([...api.storage]).includes('accessToken'));
+});
+test('another-tab logout invalidates the in-memory admin session immediately',async t=>{
+  const api=await setup(t,()=>json({}));api.acceptAdminSession({user,accessToken:'admin',adminSession:mfaSession()});
+  const event=new Event('storage');Object.defineProperty(event,'key',{value:'admin_logout_at'});window.dispatchEvent(event);
+  assert.equal(api.identityApi.getAccessToken(),null);assert.equal(api.identityApi.getAdminSession(),null);await assert.rejects(api.identityApi.me(),{status:401});assert.equal(api.calls.length,0);
 });

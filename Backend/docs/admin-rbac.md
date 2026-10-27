@@ -1,5 +1,7 @@
 # Phân quyền và phê duyệt quản trị
 
+> Cập nhật mục 5: [MFA, xác thực lại và quản lý phiên](admin-auth.md). Role/permission chỉ vào phiên người dùng sau MFA; thao tác nhạy cảm yêu cầu xác thực lại gần đây. CLI cấp vai trò không bỏ qua yêu cầu tự đăng ký MFA của nhân viên.
+
 Ngày nghiệm thu phát triển: **27/10/2026, Asia/Bangkok**. Áp dụng cho API quản trị hiện có trong Identity, Catalog, Storefront, Order và CASE/Return. Chưa nghiệm thu production hoặc giao dịch với provider tiền thật.
 
 ## Trạng thái mục 4

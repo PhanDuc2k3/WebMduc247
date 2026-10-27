@@ -1,7 +1,9 @@
 import { PlatformAdminError } from './platform-admin.js';
+import {ADMIN_SENSITIVE_PERMISSIONS,requireRecentAdmin} from './admin-auth-policy.js';
 
 // Explicit allowlists: a new resource/action never inherits an existing role.
 export const ADMIN_PERMISSIONS = Object.freeze([
+  'mfa_recovery.approve',
   'staff.read','staff.update','users.read','users.moderate','users.export','users.view_sensitive',
   'stores.read','stores.moderate','products.read','products.moderate','orders.read','orders.create','orders.approve','orders.execute',
   'cases.read','cases.create','cases.update','cases.approve','cases.execute','cases.view_sensitive',
@@ -12,7 +14,7 @@ export const ADMIN_PERMISSIONS = Object.freeze([
   'finance.export','finance.view_sensitive','approval_policy.read','approval_policy.update',
 ]);
 export const ADMIN_ROLES = Object.freeze({
-  system_admin: { label:'Quản trị hệ thống', permissions:['staff.read','staff.update','approval_policy.read','approval_policy.update','audit.read'] },
+  system_admin: { label:'Quản trị hệ thống', permissions:['staff.read','staff.update','approval_policy.read','approval_policy.update','audit.read','mfa_recovery.approve'] },
   operations: { label:'Vận hành sàn', permissions:['stores.read','products.read','orders.read','orders.create','cases.read','cases.create','cases.update','returns.read','reports.read'] },
   customer_support: { label:'Chăm sóc khách hàng', permissions:['orders.read','cases.read','cases.create','cases.update','cases.view_sensitive','returns.read'] },
   moderator: { label:'Kiểm duyệt', permissions:['stores.read','stores.moderate','products.read','products.moderate','cases.read','cases.update','cases.approve','cases.view_sensitive'] },
@@ -54,6 +56,8 @@ export function permissionGrants(user,permission) {
 }
 export function requireAdminPermission(user,permission) {
   if(!permissionGrants(user,permission).length)throw new PlatformAdminError(403,'ADMIN_PERMISSION_REQUIRED','Chưa được cấp quyền cho thao tác này.');
+  // Internal authorization lookups carry grants without an interactive session; the HTTP actor must step up.
+  if(user.adminSession&&(ADMIN_SENSITIVE_PERMISSIONS.has(permission)||permission.endsWith('.view_sensitive')))requireRecentAdmin(user);
   return user;
 }
 export function requireAdminScope(user,permission,resource) {

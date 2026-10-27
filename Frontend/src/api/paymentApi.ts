@@ -19,6 +19,7 @@ export interface CreateVietQRPaymentData {
 }
 
 export interface VietQRPaymentResponse {
+  message?: string;
   qrCodeUrl: string;
   qrContent: string;
   amount: number;

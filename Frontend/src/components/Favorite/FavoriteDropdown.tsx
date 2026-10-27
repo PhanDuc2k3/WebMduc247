@@ -143,7 +143,7 @@ const FavoriteDropdown: React.FC<FavoriteDropdownProps> = ({ isOpen, onClose }) 
                   rating: product.rating,
                   reviewsCount: product.reviewsCount,
                   soldCount: product.soldCount,
-                  location: product.location,
+                  location: typeof product.store === 'object' ? product.store?.storeAddress : undefined,
                   store: typeof product.store === 'string' 
                     ? product.store 
                     : (product.store && typeof product.store === 'object' && 'name' in product.store)

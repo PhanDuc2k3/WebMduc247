@@ -1,0 +1,21 @@
+.pa-security{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;min-width:0}
+.pa-security>.pa-panel{min-width:0;width:100%;box-sizing:border-box}
+.pa-security .pa-table-scroll,.pa-security .pa-case-form,.pa-security label{min-width:0;max-width:100%}
+.pa-security h2,.pa-security p,.pa-security strong{overflow-wrap:anywhere}
+.pa-security article{padding:12px 0}
+.pa-security td:first-child{max-width:340px;overflow-wrap:anywhere}
+.pa-mfa-setup{display:grid;gap:10px;margin:16px 0}
+.pa-mfa-setup code{display:block;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;padding:12px;overflow-wrap:anywhere;font-size:15px;user-select:all}
+.pa-mfa-codes pre{padding:16px;background:#f1f5f9;border-radius:8px;letter-spacing:1px;line-height:1.8;user-select:all;overflow:auto}
+.pa-session-warning{padding:14px 20px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;margin-bottom:20px}
+.pa-security textarea,.pa-login-card textarea{width:100%;min-height:90px;padding:10px;border:1px solid #cbd5e1;border-radius:8px}
+.pa-login-card .pa-text-link{margin:10px 8px 10px 0}
+.pa-login-card .pa-button-light{margin-top:12px}
+.pa-security input[type=checkbox]{width:auto;margin-right:8px}
+@media(max-width:600px){
+  .pa-mfa-codes .pa-dialog-actions{flex-direction:column}
+  .pa-security .pa-page-heading{align-items:flex-start}
+  .pa-topbar>div:first-child{min-width:0;flex:1}
+  .pa-breadcrumb,.pa-breadcrumb strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pa-topbar-right{flex-shrink:0}
+}

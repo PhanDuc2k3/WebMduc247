@@ -4,6 +4,7 @@ import { ArrowUpRight, ChevronRight, LayoutDashboard, LogOut, Menu, Package, Pan
 import { identityApi } from '../../api/identityApi';
 import { useAdminSession } from './AdminSession';
 import { canVisitAdminPath } from './adminPolicy';
+import AdminSessionGuard from './AdminSessionGuard';
 import './platform-admin.css';
 const links = [
   { path: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
@@ -19,6 +20,7 @@ const links = [
   { path: '/admin/audit', label: 'Nhật ký quản trị', icon: ScrollText },
   { path: '/admin/staff-access', label: 'Nhân sự & quyền', icon: Users },
   { path: '/admin/approvals', label: 'Yêu cầu phê duyệt', icon: ShieldCheck },
+  { path: '/admin/security', label: 'Bảo mật & phiên', icon: ShieldCheck },
 ];
 export default function PlatformAdminShell() {
   const user = useAdminSession(), location = useLocation(), navigate = useNavigate();
@@ -26,9 +28,10 @@ export default function PlatformAdminShell() {
   const title = links.find(link => link.path === location.pathname)?.label || 'Tổng quan';
   async function logout() {
     setBusy(true); setError('');
-    try { await identityApi.logout(); navigate('/admin/login', { replace: true }); }
+    let confirmed=false;
+    try { await identityApi.logout(); confirmed=true; }
     catch { setError('Chưa thể đăng xuất. Vui lòng thử lại.'); }
-    finally { setBusy(false); }
+    finally { setBusy(false);navigate(`/admin/login?logout=${confirmed?'1':'unconfirmed'}`,{replace:true}); }
   }
   return <div className="pa-app">
     {open && <button className="pa-mobile-backdrop" aria-label="Đóng menu" onClick={() => setOpen(false)} />}
@@ -46,7 +49,7 @@ export default function PlatformAdminShell() {
     <div className="pa-workarea"><header className="pa-topbar"><div><button className="pa-menu-button" onClick={() => setOpen(true)} aria-label="Mở menu quản trị"><Menu size={21} /></button>
       <span className="pa-breadcrumb">Quản trị sàn <ChevronRight size={14} /><strong>{title}</strong></span></div>
       <div className="pa-topbar-right"><span className="pa-admin-badge"><ShieldCheck size={14} />Platform Admin</span><Link to="/" target="_blank" rel="noreferrer">Xem cửa hàng <ArrowUpRight size={16} /></Link></div></header>
-      <main className="pa-main">{error && <p role="alert" className="pa-error">{error}</p>}<Outlet /></main>
+      <main className="pa-main"><AdminSessionGuard/>{error && <p role="alert" className="pa-error">{error}</p>}<Outlet /></main>
       <footer className="pa-app-footer"><span>MDUC247 Platform</span><span>Không gian dành cho quản trị viên</span></footer>
     </div>
   </div>;

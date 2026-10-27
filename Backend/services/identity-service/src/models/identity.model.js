@@ -169,6 +169,9 @@ export class IdentityRepository {
   async revokeFamily(userId, familyId) {
     await this.pool.query('UPDATE refresh_sessions SET revoked_at=now() WHERE user_id=$1 AND family_id=$2 AND revoked_at IS NULL', [userId, familyId]);
   }
+  async sessionOwner(tokenHash){
+    return (await this.pool.query('SELECT user_id,family_id FROM refresh_sessions WHERE token_hash=$1',[tokenHash])).rows[0]||null;
+  }
   async revokeAll(userId) {
     await this.pool.query('UPDATE refresh_sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL', [userId]);
   }

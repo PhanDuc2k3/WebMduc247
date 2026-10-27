@@ -476,7 +476,7 @@ const VoucherManagement: React.FC = () => {
                     </button>
                   )}
                   <button
-                    onClick={() => voucher._id && handleDelete(voucher._id)}
+                    onClick={() => voucher._id && handleDeleteClick(voucher._id)}
                     className="px-3 py-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors text-xs font-bold flex items-center gap-1"
                   >
                     <Trash2 size={14} />

@@ -1,10 +1,11 @@
 import axiosClient from "./axiosClient";
+import type { CartVariation } from "./cartApi";
 
 export interface CreateOrderData {
   items: {
     productId: string;
     quantity: number;
-    variation?: { color?: string; size?: string; additionalPrice?: number };
+    variation?: CartVariation;
   }[];
   shippingAddress: {
     fullName: string;

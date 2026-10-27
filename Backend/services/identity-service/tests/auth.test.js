@@ -19,11 +19,13 @@ test('runtime rejects disabling email verification', () => {
   assert.equal(loadConfig(env).emailVerificationRequired, true);
   assert.throws(() => loadConfig({ ...env, REQUIRE_EMAIL_VERIFICATION: 'false' }), /Email verification is required/);
   const production = { ...env, NODE_ENV: 'production', FRONTEND_ORIGIN: 'https://mduc247.site',
+    ADMIN_MFA_KEY:Buffer.alloc(32,7).toString('base64'),
     PHONE_OTP_MODE: 'sms-webhook', SMS_WEBHOOK_URL: 'https://sms.example.test/send', SMS_WEBHOOK_TOKEN: 'test-token' };
   assert.throws(() => loadConfig(production), /avatar storage is required/);
   const withStorage = { ...production, S3_BUCKET: 'avatars', S3_ACCESS_KEY: 'test', S3_SECRET_KEY: 'test' };
   assert.throws(() => loadConfig(withStorage), /ClamAV scanner is required/);
   assert.ok(loadConfig({ ...withStorage, CLAMAV_HOST: 'scanner' }).scanner);
+  assert.throws(()=>loadConfig({...withStorage,CLAMAV_HOST:'scanner',ADMIN_MFA_KEY:''}),/ADMIN_MFA_KEY is required/);
   assert.equal(loadConfig({ ...withStorage, CLAMAV_HOST: 'scanner', PHONE_OTP_MODE: 'email' }).phoneSender.mode, 'email');
   assert.throws(() => loadConfig({ ...withStorage, CLAMAV_HOST: 'scanner', PHONE_OTP_MODE: 'email-dev' }), /Invalid PHONE_OTP_MODE/);
 });

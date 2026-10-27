@@ -26,7 +26,9 @@ interface Product {
   salePrice?: number;
   rating?: number;
   reviewsCount?: number;
-  store?: { name: string };
+  store?: string | { _id: string; name: string };
+  storeId?: string;
+  images?: string[];
   variations?: Variation[];
 }
 
@@ -185,7 +187,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
       const checkoutItem = {
         _id: `temp-${Date.now()}`, // ID tạm thời
         productId: product._id,
-        storeId: product.store?._id || product.storeId || null,
+        storeId: (typeof product.store === "string" ? product.store : product.store?._id) || product.storeId || null,
         name: product.name,
         imageUrl: product.images?.[0] || "",
         price: product.price,
@@ -440,7 +442,7 @@ const ProductInfo: React.FC<ProductInfoProps> = ({
         <div className="flex items-center gap-2">
               <Store size={16} className="text-gray-700" />
           <span className="font-semibold text-gray-700">Người bán:</span>{" "}
-          <span className="font-bold text-[#4B5563]">{product.store?.name || "Không rõ"}</span>
+          <span className="font-bold text-[#4B5563]">{(typeof product.store === "object" && product.store?.name) || "Không rõ"}</span>
         </div>
       </div>
     </div>

@@ -1,13 +1,17 @@
 import axiosClient from "./axiosClient";
 
+export interface CartVariation {
+  color?: string;
+  size?: string;
+  additionalPrice?: number;
+  variationId?: string;
+  optionId?: string;
+}
+
 interface CartItem {
   productId: string;
   quantity: number;
-  variation?: {
-    color?: string;
-    size?: string;
-    additionalPrice?: number;
-  };
+  variation?: CartVariation;
 }
 
 const cartApi = {
