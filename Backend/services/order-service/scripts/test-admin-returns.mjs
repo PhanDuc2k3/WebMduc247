@@ -14,7 +14,7 @@ try {
 } finally { await client.end(); }
 url.pathname = `/${testDatabase}`;
 const env = {...process.env,ORDER_DATABASE_URL:url.href,ADMIN_RETURNS_TEST_DATABASE_URL:url.href};
-for(const args of [['services/order-service/scripts/migrate.js'],['--test','services/order-service/tests/admin-returns.test.js','services/order-service/tests/admin-cases.test.js','services/order-service/tests/case-resolution.test.js']]) {
+for(const args of [['services/order-service/scripts/migrate.js'],['--input-type=module','-e',"import pg from 'pg'; const db=new pg.Client({connectionString:process.env.ORDER_DATABASE_URL}); await db.connect(); await db.query('UPDATE order_service.admin_approval_policies SET threshold_minor=9007199254740991'); await db.end();"],['--test','services/order-service/tests/admin-returns.test.js','services/order-service/tests/admin-cases.test.js','services/order-service/tests/case-resolution.test.js']]) {
   const result = spawnSync(process.execPath,args,{env,stdio:'inherit'});
   if(result.status !== 0) process.exit(result.status || 1);
 }

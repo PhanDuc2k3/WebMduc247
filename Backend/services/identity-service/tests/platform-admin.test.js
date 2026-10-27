@@ -20,7 +20,7 @@ function fixture(roles = ['buyer','platform_admin']) {
     userByEmail: async email => email === user.email ? user : null, event: async action => events.push(action),
     createSession: async session => sessions.push(session),
     currentUser: async (id, familyId) => sessions.some(session => session.userId === id && session.familyId === familyId) ? user : null,
-    pool: { query: async () => ({ rows: [{ total: 3, active: 2, suspended: 0, pending: 1, new_week: 2 }] }) },
+    pool: { query: async sql => ({ rows: sql.includes('admin_role_assignments') ? (user.roles.includes('platform_admin')?[{role:'legacy_admin',scope:{}}]:[]) : [{ total: 3, active: 2, suspended: 0, pending: 1, new_week: 2 }] }) },
   };
   const service = new IdentityService({ repository: repo, mailer: {}, config,
     password: { verify: async (_hash, value) => value === 'correct-password!' } });

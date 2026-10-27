@@ -1,7 +1,10 @@
-import { requirePlatformAdmin, adminId, PlatformAdminError } from '../../../packages/contracts/platform-admin.js';
-import { CaseService } from './case.service.js';
-import { caseFilters } from './case-contract.js';
-import {CaseResolutionService,decisionBasis} from './case-resolution.service.js';
+import {requireCaseAccess} from './admin-scope.js';
+import {requireAdminPermission} from '../../../packages/contracts/admin-rbac.js';
+import {adminId, PlatformAdminError} from '../../../packages/contracts/platform-admin.js';
+import {CaseService} from './case.service.js';
+import {caseFilters} from './case-contract.js';
+import {CaseResolutionService, decisionBasis} from './case-resolution.service.js';
+import {AdminApprovalService} from './admin-approval.service.js';
 
 export const returnStatuses = ['REQUESTED','UNDER_REVIEW','APPROVED','REJECTED','RETURNING',
   'RECEIVED','REFUND_PENDING','REFUNDED','CLOSED'];
@@ -23,9 +26,10 @@ export function returnAdminFilters(query = {}) {
 }
 export function returnAdminDecision(input) {
   if(!input || typeof input !== 'object' || Array.isArray(input) ||
-    Object.keys(input).some(key => !['action','reason','version','responsibleParty','policyVersion','basisSummary','evidenceRefs'].includes(key)) ||
+    Object.keys(input).some(key => !['action','reason','version','responsibleParty','policyVersion','basisSummary','evidenceRefs','approvalId'].includes(key)) ||
     !Object.hasOwn(decisionRules,input.action) || !Number.isSafeInteger(input.version) || input.version < 1)
     throw invalid('Thao tác hoặc phiên bản yêu cầu không hợp lệ.');
+  if(input.approvalId&&input.action!=='approve')throw invalid('Mã phê duyệt chỉ dùng cho thao tác chấp nhận.');
   return {...input,reason:reasonText(input.reason),...(input.action==='review'?{}:decisionBasis(input))};
 }
 
@@ -39,12 +43,13 @@ export class ReturnAdminService {
       refundReference:row.refund_reference || null,refundNeedsAttention:Boolean(row.last_refund_error)};
   }
   async list(user,query) {
-    requirePlatformAdmin(user);
+    requireAdminPermission(user,'returns.read');
     if(Object.hasOwn(query,'kind'))throw new PlatformAdminError(400,'INVALID_ADMIN_FILTER','Bộ lọc loại hồ sơ không hợp lệ.');
-    return this.cases.list(user,{...query,kind:'RETURN'});
+    return this.cases.list(user,{...query,kind:'RETURN'},{permission:'returns.read'});
   }
   async detail(user,id) {
-    requirePlatformAdmin(user); adminId(id);
+    requireAdminPermission(user,'returns.read'); adminId(id);
+    await requireCaseAccess(this.pool,user,'returns.read',id);
     const row = (await this.pool.query(`SELECT r.*,o.group_id,o.status AS order_status,o.payment_method,
       o.payment_status,o.payable_total_minor,o.refunded_minor,o.store_snapshot_json
       FROM order_service.return_requests r JOIN order_service.orders o ON o.id=r.shop_order_id WHERE r.id=$1`,[id])).rows[0];
@@ -71,13 +76,16 @@ export class ReturnAdminService {
         evidenceId:event.evidence_id,createdAt:event.created_at,readVersion:event.read_version,resultVersion:event.result_version}))};
   }
   async decide(user,id,input) {
-    requirePlatformAdmin(user); adminId(id);
+    requireAdminPermission(user,'returns.moderate'); adminId(id);
+    await requireCaseAccess(this.pool,user,'returns.moderate',id);
     const command = returnAdminDecision(input), rule = decisionRules[command.action];
     const db = await this.pool.connect();
     try {
       await db.query('BEGIN');
       const current = (await db.query('SELECT * FROM order_service.return_requests WHERE id=$1 FOR UPDATE',[id])).rows[0];
       if(!current) throw new PlatformAdminError(404,'RETURN_NOT_FOUND','Không tìm thấy yêu cầu trả hàng.');
+      await db.query('SELECT id FROM order_service.admin_cases WHERE id=$1 FOR UPDATE',[id]);
+      await requireCaseAccess(db,user,'returns.moderate',id);
       if(current.buyer_id === user.id)
         throw new PlatformAdminError(403,'RETURN_ACTOR_CONFLICT','Không thể xử lý yêu cầu trả hàng của chính mình.');
       if(current.resolution !== 'REFUND')
@@ -88,11 +96,19 @@ export class ReturnAdminService {
         const owner=(await db.query('UPDATE order_service.admin_cases SET assignee_id=coalesce(assignee_id,$2) WHERE id=$1 RETURNING assignee_id',[id,user.id])).rows[0];
         if(owner.assignee_id!==user.id)throw new PlatformAdminError(403,'CASE_NOT_ASSIGNED','Hồ sơ đang được phân công cho người khác.');
       }
-      else await new CaseResolutionService(this.cases).recordReturnDecision(db,user,current,command);
+      else {
+        if(command.action==='approve')await new AdminApprovalService(this.returns.order).consume(db,user,'return_approve',id,command.approvalId);
+        await new CaseResolutionService(this.cases).recordReturnDecision(db,user,current,command);
+      }
+      const approvalPolicy=command.action==='approve'?await new AdminApprovalService(this.returns.order).policy(db,'return_approve'):null;
+      const authorization=command.action==='approve'?{actorId:user.id,approvalId:command.approvalId||null,
+        approvalPolicyVersion:approvalPolicy.version,approvalThresholdMinor:approvalPolicy.thresholdMinor,
+        amountMinor:Number(current.eligible_refund_minor),recipientId:current.buyer_id,storeId:current.store_id,policyVersion:current.policy_version}:null;
       await db.query(`UPDATE order_service.return_requests SET status=$2,admin_response=$3,
+        admin_authorization=CASE WHEN $2='APPROVED' THEN $4 ELSE admin_authorization END,
         ship_by=CASE WHEN $2='APPROVED' THEN now()+interval '7 days' ELSE ship_by END,
         reservation_released_at=CASE WHEN $2='REJECTED' THEN now() ELSE reservation_released_at END,
-        version=version+1,updated_at=now() WHERE id=$1`,[id,rule.to,command.reason]);
+        version=version+1,updated_at=now() WHERE id=$1`,[id,rule.to,command.reason,authorization]);
       await this.returns.history(db,id,current.status,rule.to,user.id,'platform_admin',command.reason);
       await db.query(`INSERT INTO order_service.admin_return_actions
         (request_id,actor_id,action,previous_status,next_status,reason,read_version,result_version) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,

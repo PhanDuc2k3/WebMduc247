@@ -3,7 +3,7 @@ export class PlatformAdminError extends Error {
 }
 export function requirePlatformAdmin(user) {
   if (!user?.id) throw new PlatformAdminError(401, 'UNAUTHORIZED', 'Vui lòng đăng nhập.');
-  if (!Array.isArray(user.roles) || !user.roles.includes('platform_admin'))
+  if (!user.adminAccess?.grants?.length)
     throw new PlatformAdminError(403, 'PLATFORM_ADMIN_REQUIRED', 'Tài khoản không có quyền quản trị sàn.');
   return user;
 }

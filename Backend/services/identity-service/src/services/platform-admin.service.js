@@ -1,6 +1,7 @@
-import { requirePlatformAdmin, adminId, adminQuery, adminPage, adminAction, checkAdminVersion, PlatformAdminError } from '../../../../packages/contracts/platform-admin.js';
-import { adminCommand } from '../../../../packages/contracts/admin-command.js';
-import { maskEmail, maskName } from '../../../../packages/contracts/admin-privacy.js';
+import {requireAdminScope} from '../../../../packages/contracts/admin-rbac.js';
+import {adminId, adminQuery, adminPage, adminAction, checkAdminVersion, PlatformAdminError} from '../../../../packages/contracts/platform-admin.js';
+import {adminCommand} from '../../../../packages/contracts/admin-command.js';
+import {maskEmail, maskName} from '../../../../packages/contracts/admin-privacy.js';
 
 const userDto = row => ({ id: row.id, email: maskEmail(row.email), fullName: maskName(row.full_name), status: row.status,
   roles: row.roles, emailVerifiedAt: row.email_verified_at, createdAt: row.created_at, version: Number(row.admin_version) });
@@ -10,7 +11,7 @@ const columns = `u.id,u.email,u.full_name,u.status,u.email_verified_at,u.created
 export class IdentityAdminService {
   constructor(repository) { this.repo = repository; }
   async summary(user) {
-    requirePlatformAdmin(user);
+    requireAdminScope(user,'users.read',{});
     const { rows } = await this.repo.pool.query(`SELECT count(*)::int AS total,
       count(*) FILTER (WHERE status='active')::int AS active,
       count(*) FILTER (WHERE status='suspended')::int AS suspended,
@@ -20,7 +21,7 @@ export class IdentityAdminService {
       pending: rows[0].pending, newWeek: rows[0].new_week } };
   }
   async list(user, query) {
-    requirePlatformAdmin(user);
+    requireAdminScope(user,'users.read',{});
     const options = adminQuery(query, { statuses: ['active','suspended','pending_verification'], roles: ['buyer','seller','platform_admin'] });
     const where = `WHERE (u.full_name ILIKE $1 OR u.email ILIKE $1) AND ($2='' OR u.status=$2)
       AND ($3='' OR EXISTS(SELECT 1 FROM user_roles r WHERE r.user_id=u.id AND r.role=$3))`;
@@ -33,7 +34,7 @@ export class IdentityAdminService {
     return adminPage(list.rows.map(userDto), count.rows[0].total, options);
   }
   async detail(user, id) {
-    requirePlatformAdmin(user); adminId(id);
+    requireAdminScope(user,'users.read',{}); adminId(id);
     const { rows } = await this.repo.pool.query(`SELECT ${columns} FROM users u WHERE u.id=$1`, [id]);
     if (!rows[0]) throw new PlatformAdminError(404, 'USER_NOT_FOUND', 'Không tìm thấy tài khoản.');
     const history = await this.repo.pool.query(`SELECT a.id,coalesce(a.actor_id,a.actor_reference) AS actor_id,a.action,a.previous_status,a.next_status,a.reason,a.created_at,a.read_version,a.result_version,a.correlation_id,
@@ -42,8 +43,8 @@ export class IdentityAdminService {
     return { record: userDto(rows[0]), history: history.rows };
   }
   async moderate(actor, id, input) {
-    requirePlatformAdmin(actor); adminId(id); const action = adminAction(input);
-    if (actor.id === id) throw new PlatformAdminError(409, 'ADMIN_PROTECTED', 'Bạn không thể thay đổi trạng thái tài khoản đang dùng.');
+    requireAdminScope(actor,'users.moderate',{}); adminId(id); const action = adminAction(input);
+    if (actor.id === id.toLowerCase()) throw new PlatformAdminError(409, 'ADMIN_PROTECTED', 'Bạn không thể thay đổi trạng thái tài khoản đang dùng.');
     return this.repo.transaction(db => adminCommand(db, 'public', actor, `users:${id}:status`, action, async () => {
       const { rows } = await db.query(`SELECT u.id,u.status,u.email_verified_at,u.admin_version,
         EXISTS(SELECT 1 FROM user_roles r WHERE r.user_id=u.id AND r.role='platform_admin') AS is_admin
@@ -63,7 +64,7 @@ export class IdentityAdminService {
     }));
   }
   async audit(user, query) {
-    requirePlatformAdmin(user); const options = adminQuery(query);
+    requireAdminScope(user,'audit.read',{}); const options = adminQuery(query);
     const args = [options.pattern];
     const from = `FROM platform_admin_actions a LEFT JOIN users actor ON actor.id=a.actor_id LEFT JOIN users target ON target.id=a.target_id
       WHERE (coalesce(target.email,'') ILIKE $1 OR a.reason ILIKE $1 OR a.target_id::text ILIKE $1)`;

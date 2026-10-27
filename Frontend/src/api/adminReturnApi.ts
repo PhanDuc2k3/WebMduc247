@@ -31,9 +31,9 @@ export const adminReturnApi = {
     return authorizedRequest<AdminPage<AdminReturn>>(`${base}?${query}`);
   },
   detail:(id:string) => authorizedRequest<AdminReturnDetail>(`${base}/${encodeURIComponent(id)}`),
-  decide:(record:AdminReturn,action:ReturnDecision,reason:string,basis?:DecisionBasis) =>
+  decide:(record:AdminReturn,action:ReturnDecision,reason:string,basis?:DecisionBasis,approvalId?:string) =>
     authorizedRequest<{id:string;status:ReturnStatus;version:number}>(`${base}/${encodeURIComponent(record.id)}/decisions`,
-      {method:'POST',body:{action,version:record.version,reason,...basis}}),
+      {method:'POST',body:{action,version:record.version,reason,...basis,...(approvalId?{approvalId}:{})}}),
   async evidence(id:string,evidenceId:string){
     const access=await authorizedRequest<{url:string;expiresAt:string}>(`${base}/${encodeURIComponent(id)}/evidence/${encodeURIComponent(evidenceId)}/access`,
       {method:'POST',body:{reason:'Xem ảnh chứng cứ phục vụ xử lý yêu cầu trả hàng.'}});

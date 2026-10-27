@@ -7,7 +7,7 @@ export const adminReturnApi = {
         return authorizedRequest(`${base}?${query}`);
     },
     detail: (id) => authorizedRequest(`${base}/${encodeURIComponent(id)}`),
-    decide: (record, action, reason, basis) => authorizedRequest(`${base}/${encodeURIComponent(record.id)}/decisions`, { method: 'POST', body: { action, version: record.version, reason, ...basis } }),
+    decide: (record, action, reason, basis, approvalId) => authorizedRequest(`${base}/${encodeURIComponent(record.id)}/decisions`, { method: 'POST', body: { action, version: record.version, reason, ...basis, ...(approvalId ? { approvalId } : {}) } }),
     async evidence(id, evidenceId) {
         const access = await authorizedRequest(`${base}/${encodeURIComponent(id)}/evidence/${encodeURIComponent(evidenceId)}/access`, { method: 'POST', body: { reason: 'Xem ảnh chứng cứ phục vụ xử lý yêu cầu trả hàng.' } });
         const blob = await authorizedBlobRequest(new URL(access.url, base).href);

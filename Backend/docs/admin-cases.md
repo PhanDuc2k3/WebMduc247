@@ -1,5 +1,7 @@
 # Admin CASE-001 đến CASE-008
 
+> Cập nhật phân quyền 27/10/2026: [RBAC, chuyển đổi tài khoản và CLI](admin-rbac.md) thay các hướng dẫn cấp quyền bằng `platform_admin`/`case-permission.mjs` bên dưới. Quyền nghiệp vụ hiện do Identity quản lý; CLI CASE chỉ còn quản lý giám sát chứng cứ.
+
 Ngày nghiệm thu local: 26/10/2026. Không có mã CASE-000 trong checklist gốc. Phạm vi này mở rộng đợt quản trị trả hàng trước đó và không bao gồm console thực chi/hoàn tiền.
 
 > Đã triển khai tiếp CASE-009 đến 018: [quyết định, nghĩa vụ, can thiệp, kháng nghị và báo cáo](case-resolution.md). Tài liệu tiếp theo thay các giới hạn tương ứng của đợt đầu được ghi bên dưới.

@@ -55,11 +55,11 @@
 
 ### 1.2. Mức ưu tiên
 
-| Mức | Ý nghĩa | Điều kiện triển khai |
-| --- | --- | --- |
-| P0 | Cần cho vận hành có giao dịch thật hoặc bảo vệ nghiệp vụ cốt lõi | Hoàn thành trước khi mở phạm vi vận hành tương ứng |
-| P1 | Tăng khả năng xử lý, giảm công việc thủ công | Làm sau nền tảng P0 và khi có người sử dụng thực tế |
-| P2 | Nâng cao, tối ưu hoặc phục vụ quy mô lớn hơn | Chỉ làm khi số liệu hoặc mô hình kinh doanh chứng minh cần thiết |
+| Mức | Ý nghĩa                                                          | Điều kiện triển khai                                             |
+| --- | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| P0  | Cần cho vận hành có giao dịch thật hoặc bảo vệ nghiệp vụ cốt lõi | Hoàn thành trước khi mở phạm vi vận hành tương ứng               |
+| P1  | Tăng khả năng xử lý, giảm công việc thủ công                     | Làm sau nền tảng P0 và khi có người sử dụng thực tế              |
+| P2  | Nâng cao, tối ưu hoặc phục vụ quy mô lớn hơn                     | Chỉ làm khi số liệu hoặc mô hình kinh doanh chứng minh cần thiết |
 
 P0 không có nghĩa tất cả các mục phải triển khai trong một đợt. Ví dụ: chức năng quyết toán cho người bán chỉ trở thành bắt buộc khi sàn thực sự giữ và chi trả tiền cho người bán.
 
@@ -78,21 +78,21 @@ P0 không có nghĩa tất cả các mục phải triển khai trong một đợ
 
 Đây là mốc trước các đợt triển khai CASE. Tiến độ mới nhất và các chức năng đã nghiệm thu nằm ở mục 2.3.
 
-| Khu vực | Hiện có | Phần cần phát triển tiếp |
-| --- | --- | --- |
-| Đăng nhập | Trang `/admin/login`, kiểm tra `platform_admin`, access token và refresh cookie | MFA, quyền theo nghiệp vụ, quản lý nhân sự và phiên admin |
-| Dashboard | Tổng người dùng/shop/sản phẩm/đơn, biểu đồ 7 ngày, 5 đơn gần đây | Khoảng ngày, số liệu tài chính đúng nguồn, cảnh báo và hàng chờ có thể mở xử lý |
-| Người dùng | Tìm kiếm, lọc vai trò/trạng thái, phân trang, chi tiết, khóa/khôi phục, lịch sử | Phiên, ghi chú hỗ trợ, tra cứu liên quan và hồ sơ yêu cầu dữ liệu |
-| Cửa hàng | Danh sách, chi tiết, tạm ngừng/khôi phục, lịch sử | Xét duyệt hồ sơ theo chính sách, vi phạm, hiệu quả và công việc cần xử lý |
-| Sản phẩm | Danh sách, biến thể, giá/tồn, ẩn/khôi phục, lịch sử | Hàng chờ kiểm duyệt, báo cáo vi phạm, chính sách đăng bán và kháng nghị |
-| Đơn hàng | Danh sách/chi tiết, snapshot, item, trạng thái, tiền hoàn và lịch sử | Timeline liên service, trả hàng/tranh chấp, cảnh báo quá hạn và thao tác nghiệp vụ có kiểm soát |
-| Nhật ký | Nhật ký Identity và Catalog, tìm kiếm, loại đối tượng, phân trang | Lọc thời gian/người xử lý, sự kiện từ các module mới và xuất có kiểm soát |
-| Trang chủ | Menu, danh mục nổi bật, banner, thứ tự khối, ghim sản phẩm/shop | Upload media, lên lịch, so sánh/khôi phục phiên bản, quy trình duyệt nội dung |
-| Danh mục | Tạo danh mục gốc/con từ trình biên tập trang chủ | Quản lý cây, sửa, đổi vị trí và ngừng sử dụng có kiểm tra tham chiếu |
-| Trả hàng | Order có nghiệp vụ trả hàng và retry hoàn tiền | Chưa có không gian xử lý dành riêng cho admin |
-| Thanh toán | Payment có giao dịch, hoàn tiền, webhook và đối soát nội bộ | Chưa có bộ màn hình quản trị tài chính tương ứng |
-| Khuyến mãi | Engagement có voucher/Flash Sale và API nội bộ cho voucher sàn | Chưa có màn admin quản lý chiến dịch toàn sàn |
-| Chat | Có báo cáo hội thoại được lưu ở backend | Chưa có hàng chờ xử lý báo cáo dành cho admin |
+| Khu vực    | Hiện có                                                                         | Phần cần phát triển tiếp                                                                        |
+| ---------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Đăng nhập  | Trang `/admin/login`, kiểm tra `platform_admin`, access token và refresh cookie | MFA, quyền theo nghiệp vụ, quản lý nhân sự và phiên admin                                       |
+| Dashboard  | Tổng người dùng/shop/sản phẩm/đơn, biểu đồ 7 ngày, 5 đơn gần đây                | Khoảng ngày, số liệu tài chính đúng nguồn, cảnh báo và hàng chờ có thể mở xử lý                 |
+| Người dùng | Tìm kiếm, lọc vai trò/trạng thái, phân trang, chi tiết, khóa/khôi phục, lịch sử | Phiên, ghi chú hỗ trợ, tra cứu liên quan và hồ sơ yêu cầu dữ liệu                               |
+| Cửa hàng   | Danh sách, chi tiết, tạm ngừng/khôi phục, lịch sử                               | Xét duyệt hồ sơ theo chính sách, vi phạm, hiệu quả và công việc cần xử lý                       |
+| Sản phẩm   | Danh sách, biến thể, giá/tồn, ẩn/khôi phục, lịch sử                             | Hàng chờ kiểm duyệt, báo cáo vi phạm, chính sách đăng bán và kháng nghị                         |
+| Đơn hàng   | Danh sách/chi tiết, snapshot, item, trạng thái, tiền hoàn và lịch sử            | Timeline liên service, trả hàng/tranh chấp, cảnh báo quá hạn và thao tác nghiệp vụ có kiểm soát |
+| Nhật ký    | Nhật ký Identity và Catalog, tìm kiếm, loại đối tượng, phân trang               | Lọc thời gian/người xử lý, sự kiện từ các module mới và xuất có kiểm soát                       |
+| Trang chủ  | Menu, danh mục nổi bật, banner, thứ tự khối, ghim sản phẩm/shop                 | Upload media, lên lịch, so sánh/khôi phục phiên bản, quy trình duyệt nội dung                   |
+| Danh mục   | Tạo danh mục gốc/con từ trình biên tập trang chủ                                | Quản lý cây, sửa, đổi vị trí và ngừng sử dụng có kiểm tra tham chiếu                            |
+| Trả hàng   | Order có nghiệp vụ trả hàng và retry hoàn tiền                                  | Chưa có không gian xử lý dành riêng cho admin                                                   |
+| Thanh toán | Payment có giao dịch, hoàn tiền, webhook và đối soát nội bộ                     | Chưa có bộ màn hình quản trị tài chính tương ứng                                                |
+| Khuyến mãi | Engagement có voucher/Flash Sale và API nội bộ cho voucher sàn                  | Chưa có màn admin quản lý chiến dịch toàn sàn                                                   |
+| Chat       | Có báo cáo hội thoại được lưu ở backend                                         | Chưa có hàng chờ xử lý báo cáo dành cho admin                                                   |
 
 ### 2.2. Phạm vi dự kiến
 
@@ -106,26 +106,26 @@ P0 không có nghĩa tất cả các mục phải triển khai trong một đợ
 
 Đã hoàn thành và nghiệm thu local 18 yêu cầu ADM-CASE-001 đến ADM-CASE-018. Không có mã CASE-000 trong tài liệu. Chỉ đánh dấu `[x]` theo phạm vi của chính yêu cầu; không suy diễn rằng các quy tắc xuyên suốt mọi module đã hoàn thành.
 
-| Mã yêu cầu | Trạng thái | Đã có | Còn thiếu |
-| --- | --- | --- | --- |
-| ADM-CASE-001 | Hoàn thành local | Danh sách trả hàng/khiếu nại, trạng thái, lý do, shop, người phụ trách, hạn, phương thức thanh toán và khoảng ngày | Không còn trong phạm vi yêu cầu này |
-| ADM-CASE-002 | Hoàn thành local | Liên kết shop order, item, lượng, buyer/shop, chứng cứ, nội dung/phương án khách yêu cầu và tiền đủ điều kiện | Hồ sơ tranh chấp tài chính đầy đủ thuộc các yêu cầu khác |
-| ADM-CASE-003 | Hoàn thành local | Return/ticket/dispute dùng bảng và state machine riêng, có liên kết cùng đơn | CASE-014 được nghiệm thu riêng ở đợt mở rộng |
-| ADM-CASE-004 | Hoàn thành local | Giữ policy 7 ngày, lấy lần giao đầu, lưu version/ngày giao/window; chặn bypass từ client | Giao diện đổi policy là phạm vi cấu hình sau này |
-| ADM-CASE-005 | Hoàn thành local | Quyền đề nghị/duyệt riêng, hai actor độc lập, lý do/version, kiểm tra lại quyền và số lượng/tiền khi duyệt | Cần cấp quyền qua CLI cho nhân sự được giao; không tự cấp cho tài khoản hiện có |
-| ADM-CASE-006 | Hoàn thành local | Lock order, giới hạn lượng/tiền đã/chờ hoàn, tính theo snapshot, round nguyên và giải phóng đúng khi từ chối rồi đóng | Không còn trong phạm vi yêu cầu này |
-| ADM-CASE-007 | Hoàn thành local | Scope theo assignee/giám sát, grant dùng một lần 60 giây gắn actor/case/image, kiểm tra lại khi tải; validation/quét ảnh và audit | Không còn trong phạm vi yêu cầu này |
-| ADM-CASE-008 | Hoàn thành local | Prompt theo buyer/seller có hạn, notification outbox, trả lời từ đơn, lịch sử append-only và kiểm tra đúng bên nhận | Không còn trong phạm vi yêu cầu này |
-| ADM-CASE-009 | Hoàn thành local | Nhận việc/phân công, chuyển cấp, ghi chú nội bộ và thông báo đúng bên nhận tách riêng, có audit/idempotency | Không còn trong phạm vi yêu cầu này |
-| ADM-CASE-010 | Hoàn thành local | Policy, bên chịu trách nhiệm, lý do, căn cứ và tham chiếu chứng cứ; snapshot/version | Không còn trong phạm vi yêu cầu này |
-| ADM-CASE-011 | Hoàn thành local | Receipt/inspection trước mở refund; nghĩa vụ tiền chỉ hoàn tất theo xác nhận Payment | Không coi quyết định là tiền đã chuyển |
-| ADM-CASE-012 | Hoàn thành local | FULL/PARTIAL, tiền hàng/ship, tổng đã hoàn và snapshot/prorate nguồn | Không có sửa tiền tùy ý |
-| ADM-CASE-013 | Hoàn thành local | Mốc gửi/nhận, inspection, pending refund và lệnh can thiệp khi seller quá hạn | Quá hạn không thay chứng cứ đã nhận hàng |
-| ADM-CASE-014 | Hoàn thành local | Tường trình/ảnh hai bên, đề xuất cố định, duyệt độc lập, người duyệt/thời điểm, nghĩa vụ riêng | Không phát giao dịch tiền từ công bố quyết định |
-| ADM-CASE-015 | Hoàn thành local | Assignee có quyền hậu mãi tiếp tục xử lý khi shop/chủ shop bị khóa; metadata kiểm tra chỉ đọc | Không kích hoạt lại shop/tài khoản seller |
-| ADM-CASE-016 | Hoàn thành local | Guard trạng thái/version, idempotent callback, từ chối receipt muộn; mở lại sau kháng nghị phải giữ lại lượng/tiền hợp lệ | Không đảo ngược tiền đã chi |
-| ADM-CASE-017 | Hoàn thành local | Hạn nhận appeal, người xét độc lập, kết quả/căn cứ; giữ quyết định cũ và đánh giá lại rõ ràng | Không sửa âm thầm quyết định đã phát hành |
-| ADM-CASE-018 | Hoàn thành local | Báo cáo nguyên nhân, thời gian xử lý, tỷ lệ appeal accepted/đã xét theo shop/category snapshot | Snapshot cũ thiếu category giữ UNKNOWN |
+| Mã yêu cầu   | Trạng thái       | Đã có                                                                                                                             | Còn thiếu                                                                       |
+| ------------ | ---------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| ADM-CASE-001 | Hoàn thành local | Danh sách trả hàng/khiếu nại, trạng thái, lý do, shop, người phụ trách, hạn, phương thức thanh toán và khoảng ngày                | Không còn trong phạm vi yêu cầu này                                             |
+| ADM-CASE-002 | Hoàn thành local | Liên kết shop order, item, lượng, buyer/shop, chứng cứ, nội dung/phương án khách yêu cầu và tiền đủ điều kiện                     | Hồ sơ tranh chấp tài chính đầy đủ thuộc các yêu cầu khác                        |
+| ADM-CASE-003 | Hoàn thành local | Return/ticket/dispute dùng bảng và state machine riêng, có liên kết cùng đơn                                                      | CASE-014 được nghiệm thu riêng ở đợt mở rộng                                    |
+| ADM-CASE-004 | Hoàn thành local | Giữ policy 7 ngày, lấy lần giao đầu, lưu version/ngày giao/window; chặn bypass từ client                                          | Giao diện đổi policy là phạm vi cấu hình sau này                                |
+| ADM-CASE-005 | Hoàn thành local | Quyền đề nghị/duyệt riêng, hai actor độc lập, lý do/version, kiểm tra lại quyền và số lượng/tiền khi duyệt                        | Cần cấp quyền qua CLI cho nhân sự được giao; không tự cấp cho tài khoản hiện có |
+| ADM-CASE-006 | Hoàn thành local | Lock order, giới hạn lượng/tiền đã/chờ hoàn, tính theo snapshot, round nguyên và giải phóng đúng khi từ chối rồi đóng             | Không còn trong phạm vi yêu cầu này                                             |
+| ADM-CASE-007 | Hoàn thành local | Scope theo assignee/giám sát, grant dùng một lần 60 giây gắn actor/case/image, kiểm tra lại khi tải; validation/quét ảnh và audit | Không còn trong phạm vi yêu cầu này                                             |
+| ADM-CASE-008 | Hoàn thành local | Prompt theo buyer/seller có hạn, notification outbox, trả lời từ đơn, lịch sử append-only và kiểm tra đúng bên nhận               | Không còn trong phạm vi yêu cầu này                                             |
+| ADM-CASE-009 | Hoàn thành local | Nhận việc/phân công, chuyển cấp, ghi chú nội bộ và thông báo đúng bên nhận tách riêng, có audit/idempotency                       | Không còn trong phạm vi yêu cầu này                                             |
+| ADM-CASE-010 | Hoàn thành local | Policy, bên chịu trách nhiệm, lý do, căn cứ và tham chiếu chứng cứ; snapshot/version                                              | Không còn trong phạm vi yêu cầu này                                             |
+| ADM-CASE-011 | Hoàn thành local | Receipt/inspection trước mở refund; nghĩa vụ tiền chỉ hoàn tất theo xác nhận Payment                                              | Không coi quyết định là tiền đã chuyển                                          |
+| ADM-CASE-012 | Hoàn thành local | FULL/PARTIAL, tiền hàng/ship, tổng đã hoàn và snapshot/prorate nguồn                                                              | Không có sửa tiền tùy ý                                                         |
+| ADM-CASE-013 | Hoàn thành local | Mốc gửi/nhận, inspection, pending refund và lệnh can thiệp khi seller quá hạn                                                     | Quá hạn không thay chứng cứ đã nhận hàng                                        |
+| ADM-CASE-014 | Hoàn thành local | Tường trình/ảnh hai bên, đề xuất cố định, duyệt độc lập, người duyệt/thời điểm, nghĩa vụ riêng                                    | Không phát giao dịch tiền từ công bố quyết định                                 |
+| ADM-CASE-015 | Hoàn thành local | Assignee có quyền hậu mãi tiếp tục xử lý khi shop/chủ shop bị khóa; metadata kiểm tra chỉ đọc                                     | Không kích hoạt lại shop/tài khoản seller                                       |
+| ADM-CASE-016 | Hoàn thành local | Guard trạng thái/version, idempotent callback, từ chối receipt muộn; mở lại sau kháng nghị phải giữ lại lượng/tiền hợp lệ         | Không đảo ngược tiền đã chi                                                     |
+| ADM-CASE-017 | Hoàn thành local | Hạn nhận appeal, người xét độc lập, kết quả/căn cứ; giữ quyết định cũ và đánh giá lại rõ ràng                                     | Không sửa âm thầm quyết định đã phát hành                                       |
+| ADM-CASE-018 | Hoàn thành local | Báo cáo nguyên nhân, thời gian xử lý, tỷ lệ appeal accepted/đã xét theo shop/category snapshot                                    | Snapshot cũ thiếu category giữ UNKNOWN                                          |
 
 Tại thời điểm chốt CASE, các quy tắc ADM-CORE-003/004/005 và phần liên quan của ADM-UX-005/006 đã được thực hiện, kiểm thử trong module trả hàng: lý do/actor/version, chống xử lý đồng thời, rollback khi audit lỗi và tải lại khi xung đột. Phần CORE xuyên suốt được triển khai và nghiệm thu tiếp ở mục 2.4; không suy diễn tiến độ các mã UX ngoài phạm vi đó.
 
@@ -165,28 +165,30 @@ Các ô CORE hoàn thành bên dưới xác nhận phạm vi hiện có; quy t�
 
 ### 4.1. Vai trò nghiệp vụ đề xuất
 
-| Vai trò | Công việc chính | Giới hạn mặc định |
-| --- | --- | --- |
-| Quản trị hệ thống | Quản lý nhân sự, quyền, cấu hình quan trọng | Không mặc nhiên được duyệt chính yêu cầu tài chính mình tạo |
-| Vận hành sàn | Theo dõi shop, đơn và điều phối công việc | Không đổi quyền nhân sự hoặc tự xác nhận tiền |
-| Chăm sóc khách hàng | Ticket, khiếu nại, tra cứu đơn theo vụ việc | Không xem hàng loạt thông tin thanh toán hoặc sửa giao dịch |
-| Kiểm duyệt | Sản phẩm, shop, review, báo cáo chat và kháng nghị | Không xuất dữ liệu tài chính hoặc đọc toàn bộ hội thoại |
-| Tài chính | Thanh toán, hoàn tiền, đối soát và quyết toán nếu có | Không sửa nội dung bán hàng hoặc tự cấp quyền |
-| Marketing | Voucher, Flash Sale, ngân sách khuyến mãi được giao | Không xuất danh sách người dùng hoặc đọc khiếu nại riêng tư |
-| Biên tập nội dung | Trang chủ, banner, danh mục và bài hướng dẫn | Không quản lý giao dịch hoặc danh tính người dùng |
-| Kiểm tra/đọc báo cáo | Số liệu và audit trong phạm vi được giao | Chỉ đọc; xuất dữ liệu là quyền tách biệt |
+| Vai trò              | Công việc chính                                      | Giới hạn mặc định                                           |
+| -------------------- | ---------------------------------------------------- | ----------------------------------------------------------- |
+| Quản trị hệ thống    | Quản lý nhân sự, quyền, cấu hình quan trọng          | Không mặc nhiên được duyệt chính yêu cầu tài chính mình tạo |
+| Vận hành sàn         | Theo dõi shop, đơn và điều phối công việc            | Không đổi quyền nhân sự hoặc tự xác nhận tiền               |
+| Chăm sóc khách hàng  | Ticket, khiếu nại, tra cứu đơn theo vụ việc          | Không xem hàng loạt thông tin thanh toán hoặc sửa giao dịch |
+| Kiểm duyệt           | Sản phẩm, shop, review, báo cáo chat và kháng nghị   | Không xuất dữ liệu tài chính hoặc đọc toàn bộ hội thoại     |
+| Tài chính            | Thanh toán, hoàn tiền, đối soát và quyết toán nếu có | Không sửa nội dung bán hàng hoặc tự cấp quyền               |
+| Marketing            | Voucher, Flash Sale, ngân sách khuyến mãi được giao  | Không xuất danh sách người dùng hoặc đọc khiếu nại riêng tư |
+| Biên tập nội dung    | Trang chủ, banner, danh mục và bài hướng dẫn         | Không quản lý giao dịch hoặc danh tính người dùng           |
+| Kiểm tra/đọc báo cáo | Số liệu và audit trong phạm vi được giao             | Chỉ đọc; xuất dữ liệu là quyền tách biệt                    |
 
 ### 4.2. Yêu cầu quyền
 
-- [ ] **ADM-RBAC-001 — P0:** Chuyển kiểm tra một role chung sang permission rõ ràng, có kế hoạch tương thích tài khoản `platform_admin` hiện có.
-- [ ] **ADM-RBAC-002 — P0:** Tách quyền `read`, `create`, `update`, `moderate`, `approve`, `execute`, `export`, `view_sensitive` theo tài nguyên.
-- [ ] **ADM-RBAC-003 — P0:** Không mặc định mở quyền khi thêm module/permission mới; phải có mapping vai trò và xác nhận phạm vi.
-- [ ] **ADM-RBAC-004 — P0:** Một người có thể có nhiều vai trò nhưng vẫn chịu ràng buộc không tự duyệt; thay đổi quyền phải thu hồi hoặc làm mới hiệu lực phiên phù hợp.
-- [ ] **ADM-RBAC-005 — P0:** Luồng phê duyệt hai người áp dụng cho hoàn tiền ngoại lệ, thay tài khoản nhận tiền và thao tác vượt ngưỡng; ngưỡng được cấu hình, không hardcode tùy tiện.
-- [ ] **ADM-RBAC-006 — P0:** Kiểm tra quyền cả khi tạo, duyệt và thực thi; quyền bị thu hồi giữa các bước phải ngăn bước tiếp theo.
-- [ ] **ADM-RBAC-007 — P0:** Duyệt phải gắn đúng đối tượng, số tiền, người nhận và phiên bản. Sửa các dữ liệu này làm mất hiệu lực phê duyệt cũ.
-- [ ] **ADM-RBAC-008 — P1:** Có phạm vi theo nhóm xử lý, loại vụ việc hoặc shop phụ trách khi cần; scope phải được thực thi ở truy vấn backend.
-- [ ] **ADM-RBAC-009 — P1:** Giao diện xem trước quyền hiệu lực của một nhân viên, nêu quyền nhận từ vai trò nào và các giới hạn liên quan.
+- [x] **ADM-RBAC-001 — P0:** Chuyển kiểm tra một role chung sang permission rõ ràng, có kế hoạch tương thích tài khoản `platform_admin` hiện có.
+- [x] **ADM-RBAC-002 — P0:** Tách quyền `read`, `create`, `update`, `moderate`, `approve`, `execute`, `export`, `view_sensitive` theo tài nguyên.
+- [x] **ADM-RBAC-003 — P0:** Không mặc định mở quyền khi thêm module/permission mới; phải có mapping vai trò và xác nhận phạm vi.
+- [x] **ADM-RBAC-004 — P0:** Một người có thể có nhiều vai trò nhưng vẫn chịu ràng buộc không tự duyệt; thay đổi quyền phải thu hồi hoặc làm mới hiệu lực phiên phù hợp.
+- [ ] **ADM-RBAC-005 — P0:** Luồng phê duyệt hai người áp dụng cho hoàn tiền ngoại lệ, thay tài khoản nhận tiền và thao tác vượt ngưỡng; ngưỡng được cấu hình, không hardcode tùy tiện. (chưa có module , tạm thời để trống)
+- [x] **ADM-RBAC-006 — P0:** Kiểm tra quyền cả khi tạo, duyệt và thực thi; quyền bị thu hồi giữa các bước phải ngăn bước tiếp theo.
+- [x] **ADM-RBAC-007 — P0:** Duyệt phải gắn đúng đối tượng, số tiền, người nhận và phiên bản. Sửa các dữ liệu này làm mất hiệu lực phê duyệt cũ.
+- [x] **ADM-RBAC-008 — P1:** Có phạm vi theo nhóm xử lý, loại vụ việc hoặc shop phụ trách khi cần; scope phải được thực thi ở truy vấn backend.
+- [x] **ADM-RBAC-009 — P1:** Giao diện xem trước quyền hiệu lực của một nhân viên, nêu quyền nhận từ vai trò nào và các giới hạn liên quan.
+
+**Cập nhật 27/10/2026:** Đã triển khai và kiểm thử RBAC cho các module quản trị hiện có; xem [mapping, migration, cấu hình và bằng chứng](Backend/docs/admin-rbac.md). `ADM-RBAC-005` còn mở vì chưa có module thay tài khoản nhận tiền; thao tác này đang bị từ chối. Ngoại lệ hoàn tiền và các thao tác hiện có vượt ngưỡng đã có phê duyệt hai người. Cần cấu hình `ADMIN_AUTHORIZATION_TOKEN` chung cho Identity/Order và bootstrap vai trò quản trị nhân sự qua operator; chưa tự cấp thêm quyền cho tài khoản thật.
 
 **Nghiệm thu:** nhân viên CSKH không gọi được API hoàn tiền; biên tập không xuất người dùng; người tạo yêu cầu không tự duyệt bằng một vai trò khác trong cùng tài khoản.
 
@@ -370,16 +372,16 @@ Phạm vi này phụ thuộc khả năng giao nhận thực tế. Không coi tr�
 
 ### 15.3. Mô hình trạng thái đề xuất cho hồ sơ tranh chấp
 
-| Trạng thái nghiệp vụ | Ai thực hiện bước tiếp | Điều kiện chuyển |
-| --- | --- | --- |
-| Mới tiếp nhận | Nhân viên được phân công | Xác nhận đúng đối tượng và không trùng hồ sơ đang mở |
-| Đang xem xét | Nhân viên xử lý | Đủ quyền và đã nhận việc |
-| Chờ thông tin khách/shop | Bên được yêu cầu | Có danh sách thông tin thiếu và hạn phản hồi |
-| Chờ phê duyệt | Người duyệt khác người đề xuất nếu áp dụng | Hồ sơ đủ bằng chứng, số tiền và phương án đã được cố định |
-| Đã quyết định | Nhân viên thực thi/khách hàng | Quyết định có lý do và thông báo đã được ghi nhận |
-| Chờ thực hiện nghĩa vụ | Order/Payment hoặc bộ phận phụ trách | Theo dõi riêng hoàn tiền, trả hàng hoặc biện pháp khác |
-| Đã giải quyết | Nhân viên phụ trách | Nghĩa vụ hoàn tất hoặc có kết luận không phát sinh nghĩa vụ |
-| Đóng | Nhân viên theo policy | Hết bước xử lý/kháng nghị theo quy định được cấu hình |
+| Trạng thái nghiệp vụ     | Ai thực hiện bước tiếp                     | Điều kiện chuyển                                            |
+| ------------------------ | ------------------------------------------ | ----------------------------------------------------------- |
+| Mới tiếp nhận            | Nhân viên được phân công                   | Xác nhận đúng đối tượng và không trùng hồ sơ đang mở        |
+| Đang xem xét             | Nhân viên xử lý                            | Đủ quyền và đã nhận việc                                    |
+| Chờ thông tin khách/shop | Bên được yêu cầu                           | Có danh sách thông tin thiếu và hạn phản hồi                |
+| Chờ phê duyệt            | Người duyệt khác người đề xuất nếu áp dụng | Hồ sơ đủ bằng chứng, số tiền và phương án đã được cố định   |
+| Đã quyết định            | Nhân viên thực thi/khách hàng              | Quyết định có lý do và thông báo đã được ghi nhận           |
+| Chờ thực hiện nghĩa vụ   | Order/Payment hoặc bộ phận phụ trách       | Theo dõi riêng hoàn tiền, trả hàng hoặc biện pháp khác      |
+| Đã giải quyết            | Nhân viên phụ trách                        | Nghĩa vụ hoàn tất hoặc có kết luận không phát sinh nghĩa vụ |
+| Đóng                     | Nhân viên theo policy                      | Hết bước xử lý/kháng nghị theo quy định được cấu hình       |
 
 Bảng trên không thay enum `return_requests` hiện hữu. Đã triển khai `admin_cases.workflow_status` với ánh xạ sang return/ticket/dispute, còn kết quả tiền lấy từ Payment; xem [bảng trạng thái triển khai](Backend/docs/case-resolution.md#ánh-xạ-trạng-thái).
 
@@ -633,16 +635,16 @@ Giữ và mở rộng trình biên tập hiện có; không xây lại menu, ban
 
 ### 30.1. Quyền sở hữu
 
-| Miền | Service sở hữu đề xuất | Nguyên tắc |
-| --- | --- | --- |
-| Admin, nhân sự, phiên, quyền | Identity | Các service khác xác minh danh tính/quyền qua hợp đồng tin cậy |
-| Shop, sản phẩm, danh mục, tồn, trang chủ | Catalog | Giữ kiểm tra cờ chặn ở public/seller/inventory |
-| Đơn, yêu cầu trả hàng, hồ sơ tranh chấp đơn | Order | Quyết định nghiệp vụ đơn; không tự xác nhận kết quả chi tiền |
-| Giao dịch, refund, đối soát, COD theo khả năng hiện có | Payment | Nguồn kết quả tiền; adapter provider không được gọi từ frontend |
-| Voucher, Flash Sale, review, thông báo | Engagement | Tái sử dụng nghiệp vụ có sẵn và bổ sung admin authorization |
-| Hội thoại, attachment, báo cáo chat, bot | Chat | Quyền truy cập bằng chứng giới hạn theo vụ việc |
-| Ticket hỗ trợ tổng quát | Cần chốt owner trước triển khai | MVP có thể dùng module trong service hiện có; không mặc định thêm service |
-| Giao nhận/quyết toán tương lai | Chốt theo phạm vi được duyệt | Chỉ tạo module/service khi adapter và nghiệp vụ đã sẵn sàng |
+| Miền                                                   | Service sở hữu đề xuất          | Nguyên tắc                                                                |
+| ------------------------------------------------------ | ------------------------------- | ------------------------------------------------------------------------- |
+| Admin, nhân sự, phiên, quyền                           | Identity                        | Các service khác xác minh danh tính/quyền qua hợp đồng tin cậy            |
+| Shop, sản phẩm, danh mục, tồn, trang chủ               | Catalog                         | Giữ kiểm tra cờ chặn ở public/seller/inventory                            |
+| Đơn, yêu cầu trả hàng, hồ sơ tranh chấp đơn            | Order                           | Quyết định nghiệp vụ đơn; không tự xác nhận kết quả chi tiền              |
+| Giao dịch, refund, đối soát, COD theo khả năng hiện có | Payment                         | Nguồn kết quả tiền; adapter provider không được gọi từ frontend           |
+| Voucher, Flash Sale, review, thông báo                 | Engagement                      | Tái sử dụng nghiệp vụ có sẵn và bổ sung admin authorization               |
+| Hội thoại, attachment, báo cáo chat, bot               | Chat                            | Quyền truy cập bằng chứng giới hạn theo vụ việc                           |
+| Ticket hỗ trợ tổng quát                                | Cần chốt owner trước triển khai | MVP có thể dùng module trong service hiện có; không mặc định thêm service |
+| Giao nhận/quyết toán tương lai                         | Chốt theo phạm vi được duyệt    | Chỉ tạo module/service khi adapter và nghiệp vụ đã sẵn sàng               |
 
 Trang tổng hợp có thể gọi nhiều API hoặc dùng lớp tổng hợp phía server nếu có nhu cầu. Lớp tổng hợp không sở hữu lại giao dịch tiền hoặc ghi trực tiếp vào bảng của các service.
 
@@ -665,59 +667,59 @@ Trang tổng hợp có thể gọi nhiều API hoặc dùng lớp tổng hợp p
 
 **Đây là thiết kế đề xuất, không phải danh sách endpoint đã triển khai.** Tên cuối cùng cần thống nhất với kiến trúc hiện hữu. Những endpoint read/status hiện có nên được mở rộng thay vì tạo bản trùng.
 
-| Nhóm | Method và path sau `/api/v2` | Quyền gợi ý | Ghi chú |
-| --- | --- | --- | --- |
-| MFA | `POST /auth/admin/mfa/challenge` | Phiên xác thực từng bước | Không cấp quyền nghiệp vụ |
-| Phiên | `GET /admin/sessions`, `DELETE /admin/sessions/:id` | `sessions.read/revoke` | Tách phạm vi phiên của mình/người khác |
-| Nhân sự | `GET /admin/staff`, `POST /admin/staff/invitations` | `staff.read/invite` | Lời mời có hạn |
-| Vai trò | `GET /admin/roles`, `PATCH /admin/staff/:id/roles` | `roles.read/assign` | Có kiểm tra quyền được phép cấp |
-| Phê duyệt | `GET /admin/approvals`, `POST /admin/approvals/:id/decisions` | `approvals.read/decide` | Ràng buộc domain và phiên bản dữ liệu |
-| Dashboard | `GET /admin/overview` hoặc endpoint summary mở rộng | `dashboard.read` | Dữ liệu theo quyền và kỳ |
-| Công việc | `GET /admin/work-items`, `POST /admin/work-items/:id/assignments` | `work.read/assign` | Chốt owner, không gộp transaction liên service |
-| Người dùng | `GET /admin/users/:id/context` | `users.read` và quyền miền liên quan | Chỉ dữ liệu được phép |
-| Shop | `GET /admin/store-applications`, `POST /admin/store-applications/:id/decisions` | `stores.review` | Chỉ khi có chính sách xét duyệt |
-| Sản phẩm | `GET /admin/product-reviews`, `POST /admin/product-reviews/:id/decisions` | `products.review` | Phân biệt review xét duyệt với đánh giá khách |
-| Danh mục | `GET/POST /admin/categories`, `PATCH /admin/categories/:id` | `categories.read/write` | Tái sử dụng nghiệp vụ tạo hiện có |
-| Kho | `GET /admin/inventory/reservations`, `POST /admin/inventory/reconciliation-jobs` | `inventory.read/reconcile` | Không sửa reservation tùy ý |
-| Đơn | `GET /admin/orders/:id/timeline` | `orders.read` | Bổ sung nguồn sự kiện |
-| Hủy đơn | `POST /admin/orders/:id/cancellations` | `orders.cancel` | Kiểm tra state machine |
-| Trả hàng | `GET /admin/returns`, `GET /admin/returns/:id` | `returns.read` | Khác API buyer/seller |
-| Quyết định trả hàng | `POST /admin/returns/:id/decisions` | `returns.decide` | Version, lý do và audit |
-| Tranh chấp | `GET/POST /admin/disputes`, `POST /admin/disputes/:id/decisions` | `disputes.read/create/decide` | Không tự xác nhận chi tiền |
-| Thanh toán | `GET /admin/payments`, `GET /admin/payments/:id` | `payments.read` | Theo phạm vi được giao |
-| Kiểm tra provider | `POST /admin/payments/:id/status-checks` | `payments.reconcile` | Rate limit và idempotency |
-| Đối soát | `GET /admin/reconciliations`, `POST /admin/reconciliation-jobs` | `reconciliation.read/run` | Job và kết quả từng mục |
-| Refund | `GET/POST /admin/refunds`, `GET /admin/refunds/:id` | `refunds.read/request` | Kiểm tra nguồn và số tiền |
-| Duyệt refund | `POST /admin/refunds/:id/decisions` | `refunds.approve` | Không tự duyệt, dữ liệu đã cố định |
-| Retry refund | `POST /admin/refunds/:id/retry-requests` | `refunds.retry` | Kiểm tra kết quả provider cũ |
-| Thực chi thủ công | `POST /admin/refunds/:id/settlement-confirmations` | `refunds.settle` | Bọc nghiệp vụ settlement hiện có, không lộ internal token |
-| Báo cáo vi phạm | `GET /admin/reports`, `POST /admin/reports/:id/decisions` | `moderation.read/decide` | Chốt cơ chế gom nguồn |
-| Review khách | `POST /admin/reviews/:id/moderation-decisions` | `reviews.moderate` | Ẩn/khôi phục, không sửa lời khách |
-| Ticket | `GET/POST /admin/tickets`, `POST /admin/tickets/:id/messages` | `support.read/write` | Nội bộ/công khai là hai loại tin |
-| Khuyến mãi | `GET/POST /admin/campaigns`, `POST /admin/campaigns/:id/status-changes` | `promotions.read/write/publish` | Tái sử dụng Engagement |
-| Media | `POST /admin/media/upload-intents`, `GET /admin/media` | `media.upload/read` | Luồng file theo storage được chọn |
-| Trang chủ | `GET /admin/storefront/versions`, `POST /admin/storefront/restorations` | `storefront.read/restore` | Restore vào nháp |
-| Thông báo | `GET /admin/notification-deliveries`, `POST /admin/notification-retries` | `notifications.read/retry` | Không gửi lặp sự kiện |
-| Chat | `GET /admin/chat/reports/:id/evidence` | `chat.evidence.read` | Bắt buộc vụ việc và lý do |
-| Báo cáo | `GET /admin/analytics/:reportKey` | `analytics.read` | Allowlist report và dimension |
-| Export | `POST /admin/export-jobs`, `GET /admin/export-jobs/:id` | `<domain>.export` | Tải file kiểm tra lại quyền |
-| Audit | `GET /admin/audit-events` hoặc tổng hợp endpoint hiện có | `audit.read` | Nêu độ trễ index nếu có |
-| Cấu hình | `GET /admin/settings`, `POST /admin/settings/changes` | `settings.read/change` | Không quản lý secret qua form này |
-| Vận hành | `GET /admin/system/health`, `GET /admin/jobs/:id` | `operations.read` | Chỉ metadata cần thiết |
+| Nhóm                | Method và path sau `/api/v2`                                                     | Quyền gợi ý                          | Ghi chú                                                   |
+| ------------------- | -------------------------------------------------------------------------------- | ------------------------------------ | --------------------------------------------------------- |
+| MFA                 | `POST /auth/admin/mfa/challenge`                                                 | Phiên xác thực từng bước             | Không cấp quyền nghiệp vụ                                 |
+| Phiên               | `GET /admin/sessions`, `DELETE /admin/sessions/:id`                              | `sessions.read/revoke`               | Tách phạm vi phiên của mình/người khác                    |
+| Nhân sự             | `GET /admin/staff`, `POST /admin/staff/invitations`                              | `staff.read/invite`                  | Lời mời có hạn                                            |
+| Vai trò             | `GET /admin/roles`, `PATCH /admin/staff/:id/roles`                               | `roles.read/assign`                  | Có kiểm tra quyền được phép cấp                           |
+| Phê duyệt           | `GET /admin/approvals`, `POST /admin/approvals/:id/decisions`                    | `approvals.read/decide`              | Ràng buộc domain và phiên bản dữ liệu                     |
+| Dashboard           | `GET /admin/overview` hoặc endpoint summary mở rộng                              | `dashboard.read`                     | Dữ liệu theo quyền và kỳ                                  |
+| Công việc           | `GET /admin/work-items`, `POST /admin/work-items/:id/assignments`                | `work.read/assign`                   | Chốt owner, không gộp transaction liên service            |
+| Người dùng          | `GET /admin/users/:id/context`                                                   | `users.read` và quyền miền liên quan | Chỉ dữ liệu được phép                                     |
+| Shop                | `GET /admin/store-applications`, `POST /admin/store-applications/:id/decisions`  | `stores.review`                      | Chỉ khi có chính sách xét duyệt                           |
+| Sản phẩm            | `GET /admin/product-reviews`, `POST /admin/product-reviews/:id/decisions`        | `products.review`                    | Phân biệt review xét duyệt với đánh giá khách             |
+| Danh mục            | `GET/POST /admin/categories`, `PATCH /admin/categories/:id`                      | `categories.read/write`              | Tái sử dụng nghiệp vụ tạo hiện có                         |
+| Kho                 | `GET /admin/inventory/reservations`, `POST /admin/inventory/reconciliation-jobs` | `inventory.read/reconcile`           | Không sửa reservation tùy ý                               |
+| Đơn                 | `GET /admin/orders/:id/timeline`                                                 | `orders.read`                        | Bổ sung nguồn sự kiện                                     |
+| Hủy đơn             | `POST /admin/orders/:id/cancellations`                                           | `orders.cancel`                      | Kiểm tra state machine                                    |
+| Trả hàng            | `GET /admin/returns`, `GET /admin/returns/:id`                                   | `returns.read`                       | Khác API buyer/seller                                     |
+| Quyết định trả hàng | `POST /admin/returns/:id/decisions`                                              | `returns.decide`                     | Version, lý do và audit                                   |
+| Tranh chấp          | `GET/POST /admin/disputes`, `POST /admin/disputes/:id/decisions`                 | `disputes.read/create/decide`        | Không tự xác nhận chi tiền                                |
+| Thanh toán          | `GET /admin/payments`, `GET /admin/payments/:id`                                 | `payments.read`                      | Theo phạm vi được giao                                    |
+| Kiểm tra provider   | `POST /admin/payments/:id/status-checks`                                         | `payments.reconcile`                 | Rate limit và idempotency                                 |
+| Đối soát            | `GET /admin/reconciliations`, `POST /admin/reconciliation-jobs`                  | `reconciliation.read/run`            | Job và kết quả từng mục                                   |
+| Refund              | `GET/POST /admin/refunds`, `GET /admin/refunds/:id`                              | `refunds.read/request`               | Kiểm tra nguồn và số tiền                                 |
+| Duyệt refund        | `POST /admin/refunds/:id/decisions`                                              | `refunds.approve`                    | Không tự duyệt, dữ liệu đã cố định                        |
+| Retry refund        | `POST /admin/refunds/:id/retry-requests`                                         | `refunds.retry`                      | Kiểm tra kết quả provider cũ                              |
+| Thực chi thủ công   | `POST /admin/refunds/:id/settlement-confirmations`                               | `refunds.settle`                     | Bọc nghiệp vụ settlement hiện có, không lộ internal token |
+| Báo cáo vi phạm     | `GET /admin/reports`, `POST /admin/reports/:id/decisions`                        | `moderation.read/decide`             | Chốt cơ chế gom nguồn                                     |
+| Review khách        | `POST /admin/reviews/:id/moderation-decisions`                                   | `reviews.moderate`                   | Ẩn/khôi phục, không sửa lời khách                         |
+| Ticket              | `GET/POST /admin/tickets`, `POST /admin/tickets/:id/messages`                    | `support.read/write`                 | Nội bộ/công khai là hai loại tin                          |
+| Khuyến mãi          | `GET/POST /admin/campaigns`, `POST /admin/campaigns/:id/status-changes`          | `promotions.read/write/publish`      | Tái sử dụng Engagement                                    |
+| Media               | `POST /admin/media/upload-intents`, `GET /admin/media`                           | `media.upload/read`                  | Luồng file theo storage được chọn                         |
+| Trang chủ           | `GET /admin/storefront/versions`, `POST /admin/storefront/restorations`          | `storefront.read/restore`            | Restore vào nháp                                          |
+| Thông báo           | `GET /admin/notification-deliveries`, `POST /admin/notification-retries`         | `notifications.read/retry`           | Không gửi lặp sự kiện                                     |
+| Chat                | `GET /admin/chat/reports/:id/evidence`                                           | `chat.evidence.read`                 | Bắt buộc vụ việc và lý do                                 |
+| Báo cáo             | `GET /admin/analytics/:reportKey`                                                | `analytics.read`                     | Allowlist report và dimension                             |
+| Export              | `POST /admin/export-jobs`, `GET /admin/export-jobs/:id`                          | `<domain>.export`                    | Tải file kiểm tra lại quyền                               |
+| Audit               | `GET /admin/audit-events` hoặc tổng hợp endpoint hiện có                         | `audit.read`                         | Nêu độ trễ index nếu có                                   |
+| Cấu hình            | `GET /admin/settings`, `POST /admin/settings/changes`                            | `settings.read/change`               | Không quản lý secret qua form này                         |
+| Vận hành            | `GET /admin/system/health`, `GET /admin/jobs/:id`                                | `operations.read`                    | Chỉ metadata cần thiết                                    |
 
 ### 30.4. Quyền tối thiểu cho thao tác nhạy cảm
 
-| Hành động | Quyền nghiệp vụ | Yêu cầu bổ sung |
-| --- | --- | --- |
-| Xem địa chỉ đầy đủ | `orders.view_sensitive` | Vụ việc/lý do, audit truy cập |
-| Xem bằng chứng chat | `chat.evidence.read` | Phạm vi hội thoại thuộc báo cáo |
-| Khóa tài khoản | `users.moderate` | Version, lý do, thu hồi phiên |
-| Duyệt hoàn ngoại lệ | `refunds.approve` | Khác người tạo, xác thực lại theo policy |
-| Xác nhận chuyển khoản hoàn | `refunds.settle` | Bằng chứng đối soát, mã tham chiếu và số tiền hợp lệ |
-| Cấp vai trò | `roles.assign` | Không cấp vượt thẩm quyền, không tự cấp |
-| Xuất danh sách người dùng | `users.export` | Quyền từng cột, thời hạn file, audit |
-| Retry webhook | `payments.reprocess` | Sự kiện đã xác minh, chống thực hiện lặp |
-| Xuất bản trang chủ | `storefront.publish` | Phiên bản hợp lệ, duyệt nếu policy yêu cầu |
+| Hành động                  | Quyền nghiệp vụ         | Yêu cầu bổ sung                                      |
+| -------------------------- | ----------------------- | ---------------------------------------------------- |
+| Xem địa chỉ đầy đủ         | `orders.view_sensitive` | Vụ việc/lý do, audit truy cập                        |
+| Xem bằng chứng chat        | `chat.evidence.read`    | Phạm vi hội thoại thuộc báo cáo                      |
+| Khóa tài khoản             | `users.moderate`        | Version, lý do, thu hồi phiên                        |
+| Duyệt hoàn ngoại lệ        | `refunds.approve`       | Khác người tạo, xác thực lại theo policy             |
+| Xác nhận chuyển khoản hoàn | `refunds.settle`        | Bằng chứng đối soát, mã tham chiếu và số tiền hợp lệ |
+| Cấp vai trò                | `roles.assign`          | Không cấp vượt thẩm quyền, không tự cấp              |
+| Xuất danh sách người dùng  | `users.export`          | Quyền từng cột, thời hạn file, audit                 |
+| Retry webhook              | `payments.reprocess`    | Sự kiện đã xác minh, chống thực hiện lặp             |
+| Xuất bản trang chủ         | `storefront.publish`    | Phiên bản hợp lệ, duyệt nếu policy yêu cầu           |
 
 ## 31. Mô hình dữ liệu đề xuất
 
@@ -725,23 +727,23 @@ Trang tổng hợp có thể gọi nhiều API hoặc dùng lớp tổng hợp p
 
 Không yêu cầu tạo mọi bảng ngay từ đầu. Trước khi thêm bảng phải đối chiếu entity hiện hữu, xác định owner, khóa ngoại trong cùng miền và cách tham chiếu ID qua service.
 
-| Đối tượng | Trường tối thiểu/điểm cần thiết kế |
-| --- | --- |
-| Vai trò và permission | Mã ổn định, tên, domain/action, trạng thái, mapping và phiên bản |
-| Gán quyền nhân viên | Nhân viên, role/scope, người cấp, thời điểm hiệu lực/hết hạn, lý do |
-| Đăng ký MFA | Tham chiếu secret được bảo vệ, trạng thái, thời điểm xác minh; mã khôi phục lưu theo cơ chế kiểm tra an toàn |
-| Yêu cầu phê duyệt | Domain, target, requester, payload hash/version, số tiền nếu có, quyết định, người duyệt và hạn |
-| Work item | Loại, target, assignee/team, ưu tiên, hạn phản hồi/giải quyết, trạng thái, version |
-| Dispute/case | Order/return liên quan, bên yêu cầu, lý do, phương án, số tiền, owner, policy version và kết luận |
-| Bằng chứng | Case/report, uploader, storage key, loại/dung lượng/hash, trạng thái quét, quyền, thời hạn |
-| Quyết định kiểm duyệt | Đối tượng và snapshot/version, lý do, policy version, hành động, actor, hiệu lực và kháng nghị |
-| Ticket/message | Đối tượng hỗ trợ, bên tham gia, loại nội bộ/công khai, người gửi, thời điểm và attachment |
-| Lệnh admin | Loại command, actor, target, idempotency key, request hash, trạng thái/kết quả và correlation ID |
-| Audit | Actor, domain, target, action, before/after đã lọc, lý do, kết quả, UTC và correlation ID |
-| Export job | Report/domain, bộ lọc/cột, requester, trạng thái, số dòng, mốc dữ liệu, file reference và hạn |
-| Phiên đối soát | Provider, kỳ, nguồn/file hash, tổng, chênh lệch, kết quả từng mục và người xác nhận |
-| Media | Storage key, metadata, uploader, kiểm tra/quét, tham chiếu sử dụng và trạng thái |
-| Policy/config version | Key, schema/version, giá trị được phép, hiệu lực, người duyệt và lịch sử |
+| Đối tượng             | Trường tối thiểu/điểm cần thiết kế                                                                           |
+| --------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Vai trò và permission | Mã ổn định, tên, domain/action, trạng thái, mapping và phiên bản                                             |
+| Gán quyền nhân viên   | Nhân viên, role/scope, người cấp, thời điểm hiệu lực/hết hạn, lý do                                          |
+| Đăng ký MFA           | Tham chiếu secret được bảo vệ, trạng thái, thời điểm xác minh; mã khôi phục lưu theo cơ chế kiểm tra an toàn |
+| Yêu cầu phê duyệt     | Domain, target, requester, payload hash/version, số tiền nếu có, quyết định, người duyệt và hạn              |
+| Work item             | Loại, target, assignee/team, ưu tiên, hạn phản hồi/giải quyết, trạng thái, version                           |
+| Dispute/case          | Order/return liên quan, bên yêu cầu, lý do, phương án, số tiền, owner, policy version và kết luận            |
+| Bằng chứng            | Case/report, uploader, storage key, loại/dung lượng/hash, trạng thái quét, quyền, thời hạn                   |
+| Quyết định kiểm duyệt | Đối tượng và snapshot/version, lý do, policy version, hành động, actor, hiệu lực và kháng nghị               |
+| Ticket/message        | Đối tượng hỗ trợ, bên tham gia, loại nội bộ/công khai, người gửi, thời điểm và attachment                    |
+| Lệnh admin            | Loại command, actor, target, idempotency key, request hash, trạng thái/kết quả và correlation ID             |
+| Audit                 | Actor, domain, target, action, before/after đã lọc, lý do, kết quả, UTC và correlation ID                    |
+| Export job            | Report/domain, bộ lọc/cột, requester, trạng thái, số dòng, mốc dữ liệu, file reference và hạn                |
+| Phiên đối soát        | Provider, kỳ, nguồn/file hash, tổng, chênh lệch, kết quả từng mục và người xác nhận                          |
+| Media                 | Storage key, metadata, uploader, kiểm tra/quét, tham chiếu sử dụng và trạng thái                             |
+| Policy/config version | Key, schema/version, giá trị được phép, hiệu lực, người duyệt và lịch sử                                     |
 
 ### 31.2. Ràng buộc dữ liệu
 
@@ -757,14 +759,14 @@ Không yêu cầu tạo mọi bảng ngay từ đầu. Trước khi thêm bảng
 
 ### 31.3. Phân biệt trạng thái nguồn hiện có
 
-| Nguồn | Ví dụ trạng thái trong mã nguồn | Yêu cầu trình bày |
-| --- | --- | --- |
-| Order | `PENDING_PAYMENT`, `PLACED`, `SHIPPING`, `DELIVERED`, `CANCELLED` | Trạng thái thực hiện đơn |
-| Thanh toán trên Order | `UNPAID`, `PAID`, `FAILED`, `REFUNDED` và trạng thái group liên quan | Không đồng nhất với state máy provider |
-| Payment intent | `INITIATED`, `PENDING`, `SUCCEEDED`, `FAILED`, `EXPIRED`, `PARTIALLY_REFUNDED`, `REFUNDED`, `UNPAID` | Có ánh xạ nhãn, không đổi enum để hợp UI |
-| Return request | `REQUESTED`, `UNDER_REVIEW`, `APPROVED`, `REJECTED`, `RETURNING`, `RECEIVED`, `REFUND_PENDING`, `REFUNDED`, `CLOSED` | Trạng thái yêu cầu trả hàng |
-| Refund Payment | `INITIATED`, `PENDING`, `SUCCEEDED`, `FAILED` theo migration hiện có | Hành trình duyệt admin lưu riêng nếu bổ sung |
-| Dispute/work item mới | Chốt state machine khi triển khai | Không ghi các trạng thái đề xuất vào bảng cũ khi chưa có migration |
+| Nguồn                 | Ví dụ trạng thái trong mã nguồn                                                                                      | Yêu cầu trình bày                                                  |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Order                 | `PENDING_PAYMENT`, `PLACED`, `SHIPPING`, `DELIVERED`, `CANCELLED`                                                    | Trạng thái thực hiện đơn                                           |
+| Thanh toán trên Order | `UNPAID`, `PAID`, `FAILED`, `REFUNDED` và trạng thái group liên quan                                                 | Không đồng nhất với state máy provider                             |
+| Payment intent        | `INITIATED`, `PENDING`, `SUCCEEDED`, `FAILED`, `EXPIRED`, `PARTIALLY_REFUNDED`, `REFUNDED`, `UNPAID`                 | Có ánh xạ nhãn, không đổi enum để hợp UI                           |
+| Return request        | `REQUESTED`, `UNDER_REVIEW`, `APPROVED`, `REJECTED`, `RETURNING`, `RECEIVED`, `REFUND_PENDING`, `REFUNDED`, `CLOSED` | Trạng thái yêu cầu trả hàng                                        |
+| Refund Payment        | `INITIATED`, `PENDING`, `SUCCEEDED`, `FAILED` theo migration hiện có                                                 | Hành trình duyệt admin lưu riêng nếu bổ sung                       |
+| Dispute/work item mới | Chốt state machine khi triển khai                                                                                    | Không ghi các trạng thái đề xuất vào bảng cũ khi chưa có migration |
 
 Danh sách trên là điểm đối chiếu, không thay hợp đồng đầy đủ; cần kiểm tra toàn bộ migration có hiệu lực trước khi triển khai.
 
@@ -789,56 +791,56 @@ Danh sách trên là điểm đối chiếu, không thay hợp đồng đầy đ
 
 Mỗi dòng là một kịch bản cần bằng chứng phù hợp: API, integration trên database riêng, provider giả lập hoặc thao tác trình duyệt. Không bắt buộc viết unit test cho mọi label hoặc thay đổi CSS.
 
-| Mã | Kịch bản | Kết quả bắt buộc |
-| --- | --- | --- |
-| AT-001 | Buyer/seller gọi trực tiếp API admin | 403; không thay đổi dữ liệu hoặc cấp phiên admin |
-| AT-002 | Nhân viên có read nhưng không có export | Xem trong phạm vi được giao; tạo/tải export bị từ chối |
-| AT-003 | Cấp và thu hồi quyền giữa một phiên | Bước tiếp theo kiểm tra quyền mới; không chờ UI tự làm mới |
-| AT-004 | Token chưa hoàn tất MFA gọi API nghiệp vụ | Bị từ chối; mã MFA/khôi phục lặp không cấp thêm phiên |
-| AT-005 | Người tạo hoàn tiền tự duyệt | Bị từ chối dù tài khoản có nhiều vai trò |
-| AT-006 | Hai admin khóa/khôi phục cùng phiên bản | Chỉ một thay đổi hợp lệ; bên còn lại nhận xung đột |
-| AT-007 | Audit ghi lỗi trong mutation bắt buộc | Thay đổi dữ liệu cục bộ rollback |
-| AT-008 | Khóa tài khoản có phiên cũ | Access/refresh bị từ chối theo chính sách hiện có |
-| AT-009 | Khôi phục tài khoản chưa xác minh | Vẫn cần xác minh email |
-| AT-010 | Seller sửa trạng thái shop/sản phẩm bị chặn | Không bỏ được cờ chặn của sàn |
-| AT-011 | Shop tự ngừng trước khi sàn chặn | Khôi phục của sàn giữ ý định không nhận đơn |
-| AT-012 | Khôi phục sản phẩm bản nháp | Không tự trở thành đang bán |
-| AT-013 | Chuyển danh mục vào hậu duệ | Bị từ chối, không tạo chu trình |
-| AT-014 | Ngừng danh mục còn sản phẩm/tham chiếu | Thực thi đúng policy đã chốt hoặc yêu cầu xử lý tham chiếu trước |
-| AT-015 | Checkout nhiều shop, hủy một shop | Phân bổ tồn, tiền và voucher đúng từng phần |
-| AT-016 | Callback thanh toán tới sau khi hủy | Không hồi sinh đơn trái policy; đưa vào luồng xử lý tiền muộn |
-| AT-017 | Provider callback trùng hoặc tới sai thứ tự | Không ghi nhận thu/hoàn hai lần, không lùi trạng thái hợp lệ |
-| AT-018 | Provider báo sai số tiền | Không xác nhận đơn đã thanh toán |
-| AT-019 | Hai refund đồng thời cùng đơn | Tổng đã hoàn/đang giữ không vượt tiền đủ điều kiện |
-| AT-020 | Request hoàn timeout rồi nhân viên retry | Tra cứu kết quả cũ; không tạo lần chi mới khi chưa xác định |
-| AT-021 | Đổi tài khoản nhận tiền sau duyệt | Mất hiệu lực duyệt cũ, yêu cầu đánh giá lại |
-| AT-022 | COD/VietQR chỉ có ảnh chứng từ | Không tự coi tiền đã hoàn; cần xác nhận đối soát có quyền |
-| AT-023 | Payment xác nhận hoàn nhưng event tới Order chậm | UI nêu khác biệt nguồn; retry đồng bộ không cộng lại tiền |
-| AT-024 | Trả cùng item nhiều lần vượt lượng đã mua | Bị từ chối tại backend |
-| AT-025 | Hoàn phí ship qua nhiều yêu cầu trả | Không vượt chính sách/tiền ship đủ điều kiện |
-| AT-026 | Từ chối yêu cầu trả hàng | Không tạo refund; có lý do và thông báo |
-| AT-027 | Shop bị khóa nhưng còn yêu cầu hậu mãi | Có đường xử lý bởi người được giao, không mở lại bán hàng ngầm |
-| AT-028 | Báo cáo trùng cùng vụ việc | Gom hồ sơ mà vẫn giữ các nguồn; không phạt lặp thiếu căn cứ |
-| AT-029 | Nhân viên không có quyền xem chat/bằng chứng | Không truy cập được API hoặc URL file |
-| AT-030 | Ẩn/khôi phục review | Điểm tổng hợp cập nhật theo policy và audit đầy đủ |
-| AT-031 | Voucher sát quota bị dùng đồng thời | Không vượt ngân sách/quota; retry không trừ thêm lượt |
-| AT-032 | Voucher hết hạn hoặc campaign tạm dừng | Backend ngăn sử dụng mới, không phá đơn đã cam kết |
-| AT-033 | Lưu nháp/xem trước trang chủ | Không thay bản public; preview vẫn yêu cầu quyền |
-| AT-034 | Hai biên tập xuất bản cùng phiên bản | Không ghi đè âm thầm; phát hiện xung đột |
-| AT-035 | Job xuất bản đã hủy vẫn được gọi lại | Không xuất bản; command idempotent |
-| AT-036 | Upload file giả ảnh/không qua kiểm tra | Bị từ chối hoặc cách ly; không có URL public dùng được |
-| AT-037 | CSV có ô bắt đầu bằng công thức | File được xử lý tránh thực thi công thức khi mở bằng công cụ mục tiêu |
-| AT-038 | Quyền bị thu hồi sau khi tạo export | Không tải được file ngoài quyền hiện tại |
-| AT-039 | Export đã hết hạn hoặc link bị chia sẻ | Không tải trái phép; tệp hết hạn được dọn theo policy |
-| AT-040 | Lọc ngày qua ranh giới UTC/ngày Bangkok | Danh sách và tổng số liệu khớp quy ước ngày |
-| AT-041 | DB/service dừng khi dashboard đang mở | Nêu phần lỗi/độ cũ, không thay dữ liệu bằng 0 hoặc mock |
-| AT-042 | Gửi thông báo retry cùng event ID | Không gửi trùng ngoài chính sách gửi lại có chủ đích |
-| AT-043 | Đăng xuất hoặc hết phiên khi có form chưa gửi | Không tự gửi lại sau đăng nhập; dữ liệu nhạy cảm không còn trong cache |
-| AT-044 | Giao diện mobile, keyboard và dialog | Truy cập được bộ lọc/chi tiết, focus đúng và không mất nút xác nhận |
-| AT-045 | Tải lớn theo tập dữ liệu đã chốt | Đạt mục tiêu đo; export/job không làm nghẽn request vận hành chính |
-| AT-046 | Người dùng bị ẩn danh nhưng có giao dịch cũ | Quan hệ, tổng tiền và audit cần thiết còn nhất quán |
-| AT-047 | Hủy/đổi cấu hình sau khi command đã xếp hàng | Worker kiểm tra lại điều kiện và ghi kết quả; không thực thi dữ liệu đã mất hiệu lực |
-| AT-048 | Migration/backfill trên bản sao dữ liệu đại diện | Không đổi ID, giá, snapshot, quyền hoặc số tiền ngoài phạm vi migration |
+| Mã     | Kịch bản                                         | Kết quả bắt buộc                                                                     |
+| ------ | ------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| AT-001 | Buyer/seller gọi trực tiếp API admin             | 403; không thay đổi dữ liệu hoặc cấp phiên admin                                     |
+| AT-002 | Nhân viên có read nhưng không có export          | Xem trong phạm vi được giao; tạo/tải export bị từ chối                               |
+| AT-003 | Cấp và thu hồi quyền giữa một phiên              | Bước tiếp theo kiểm tra quyền mới; không chờ UI tự làm mới                           |
+| AT-004 | Token chưa hoàn tất MFA gọi API nghiệp vụ        | Bị từ chối; mã MFA/khôi phục lặp không cấp thêm phiên                                |
+| AT-005 | Người tạo hoàn tiền tự duyệt                     | Bị từ chối dù tài khoản có nhiều vai trò                                             |
+| AT-006 | Hai admin khóa/khôi phục cùng phiên bản          | Chỉ một thay đổi hợp lệ; bên còn lại nhận xung đột                                   |
+| AT-007 | Audit ghi lỗi trong mutation bắt buộc            | Thay đổi dữ liệu cục bộ rollback                                                     |
+| AT-008 | Khóa tài khoản có phiên cũ                       | Access/refresh bị từ chối theo chính sách hiện có                                    |
+| AT-009 | Khôi phục tài khoản chưa xác minh                | Vẫn cần xác minh email                                                               |
+| AT-010 | Seller sửa trạng thái shop/sản phẩm bị chặn      | Không bỏ được cờ chặn của sàn                                                        |
+| AT-011 | Shop tự ngừng trước khi sàn chặn                 | Khôi phục của sàn giữ ý định không nhận đơn                                          |
+| AT-012 | Khôi phục sản phẩm bản nháp                      | Không tự trở thành đang bán                                                          |
+| AT-013 | Chuyển danh mục vào hậu duệ                      | Bị từ chối, không tạo chu trình                                                      |
+| AT-014 | Ngừng danh mục còn sản phẩm/tham chiếu           | Thực thi đúng policy đã chốt hoặc yêu cầu xử lý tham chiếu trước                     |
+| AT-015 | Checkout nhiều shop, hủy một shop                | Phân bổ tồn, tiền và voucher đúng từng phần                                          |
+| AT-016 | Callback thanh toán tới sau khi hủy              | Không hồi sinh đơn trái policy; đưa vào luồng xử lý tiền muộn                        |
+| AT-017 | Provider callback trùng hoặc tới sai thứ tự      | Không ghi nhận thu/hoàn hai lần, không lùi trạng thái hợp lệ                         |
+| AT-018 | Provider báo sai số tiền                         | Không xác nhận đơn đã thanh toán                                                     |
+| AT-019 | Hai refund đồng thời cùng đơn                    | Tổng đã hoàn/đang giữ không vượt tiền đủ điều kiện                                   |
+| AT-020 | Request hoàn timeout rồi nhân viên retry         | Tra cứu kết quả cũ; không tạo lần chi mới khi chưa xác định                          |
+| AT-021 | Đổi tài khoản nhận tiền sau duyệt                | Mất hiệu lực duyệt cũ, yêu cầu đánh giá lại                                          |
+| AT-022 | COD/VietQR chỉ có ảnh chứng từ                   | Không tự coi tiền đã hoàn; cần xác nhận đối soát có quyền                            |
+| AT-023 | Payment xác nhận hoàn nhưng event tới Order chậm | UI nêu khác biệt nguồn; retry đồng bộ không cộng lại tiền                            |
+| AT-024 | Trả cùng item nhiều lần vượt lượng đã mua        | Bị từ chối tại backend                                                               |
+| AT-025 | Hoàn phí ship qua nhiều yêu cầu trả              | Không vượt chính sách/tiền ship đủ điều kiện                                         |
+| AT-026 | Từ chối yêu cầu trả hàng                         | Không tạo refund; có lý do và thông báo                                              |
+| AT-027 | Shop bị khóa nhưng còn yêu cầu hậu mãi           | Có đường xử lý bởi người được giao, không mở lại bán hàng ngầm                       |
+| AT-028 | Báo cáo trùng cùng vụ việc                       | Gom hồ sơ mà vẫn giữ các nguồn; không phạt lặp thiếu căn cứ                          |
+| AT-029 | Nhân viên không có quyền xem chat/bằng chứng     | Không truy cập được API hoặc URL file                                                |
+| AT-030 | Ẩn/khôi phục review                              | Điểm tổng hợp cập nhật theo policy và audit đầy đủ                                   |
+| AT-031 | Voucher sát quota bị dùng đồng thời              | Không vượt ngân sách/quota; retry không trừ thêm lượt                                |
+| AT-032 | Voucher hết hạn hoặc campaign tạm dừng           | Backend ngăn sử dụng mới, không phá đơn đã cam kết                                   |
+| AT-033 | Lưu nháp/xem trước trang chủ                     | Không thay bản public; preview vẫn yêu cầu quyền                                     |
+| AT-034 | Hai biên tập xuất bản cùng phiên bản             | Không ghi đè âm thầm; phát hiện xung đột                                             |
+| AT-035 | Job xuất bản đã hủy vẫn được gọi lại             | Không xuất bản; command idempotent                                                   |
+| AT-036 | Upload file giả ảnh/không qua kiểm tra           | Bị từ chối hoặc cách ly; không có URL public dùng được                               |
+| AT-037 | CSV có ô bắt đầu bằng công thức                  | File được xử lý tránh thực thi công thức khi mở bằng công cụ mục tiêu                |
+| AT-038 | Quyền bị thu hồi sau khi tạo export              | Không tải được file ngoài quyền hiện tại                                             |
+| AT-039 | Export đã hết hạn hoặc link bị chia sẻ           | Không tải trái phép; tệp hết hạn được dọn theo policy                                |
+| AT-040 | Lọc ngày qua ranh giới UTC/ngày Bangkok          | Danh sách và tổng số liệu khớp quy ước ngày                                          |
+| AT-041 | DB/service dừng khi dashboard đang mở            | Nêu phần lỗi/độ cũ, không thay dữ liệu bằng 0 hoặc mock                              |
+| AT-042 | Gửi thông báo retry cùng event ID                | Không gửi trùng ngoài chính sách gửi lại có chủ đích                                 |
+| AT-043 | Đăng xuất hoặc hết phiên khi có form chưa gửi    | Không tự gửi lại sau đăng nhập; dữ liệu nhạy cảm không còn trong cache               |
+| AT-044 | Giao diện mobile, keyboard và dialog             | Truy cập được bộ lọc/chi tiết, focus đúng và không mất nút xác nhận                  |
+| AT-045 | Tải lớn theo tập dữ liệu đã chốt                 | Đạt mục tiêu đo; export/job không làm nghẽn request vận hành chính                   |
+| AT-046 | Người dùng bị ẩn danh nhưng có giao dịch cũ      | Quan hệ, tổng tiền và audit cần thiết còn nhất quán                                  |
+| AT-047 | Hủy/đổi cấu hình sau khi command đã xếp hàng     | Worker kiểm tra lại điều kiện và ghi kết quả; không thực thi dữ liệu đã mất hiệu lực |
+| AT-048 | Migration/backfill trên bản sao dữ liệu đại diện | Không đổi ID, giá, snapshot, quyền hoặc số tiền ngoài phạm vi migration              |
 
 ### 33.2. Luồng nghiệm thu đầu cuối tối thiểu
 
@@ -853,15 +855,15 @@ Mỗi dòng là một kịch bản cần bằng chứng phù hợp: API, integra
 
 ### 34.1. Các gói triển khai
 
-| Gói | Phạm vi | Phụ thuộc | Kết quả bàn giao |
-| --- | --- | --- | --- |
-| G0 — Nền tảng | Permission, MFA, actor/audit, version, idempotency, schema API | Hiện trạng Identity/Catalog/Order | Mọi module mới có nền quyền và lịch sử thống nhất |
-| G1 — Hậu mãi | Admin returns/disputes, work queue, bằng chứng, SLA, thông báo cơ bản | G0 và nghiệp vụ trả hàng hiện có | Có thể xử lý một vụ việc từ tiếp nhận tới kết luận |
-| G2 — Tiền | Payment/refund/reconciliation console, duyệt ngoại lệ, thực chi và đồng bộ | G0; phối hợp G1, Payment adapter | Có thể điều tra và hoàn tiền đúng nguồn, không chi trùng |
-| G3 — Kiểm duyệt | Reports, moderation, kháng nghị và chat evidence | G0, policy nội dung và quyền riêng tư | Nhận và giải quyết báo cáo có lưu bằng chứng/quyết định |
-| G4 — Năng suất | Dashboard hành động, lọc nâng cao, audit thống nhất, export, ticket | Các domain liên quan | Giảm tra cứu thủ công và kiểm tra được số liệu |
-| G5 — Thương mại | Categories/attributes, voucher/Flash Sale, CMS/media, notification templates | G0 và Catalog/Engagement | Nhân viên phụ trách vận hành nội dung/chiến dịch qua UI |
-| G6 — Mở rộng | Logistics, payout/fees, SSO, BI, tự động gợi ý rủi ro | Phạm vi kinh doanh và nguồn dữ liệu đã chốt | Chỉ thực hiện module có lợi ích và chủ sở hữu rõ ràng |
+| Gói             | Phạm vi                                                                      | Phụ thuộc                                   | Kết quả bàn giao                                         |
+| --------------- | ---------------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------- |
+| G0 — Nền tảng   | Permission, MFA, actor/audit, version, idempotency, schema API               | Hiện trạng Identity/Catalog/Order           | Mọi module mới có nền quyền và lịch sử thống nhất        |
+| G1 — Hậu mãi    | Admin returns/disputes, work queue, bằng chứng, SLA, thông báo cơ bản        | G0 và nghiệp vụ trả hàng hiện có            | Có thể xử lý một vụ việc từ tiếp nhận tới kết luận       |
+| G2 — Tiền       | Payment/refund/reconciliation console, duyệt ngoại lệ, thực chi và đồng bộ   | G0; phối hợp G1, Payment adapter            | Có thể điều tra và hoàn tiền đúng nguồn, không chi trùng |
+| G3 — Kiểm duyệt | Reports, moderation, kháng nghị và chat evidence                             | G0, policy nội dung và quyền riêng tư       | Nhận và giải quyết báo cáo có lưu bằng chứng/quyết định  |
+| G4 — Năng suất  | Dashboard hành động, lọc nâng cao, audit thống nhất, export, ticket          | Các domain liên quan                        | Giảm tra cứu thủ công và kiểm tra được số liệu           |
+| G5 — Thương mại | Categories/attributes, voucher/Flash Sale, CMS/media, notification templates | G0 và Catalog/Engagement                    | Nhân viên phụ trách vận hành nội dung/chiến dịch qua UI  |
+| G6 — Mở rộng    | Logistics, payout/fees, SSO, BI, tự động gợi ý rủi ro                        | Phạm vi kinh doanh và nguồn dữ liệu đã chốt | Chỉ thực hiện module có lợi ích và chủ sở hữu rõ ràng    |
 
 G1 và G2 có thể thiết kế cùng nhau vì case và refund liên quan chặt chẽ. Có thể bàn giao phần chỉ đọc của Payment trước, nhưng không mở nút thực thi khi nền quyền/idempotency chưa hoàn tất.
 
@@ -901,28 +903,28 @@ Phụ thuộc: ADM-API-010, ADM-API-011, ADM-REFUND-007
 
 Các mục dưới đây là quyết định thiết kế cho giai đoạn triển khai, không phải yêu cầu người đọc phải trả lời trước khi có thể dùng tài liệu.
 
-| Mã | Câu hỏi cần quyết định | Đề xuất mặc định/phạm vi ban đầu |
-| --- | --- | --- |
-| Q-01 | Vai trò nào được dùng trước? | CSKH, kiểm duyệt, tài chính, nội dung và quản trị; chỉ mở nhóm có người phụ trách |
-| Q-02 | MFA bắt buộc khi nào và cách phục hồi? | Bắt buộc trước vận hành thật cho admin; phục hồi có xác minh và audit |
-| Q-03 | Mức tiền/loại ngoại lệ nào cần hai người? | Chốt cùng tài chính; không cài ngưỡng tùy ý vào source |
-| Q-04 | Thời hạn phản hồi/giải quyết từng loại vụ việc? | Cấu hình theo loại, xác định thời điểm bắt đầu/tạm dừng |
-| Q-05 | Shop mới/sản phẩm mới có duyệt trước không? | Giữ cơ chế hiện tại tới khi có chính sách và nhân sự duyệt |
-| Q-06 | Admin có thể hủy/thay mặt seller đến trạng thái nào? | Chỉ command được Order hỗ trợ, không ép trạng thái hoặc bỏ qua tiền/tồn |
-| Q-07 | Ngoài hạn trả hàng có xử lý ngoại lệ không? | Giữ mốc 7 ngày hiện có; ngoại lệ cần quyền và hồ sơ riêng |
-| Q-08 | Đổi hàng thay thế được hỗ trợ tới đâu? | Không coi enum `REPLACEMENT` là luồng đã hoàn chỉnh; phải chốt tồn/đơn thay thế/vận chuyển |
-| Q-09 | COD/VietQR hoàn qua kênh nào và ai xác minh? | Theo khả năng chi thực tế; chờ xác minh trước khi báo đã hoàn |
-| Q-10 | Sàn giữ tiền và quyết toán cho shop không? | Nếu chưa có: hoãn payout, sổ phí và ví; chỉ báo cáo giao dịch hiện có |
-| Q-11 | Tích hợp giao vận nào và dữ liệu đáng tin cậy? | Chỉ mở chức năng theo adapter/hợp đồng đã có |
-| Q-12 | Review bị ẩn có tính vào điểm không? | Chốt policy minh bạch, cập nhật tổng hợp nhất quán |
-| Q-13 | Giới hạn đọc chat và giữ bằng chứng? | Theo vụ việc, quyền riêng, truy cập có log và thời hạn đã xác định |
-| Q-14 | Chính sách lưu/xóa dữ liệu và chứng từ? | Chốt theo mục đích, yêu cầu áp dụng và khả năng hệ thống; không tự đặt một mốc chung |
-| Q-15 | Voucher cộng dồn và bên tài trợ thế nào? | Tái sử dụng logic hiện có, ghi snapshot phân bổ; thay đổi cần phiên bản |
-| Q-16 | Quy trình duyệt/xuất bản nội dung? | Giữ luồng nháp/preview/publish; thêm duyệt khi có nhiều người phụ trách |
-| Q-17 | Ai sở hữu ticket và queue liên domain? | Chọn owner trước API/schema; không để hai service cùng ghi một hồ sơ |
-| Q-18 | Khối lượng dữ liệu, tải đồng thời, RPO/RTO? | Đo baseline, đặt mục tiêu theo môi trường rồi nghiệm thu bằng số liệu |
-| Q-19 | Phạm vi admin khẩn cấp khi hệ thống lỗi? | Quy trình riêng, quyền có hạn, xác thực và hậu kiểm; không thêm tài khoản bí mật hoặc bypass chung |
-| Q-20 | Điều kiện chuyển từ sandbox sang thật? | Kiểm thử tích hợp, thông tin môi trường rõ ràng, quyền/provider và quy trình vận hành đã sẵn sàng |
+| Mã   | Câu hỏi cần quyết định                               | Đề xuất mặc định/phạm vi ban đầu                                                                   |
+| ---- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| Q-01 | Vai trò nào được dùng trước?                         | CSKH, kiểm duyệt, tài chính, nội dung và quản trị; chỉ mở nhóm có người phụ trách                  |
+| Q-02 | MFA bắt buộc khi nào và cách phục hồi?               | Bắt buộc trước vận hành thật cho admin; phục hồi có xác minh và audit                              |
+| Q-03 | Mức tiền/loại ngoại lệ nào cần hai người?            | Chốt cùng tài chính; không cài ngưỡng tùy ý vào source                                             |
+| Q-04 | Thời hạn phản hồi/giải quyết từng loại vụ việc?      | Cấu hình theo loại, xác định thời điểm bắt đầu/tạm dừng                                            |
+| Q-05 | Shop mới/sản phẩm mới có duyệt trước không?          | Giữ cơ chế hiện tại tới khi có chính sách và nhân sự duyệt                                         |
+| Q-06 | Admin có thể hủy/thay mặt seller đến trạng thái nào? | Chỉ command được Order hỗ trợ, không ép trạng thái hoặc bỏ qua tiền/tồn                            |
+| Q-07 | Ngoài hạn trả hàng có xử lý ngoại lệ không?          | Giữ mốc 7 ngày hiện có; ngoại lệ cần quyền và hồ sơ riêng                                          |
+| Q-08 | Đổi hàng thay thế được hỗ trợ tới đâu?               | Không coi enum `REPLACEMENT` là luồng đã hoàn chỉnh; phải chốt tồn/đơn thay thế/vận chuyển         |
+| Q-09 | COD/VietQR hoàn qua kênh nào và ai xác minh?         | Theo khả năng chi thực tế; chờ xác minh trước khi báo đã hoàn                                      |
+| Q-10 | Sàn giữ tiền và quyết toán cho shop không?           | Nếu chưa có: hoãn payout, sổ phí và ví; chỉ báo cáo giao dịch hiện có                              |
+| Q-11 | Tích hợp giao vận nào và dữ liệu đáng tin cậy?       | Chỉ mở chức năng theo adapter/hợp đồng đã có                                                       |
+| Q-12 | Review bị ẩn có tính vào điểm không?                 | Chốt policy minh bạch, cập nhật tổng hợp nhất quán                                                 |
+| Q-13 | Giới hạn đọc chat và giữ bằng chứng?                 | Theo vụ việc, quyền riêng, truy cập có log và thời hạn đã xác định                                 |
+| Q-14 | Chính sách lưu/xóa dữ liệu và chứng từ?              | Chốt theo mục đích, yêu cầu áp dụng và khả năng hệ thống; không tự đặt một mốc chung               |
+| Q-15 | Voucher cộng dồn và bên tài trợ thế nào?             | Tái sử dụng logic hiện có, ghi snapshot phân bổ; thay đổi cần phiên bản                            |
+| Q-16 | Quy trình duyệt/xuất bản nội dung?                   | Giữ luồng nháp/preview/publish; thêm duyệt khi có nhiều người phụ trách                            |
+| Q-17 | Ai sở hữu ticket và queue liên domain?               | Chọn owner trước API/schema; không để hai service cùng ghi một hồ sơ                               |
+| Q-18 | Khối lượng dữ liệu, tải đồng thời, RPO/RTO?          | Đo baseline, đặt mục tiêu theo môi trường rồi nghiệm thu bằng số liệu                              |
+| Q-19 | Phạm vi admin khẩn cấp khi hệ thống lỗi?             | Quy trình riêng, quyền có hạn, xác thực và hậu kiểm; không thêm tài khoản bí mật hoặc bypass chung |
+| Q-20 | Điều kiện chuyển từ sandbox sang thật?               | Kiểm thử tích hợp, thông tin môi trường rõ ràng, quyền/provider và quy trình vận hành đã sẵn sàng  |
 
 ## 36. Nguồn đối chiếu
 
@@ -957,6 +959,3 @@ Các mục dưới đây là quyết định thiết kế cho giai đoạn tri�
 - [OWASP — Authorization](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html): tham khảo nguyên tắc quyền tối thiểu, kiểm tra quyền trên từng request và kiểm thử quyền.
 
 Các nguồn tham khảo không có nghĩa hệ thống hiện đã đáp ứng một tiêu chuẩn chứng nhận. Mọi yêu cầu mới cần được triển khai và nghiệm thu theo phạm vi được chọn.
-
-
-

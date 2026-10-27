@@ -78,6 +78,7 @@ services:
       SMS_WEBHOOK_TOKEN: ${SMS_WEBHOOK_TOKEN:-}
       NODE_ENV: ${NODE_ENV:-development}
       CATALOG_SYNC_SECRET: ${CATALOG_SYNC_SECRET:?Set CATALOG_SYNC_SECRET in .env}
+      ADMIN_AUTHORIZATION_TOKEN: ${ADMIN_AUTHORIZATION_TOKEN:-}
       NOTIFICATION_IDENTITY_TOKEN: ${NOTIFICATION_IDENTITY_TOKEN:-}
       IDENTITY_EVENT_WEBHOOK_URL: http://engagement-service:5105/api/v2/internal/notifications/identity-events
       IDENTITY_EVENT_WEBHOOK_TOKEN: ${IDENTITY_EVENT_WEBHOOK_TOKEN:?Set IDENTITY_EVENT_WEBHOOK_TOKEN in .env}
@@ -129,6 +130,7 @@ services:
     environment:
       ORDER_DATABASE_URL: postgresql://identity:${POSTGRES_PASSWORD}@identity-db:5432/identity
       ORDER_IDENTITY_URL: http://identity-service:5101
+      ADMIN_AUTHORIZATION_TOKEN: ${ADMIN_AUTHORIZATION_TOKEN:-}
       ORDER_CATALOG_URL: http://catalog-service:5102
       ORDER_PAYMENT_URL: http://payment-service:5104
       ORDER_ENGAGEMENT_URL: http://engagement-service:5105

@@ -15,7 +15,7 @@ export const platformAdminApi = {
     recentOrders: () => authorizedRequest(`${order}/api/v2/admin/orders/recent`),
     list: (resource, filters) => entityRequest(resource, `?${queryString(filters)}`),
     detail: (resource, id) => entityRequest(resource, `/${encodeURIComponent(id)}`),
-    cancelBlockedSeller: (record, reason, requestId) => entityRequest('orders', `/${record.id}/cancel-blocked-seller`, { method: 'POST', body: { version: record.version, reason, requestId } }),
+    cancelBlockedSeller: (record, reason, requestId, approvalId) => entityRequest('orders', `/${record.id}/cancel-blocked-seller`, { method: 'POST', body: { version: record.version, reason, requestId, ...(approvalId ? { approvalId } : {}) } }),
     moderate: (resource, record, action, reason, requestId) => entityRequest(resource, `/${record.id}/status`, { method: 'PATCH', body: { action, reason, version: record.version, requestId } }),
     audit: (source, filters) => source === 'identity' ?
         identityAuthorizedRequest(`/admin/audit?${queryString(filters)}`) :

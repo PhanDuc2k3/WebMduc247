@@ -4,6 +4,8 @@ export type IdentityUser = {
   fullName: string;
   emailVerifiedAt: string | null;
   roles: Array<"buyer" | "seller" | "platform_admin">;
+  adminAccess?: {roles:{role:string;label:string;scope:Record<string,string[]>}[];permissions:string[];
+    grants:{permission:string;role:string;scope:Record<string,string[]>}[];restrictions:string[]};
 };
 
 const baseUrl = import.meta.env.VITE_IDENTITY_API_URL || "http://localhost:5101";

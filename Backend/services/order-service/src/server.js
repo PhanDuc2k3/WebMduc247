@@ -11,6 +11,7 @@ import { ReturnAdminService } from './return-admin.service.js';
 import { CaseService } from './case.service.js';
 import {CaseResolutionService} from './case-resolution.service.js';
 import { PlatformAdminError } from '../../../packages/contracts/platform-admin.js';
+import {AdminApprovalService} from './admin-approval.service.js';
 
 const port = Number(process.env.ORDER_PORT || 5103);
 const dbUrl = process.env.ORDER_DATABASE_URL || process.env.IDENTITY_DATABASE_URL;
@@ -143,6 +144,14 @@ export function createHandler(orderService = service, orderLifecycle = lifecycle
       const { user } = await orderService.identity('/auth/me',req.headers.authorization);
       const query = Object.fromEntries(url.searchParams);
       if (path.startsWith('/admin/')) {
+        const approvals=new AdminApprovalService(orderService);
+        if(req.method==='GET'&&path==='/admin/approvals')return send(res,200,await approvals.list(user,query.operation));
+        if(req.method==='POST'&&path==='/admin/approvals')return send(res,201,await approvals.create(user,await body(req)));
+        const approvalReview=/^\/admin\/approvals\/([0-9a-f-]{36})\/review$/i.exec(path);
+        if(req.method==='POST'&&approvalReview)return send(res,200,await approvals.review(user,approvalReview[1],await body(req)));
+        if(req.method==='GET'&&path==='/admin/approval-policies')return send(res,200,await approvals.policies(user));
+        const approvalPolicy=/^\/admin\/approval-policies\/(return_approve|cancel_paid_order)$/.exec(path);
+        if(req.method==='PUT'&&approvalPolicy)return send(res,200,await approvals.updatePolicy(user,approvalPolicy[1],await body(req)));
         const blockedCancellation=/^\/admin\/orders\/([0-9a-f-]{36})\/cancel-blocked-seller$/i.exec(path);
         if(req.method==='POST'&&blockedCancellation)return send(res,200,await new AdminOrderObligations(orderLifecycle).cancel(user,blockedCancellation[1],await body(req),req.headers.authorization));
         const admin = new OrderAdminService(orderService.pool);

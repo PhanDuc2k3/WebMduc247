@@ -1,8 +1,9 @@
-import { createHash, randomBytes } from 'node:crypto';
-import { requirePlatformAdmin, adminId, adminPage } from '../../../packages/contracts/platform-admin.js';
-import { validateReturnInput } from './return.service.js';
-import { caseError, caseInput, caseText, caseVersion, caseDue, casePermission, requireCasePermission,
-  caseAudit, requireEvidenceScope, caseFilters } from './case-contract.js';
+import {requireCaseAccess, requireOrderAccess} from './admin-scope.js';
+import {requireAdminPermission, adminScopeSql} from '../../../packages/contracts/admin-rbac.js';
+import {createHash, randomBytes} from 'node:crypto';
+import {adminId, adminPage} from '../../../packages/contracts/platform-admin.js';
+import {validateReturnInput} from './return.service.js';
+import {caseError, caseInput, caseText, caseVersion, caseDue, casePermission, requireCasePermission, caseAudit, requireEvidenceScope, caseFilters, casePermissionAliases} from './case-contract.js';
 
 const hash=value=>createHash('sha256').update(value).digest('hex');
 const joins=`FROM order_service.admin_cases c JOIN order_service.orders o ON o.id=c.shop_order_id
@@ -29,11 +30,12 @@ export class CaseService {
       orderTotalMinor:Number(row.payable_total_minor),refundedMinor:Number(row.refunded_minor||0),orderStatus:row.order_status,
       refundReference:row.return_record?.refund_reference||null,refundNeedsAttention:Boolean(row.return_record?.last_refund_error)};
   }
-  async list(user,query){
-    requirePlatformAdmin(user);const f=caseFilters(query,user);
+  async list(user,query,{permission='cases.read'}={}){
+    requireAdminPermission(user,permission);const f=caseFilters(query,user);
     const args=[f.kind,f.pattern,f.status,f.from,f.to,f.storeId,f.paymentMethod,f.reasonCode,
       f.assigneeId==='unassigned'?null:f.assigneeId||null,f.assigneeId==='unassigned',f.due];
-    const where=`${joins} WHERE c.kind=$1 AND (c.id::text ILIKE $2 OR o.id::text ILIKE $2 OR o.group_id::text ILIKE $2
+    const scope=adminScopeSql(user,permission,{storeIds:'o.store_id::text',caseKinds:'c.kind',assigneeIds:'c.assignee_id::text'},args);
+    const where=`${joins} WHERE ${scope} AND c.kind=$1 AND (c.id::text ILIKE $2 OR o.id::text ILIKE $2 OR o.group_id::text ILIKE $2
       OR coalesce(o.store_snapshot_json->>'name','') ILIKE $2 OR coalesce(t.subject,d.subject,'') ILIKE $2)
       AND ($3='' OR coalesce(r.status,t.status,d.status)=$3)
       AND ($4::timestamptz IS NULL OR coalesce(r.requested_at,c.created_at)>=$4)
@@ -43,14 +45,14 @@ export class CaseService {
       AND ($9::uuid IS NULL OR c.assignee_id=$9) AND (NOT $10::boolean OR c.assignee_id IS NULL)
       AND ($11='' OR ($11='overdue' AND c.due_at<now()) OR ($11='upcoming' AND c.due_at>=now()))`;
     const [count,list]=await Promise.all([this.pool.query(`SELECT count(*)::int AS total ${where}`,args),
-      this.pool.query(`SELECT ${columns} ${where} ORDER BY c.created_at DESC,c.id DESC LIMIT $12 OFFSET $13`,[...args,f.limit,f.offset])]);
+      this.pool.query(`SELECT ${columns} ${where} ORDER BY c.created_at DESC,c.id DESC LIMIT $${args.length+1} OFFSET $${args.length+2}`,[...args,f.limit,f.offset])]);
     return adminPage(list.rows.map(row=>this.map(row)),count.rows[0].total,f);
   }
   async capabilities(user){
-    requirePlatformAdmin(user);
+    requireAdminPermission(user,'cases.read');
     const permissions=(await this.pool.query(`SELECT permission FROM order_service.case_permissions WHERE user_id=$1
       AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now())`,[user.id])).rows.map(row=>row.permission);
-    return {userId:user.id,permissions};
+    return {userId:user.id,permissions:[...new Set([...permissions.filter(p=>p==='evidence.supervise'),...Object.entries(casePermissionAliases).filter(([,p])=>user.adminAccess.permissions.includes(p)).map(([alias])=>alias)])]};
   }
   async information(db,id,party=null){
     const rows=(await db.query(`SELECT * FROM order_service.case_information_requests WHERE case_id=$1
@@ -62,8 +64,9 @@ export class CaseService {
       replies:replies.filter(reply=>reply.request_id===row.id).map(reply=>({id:reply.id,actorType:reply.actor_type,message:reply.message,createdAt:reply.created_at}))}));
   }
   async detail(user,id){
-    requirePlatformAdmin(user);adminId(id);
-    const row=(await this.pool.query(`SELECT ${columns} ${joins} WHERE c.id=$1`,[id])).rows[0];
+    requireAdminPermission(user,'cases.read');adminId(id);
+    const args=[id],scope=adminScopeSql(user,'cases.read',{storeIds:'o.store_id::text',caseKinds:'c.kind',assigneeIds:'c.assignee_id::text'},args);
+    const row=(await this.pool.query(`SELECT ${columns} ${joins} WHERE c.id=$1 AND ${scope}`,args)).rows[0];
     if(!row)throw caseError(404,'CASE_NOT_FOUND','Không tìm thấy hồ sơ.');
     const [links,events,information]=await Promise.all([
       this.pool.query(`SELECT c.id,c.kind,c.shop_order_id FROM order_service.case_links l
@@ -77,22 +80,23 @@ export class CaseService {
       informationRequests:information,canViewEvidence:row.assignee_id===user.id||await casePermission(this.pool,user.id,'evidence.supervise')};
   }
   async staff(user,bearer,q=''){
-    requirePlatformAdmin(user);caseText(q||'all',1,100);
-    const data=await this.order.identity(`/admin/users?${new URLSearchParams({role:'platform_admin',status:'active',q,limit:'50'})}`,bearer);
-    return {items:data.items.map(row=>({id:row.id,name:row.fullName}))};
+    requireAdminPermission(user,'cases.read');caseText(q||'all',1,100);
+    return this.order.identity('/admin/staff?'+new URLSearchParams({q}),bearer);
   }
   async assign(user,id,input,bearer){
-    requirePlatformAdmin(user);adminId(id);caseInput(input,['assigneeId','dueAt','version','reason']);caseVersion(input.version);
+    requireAdminPermission(user,'cases.update');adminId(id);caseInput(input,['assigneeId','dueAt','version','reason']);caseVersion(input.version);
+    await requireCaseAccess(this.pool,user,'cases.update',id);
     const reason=caseText(input.reason,10,500),dueAt=caseDue(input.dueAt);
     if(input.assigneeId!==null){
       adminId(input.assigneeId);
       if(input.assigneeId!==user.id){
-        const {record}=await this.order.identity('/admin/users/'+input.assigneeId,bearer);
-        if(record.status!=='active'||!record.roles?.includes('platform_admin'))throw caseError(400,'INVALID_ASSIGNEE','Người được giao phải là quản trị viên đang hoạt động.');
+        const {items}=await this.order.identity('/admin/staff?'+new URLSearchParams({id:input.assigneeId}),bearer);
+        if(!items.some(person=>person.id===input.assigneeId))throw caseError(400,'INVALID_ASSIGNEE','Người được giao phải có quyền xử lý hồ sơ và đang hoạt động.');
       }
     }
     return this.transaction(async db=>{
       const current=(await db.query('SELECT * FROM order_service.admin_cases WHERE id=$1 FOR UPDATE',[id])).rows[0];
+      await requireCaseAccess(db,user,'cases.update',id);
       if(!current)throw caseError(404,'CASE_NOT_FOUND','Không tìm thấy hồ sơ.');
       if(current.version!==input.version)throw caseError(409,'CASE_STATE_CHANGED','Hồ sơ đã thay đổi. Hãy tải lại.');
       await db.query('UPDATE order_service.admin_cases SET assignee_id=$2,due_at=$3,version=version+1,updated_at=now() WHERE id=$1',[id,input.assigneeId,dueAt]);
@@ -103,7 +107,8 @@ export class CaseService {
     });
   }
   async create(user,input){
-    requirePlatformAdmin(user);caseInput(input,['kind','shopOrderId','subject','description','reasonCode','relatedCaseId','clientRequestId']);
+    requireAdminPermission(user,'cases.create');caseInput(input,['kind','shopOrderId','subject','description','reasonCode','relatedCaseId','clientRequestId']);
+    await requireOrderAccess(this.pool,user,'cases.create',input.shopOrderId,{caseKind:input.kind,assigneeId:user.id});
     if(!['TICKET','DISPUTE'].includes(input.kind))throw caseError(400,'INVALID_CASE_KIND','Chỉ tạo ticket hoặc khiếu nại/tranh chấp tại đây.');
     adminId(input.shopOrderId);adminId(input.clientRequestId);if(input.relatedCaseId)adminId(input.relatedCaseId);
     const subject=caseText(input.subject,5,200),description=caseText(input.description),reasonCode=input.reasonCode||'OTHER';
@@ -127,11 +132,13 @@ export class CaseService {
     });
   }
   async status(user,id,input){
-    requirePlatformAdmin(user);adminId(id);caseInput(input,['status','version','reason']);caseVersion(input.version);const reason=caseText(input.reason,10,500);
+    requireAdminPermission(user,'cases.update');adminId(id);caseInput(input,['status','version','reason']);caseVersion(input.version);const reason=caseText(input.reason,10,500);
+    await requireCaseAccess(this.pool,user,'cases.update',id);
     const transitions={TICKET:{NEW:['IN_PROGRESS'],IN_PROGRESS:['WAITING_CUSTOMER','RESOLVED'],WAITING_CUSTOMER:['IN_PROGRESS','RESOLVED'],RESOLVED:['CLOSED','IN_PROGRESS']},
       DISPUTE:{OPEN:['INVESTIGATING'],INVESTIGATING:['AWAITING_DECISION'],AWAITING_DECISION:['DECIDED','INVESTIGATING'],DECIDED:['CLOSED']}};
     return this.transaction(async db=>{
       const row=(await db.query('SELECT * FROM order_service.admin_cases WHERE id=$1 FOR UPDATE',[id])).rows[0];
+      await requireCaseAccess(db,user,'cases.update',id);
       if(!row)throw caseError(404,'CASE_NOT_FOUND','Không tìm thấy hồ sơ.');
       if(row.kind==='RETURN')throw caseError(400,'WRONG_CASE_COMMAND','Trả hàng sử dụng luồng quyết định riêng.');
       if(row.kind==='DISPUTE'&&['DECIDED','CLOSED'].includes(input.status))throw caseError(400,'STRUCTURED_DECISION_REQUIRED','Dùng phiếu quyết định và đóng hồ sơ có kiểm tra nghĩa vụ/kháng nghị.');
@@ -146,11 +153,13 @@ export class CaseService {
     });
   }
   async requestInformation(user,id,input){
-    requirePlatformAdmin(user);adminId(id);caseInput(input,['recipientKind','prompt','dueAt','version']);caseVersion(input.version);
+    requireAdminPermission(user,'cases.update');adminId(id);caseInput(input,['recipientKind','prompt','dueAt','version']);caseVersion(input.version);
+    await requireCaseAccess(this.pool,user,'cases.update',id);
     if(!['BUYER','SELLER'].includes(input.recipientKind))throw caseError(400,'INVALID_CASE_RECIPIENT','Bên nhận không hợp lệ.');
     const prompt=caseText(input.prompt),dueAt=caseDue(input.dueAt);
     return this.transaction(async db=>{
       const row=(await db.query('SELECT * FROM order_service.admin_cases WHERE id=$1 FOR UPDATE',[id])).rows[0];
+      await requireCaseAccess(db,user,'cases.update',id);
       if(!row)throw caseError(404,'CASE_NOT_FOUND','Không tìm thấy hồ sơ.');
       if(row.version!==input.version)throw caseError(409,'CASE_STATE_CHANGED','Hồ sơ đã thay đổi.');
       const state=(await db.query(`SELECT coalesce(r.status,t.status,d.status) AS status ${joins} WHERE c.id=$1`,[id])).rows[0].status;
@@ -203,7 +212,8 @@ export class CaseService {
     });
   }
   async orderContext(user,id){
-    requirePlatformAdmin(user);adminId(id);
+    requireAdminPermission(user,'cases.read');adminId(id);
+    await requireOrderAccess(this.pool,user,'cases.read',id,{caseKind:'RETURN',assigneeId:user.id});
     const row=(await this.pool.query(`SELECT id,user_id,status,payable_total_minor,refunded_minor FROM order_service.orders WHERE id=$1`,[id])).rows[0];
     if(!row)throw caseError(404,'ORDER_NOT_FOUND','Không tìm thấy đơn.');
     const delivered=(await this.pool.query(`SELECT min(occurred_at) AS time FROM order_service.order_status_history WHERE shop_order_id=$1 AND to_status='DELIVERED'`,[id])).rows[0].time;
@@ -213,7 +223,8 @@ export class CaseService {
       items:items.map(item=>({id:item.id,name:item.product_name,quantity:item.quantity}))};
   }
   async requestException(user,input){
-    requirePlatformAdmin(user);await requireCasePermission(this.pool,user.id,'exception.request');
+    requireAdminPermission(user,'refunds.create');await requireCasePermission(this.pool,user,'exception.request');
+    await requireOrderAccess(this.pool,user,'refunds.create',input.shopOrderId,{caseKind:'RETURN',assigneeId:user.id});
     caseInput(input,['shopOrderId','payload','reason','clientRequestId']);adminId(input.shopOrderId);adminId(input.clientRequestId);
     const reason=caseText(input.reason,10,500),payload=validateReturnInput(input.payload),context=await this.orderContext(user,input.shopOrderId);
     if(context.buyerId===user.id||!['DELIVERED','COMPLETED'].includes(context.status)||!context.deliveredAt||
@@ -223,30 +234,35 @@ export class CaseService {
       throw caseError(400,'INVALID_RETURN_ITEMS','Sản phẩm hoặc số lượng không thuộc đơn.');
     return this.transaction(async db=>{
       await db.query('SELECT pg_advisory_xact_lock(hashtext($1))',[input.clientRequestId]);
-      await requireCasePermission(db,user.id,'exception.request');
+      await requireCasePermission(db,user,'exception.request');
       const existing=(await db.query('SELECT * FROM order_service.return_exceptions WHERE client_request_id=$1',[input.clientRequestId])).rows[0];
       if(existing){
         if(existing.requested_by!==user.id||existing.reason!==reason||existing.shop_order_id!==input.shopOrderId||
           JSON.stringify(validateReturnInput(existing.request_payload))!==JSON.stringify(payload))throw caseError(409,'CASE_KEY_REUSED','Mã yêu cầu đã dùng cho nội dung khác.');
         return {id:existing.id};
       }
-      const row=(await db.query(`INSERT INTO order_service.return_exceptions(shop_order_id,buyer_id,request_payload,requested_by,reason,client_request_id,policy_version,delivered_at_snapshot)
-        VALUES($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,[input.shopOrderId,context.buyerId,payload,user.id,reason,input.clientRequestId,context.policyVersion,context.deliveredAt])).rows[0];
+      const source=(await db.query('SELECT * FROM order_service.orders WHERE id=$1 FOR UPDATE',[input.shopOrderId])).rows[0];
+      const snapshot=await this.returns.approvalSnapshot(db,source,payload);
+      const row=(await db.query(`INSERT INTO order_service.return_exceptions(shop_order_id,buyer_id,request_payload,requested_by,reason,client_request_id,policy_version,delivered_at_snapshot,approval_snapshot)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,[input.shopOrderId,context.buyerId,payload,user.id,reason,input.clientRequestId,context.policyVersion,context.deliveredAt,snapshot])).rows[0];
       await db.query(`INSERT INTO order_service.return_exception_actions(exception_id,actor_id,action,reason,read_version,result_version,next_status)
         VALUES($1,$2,'requested',$3,0,1,'REQUESTED')`,[row.id,user.id,reason]);
       return {id:row.id};
     });
   }
   async exceptions(user){
-    requirePlatformAdmin(user);
-    const allowed=await casePermission(this.pool,user.id,'exception.approve');
-    const rows=(await this.pool.query(`SELECT id,shop_order_id,requested_by,request_payload,delivered_at_snapshot,reason,status,version,approved_by,decision_reason,result_return_id,policy_version,created_at
-      FROM order_service.return_exceptions WHERE requested_by=$1 OR $2::boolean ORDER BY created_at DESC LIMIT 100`,[user.id,allowed])).rows;
+    requireAdminPermission(user,'refunds.read');
+    const allowed=await casePermission(this.pool,user,'exception.approve');
+    const args=[user.id,allowed],scope=adminScopeSql(user,'refunds.read',{storeIds:'o.store_id::text',caseKinds:"'RETURN'",assigneeIds:'e.requested_by::text'},args);
+    const rows=(await this.pool.query(`SELECT e.* FROM order_service.return_exceptions e JOIN order_service.orders o ON o.id=e.shop_order_id WHERE (e.requested_by=$1 OR $2::boolean) AND ${scope} ORDER BY e.created_at DESC LIMIT 100`,args)).rows;
     return {items:rows.map(row=>({id:row.id,shopOrderId:row.shop_order_id,requestedBy:row.requested_by,reason:row.reason,status:row.status,
-      payload:row.request_payload,deliveredAt:row.delivered_at_snapshot,version:row.version,approvedBy:row.approved_by,decisionReason:row.decision_reason,resultReturnId:row.result_return_id,policyVersion:row.policy_version,createdAt:row.created_at}))};
+      payload:row.request_payload,approvalSnapshot:row.approval_snapshot,deliveredAt:row.delivered_at_snapshot,version:row.version,approvedBy:row.approved_by,decisionReason:row.decision_reason,resultReturnId:row.result_return_id,policyVersion:row.policy_version,createdAt:row.created_at}))};
   }
   async decideException(user,id,input){
-    requirePlatformAdmin(user);adminId(id);await requireCasePermission(this.pool,user.id,'exception.approve');
+    requireAdminPermission(user,'refunds.approve');adminId(id);await requireCasePermission(this.pool,user,'exception.approve');
+    const target=(await this.pool.query('SELECT shop_order_id FROM order_service.return_exceptions WHERE id=$1',[id])).rows[0];
+    if(!target)throw caseError(404,'EXCEPTION_NOT_FOUND','Không tìm thấy ngoại lệ.');
+    await requireOrderAccess(this.pool,user,'refunds.approve',target.shop_order_id,{caseKind:'RETURN',assigneeId:user.id});
     caseInput(input,['action','version','reason']);caseVersion(input.version);const reason=caseText(input.reason,10,500);
     if(!['approve','reject'].includes(input.action))throw caseError(400,'INVALID_EXCEPTION_ACTION','Quyết định không hợp lệ.');
     const row=(await this.pool.query('SELECT * FROM order_service.return_exceptions WHERE id=$1',[id])).rows[0];
@@ -255,7 +271,7 @@ export class CaseService {
     if(row.status!=='REQUESTED'||row.version!==input.version)throw caseError(409,'EXCEPTION_CHANGED','Ngoại lệ đã được xử lý hoặc thay đổi.');
     if(input.action==='approve')return this.returns.create(row.buyer_id,row.shop_order_id,row.request_payload,{id,actorId:user.id,version:input.version,reason});
     return this.transaction(async db=>{
-      await requireCasePermission(db,user.id,'exception.approve');
+      await requireCasePermission(db,user,'exception.approve');
       const result=await db.query(`UPDATE order_service.return_exceptions SET status='REJECTED',approved_by=$2,decision_reason=$3,decided_at=now(),version=version+1
         WHERE id=$1 AND status='REQUESTED' AND version=$4 RETURNING id`,[id,user.id,reason,input.version]);
       if(!result.rowCount)throw caseError(409,'EXCEPTION_CHANGED','Ngoại lệ đã được xử lý.');
@@ -265,9 +281,11 @@ export class CaseService {
     });
   }
   async issueEvidence(user,id,evidenceId,reason){
-    requirePlatformAdmin(user);adminId(id);adminId(evidenceId);reason=caseText(reason,10,500);
+    requireAdminPermission(user,'cases.view_sensitive');adminId(id);adminId(evidenceId);reason=caseText(reason,10,500);
+    await requireCaseAccess(this.pool,user,'cases.view_sensitive',id);
     return this.transaction(async db=>{
       await db.query('SELECT id FROM order_service.admin_cases WHERE id=$1 FOR UPDATE',[id]);
+      await requireCaseAccess(db,user,'cases.view_sensitive',id);
       await requireEvidenceScope(db,user,id);
       if(!(await db.query('SELECT 1 FROM order_service.return_evidence WHERE id=$1 AND request_id=$2',[evidenceId,id])).rowCount)
         throw caseError(404,'EVIDENCE_NOT_FOUND','Không tìm thấy chứng cứ của hồ sơ.');
@@ -279,10 +297,12 @@ export class CaseService {
     });
   }
   async evidence(user,id,evidenceId,token){
-    requirePlatformAdmin(user);adminId(id);adminId(evidenceId);
+    requireAdminPermission(user,'cases.view_sensitive');adminId(id);adminId(evidenceId);
+    await requireCaseAccess(this.pool,user,'cases.view_sensitive',id);
     if(typeof token!=='string'||!/^[\w-]{43}$/.test(token))throw caseError(403,'EVIDENCE_GRANT_REQUIRED','Cần liên kết xem chứng cứ còn hiệu lực.');
     return this.transaction(async db=>{
       await db.query('SELECT id FROM order_service.admin_cases WHERE id=$1 FOR UPDATE',[id]);
+      await requireCaseAccess(db,user,'cases.view_sensitive',id);
       await requireEvidenceScope(db,user,id);
       const grant=(await db.query(`UPDATE order_service.case_evidence_grants SET used_at=now() WHERE token_hash=$1 AND case_id=$2
         AND evidence_id=$3 AND actor_id=$4 AND expires_at>now() AND used_at IS NULL RETURNING reason`,[hash(token),id,evidenceId,user.id])).rows[0];

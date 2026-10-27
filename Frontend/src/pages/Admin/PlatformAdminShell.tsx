@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { ArrowUpRight, ChevronRight, LayoutDashboard, LogOut, Menu, Package, PanelsTopLeft, ScrollText, ShieldCheck, ShoppingBag, Store, Undo2, Users, X } from 'lucide-react';
 import { identityApi } from '../../api/identityApi';
 import { useAdminSession } from './AdminSession';
+import { canVisitAdminPath } from './adminPolicy';
 import './platform-admin.css';
 const links = [
   { path: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
@@ -16,6 +17,8 @@ const links = [
   { path: '/admin/case-reports', label: 'Báo cáo hậu mãi', icon: ScrollText },
   { path: '/admin/storefront', label: 'Giao diện trang chủ', icon: PanelsTopLeft },
   { path: '/admin/audit', label: 'Nhật ký quản trị', icon: ScrollText },
+  { path: '/admin/staff-access', label: 'Nhân sự & quyền', icon: Users },
+  { path: '/admin/approvals', label: 'Yêu cầu phê duyệt', icon: ShieldCheck },
 ];
 export default function PlatformAdminShell() {
   const user = useAdminSession(), location = useLocation(), navigate = useNavigate();
@@ -34,7 +37,7 @@ export default function PlatformAdminShell() {
       <button className="pa-mobile-close" onClick={() => setOpen(false)} aria-label="Đóng menu"><X size={20} /></button>
       <div className="pa-workspace"><span><ShieldCheck size={18} /></span><div><strong>Quản trị sàn</strong><small>Không gian vận hành</small></div><span className="pa-workspace-dot" /></div>
       <span className="pa-nav-label">BẢNG ĐIỀU KHIỂN</span>
-      <nav>{links.map(({ path, label, icon: Icon }) => <NavLink key={path} to={path} end={path === '/admin'} onClick={() => setOpen(false)}
+      <nav>{links.filter(link=>canVisitAdminPath(user,link.path)).map(({ path, label, icon: Icon }) => <NavLink key={path} to={path} end={path === '/admin'} onClick={() => setOpen(false)}
         className={({ isActive }) => `pa-nav-link ${isActive ? 'is-active' : ''}`}><Icon size={19} /><span>{label}</span></NavLink>)}</nav>
       <div className="pa-sidebar-bottom"><div className="pa-sidebar-guide"><ShieldCheck size={20} /><strong>Vận hành có kiểm soát</strong><p>Quyền quản trị được xác minh theo phiên đăng nhập.</p></div>
         <div className="pa-sidebar-user"><span className="pa-avatar">{user.fullName.trim().slice(0, 1).toUpperCase()}</span><div><strong>{user.fullName}</strong><small>Quản trị viên sàn</small></div>

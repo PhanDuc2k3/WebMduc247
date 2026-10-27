@@ -1,6 +1,8 @@
-import {createHash,randomBytes} from 'node:crypto';
-import {requirePlatformAdmin,adminId} from '../../../packages/contracts/platform-admin.js';
-import {caseInput,caseText,caseVersion,caseDue,caseError,caseAudit,requireCasePermission,requireEvidenceScope} from './case-contract.js';
+import {requireCaseAccess} from './admin-scope.js';
+import {requireAdminPermission, adminScopeSql} from '../../../packages/contracts/admin-rbac.js';
+import {createHash, randomBytes} from 'node:crypto';
+import {adminId} from '../../../packages/contracts/platform-admin.js';
+import {caseInput, caseText, caseVersion, caseDue, caseError, caseAudit, requireCasePermission, requireEvidenceScope} from './case-contract.js';
 import {normalizeImage} from '../../../packages/contracts/image-validation.js';
 
 const digest=value=>createHash('sha256').update(value).digest('hex');
@@ -19,11 +21,13 @@ export function decisionBasis(input){
 }
 export class CaseResolutionService {
   constructor(cases){this.cases=cases;this.returns=cases.returns;this.pool=cases.pool;this.order=cases.order;}
-  async lock(db,id){
+  async lock(db,id,user,permission){
     const context=(await db.query('SELECT shop_order_id,return_request_id FROM order_service.admin_cases WHERE id=$1',[id])).rows[0];
     if(!context)throw caseError(404,'CASE_NOT_FOUND','Không tìm thấy hồ sơ.');
     await db.query('SELECT id FROM order_service.orders WHERE id=$1 FOR UPDATE',[context.shop_order_id]);
     if(context.return_request_id)await db.query('SELECT id FROM order_service.return_requests WHERE id=$1 FOR UPDATE',[context.return_request_id]);
+    await db.query('SELECT id FROM order_service.admin_cases WHERE id=$1 FOR UPDATE',[id]);
+    if(user)await requireCaseAccess(db,user,permission,id);
     return (await db.query(`SELECT c.*,o.user_id AS buyer_id,o.store_id FROM order_service.admin_cases c
       JOIN order_service.orders o ON o.id=c.shop_order_id WHERE c.id=$1 FOR UPDATE OF c`,[id])).rows[0];
   }
@@ -38,19 +42,20 @@ export class CaseResolutionService {
     const row=(await db.query('SELECT * FROM order_service.case_resolution_policies WHERE id=$1',[id])).rows[0];
     if(!row)throw caseError(400,'INVALID_CASE_POLICY','Policy xử lý không hợp lệ.');return row;
   }
-  async evidenceIndex(db,id){
-    const scope=`WITH scope AS (SELECT $1::uuid AS id UNION SELECT CASE WHEN source_id=$1 THEN target_id ELSE source_id END
-      FROM order_service.case_links WHERE source_id=$1 OR target_id=$1)`;
-    const statements=await db.query(`${scope} SELECT s.id,s.case_id,s.party,s.requested_resolution,s.content,s.created_at FROM order_service.case_statements s JOIN scope ON scope.id=s.case_id ORDER BY s.created_at`,[id]);
-    const images=await db.query(`${scope} SELECT e.id,e.case_id,e.party,e.created_at FROM order_service.case_evidence e JOIN scope ON scope.id=e.case_id ORDER BY e.created_at`,[id]);
+  async evidenceIndex(db,id,user){
+    const args=[id],filter=adminScopeSql(user,'cases.read',{storeIds:'o.store_id::text',caseKinds:'c.kind',assigneeIds:'c.assignee_id::text'},args);
+    const scope=`WITH candidates AS (SELECT $1::uuid AS id UNION SELECT CASE WHEN source_id=$1 THEN target_id ELSE source_id END
+      FROM order_service.case_links WHERE source_id=$1 OR target_id=$1), scope AS (SELECT c.id FROM candidates x JOIN order_service.admin_cases c ON c.id=x.id JOIN order_service.orders o ON o.id=c.shop_order_id WHERE ${filter})`;
+    const statements=await db.query(`${scope} SELECT s.id,s.case_id,s.party,s.requested_resolution,s.content,s.created_at FROM order_service.case_statements s JOIN scope ON scope.id=s.case_id ORDER BY s.created_at`,args);
+    const images=await db.query(`${scope} SELECT e.id,e.case_id,e.party,e.created_at FROM order_service.case_evidence e JOIN scope ON scope.id=e.case_id ORDER BY e.created_at`,args);
     const returns=await db.query(`${scope} SELECT e.id,c.id AS case_id,e.created_at FROM order_service.return_evidence e
-        JOIN order_service.admin_cases c ON c.return_request_id=e.request_id JOIN scope ON scope.id=c.id ORDER BY e.created_at`,[id]);
+        JOIN order_service.admin_cases c ON c.return_request_id=e.request_id JOIN scope ON scope.id=c.id ORDER BY e.created_at`,args);
     return [...statements.rows.map(row=>({kind:'STATEMENT',id:row.id,caseId:row.case_id,party:row.party,content:row.content,requestedResolution:row.requested_resolution,createdAt:row.created_at})),
       ...images.rows.map(row=>({kind:'CASE_EVIDENCE',id:row.id,caseId:row.case_id,party:row.party,createdAt:row.created_at})),
       ...returns.rows.map(row=>({kind:'RETURN_EVIDENCE',id:row.id,caseId:row.case_id,createdAt:row.created_at}))];
   }
-  async validateBasis(db,id,basis){
-    await this.policy(db,basis.policyVersion);const available=await this.evidenceIndex(db,id);
+  async validateBasis(db,id,basis,user){
+    await this.policy(db,basis.policyVersion);const available=await this.evidenceIndex(db,id,user);
     if(basis.evidenceRefs.some(ref=>!available.some(item=>item.id===ref.id&&item.kind===ref.kind)))
       throw caseError(400,'EVIDENCE_OUTSIDE_CASE','Chứng cứ không thuộc hồ sơ hoặc hồ sơ được liên kết.');
   }
@@ -59,18 +64,19 @@ export class CaseResolutionService {
       [type,row.shop_order_id,{caseId:row.id,shopOrderId:row.shop_order_id,...extra}]);
   }
   async recordReturnDecision(db,user,current,command){
-    const basis=decisionBasis(command);await this.validateBasis(db,current.id,basis);
+    const basis=decisionBasis(command);await this.validateBasis(db,current.id,basis,user);
     const row=(await db.query('SELECT * FROM order_service.admin_cases WHERE id=$1 FOR UPDATE',[current.id])).rows[0];
     this.owner(row,user);
     if((await db.query("SELECT 1 FROM order_service.case_appeals WHERE case_id=$1 AND status IN ('SUBMITTED','UNDER_REVIEW')",[current.id])).rowCount)throw caseError(409,'APPEAL_PENDING','Còn kháng nghị chưa xử lý.');
     const policy=await this.policy(db,basis.policyVersion),approved=command.action==='approve';
-    const snapshot={returnId:current.id,returnVersion:current.version,amountMinor:Number(current.eligible_refund_minor),shippingMinor:Number(current.shipping_refund_minor),
+    const snapshot={returnId:current.id,returnVersion:current.version,amountMinor:Number(current.eligible_refund_minor),shippingMinor:Number(current.shipping_refund_minor),recipientId:current.buyer_id,financialApprovalId:command.approvalId||null,
       returnPolicyVersion:current.policy_version};
+    const financialApproval=command.approvalId?(await db.query('SELECT created_by,reviewed_by FROM order_service.admin_approvals WHERE id=$1',[command.approvalId])).rows[0]:null;
     const result=(await db.query(`INSERT INTO order_service.case_decisions(case_id,kind,status,proposed_by,reviewed_by,policy_version,
       responsible_party,reason,basis_summary,evidence_refs,outcome,return_id,snapshot,expected_case_version,expected_return_version,published_at,reviewed_at,appeal_until)
-      VALUES($1,$2,'PUBLISHED',$3,$3,$4,$5,$6,$7,$8,$9,$1,$10,$11,$12,now(),now(),now()+($13*interval '1 day')) RETURNING id`,
-      [current.id,approved?'RETURN_APPROVE':'RETURN_REJECT',user.id,basis.policyVersion,basis.responsibleParty,command.reason,
-        basis.basisSummary,JSON.stringify(basis.evidenceRefs),approved?'RETURN_REQUIRED':'NO_COMPENSATION',snapshot,row.version,current.version,policy.appeal_days])).rows[0];
+      VALUES($1,$2,'PUBLISHED',$3,$14,$4,$5,$6,$7,$8,$9,$1,$10,$11,$12,now(),now(),now()+($13*interval '1 day')) RETURNING id`,
+      [current.id,approved?'RETURN_APPROVE':'RETURN_REJECT',financialApproval?.created_by||user.id,basis.policyVersion,basis.responsibleParty,command.reason,
+        basis.basisSummary,JSON.stringify(basis.evidenceRefs),approved?'RETURN_REQUIRED':'NO_COMPENSATION',snapshot,row.version,current.version,policy.appeal_days,financialApproval?.reviewed_by||user.id])).rows[0];
     if(approved)await db.query("INSERT INTO order_service.case_obligations(case_id,decision_id,kind,return_id) VALUES($1,$2,'RETURN',$1)",[current.id,result.id]);
     await db.query('UPDATE order_service.admin_cases SET version=version+1,updated_at=now() WHERE id=$1',[current.id]);
     await caseAudit(db,current.id,user,'decision_published',command.reason,{readVersion:row.version,resultVersion:row.version+1,decisionId:result.id,...basis});
@@ -78,14 +84,14 @@ export class CaseResolutionService {
     return result.id;
   }
   async detail(user,id){
-    requirePlatformAdmin(user);adminId(id);const root=await this.cases.detail(user,id);
+    requireAdminPermission(user,'cases.read');adminId(id);const root=await this.cases.detail(user,id);
     const [decisions,obligations,messages,escalations,appeals,evidence,policies,inspections]=await Promise.all([
       this.pool.query('SELECT * FROM order_service.case_decisions WHERE case_id=$1 ORDER BY proposed_at DESC,id DESC',[id]),
       this.pool.query('SELECT * FROM order_service.case_obligations WHERE case_id=$1 ORDER BY id',[id]),
       this.pool.query('SELECT id,actor_id,visibility,recipient_kind,body,created_at FROM order_service.case_messages WHERE case_id=$1 ORDER BY created_at,id',[id]),
       this.pool.query('SELECT * FROM order_service.case_escalations WHERE case_id=$1 ORDER BY created_at DESC',[id]),
       this.pool.query('SELECT * FROM order_service.case_appeals WHERE case_id=$1 ORDER BY created_at DESC',[id]),
-      this.evidenceIndex(this.pool,id),this.pool.query('SELECT * FROM order_service.case_resolution_policies ORDER BY id'),
+      this.evidenceIndex(this.pool,id,user),this.pool.query('SELECT * FROM order_service.case_resolution_policies ORDER BY id'),
       this.pool.query('SELECT id,actor_id,actor_type,condition,note,basis_refs,created_at FROM order_service.return_inspections WHERE request_id=$1 ORDER BY created_at,id',[id]),
     ]);
     const returning=root.record.kind==='RETURN'?(await this.pool.query(`SELECT r.status,r.version,r.ship_by,r.seller_receive_by,r.refund_confirmed_at,
@@ -100,13 +106,14 @@ export class CaseResolutionService {
         orderRefundedMinor:Number(returning.refunded_minor),mode:Number(returning.eligible_refund_minor)===Number(returning.payable_total_minor)?'FULL':'PARTIAL'}:null};
   }
   async message(user,id,input){
-    requirePlatformAdmin(user);adminId(id);caseInput(input,['visibility','recipientKind','body','clientRequestId','version']);adminId(input.clientRequestId);
+    requireAdminPermission(user,'cases.update');adminId(id);caseInput(input,['visibility','recipientKind','body','clientRequestId','version']);adminId(input.clientRequestId);
+    await requireCaseAccess(this.pool,user,'cases.update',id);
     if(!['INTERNAL','PUBLIC'].includes(input.visibility)||input.visibility==='PUBLIC'&&!['BUYER','SELLER','BOTH'].includes(input.recipientKind)||input.visibility==='INTERNAL'&&input.recipientKind)
       throw caseError(400,'INVALID_VISIBILITY','Chọn ghi chú nội bộ hoặc thông báo công khai cùng bên nhận.');
     const body=caseText(input.body),fingerprint=digest(JSON.stringify([id,input.visibility,input.recipientKind||null,body]));
     return this.cases.transaction(async db=>{
       await db.query('SELECT pg_advisory_xact_lock(hashtext($1))',[user.id+input.clientRequestId]);
-      const row=await this.lock(db,id);this.owner(row,user);
+      const row=await this.lock(db,id,user,'cases.update');this.owner(row,user);
       const previous=(await db.query('SELECT id,request_hash FROM order_service.case_messages WHERE actor_id=$1 AND client_request_id=$2',[user.id,input.clientRequestId])).rows[0];
       if(previous){if(previous.request_hash!==fingerprint)throw caseError(409,'CASE_KEY_REUSED','Mã gửi đã dùng cho nội dung khác.');return {id:previous.id};}
       this.version(row,input.version);
@@ -119,13 +126,14 @@ export class CaseResolutionService {
     });
   }
   async escalate(user,id,input,bearer){
-    requirePlatformAdmin(user);adminId(id);caseInput(input,['assigneeId','dueAt','reason','version']);adminId(input.assigneeId);
+    requireAdminPermission(user,'cases.update');adminId(id);caseInput(input,['assigneeId','dueAt','reason','version']);adminId(input.assigneeId);
+    await requireCaseAccess(this.pool,user,'cases.update',id);
     const reason=caseText(input.reason,10,500),dueAt=caseDue(input.dueAt);
     if(input.assigneeId===user.id)throw caseError(400,'ESCALATION_TARGET','Chọn người khác để chuyển cấp.');
-    const {record}=await this.order.identity('/admin/users/'+input.assigneeId,bearer);
-    if(record.status!=='active'||!record.roles?.includes('platform_admin'))throw caseError(400,'INVALID_ASSIGNEE','Người nhận không phải admin đang hoạt động.');
+    const {items}=await this.order.identity('/admin/staff?'+new URLSearchParams({id:input.assigneeId}),bearer);
+    if(!items.some(person=>person.id===input.assigneeId))throw caseError(400,'INVALID_ASSIGNEE','Người nhận không có quyền xử lý hồ sơ.');
     return this.cases.transaction(async db=>{
-      const row=await this.lock(db,id);this.owner(row,user);this.version(row,input.version);
+      const row=await this.lock(db,id,user,'cases.update');this.owner(row,user);this.version(row,input.version);
       await db.query(`INSERT INTO order_service.case_escalations(case_id,actor_id,from_assignee,to_assignee,level,reason) VALUES($1,$2,$3,$4,$5,$6)`,
         [id,user.id,row.assignee_id,input.assigneeId,row.escalation_level+1,reason]);
       await db.query('UPDATE order_service.admin_cases SET assignee_id=$2,due_at=$3,escalation_level=escalation_level+1,version=version+1 WHERE id=$1',[id,input.assigneeId,dueAt]);
@@ -134,17 +142,18 @@ export class CaseResolutionService {
     });
   }
   async propose(user,id,input){
-    requirePlatformAdmin(user);adminId(id);caseInput(input,['version','reason','responsibleParty','policyVersion','basisSummary','evidenceRefs','outcome','returnId']);
+    requireAdminPermission(user,'cases.create');adminId(id);caseInput(input,['version','reason','responsibleParty','policyVersion','basisSummary','evidenceRefs','outcome','returnId']);
+    await requireCaseAccess(this.pool,user,'cases.create',id);
     const basis=decisionBasis(input),reason=caseText(input.reason,10,500);
     if(!['REFUND_EXISTING_RETURN','NO_COMPENSATION','OTHER_REMEDY'].includes(input.outcome))throw caseError(400,'INVALID_CASE_OUTCOME','Phương án xử lý không hợp lệ.');
     if(input.returnId)adminId(input.returnId);
     return this.cases.transaction(async db=>{
-      const row=await this.lock(db,id);this.owner(row,user);this.version(row,input.version);
+      const row=await this.lock(db,id,user,'cases.create');this.owner(row,user);this.version(row,input.version);
       if(row.kind!=='DISPUTE')throw caseError(400,'DISPUTE_REQUIRED','Đề xuất này dành cho hồ sơ tranh chấp.');
       if(!['IN_REVIEW','AWAITING_APPROVAL'].includes(row.workflow_status))throw caseError(409,'CASE_NOT_IN_REVIEW','Cần bắt đầu xác minh hoặc xử lý kháng nghị trước khi đề xuất.');
       if((await db.query("SELECT 1 FROM order_service.case_appeals WHERE case_id=$1 AND status IN ('SUBMITTED','UNDER_REVIEW')",[id])).rowCount)throw caseError(409,'APPEAL_PENDING','Còn kháng nghị chưa xử lý.');
       if((await db.query("SELECT 1 FROM order_service.case_decisions WHERE case_id=$1 AND status='PROPOSED'",[id])).rowCount)throw caseError(409,'DECISION_PENDING','Đã có đề xuất đang chờ duyệt.');
-      await this.validateBasis(db,id,basis);
+      await this.validateBasis(db,id,basis,user);
       let snapshot={},returnVersion=null;
       if(input.outcome==='REFUND_EXISTING_RETURN'){
         if(!input.returnId)throw caseError(400,'RETURN_REQUIRED','Chọn yêu cầu trả hàng đủ điều kiện.');
@@ -162,17 +171,19 @@ export class CaseResolutionService {
     });
   }
   async review(user,id,decisionId,input){
-    requirePlatformAdmin(user);adminId(id);adminId(decisionId);caseInput(input,['action','version','reason']);const reason=caseText(input.reason,10,500);
+    requireAdminPermission(user,input.action==='withdraw'?'cases.create':'cases.approve');adminId(id);adminId(decisionId);caseInput(input,['action','version','reason']);const reason=caseText(input.reason,10,500);
+    await requireCaseAccess(this.pool,user,input.action==='withdraw'?'cases.create':'cases.approve',id);
     if(!['publish','reject','withdraw'].includes(input.action))throw caseError(400,'INVALID_DECISION_REVIEW','Thao tác duyệt không hợp lệ.');
     return this.cases.transaction(async db=>{
-      const row=await this.lock(db,id);this.version(row,input.version);
+      const row=await this.lock(db,id,user,input.action==='withdraw'?'cases.create':'cases.approve');this.version(row,input.version);
       const d=(await db.query('SELECT * FROM order_service.case_decisions WHERE id=$1 AND case_id=$2 FOR UPDATE',[decisionId,id])).rows[0];
       if(!d||d.status!=='PROPOSED')throw caseError(409,'DECISION_CHANGED','Đề xuất đã được xử lý.');
       if(input.action==='withdraw'){if(d.proposed_by!==user.id)throw caseError(403,'PROPOSER_ONLY','Chỉ người đề xuất được rút đề xuất.');}
-      else {await requireCasePermission(db,user.id,'case.decision.approve');if(d.proposed_by===user.id||row.buyer_id===user.id)throw caseError(403,'INDEPENDENT_REVIEW_REQUIRED','Người duyệt phải độc lập với người đề xuất/người mua.');await this.independent(row,user);}
+      else {await requireCasePermission(db,user,'case.decision.approve');if(d.proposed_by===user.id||row.buyer_id===user.id)throw caseError(403,'INDEPENDENT_REVIEW_REQUIRED','Người duyệt phải độc lập với người đề xuất/người mua.');await this.independent(row,user);}
       if(input.action==='publish'){
+        await requireCaseAccess(db,await this.order.adminActor(d.proposed_by),'cases.create',id);
         if(d.expected_case_version!==row.version)throw caseError(409,'DECISION_SNAPSHOT_STALE','Hồ sơ có thông tin mới; cần rút/tạo lại đề xuất.');
-        await this.validateBasis(db,id,{policyVersion:d.policy_version,evidenceRefs:d.evidence_refs});
+        await this.validateBasis(db,id,{policyVersion:d.policy_version,evidenceRefs:d.evidence_refs},user);
         if(d.return_id){const r=(await db.query('SELECT status,version FROM order_service.return_requests WHERE id=$1 FOR UPDATE',[d.return_id])).rows[0];
           if(!r||r.version!==d.expected_return_version||!['RECEIVED','REFUND_PENDING','REFUNDED'].includes(r.status))throw caseError(409,'DECISION_SNAPSHOT_STALE','Yêu cầu trả hàng liên quan đã thay đổi.');}
         const policy=await this.policy(db,d.policy_version);
@@ -196,23 +207,24 @@ export class CaseResolutionService {
   async sellerUnavailable(row,bearer){
     const status=await this.order.inventory('/stores/'+row.store_id+'/aftersales-status');
     if(status.platformSuspended)return true;
-    if(status.ownerId){const {record}=await this.order.identity('/admin/users/'+status.ownerId,bearer);return record.status==='suspended';}
+    if(status.ownerId){const record=await this.order.adminActor(status.ownerId);return record.status==='suspended';}
     return false;
   }
   async intervene(user,id,input,bearer){
-    requirePlatformAdmin(user);adminId(id);caseInput(input,['action','version','returnVersion','reason','evidenceRefs','condition']);
+    requireAdminPermission(user,'returns.execute');adminId(id);caseInput(input,['action','version','returnVersion','reason','evidenceRefs','condition']);
+    await requireCaseAccess(this.pool,user,'returns.execute',id);
     if(!['take_review','inspect','open_refund','reopen'].includes(input.action))throw caseError(400,'INVALID_INTERVENTION','Lệnh can thiệp không hợp lệ.');
     const reason=caseText(input.reason,10,500),refs=decisionBasis({responsibleParty:'UNDETERMINED',policyVersion:'CASE_RESOLUTION_V1',basisSummary:reason,evidenceRefs:input.evidenceRefs}).evidenceRefs;
     const context=(await this.pool.query(`SELECT c.*,o.store_id FROM order_service.admin_cases c JOIN order_service.orders o ON o.id=c.shop_order_id WHERE c.id=$1`,[id])).rows[0];
     if(!context)throw caseError(404,'CASE_NOT_FOUND','Không tìm thấy hồ sơ.');
-    await requireCasePermission(this.pool,user.id,'aftersales.intervene');
+    await requireCasePermission(this.pool,user,'aftersales.intervene');
     const blocked=['take_review','inspect'].includes(input.action)?await this.sellerUnavailable(context,bearer):false;
     const result=await this.cases.transaction(async db=>{
-      await requireCasePermission(db,user.id,'aftersales.intervene');const row=await this.lock(db,id);this.owner(row,user);this.version(row,input.version);
+      await requireCasePermission(db,user,'aftersales.intervene');const row=await this.lock(db,id,user,'returns.execute');this.owner(row,user);this.version(row,input.version);
       if(row.kind!=='RETURN')throw caseError(400,'RETURN_REQUIRED','Can thiệp này dành cho yêu cầu trả hàng.');
       const current=(await db.query('SELECT * FROM order_service.return_requests WHERE id=$1',[id])).rows[0];
       if(current.version!==input.returnVersion)throw caseError(409,'RETURN_STATE_CHANGED','Yêu cầu trả hàng đã thay đổi.');
-      await this.validateBasis(db,id,{policyVersion:'CASE_RESOLUTION_V1',evidenceRefs:refs});
+      await this.validateBasis(db,id,{policyVersion:'CASE_RESOLUTION_V1',evidenceRefs:refs},user);
       let next;
       if(input.action==='take_review'){
         if(!['REQUESTED','UNDER_REVIEW'].includes(current.status)||!blocked&&Date.parse(row.due_at)>Date.now())throw caseError(409,'SELLER_STILL_WITHIN_DEADLINE','Seller còn trong hạn xử lý hoặc trạng thái không phù hợp.');
@@ -259,10 +271,11 @@ export class CaseResolutionService {
     return result;
   }
   async fulfill(user,id,input){
-    requirePlatformAdmin(user);adminId(id);caseInput(input,['version','obligationId','note','evidenceRefs']);const note=caseText(input.note,10,500);
+    requireAdminPermission(user,'cases.execute');adminId(id);caseInput(input,['version','obligationId','note','evidenceRefs']);const note=caseText(input.note,10,500);
+    await requireCaseAccess(this.pool,user,'cases.execute',id);
     if(input.obligationId)adminId(input.obligationId);
     return this.cases.transaction(async db=>{
-      const row=await this.lock(db,id);this.owner(row,user);this.version(row,input.version);
+      const row=await this.lock(db,id,user,'cases.execute');this.owner(row,user);this.version(row,input.version);
       if(!(await db.query("SELECT 1 FROM order_service.case_decisions WHERE case_id=$1 AND status='PUBLISHED'",[id])).rowCount)throw caseError(409,'DECISION_REQUIRED','Chưa có quyết định công bố.');
       if(input.obligationId){
         const obligation=(await db.query('SELECT * FROM order_service.case_obligations WHERE id=$1 AND case_id=$2 FOR UPDATE',[input.obligationId,id])).rows[0];
@@ -270,7 +283,7 @@ export class CaseResolutionService {
         if(obligation.return_id){const r=(await db.query('SELECT status,refund_confirmed_at FROM order_service.return_requests WHERE id=$1',[obligation.return_id])).rows[0];
           if(!r?.refund_confirmed_at||!['REFUNDED','CLOSED'].includes(r.status))throw caseError(409,'PAYMENT_VERIFICATION_REQUIRED','Phải chờ Payment xác nhận hoàn thực tế; quyết định không chứng minh đã chuyển tiền.');
         }else{const basis=decisionBasis({responsibleParty:'PLATFORM',policyVersion:'CASE_RESOLUTION_V1',basisSummary:note,evidenceRefs:input.evidenceRefs});
-          if(!basis.evidenceRefs.length)throw caseError(400,'COMPLETION_EVIDENCE_REQUIRED','Nghĩa vụ khác cần bằng chứng hoàn thành.');await this.validateBasis(db,id,basis);}
+          if(!basis.evidenceRefs.length)throw caseError(400,'COMPLETION_EVIDENCE_REQUIRED','Nghĩa vụ khác cần bằng chứng hoàn thành.');await this.validateBasis(db,id,basis,user);}
         await db.query("UPDATE order_service.case_obligations SET status='FULFILLED',completion_note=$2,completed_at=now() WHERE id=$1",[obligation.id,note]);
       }
       if((await db.query("SELECT 1 FROM order_service.case_obligations WHERE case_id=$1 AND status='PENDING'",[id])).rowCount){
@@ -283,9 +296,10 @@ export class CaseResolutionService {
     });
   }
   async close(user,id,input){
-    requirePlatformAdmin(user);adminId(id);caseInput(input,['version','reason']);const reason=caseText(input.reason,10,500);
+    requireAdminPermission(user,'cases.update');adminId(id);caseInput(input,['version','reason']);const reason=caseText(input.reason,10,500);
+    await requireCaseAccess(this.pool,user,'cases.update',id);
     return this.cases.transaction(async db=>{
-      const row=await this.lock(db,id);this.owner(row,user);this.version(row,input.version);
+      const row=await this.lock(db,id,user,'cases.update');this.owner(row,user);this.version(row,input.version);
       if(row.workflow_status!=='RESOLVED'||(await db.query("SELECT 1 FROM order_service.case_obligations WHERE case_id=$1 AND status='PENDING'",[id])).rowCount||
         (await db.query("SELECT 1 FROM order_service.case_appeals WHERE case_id=$1 AND status IN ('SUBMITTED','UNDER_REVIEW')",[id])).rowCount||
         (await db.query("SELECT 1 FROM order_service.case_decisions WHERE case_id=$1 AND status='PUBLISHED' AND appeal_until>now()",[id])).rowCount)
@@ -347,9 +361,10 @@ export class CaseResolutionService {
     if(!row)throw caseError(404,'EVIDENCE_NOT_FOUND','Không tìm thấy chứng cứ.');return {mimeType:row.mime_type,data:row.data};
   }
   async imageGrant(user,id,evidenceId,reason){
-    requirePlatformAdmin(user);adminId(id);adminId(evidenceId);reason=caseText(reason,10,500);
+    requireAdminPermission(user,'cases.view_sensitive');adminId(id);adminId(evidenceId);reason=caseText(reason,10,500);
+    await requireCaseAccess(this.pool,user,'cases.view_sensitive',id);
     return this.cases.transaction(async db=>{
-      await this.lock(db,id);await requireEvidenceScope(db,user,id);
+      await this.lock(db,id,user,'cases.view_sensitive');await requireEvidenceScope(db,user,id);
       if(!(await db.query('SELECT 1 FROM order_service.case_evidence WHERE id=$1 AND case_id=$2',[evidenceId,id])).rowCount)throw caseError(404,'EVIDENCE_NOT_FOUND','Không tìm thấy ảnh.');
       const token=randomBytes(32).toString('base64url'),expiresAt=new Date(Date.now()+60000).toISOString();
       await db.query('INSERT INTO order_service.case_resolution_grants(token_hash,case_id,evidence_id,actor_id,reason,expires_at) VALUES($1,$2,$3,$4,$5,$6)',[digest(token),id,evidenceId,user.id,reason,expiresAt]);
@@ -357,9 +372,10 @@ export class CaseResolutionService {
     });
   }
   async image(user,id,evidenceId,token){
-    requirePlatformAdmin(user);adminId(id);adminId(evidenceId);if(typeof token!=='string'||!/^[\w-]{43}$/.test(token))throw caseError(403,'EVIDENCE_GRANT_REQUIRED','Cần grant ảnh hợp lệ.');
+    requireAdminPermission(user,'cases.view_sensitive');adminId(id);adminId(evidenceId);if(typeof token!=='string'||!/^[\w-]{43}$/.test(token))throw caseError(403,'EVIDENCE_GRANT_REQUIRED','Cần grant ảnh hợp lệ.');
+    await requireCaseAccess(this.pool,user,'cases.view_sensitive',id);
     return this.cases.transaction(async db=>{
-      await this.lock(db,id);await requireEvidenceScope(db,user,id);
+      await this.lock(db,id,user,'cases.view_sensitive');await requireEvidenceScope(db,user,id);
       const grant=(await db.query('UPDATE order_service.case_resolution_grants SET used_at=now() WHERE token_hash=$1 AND case_id=$2 AND evidence_id=$3 AND actor_id=$4 AND expires_at>now() AND used_at IS NULL RETURNING reason',[digest(token),id,evidenceId,user.id])).rows[0];
       if(!grant)throw caseError(403,'EVIDENCE_GRANT_EXPIRED','Grant đã hết hạn, thu hồi hoặc không đúng người.');
       const data=(await db.query('SELECT mime_type,data FROM order_service.case_evidence WHERE id=$1 AND case_id=$2',[evidenceId,id])).rows[0];
@@ -379,10 +395,11 @@ export class CaseResolutionService {
     });
   }
   async reviewAppeal(user,id,appealId,input){
-    requirePlatformAdmin(user);adminId(id);adminId(appealId);caseInput(input,['action','version','reason','evidenceRefs']);const reason=caseText(input.reason,10,2000);
+    requireAdminPermission(user,'cases.approve');adminId(id);adminId(appealId);caseInput(input,['action','version','reason','evidenceRefs']);const reason=caseText(input.reason,10,2000);
+    await requireCaseAccess(this.pool,user,'cases.approve',id);
     if(!['claim','uphold','overturn'].includes(input.action))throw caseError(400,'INVALID_APPEAL_ACTION','Thao tác kháng nghị không hợp lệ.');
     return this.cases.transaction(async db=>{
-      await requireCasePermission(db,user.id,'case.appeal.review');const row=await this.lock(db,id);
+      await requireCasePermission(db,user,'case.appeal.review');const row=await this.lock(db,id,user,'cases.approve');
       const appeal=(await db.query(`SELECT a.*,d.proposed_by,d.reviewed_by FROM order_service.case_appeals a
         JOIN order_service.case_decisions d ON d.id=a.decision_id WHERE a.id=$1 AND a.case_id=$2 FOR UPDATE OF a`,[appealId,id])).rows[0];
       if(!appeal||!['SUBMITTED','UNDER_REVIEW'].includes(appeal.status)||appeal.version!==input.version)throw caseError(409,'APPEAL_CHANGED','Kháng nghị đã thay đổi.');
@@ -393,7 +410,7 @@ export class CaseResolutionService {
         await db.query("UPDATE order_service.case_appeals SET reviewer_id=$2,status='UNDER_REVIEW',version=version+1 WHERE id=$1",[appealId,user.id]);
       }else{
         if(appeal.status!=='UNDER_REVIEW'||appeal.reviewer_id!==user.id)throw caseError(403,'APPEAL_REVIEWER_ONLY','Cần nhận kháng nghị trước khi kết luận.');
-        const basis=decisionBasis({responsibleParty:'UNDETERMINED',policyVersion:'CASE_RESOLUTION_V1',basisSummary:reason,evidenceRefs:input.evidenceRefs});await this.validateBasis(db,id,basis);
+        const basis=decisionBasis({responsibleParty:'UNDETERMINED',policyVersion:'CASE_RESOLUTION_V1',basisSummary:reason,evidenceRefs:input.evidenceRefs});await this.validateBasis(db,id,basis,user);
         await db.query('UPDATE order_service.case_appeals SET status=$2,result_reason=$3,result_basis=$4,decided_at=now(),version=version+1 WHERE id=$1',
           [appealId,input.action==='uphold'?'UPHELD':'OVERTURNED',reason,JSON.stringify(basis.evidenceRefs)]);
         if(input.action==='overturn'){
@@ -407,11 +424,13 @@ export class CaseResolutionService {
     });
   }
   async report(user,query){
-    requirePlatformAdmin(user);caseInput(query,['from','to','storeId','categoryId','groupBy']);
+    requireAdminPermission(user,'reports.read');caseInput(query,['from','to','storeId','categoryId','groupBy']);
     const group=query.groupBy||'reason';if(!['reason','shop','category'].includes(group))throw caseError(400,'INVALID_REPORT_GROUP','Nhóm báo cáo không hợp lệ.');
     if(query.storeId)adminId(query.storeId);if(query.categoryId&&query.categoryId!=='UNKNOWN')adminId(query.categoryId);
     for(const key of ['from','to'])if(query[key]&&(!/^\d{4}-\d{2}-\d{2}$/.test(query[key])||!Number.isFinite(Date.parse(query[key]))||new Date(query[key]).toISOString().slice(0,10)!==query[key]))throw caseError(400,'INVALID_REPORT_DATE','Ngày báo cáo không hợp lệ.');
     if(query.from&&query.to&&query.from>query.to)throw caseError(400,'INVALID_REPORT_DATE','Khoảng ngày ngược.');
+    const args=[query.from?`${query.from}T00:00:00+07:00`:null,query.to?new Date(Date.parse(`${query.to}T00:00:00+07:00`)+86400000).toISOString():null,query.storeId||null,query.categoryId||null,group];
+    const scope=adminScopeSql(user,'reports.read',{storeIds:'o.store_id::text',caseKinds:'c.kind',assigneeIds:'c.assignee_id::text'},args);
     const sql=`WITH base AS (SELECT c.id,c.created_at,c.resolved_at,o.store_id,o.store_snapshot_json,
         coalesce(r.reason_code,d.reason_code,'OTHER') AS reason,
         coalesce((SELECT array_agg(DISTINCT coalesce(i.product_snapshot_json->>'categoryId','UNKNOWN'))
@@ -421,7 +440,7 @@ export class CaseResolutionService {
         (SELECT count(*)::int FROM order_service.case_appeals a WHERE a.case_id=c.id AND a.status='OVERTURNED') AS accepted_appeals
         FROM order_service.admin_cases c JOIN order_service.orders o ON o.id=c.shop_order_id
         LEFT JOIN order_service.return_requests r ON r.id=c.return_request_id LEFT JOIN order_service.disputes d ON d.id=c.id
-        WHERE c.kind IN ('RETURN','DISPUTE') AND ($1::timestamptz IS NULL OR c.created_at>=$1) AND ($2::timestamptz IS NULL OR c.created_at<$2)
+        WHERE ${scope} AND c.kind IN ('RETURN','DISPUTE') AND ($1::timestamptz IS NULL OR c.created_at>=$1) AND ($2::timestamptz IS NULL OR c.created_at<$2)
         AND ($3::uuid IS NULL OR o.store_id=$3)),filtered AS(SELECT * FROM base WHERE $4::text IS NULL OR $4=ANY(categories)),
         grouped AS(SELECT b.*,g.label FROM filtered b CROSS JOIN LATERAL
           (SELECT unnest(CASE WHEN $5='category' THEN b.categories WHEN $5='shop' THEN ARRAY[b.store_id::text] ELSE ARRAY[b.reason] END) AS label) g)
@@ -429,8 +448,7 @@ export class CaseResolutionService {
         avg(extract(epoch FROM resolved_at-created_at)/3600) FILTER(WHERE resolved_at IS NOT NULL) AS avg_hours,
         coalesce(sum(decided_appeals),0)::int AS decided_appeals,coalesce(sum(accepted_appeals),0)::int AS accepted_appeals
         FROM grouped GROUP BY label ORDER BY cases DESC,label LIMIT 500`;
-    const rows=(await this.pool.query(sql,[query.from?`${query.from}T00:00:00+07:00`:null,
-      query.to?new Date(Date.parse(`${query.to}T00:00:00+07:00`)+86400000).toISOString():null,query.storeId||null,query.categoryId||null,group])).rows;
+    const rows=(await this.pool.query(sql,args)).rows;
     return {groupBy:group,cohort:'case_created_at_UTC+7',asOf:new Date().toISOString(),items:rows.map(row=>({label:row.label,cases:row.cases,resolved:row.resolved,
       averageHours:row.avg_hours===null?null:Number(row.avg_hours),decidedAppeals:row.decided_appeals,acceptedAppeals:row.accepted_appeals,
       appealAcceptanceRate:row.decided_appeals?row.accepted_appeals/row.decided_appeals:null}))};

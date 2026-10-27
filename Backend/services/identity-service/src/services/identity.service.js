@@ -2,11 +2,12 @@ import argon2 from 'argon2';
 import { createHmac, randomInt } from 'node:crypto';
 import { hashToken, newId, normalizeEmail, randomToken, signAccessToken, verifyAccessToken } from '../utils/crypto.js';
 import { HttpError, invalid, unauthorized } from '../utils/errors.js';
+import { loadAdminAccess } from './admin-access.service.js';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // A valid hash keeps unknown-email login checks close to the same cost as known users.
 const dummyPasswordHash = '$argon2id$v=19$m=19456,t=2,p=1$2N2oKv5QikTuvcJ21+bX6g$6Mw2Ei+O9auyJOrhufyEjrwzzwxvBbN6PXYBi22FD08';
-const publicUser = user => ({ id: user.id, email: user.email, fullName: user.full_name, emailVerifiedAt: user.email_verified_at, roles: user.roles ?? ['buyer'] });
+const publicUser = user => ({ id: user.id, email: user.email, fullName: user.full_name, emailVerifiedAt: user.email_verified_at, roles: user.roles ?? ['buyer'], adminAccess: user.adminAccess });
 
 export class IdentityService {
   constructor({ repository, mailer, config, password = argon2 }) {
@@ -117,7 +118,8 @@ export class IdentityService {
       await this.repo.event('login_failed', { ...context, userId: user?.id });
       throw new HttpError(401, 'INVALID_CREDENTIALS', 'Email hoặc mật khẩu không hợp lệ.');
     }
-    if (platformAdmin && !user.roles?.includes('platform_admin')) {
+    if (platformAdmin) user.adminAccess = user.roles?.includes('platform_admin') ? await loadAdminAccess(this.repo.pool, user.id) : undefined;
+    if (platformAdmin && !user.adminAccess?.grants?.length) {
       await this.throttle('login', email, context, this.config.loginLimit);
       await this.repo.event('admin_login_denied', { ...context, userId: user.id });
       throw new HttpError(403, 'PLATFORM_ADMIN_REQUIRED', 'Tài khoản không có quyền quản trị sàn.');
@@ -146,6 +148,7 @@ export class IdentityService {
     if (!claims) throw unauthorized();
     const user = await this.repo.currentUser(claims.sub, claims.sid);
     if (!this.accountCanSignIn(user)) throw unauthorized();
+    user.adminAccess = user.roles?.includes('platform_admin') ? await loadAdminAccess(this.repo.pool, user.id) : undefined;
     return { user, familyId: claims.sid };
   }
   async me(header) {

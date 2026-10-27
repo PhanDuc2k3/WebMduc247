@@ -8,6 +8,8 @@ const input=caseInput(JSON.parse(raw),['userId','permission','action','operator'
 adminId(input.userId);
 if(!['exception.request','exception.approve','evidence.supervise','case.decision.approve','case.appeal.review','aftersales.intervene','orders.cancel_blocked'].includes(input.permission)||!['grant','revoke'].includes(input.action))
   throw Error('Unsupported permission/action');
+if(input.permission!=='evidence.supervise')
+  throw Error('This business permission is now owned by Identity RBAC. Use admin-roles.mjs or the staff access API; no permission changes made.');
 const operator=caseText(input.operator,3,100),reason=caseText(input.reason,10,500);
 if(input.expiresAt&&(!Number.isFinite(Date.parse(input.expiresAt))||Date.parse(input.expiresAt)<=Date.now()))throw Error('Invalid expiry');
 const databaseUrl=process.env.ORDER_DATABASE_URL||process.env.IDENTITY_DATABASE_URL;
@@ -22,5 +24,5 @@ try{
   else await db.query('UPDATE order_service.case_permissions SET revoked_at=now() WHERE user_id=$1 AND permission=$2',[input.userId,input.permission]);
   await db.query('INSERT INTO order_service.case_permission_history(user_id,permission,action,actor,reason) VALUES($1,$2,$3,$4,$5)',
     [input.userId,input.permission,input.action,operator,reason]);
-  await db.query('COMMIT');console.log('Case permission updated; account must still be an active platform administrator.');
+  await db.query('COMMIT');console.log('Evidence supervision updated; active Identity cases.view_sensitive permission is also required.');
 }catch(error){await db.query('ROLLBACK');throw error;}finally{db.release();await pool.end();}

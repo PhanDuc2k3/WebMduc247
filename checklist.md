@@ -293,6 +293,8 @@ Phần 1 không còn chức năng bỏ dở trong phạm vi **bản thử đã n
 
 ## Điều kiện nghiệm thu chung và kết quả kiểm tra lần này
 
+- **Admin RBAC — 27/10/2026:** Đã triển khai 8 vai trò nghiệp vụ, permission/scope tại backend, thu hồi phiên khi đổi quyền, duyệt độc lập và màn xem quyền hiệu lực. Các bộ DB/HTTP RBAC, quản trị, CASE và Storefront đã chạy riêng. Còn luồng đổi tài khoản nhận tiền do module nghiệp vụ chưa có; xem [trạng thái mục 4](ADMIN_PLATFORM_REQUIREMENTS.md#4-vai-trò-quyền-hạn-và-phê-duyệt) và [hướng dẫn cấu hình/nghiệm thu](Backend/docs/admin-rbac.md).
+
 - **Test mới nhất 21/10/2026:** Sau chuyển quên mật khẩu sang OTP, `identity:test` đạt 24 bài và bỏ qua 5 bài cần PostgreSQL khi không đặt test URL; bài PostgreSQL OTP riêng đạt, luồng OTP qua Resend thật đạt, frontend build đạt. Trước đó Catalog 4/4, HTTP Identity 1/1, HTTP Store 1/1 và HTTP avatar 1/1 đã đạt với PostgreSQL dev. Typecheck FE vẫn còn 22 lỗi có sẵn ngoài các file phần 01/02. Các HTTP E2E khác chưa chạy lại.
 - **Build/kiểm tra kiểu FE:** `npm.cmd run build` đạt (có cảnh báo bundle JS lớn). `tsc --noEmit -p tsconfig.app.json` **không đạt: 22 lỗi TypeScript** trong các component hiện có, gồm Admin, Favorite, ChatWindow, Voucher, Payment/OrderSummary và ProductInfo; cần xử lý trước khi coi FE đạt quality gate. Vite build không chạy bước typecheck này.
 - **FE/browser:** Mã FE đã nối nhiều API v2, nhưng chưa thao tác nghiệm thu đầy đủ trên browser; một số API cũ vẫn dùng mock (`VITE_USE_MOCK_DATA=true`). [Backend README](Backend/README.md), [Frontend env example](Frontend/.env.example).

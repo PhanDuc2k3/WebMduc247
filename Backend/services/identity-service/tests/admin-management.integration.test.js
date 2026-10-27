@@ -1,3 +1,4 @@
+import {testAdmin,syncTestAdmin} from '../../order-service/tests/admin-fixture.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -35,7 +36,7 @@ test('PostgreSQL admin management preserves permissions, moderation holds, audit
     const identityAdmin=new IdentityAdminService(repo),stores=new StoreService(pool),catalog=new CatalogService(pool,stores);
     const catalogAdmin=new CatalogAdminService(pool,catalog),orderAdmin=new OrderAdminService(pool);
     const [adminId,buyerId,pendingId,otherAdminId,storeId,productId,variantId,quoteId,groupId,orderId]=Array.from({length:10},()=>randomUUID());
-    const actor={id:adminId,roles:['platform_admin']},buyer={id:buyerId,roles:['buyer','seller']};
+    const actor=testAdmin(adminId),buyer={id:buyerId,roles:['buyer','seller']};
     const email=`${buyerId}@example.test`,password='Admin-integration-test!';
     const config={jwtSecret:'integration-admin-secret-over-thirty-two-characters',issuer:'identity-service',audience:'backend-v2',refreshDays:30,
       loginLimit:5,emailVerificationRequired:true,mailKey:Buffer.alloc(32)};
@@ -48,6 +49,7 @@ test('PostgreSQL admin management preserves permissions, moderation holds, audit
           [id,id===buyerId?email:`${id}@example.test`,'Admin integration '+id.slice(0,8),hash,id===pendingId?'pending_verification':'active',id===pendingId?null:new Date()]);
         await pool.query('INSERT INTO user_roles(user_id,role) VALUES($1,$2)',[id,[adminId,otherAdminId].includes(id)?'platform_admin':'buyer']);
       }
+      for(const id of [adminId,otherAdminId])await pool.query("INSERT INTO admin_role_assignments(user_id,role) VALUES($1,'legacy_admin')",[id]);
       await pool.query(`INSERT INTO catalog.stores(id,owner_user_id,slug,name,status) VALUES($1,$2,$3,$4,'active')`,[storeId,buyerId,`admin-test-${storeId}`,`Admin test store ${storeId}`]);
       await pool.query('INSERT INTO catalog.store_settings(store_id,accepting_orders) VALUES($1,true)',[storeId]);
       await pool.query("INSERT INTO catalog.store_addresses(store_id,pickup_address,return_address) VALUES($1,'Test pickup address','Test return address')",[storeId]);
@@ -152,7 +154,7 @@ test('PostgreSQL admin management preserves permissions, moderation holds, audit
       });
       await t.test('CORE-004 two admins using one read version cannot both moderate the same product',async()=>{
         const before=(await catalogAdmin.detail(actor,'products',productId)).record;
-        const other={id:otherAdminId,roles:['platform_admin']};
+        const other=testAdmin(otherAdminId);
         const inputs=[actor,other].map(()=>({requestId:randomUUID(),action:'suspend',reason:'Core competing moderation',version:before.version}));
         const results=await Promise.allSettled([catalogAdmin.moderate(actor,'products',productId,inputs[0]),catalogAdmin.moderate(other,'products',productId,inputs[1])]);
         assert.equal(results.filter(result=>result.status==='fulfilled').length,1);
@@ -190,7 +192,7 @@ test('PostgreSQL admin management preserves permissions, moderation holds, audit
       });
       await t.test('CORE-003/009 audit keeps a stable actor reference after reviewed Identity erasure',async()=>{
         const before=(await identityAdmin.detail(actor,pendingId)).record;
-        await identityAdmin.moderate({id:otherAdminId,roles:['platform_admin']},pendingId,{requestId:randomUUID(),version:before.version,action:'suspend',reason:'Actor trace must survive account erasure'});
+        await identityAdmin.moderate(testAdmin(otherAdminId),pendingId,{requestId:randomUUID(),version:before.version,action:'suspend',reason:'Actor trace must survive account erasure'});
         await pool.query('DELETE FROM users WHERE id=$1',[otherAdminId]);
         const detail=await identityAdmin.detail(actor,pendingId);
         assert.equal(detail.history[0].actor_id,otherAdminId);assert.equal(detail.history[0].actor_name,null);
@@ -198,7 +200,7 @@ test('PostgreSQL admin management preserves permissions, moderation holds, audit
       });
       await t.test('CORE-006/008/013 blocked seller cancellation keeps a retryable intent and delegates refunds to Payment',async()=>{
         let restockFails=true,restockCalls=0;
-        const order={pool,transaction:fn=>repo.transaction(fn),promotion:async()=>({}),
+        const order={pool,adminActor:async id=>id===actor.id?syncTestAdmin(pool,actor):{id,status:(await identityAdmin.detail(actor,id)).record.status},transaction:fn=>repo.transaction(fn),promotion:async()=>({}),
           identity:async path=>path.startsWith('/admin/users/')?identityAdmin.detail(actor,path.split('/').at(-1)):{user:actor},
           inventory:async(path,method,input)=>{
             if(path.endsWith('/aftersales-status')){
@@ -211,8 +213,8 @@ test('PostgreSQL admin management preserves permissions, moderation holds, audit
         const lifecycle=new OrderLifecycle(order),obligations=new AdminOrderObligations(lifecycle);
         const input={requestId:randomUUID(),version:1,reason:'Seller is blocked and cannot fulfill the existing order'};
         await assert.rejects(obligations.cancel(buyer,orderId,input,'Bearer test'),{status:403});
-        await assert.rejects(obligations.cancel(actor,orderId,input,'Bearer test'),{code:'CASE_PERMISSION_REQUIRED'});
-        await pool.query("INSERT INTO order_service.case_permissions(user_id,permission,granted_by,reason) VALUES($1,'orders.cancel_blocked','core-test','Core blocked seller obligations test')",[actor.id]);
+        await assert.rejects(obligations.cancel(actor,orderId,input,'Bearer test'),{code:'ADMIN_PERMISSION_REQUIRED'});
+        await pool.query("INSERT INTO order_service.case_permissions(user_id,permission,granted_by,reason) VALUES($1,'orders.cancel_blocked','core-test','Core blocked seller obligations test')",[actor.id]);await syncTestAdmin(pool,actor);
         await assert.rejects(obligations.cancel(actor,orderId,input,'Bearer test'),{code:'SELLER_NOT_BLOCKED'});
         let shop=(await catalogAdmin.detail(actor,'stores',storeId)).record;
         await catalogAdmin.moderate(actor,'stores',storeId,{requestId:randomUUID(),version:shop.version,action:'suspend',reason:'Suspend store for obligations test'});
@@ -256,8 +258,8 @@ test('PostgreSQL admin management preserves permissions, moderation holds, audit
           assert.equal(audit.length,1);assert.equal(audit[0].read_version,1);assert.equal(audit[0].result_version,2);
           assert.equal((await identityAdmin.detail(actor,buyerId)).record.status,'suspended');
           assert.equal((await catalogAdmin.detail(actor,'stores',storeId)).record.suspended,false);
-          await pool.query("UPDATE order_service.case_permissions SET revoked_at=now() WHERE user_id=$1 AND permission='orders.cancel_blocked'",[actor.id]);
-          await assert.rejects(obligations.cancel(actor,orderId,input,'Bearer test'),{code:'CASE_PERMISSION_REQUIRED'});
+          await pool.query("UPDATE order_service.case_permissions SET revoked_at=now() WHERE user_id=$1 AND permission='orders.cancel_blocked'",[actor.id]);await syncTestAdmin(pool,actor);
+          await assert.rejects(obligations.cancel(actor,orderId,input,'Bearer test'),{code:'ADMIN_PERMISSION_REQUIRED'});
         }finally{await new Promise(resolve=>server.close(resolve));}
       });
     }finally{

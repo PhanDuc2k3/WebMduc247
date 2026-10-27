@@ -1,4 +1,10 @@
 import { PlatformAdminError, adminId, adminQuery } from '../../../packages/contracts/platform-admin.js';
+import { permissionGrants, requireAdminPermission } from '../../../packages/contracts/admin-rbac.js';
+
+export const casePermissionAliases={
+  'exception.request':'refunds.create','exception.approve':'refunds.approve','case.decision.approve':'cases.approve',
+  'case.appeal.review':'cases.approve','aftersales.intervene':'returns.execute','orders.cancel_blocked':'orders.execute',
+};
 
 export const caseError = (status,code,message) => new PlatformAdminError(status,code,message);
 export function caseText(value,min=10,max=2000) {
@@ -23,10 +29,17 @@ export function caseDue(value,{future=true}={}) {
   return new Date(value).toISOString();
 }
 export async function casePermission(db,userId,permission) {
+  if(typeof userId==='object'){
+    if(casePermissionAliases[permission])return permissionGrants(userId,casePermissionAliases[permission]).length>0;
+    userId=userId.id;
+  }
   return Boolean((await db.query(`SELECT 1 FROM order_service.case_permissions WHERE user_id=$1 AND permission=$2
     AND revoked_at IS NULL AND (expires_at IS NULL OR expires_at>now())`,[userId,permission])).rowCount);
 }
 export async function requireCasePermission(db,userId,permission) {
+  if(typeof userId==='object'&&casePermissionAliases[permission]){
+    requireAdminPermission(userId,casePermissionAliases[permission]);return;
+  }
   if(!await casePermission(db,userId,permission)) throw caseError(403,'CASE_PERMISSION_REQUIRED','Chưa được cấp quyền riêng cho thao tác này.');
 }
 export async function caseAudit(db,id,user,action,reason,metadata={}) {

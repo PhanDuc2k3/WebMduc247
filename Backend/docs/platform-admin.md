@@ -1,5 +1,7 @@
 # Admin Platform
 
+> Cập nhật phân quyền 27/10/2026: [RBAC, chuyển đổi tài khoản và CLI](admin-rbac.md) thay các hướng dẫn cấp quyền bằng `platform_admin`/`case-permission.mjs` bên dưới. Quyền nghiệp vụ hiện do Identity quản lý; CLI CASE chỉ còn quản lý giám sát chứng cứ.
+
 Khu vực `/admin` dùng Identity, Catalog và Order V2 với dữ liệu PostgreSQL thật, độc lập với `VITE_USE_MOCK_DATA`. Giữ nhận diện MDUC247, layout desktop/mobile và luồng đăng nhập/refresh/logout hiện có. Các component admin đời cũ không được đưa vào router mới.
 
 ## Chức năng đã nối frontend–backend

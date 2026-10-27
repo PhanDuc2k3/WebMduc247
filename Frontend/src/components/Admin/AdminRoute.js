@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { LoaderCircle, ShieldX } from 'lucide-react';
 import { identityApi, IdentityApiError } from '../../api/identityApi';
-import { isPlatformAdmin } from '../../pages/Admin/adminPolicy';
+import { isPlatformAdmin, canVisitAdminPath } from '../../pages/Admin/adminPolicy';
 import { AdminSessionContext } from '../../pages/Admin/AdminSession';
 export default function AdminRoute({ children }) {
     const location = useLocation();
@@ -34,5 +34,7 @@ export default function AdminRoute({ children }) {
         return _jsx(Navigate, { to: `/admin/login?next=${encodeURIComponent(location.pathname + location.search)}`, replace: true });
     if (!isPlatformAdmin(state.user))
         return _jsxs("div", { className: "pa-access", children: [_jsx(ShieldX, { size: 44 }), _jsx("h1", { children: "T\u00E0i kho\u1EA3n ch\u01B0a c\u00F3 quy\u1EC1n qu\u1EA3n tr\u1ECB" }), _jsxs("p", { children: ["B\u1EA1n \u0111ang \u0111\u0103ng nh\u1EADp b\u1EB1ng ", state.user.email, ". Khu v\u1EF1c n\u00E0y d\u00E0nh cho qu\u1EA3n tr\u1ECB vi\u00EAn s\u00E0n MDUC247."] }), _jsx(Link, { className: "pa-button", to: "/admin/login", children: "D\u00F9ng t\u00E0i kho\u1EA3n qu\u1EA3n tr\u1ECB" }), _jsx(Link, { to: "/", children: "V\u1EC1 c\u1EEDa h\u00E0ng" })] });
+    if (!canVisitAdminPath(state.user, location.pathname))
+        return _jsxs("div", { className: "pa-access", children: [_jsx(ShieldX, { size: 38 }), _jsx("h1", { children: "B\u1EA1n ch\u01B0a c\u00F3 quy\u1EC1n m\u1EDF m\u1EE5c n\u00E0y" }), _jsx(Link, { to: "/admin", children: "V\u1EC1 trang qu\u1EA3n tr\u1ECB" })] });
     return _jsx(AdminSessionContext.Provider, { value: state.user, children: children });
 }

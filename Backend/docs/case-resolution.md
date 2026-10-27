@@ -1,5 +1,7 @@
 # CASE-009 đến CASE-018 — xử lý, quyết định và kháng nghị
 
+> Cập nhật phân quyền 27/10/2026: [RBAC, chuyển đổi tài khoản và CLI](admin-rbac.md) thay các hướng dẫn cấp quyền bằng `platform_admin`/`case-permission.mjs` bên dưới. Quyền nghiệp vụ hiện do Identity quản lý; CLI CASE chỉ còn quản lý giám sát chứng cứ.
+
 Nghiệm thu local ngày 26/10/2026. Tài liệu tiếp nối [CASE-001 đến 008](admin-cases.md); không có thao tác xác nhận tiền đã chuyển chỉ dựa trên quyết định của nhân viên.
 
 ## Các màn hình

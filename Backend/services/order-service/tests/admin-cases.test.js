@@ -1,3 +1,4 @@
+import {testAdmin,syncTestAdmin} from './admin-fixture.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
@@ -30,9 +31,9 @@ test('case management and exceptional permissions deny buyers before SQL',async(
 test('ADM-CASE-001..008 PostgreSQL workflows', {skip:!process.env.ADMIN_RETURNS_TEST_DATABASE_URL},async t=>{
   const url=new URL(process.env.ADMIN_RETURNS_TEST_DATABASE_URL);if(!url.pathname.endsWith('_test'))throw Error('Dedicated *_test database required');
   const pool=new pg.Pool({connectionString:url.href});const fixtureIds=[];
-  const admin={id:randomUUID(),roles:['platform_admin']},approver={id:randomUUID(),roles:['platform_admin']},seller=randomUUID(),stranger=randomUUID();
-  const order={pool,inventory:async path=>{if(!path.endsWith(seller))throw Object.assign(Error('No membership'),{status:403});return {role:'owner'};},
-    identity:async()=>({record:{id:approver.id,status:'active',roles:['platform_admin']},items:[{id:admin.id,fullName:'Test admin'},{id:approver.id,fullName:'Test approver'}]})};
+  const admin=testAdmin(),approver=testAdmin(),seller=randomUUID(),stranger=randomUUID();
+  const order={pool,adminActor:id=>syncTestAdmin(pool,id===admin.id?admin:id===approver.id?approver:testAdmin(id)),inventory:async path=>{if(!path.endsWith(seller))throw Object.assign(Error('No membership'),{status:403});return {role:'owner'};},
+    identity:async()=>({record:{id:approver.id,status:'active',roles:['platform_admin']},items:[{id:admin.id,name:'Test admin'},{id:approver.id,name:'Test approver'}]})};
   const returns=new ReturnService(order),cases=new CaseService(returns),returnAdmin=new ReturnAdminService(returns);
   const future=()=>new Date(Date.now()+3600000).toISOString();
   const payload=f=>({reason:'The delivered product was damaged',reasonCode:'DAMAGED',resolution:'REFUND',items:[{orderItemId:f.itemId,quantity:1}]});
@@ -51,12 +52,12 @@ test('ADM-CASE-001..008 PostgreSQL workflows', {skip:!process.env.ADMIN_RETURNS_
   }
   async function newReturn(f,quantity=1){return (await returns.create(f.buyerId,f.orderId,{...payload(f),items:[{orderItemId:f.itemId,quantity}]})).returnRequest.id;}
   async function grant(user,permission){await pool.query(`INSERT INTO order_service.case_permissions(user_id,permission,granted_by,reason)
-    VALUES($1,$2,'test','Dedicated integration test permission') ON CONFLICT(user_id,permission) DO UPDATE SET revoked_at=NULL`,[user.id,permission]);}
+    VALUES($1,$2,'test','Dedicated integration test permission') ON CONFLICT(user_id,permission) DO UPDATE SET revoked_at=NULL`,[user.id,permission]);await syncTestAdmin(pool,user);}
   async function take(id,user=admin){const detail=await cases.detail(user,id);return cases.assign(user,id,{assigneeId:user.id,dueAt:future(),version:detail.record.caseVersion,reason:'Assign case for scoped investigation'});}
   try{
     await t.test('005 CLI grants/revokes scoped permissions with an immutable operation history',async()=>{
       const userId=randomUUID(),script=fileURLToPath(new URL('../scripts/case-permission.mjs',import.meta.url));
-      const input={userId,permission:'exception.request',operator:'Case QA operator',reason:'Authorize the isolated exception intake test'};
+      const input={userId,permission:'evidence.supervise',operator:'Case QA operator',reason:'Authorize the isolated evidence supervision test'};
       try{
         for(const action of ['grant','revoke']){
           const result=spawnSync(process.execPath,[script],{env:{...process.env,ORDER_DATABASE_URL:url.href},input:JSON.stringify({...input,action}),encoding:'utf8'});
@@ -64,6 +65,9 @@ test('ADM-CASE-001..008 PostgreSQL workflows', {skip:!process.env.ADMIN_RETURNS_
         }
         assert.ok((await pool.query('SELECT revoked_at FROM order_service.case_permissions WHERE user_id=$1',[userId])).rows[0].revoked_at);
         assert.equal((await pool.query('SELECT count(*)::int AS n FROM order_service.case_permission_history WHERE user_id=$1',[userId])).rows[0].n,2);
+        const moved=spawnSync(process.execPath,[script],{env:{...process.env,ORDER_DATABASE_URL:url.href},input:JSON.stringify({...input,permission:'exception.request',action:'grant'}),encoding:'utf8'});
+        assert.notEqual(moved.status,0);assert.match(moved.stderr,/owned by Identity RBAC/);
+        assert.equal((await pool.query("SELECT 1 FROM order_service.case_permissions WHERE user_id=$1 AND permission='exception.request'",[userId])).rowCount,0);
       }finally{await pool.query('DELETE FROM order_service.case_permission_history WHERE user_id=$1',[userId]);await pool.query('DELETE FROM order_service.case_permissions WHERE user_id=$1',[userId]);}
     });
     await t.test('001 list/filter returns and disputes by reason, shop, assignee, deadline and payment',async()=>{
@@ -106,7 +110,7 @@ test('ADM-CASE-001..008 PostgreSQL workflows', {skip:!process.env.ADMIN_RETURNS_
     });
     await t.test('005 explicit permissions, independent approval, original delivery intact and no duplicate consumption',async()=>{
       const f=await fixture(10),input={shopOrderId:f.orderId,payload:payload(f),reason:'Approve consideration because seller supplied delayed evidence',clientRequestId:randomUUID()};
-      await assert.rejects(cases.requestException(admin,input),{code:'CASE_PERMISSION_REQUIRED'});
+      await assert.rejects(cases.requestException(admin,input),{code:'ADMIN_PERMISSION_REQUIRED'});
       await grant(admin,'exception.request');await grant(admin,'exception.approve');await grant(approver,'exception.approve');
       const [one,two]=await Promise.all([cases.requestException(admin,input),cases.requestException(admin,input)]);assert.equal(one.id,two.id);
       await assert.rejects(cases.decideException(admin,one.id,{action:'approve',version:1,reason:'A requester cannot approve own exception'}),{code:'EXCEPTION_SELF_APPROVAL'});
@@ -123,11 +127,11 @@ test('ADM-CASE-001..008 PostgreSQL workflows', {skip:!process.env.ADMIN_RETURNS_
     await t.test('005 revoking requester or approver permission blocks pending approval',async()=>{
       const f=await fixture(9),input={shopOrderId:f.orderId,payload:payload(f),reason:'Exception permission will be rechecked before execution',clientRequestId:randomUUID()};
       const proposal=await cases.requestException(admin,input);
-      await pool.query("UPDATE order_service.case_permissions SET revoked_at=now() WHERE user_id=$1 AND permission='exception.request'",[admin.id]);
-      await assert.rejects(cases.decideException(approver,proposal.id,{action:'approve',version:1,reason:'Permission revocation must block this execution'}),{code:'CASE_PERMISSION_REQUIRED'});
+      await pool.query("UPDATE order_service.case_permissions SET revoked_at=now() WHERE user_id=$1 AND permission='exception.request'",[admin.id]);await syncTestAdmin(pool,admin);
+      await assert.rejects(cases.decideException(approver,proposal.id,{action:'approve',version:1,reason:'Permission revocation must block this execution'}),{code:'ADMIN_PERMISSION_REQUIRED'});
       await grant(admin,'exception.request');
-      await pool.query("UPDATE order_service.case_permissions SET revoked_at=now() WHERE user_id=$1 AND permission='exception.approve'",[approver.id]);
-      await assert.rejects(cases.decideException(approver,proposal.id,{action:'approve',version:1,reason:'Revoked approver permission must block execution'}),{code:'CASE_PERMISSION_REQUIRED'});
+      await pool.query("UPDATE order_service.case_permissions SET revoked_at=now() WHERE user_id=$1 AND permission='exception.approve'",[approver.id]);await syncTestAdmin(pool,approver);
+      await assert.rejects(cases.decideException(approver,proposal.id,{action:'approve',version:1,reason:'Revoked approver permission must block execution'}),{code:'ADMIN_PERMISSION_REQUIRED'});
       await grant(approver,'exception.approve');
       await cases.decideException(approver,proposal.id,{action:'reject',version:1,reason:'The exception cannot be justified from supplied evidence'});
       assert.equal((await pool.query('SELECT status FROM order_service.return_exceptions WHERE id=$1',[proposal.id])).rows[0].status,'REJECTED');
@@ -211,7 +215,7 @@ test('ADM-CASE-001..008 PostgreSQL workflows', {skip:!process.env.ADMIN_RETURNS_
     });
     await t.test('assignment and information request audits are atomic under database failure',async()=>{
       const f=await fixture(),id=await newReturn(f);
-      const broken=new CaseService({pool:{connect:async()=>{const db=await pool.connect();return {release:()=>db.release(),query:(sql,args)=>{
+      const broken=new CaseService({pool:{query:(...args)=>pool.query(...args),connect:async()=>{const db=await pool.connect();return {release:()=>db.release(),query:(sql,args)=>{
         if(sql.includes('INSERT INTO order_service.case_events'))throw Error('Audit failure');return db.query(sql,args);
       }};}}});
       await assert.rejects(broken.assign(admin,id,{assigneeId:admin.id,dueAt:future(),reason:'This assignment must roll back on audit failure',version:1}),/Audit failure/);

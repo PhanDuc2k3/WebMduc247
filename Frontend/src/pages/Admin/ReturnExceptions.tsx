@@ -1,7 +1,7 @@
 import {useEffect,useState,type FormEvent} from 'react';
 import {Link,useNavigate} from 'react-router-dom';
 import {adminCaseApi,type OrderReturnContext,type ReturnException} from '../../api/adminCaseApi';
-import {AdminDialog,date} from './AdminUi';
+import {AdminDialog,date,money} from './AdminUi';
 import './admin-cases.css';
 
 const errorMessage=(cause:unknown)=>cause instanceof Error?cause.message:'Chưa thể xử lý ngoại lệ.';
@@ -31,6 +31,7 @@ export default function ReturnExceptions(){
     </div></section>}
     <section className="pa-panel pa-exceptions-panel" style={{marginTop:20}}><div className="pa-panel-title"><div><h2>Ngoại lệ gần đây</h2><p>Tối đa 100 hồ sơ: đề nghị của bạn và hồ sơ được phép duyệt.</p></div></div><div className="pa-table-scroll"><table className="pa-table"><thead><tr><th>Đề nghị / đơn</th><th>Căn cứ</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody>{items.map(row=><tr key={row.id}><td>#{row.id.slice(0,8)}<small>Đơn #{row.shopOrderId.slice(0,8)} · {date(row.createdAt,true)}</small></td><td className="pa-audit-reason">{row.reason}{row.decisionReason&&<small>Kết luận: {row.decisionReason}</small>}</td><td>{row.status==='REQUESTED'?'Chờ duyệt':row.status==='REJECTED'?'Đã từ chối':'Đã duyệt và tạo yêu cầu trả hàng'}</td><td>{row.resultReturnId&&<Link className="pa-text-link" to={`/admin/returns?id=${row.resultReturnId}`}>Xem yêu cầu trả hàng</Link>}{row.status==='REQUESTED'&&canApprove&&row.requestedBy!==caps?.userId&&<div className="pa-dialog-actions"><button className="pa-button pa-button-light" onClick={()=>{setSelected(row);setAction('reject');setDecision('');}}>Từ chối</button><button className="pa-button" onClick={()=>{setSelected(row);setAction('approve');setDecision('');}}>Xem và duyệt</button></div>}</td></tr>)}{!items.length&&<tr><td colSpan={4} className="pa-empty-cell">{loading?'Đang tải ngoại lệ…':'Chưa có ngoại lệ trong phạm vi của bạn.'}</td></tr>}</tbody></table></div></section>
     {selected&&<AdminDialog title={action==='approve'?'Duyệt ngoại lệ ngoài hạn':'Từ chối ngoại lệ'} close={()=>setSelected(null)} busy={busy}><form className="pa-detail pa-case-form" onSubmit={decide}><p className="pa-case-wide">Đơn #{selected.shopOrderId.slice(0,8)} · Người đề nghị {selected.requestedBy.slice(0,8)}. {selected.reason}</p>
+      {selected.approvalSnapshot?<p className="pa-case-wide">Số tiền dự kiến: <strong>{money(selected.approvalSnapshot.amountMinor)}</strong> · Người nhận hoàn: {selected.approvalSnapshot.recipientId} · Phiên bản đơn: {selected.approvalSnapshot.orderVersion}.</p>:<p className="pa-error pa-case-wide">Đề nghị cũ thiếu snapshot tài chính. Cần từ chối và lập đề nghị mới.</p>}
       <p className="pa-case-wide">Mốc giao gốc: {date(selected.deliveredAt,true)} · Chính sách {selected.policyVersion}.</p><p className="pa-case-wide">Nội dung của khách: {selected.payload.reason}</p>
       <div className="pa-case-wide">{selected.payload.items.map(item=><p key={item.orderItemId}>{reviewContext?.items.find(product=>product.id===item.orderItemId)?.name||item.orderItemId} · Lượng đề nghị trả: {item.quantity}</p>)}</div>
       {reviewError&&<p className="pa-error pa-case-wide" role="alert">{reviewError}</p>}

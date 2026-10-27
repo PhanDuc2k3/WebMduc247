@@ -1,3 +1,4 @@
+import {effectiveAdminAccess} from '../../../packages/contracts/admin-rbac.js';
 import test from 'node:test';import assert from 'node:assert/strict';import {randomUUID} from 'node:crypto';import pg from 'pg';
 import {StorefrontService} from '../src/storefront.service.js';import {StoreService} from '../src/store.service.js';import {CatalogService} from '../src/catalog.service.js';
 import {defaultStorefront,validateStorefront,internalTarget} from '../src/storefront-config.js';
@@ -20,7 +21,7 @@ test('PostgreSQL storefront drafts, publication, references and rollback remain 
  {skip:!process.env.STOREFRONT_TEST_DATABASE_URL},async t=>{
   const url=new URL(process.env.STOREFRONT_TEST_DATABASE_URL);if(!url.pathname.endsWith('_test'))throw Error('Use a dedicated *_test database');
   const pool=new pg.Pool({connectionString:url.href}),stores=new StoreService(pool),catalog=new CatalogService(pool,stores),cms=new StorefrontService(catalog);
-  const actor={id:randomUUID(),roles:['platform_admin']},storeId=randomUUID(),productId=randomUUID(),variantId=randomUUID();
+  const actor={id:randomUUID(),roles:['platform_admin'],adminAccess:effectiveAdminAccess([{role:'content_editor',scope:{}}])},storeId=randomUUID(),productId=randomUUID(),variantId=randomUUID();
   let categoryId;const tag=randomUUID().slice(0,8),snapshot=(await pool.query('SELECT * FROM catalog.storefront_settings WHERE id=1')).rows[0];
   try{
     await pool.query(`INSERT INTO catalog.stores(id,owner_user_id,slug,name,status) VALUES($1,$2,$3,'CMS test store','active')`,[storeId,actor.id,'cms-'+tag]);

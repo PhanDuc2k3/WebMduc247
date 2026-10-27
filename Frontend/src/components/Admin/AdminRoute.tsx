@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import { LoaderCircle, ShieldX } from 'lucide-react';
 import { identityApi, IdentityApiError, type IdentityUser } from '../../api/identityApi';
-import { isPlatformAdmin } from '../../pages/Admin/adminPolicy';
+import { isPlatformAdmin, canVisitAdminPath } from '../../pages/Admin/adminPolicy';
 import { AdminSessionContext } from '../../pages/Admin/AdminSession';
 
 export default function AdminRoute({ children }: { children: ReactNode }) {
@@ -32,5 +32,6 @@ export default function AdminRoute({ children }: { children: ReactNode }) {
   if (!isPlatformAdmin(state.user)) return <div className="pa-access"><ShieldX size={44} /><h1>Tài khoản chưa có quyền quản trị</h1>
     <p>Bạn đang đăng nhập bằng {state.user.email}. Khu vực này dành cho quản trị viên sàn MDUC247.</p>
     <Link className="pa-button" to="/admin/login">Dùng tài khoản quản trị</Link><Link to="/">Về cửa hàng</Link></div>;
+  if(!canVisitAdminPath(state.user,location.pathname))return <div className="pa-access"><ShieldX size={38}/><h1>Bạn chưa có quyền mở mục này</h1><Link to="/admin">Về trang quản trị</Link></div>;
   return <AdminSessionContext.Provider value={state.user}>{children}</AdminSessionContext.Provider>;
 }

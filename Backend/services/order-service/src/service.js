@@ -33,6 +33,14 @@ export class OrderService {
   async identity(path, bearer) {
     return this.remote(new URL('/api/v2' + path, this.identityUrl), { headers: { Authorization: bearer } });
   }
+  async adminActor(id) {
+    if(!uuid.test(String(id))||!process.env.ADMIN_AUTHORIZATION_TOKEN)
+      throw new OrderError(503,'ADMIN_AUTHORIZATION_UNAVAILABLE','Chưa cấu hình xác thực quyền giữa các dịch vụ.');
+    const result=await this.remote(new URL('/api/v2/internal/admin-authorization/'+id,this.identityUrl),{
+      headers:{'X-Admin-Authorization-Token':process.env.ADMIN_AUTHORIZATION_TOKEN},
+    });
+    return result.user;
+  }
   async inventory(path, method = 'GET', input) {
     return this.remote(new URL('/api/v2/inventory' + path, this.catalogUrl), {
       method, headers: { 'X-Inventory-Token': this.inventoryToken, ...(input ? { 'Content-Type': 'application/json' } : {}) },

@@ -1,5 +1,7 @@
 # Nghiệm thu ADM-CORE-001 đến ADM-CORE-015
 
+> Cập nhật phân quyền 27/10/2026: [RBAC, chuyển đổi tài khoản và CLI](admin-rbac.md) thay các hướng dẫn cấp quyền bằng `platform_admin`/`case-permission.mjs` bên dưới. Quyền nghiệp vụ hiện do Identity quản lý; CLI CASE chỉ còn quản lý giám sát chứng cứ.
+
 Ngày chốt: **27/10/2026, Asia/Bangkok**. Phạm vi: các API và màn Admin Platform hiện có (Identity, Catalog, Storefront, Order, CASE), cùng đường đi hoàn tiền qua Payment. Đây là nghiệm thu phát triển local; module mới phải tiếp tục tuân thủ các quy tắc này.
 
 ## Đối chiếu yêu cầu

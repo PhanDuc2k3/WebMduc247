@@ -11,6 +11,7 @@ export type CaseDetail={record:CaseRecord;links:{id:string;kind:CaseKind}[];canV
 export type CaseFilters={kind?:CaseKind;q?:string;status?:string;reasonCode?:string;storeId?:string;assigneeId?:string;due?:string;
   paymentMethod?:string;from?:string;to?:string;page?:number;limit?:number};
 export type ReturnException={id:string;shopOrderId:string;requestedBy:string;reason:string;status:string;version:number;
+  approvalSnapshot?:{amountMinor:number;recipientId:string;orderVersion:number}|null;
   payload:ReturnPayload;deliveredAt:string;approvedBy:string|null;decisionReason:string|null;resultReturnId:string|null;policyVersion:string;createdAt:string};
 export type OrderReturnContext={orderId:string;buyerId:string;status:string;deliveredAt:string|null;policyVersion:string;windowDays:number;
   items:{id:string;name:string;quantity:number}[]};

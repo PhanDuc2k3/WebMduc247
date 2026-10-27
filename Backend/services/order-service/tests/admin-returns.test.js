@@ -1,3 +1,4 @@
+import {testAdmin,syncTestAdmin} from './admin-fixture.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
@@ -6,7 +7,7 @@ import pg from 'pg';
 import { ReturnService } from '../src/return.service.js';
 import { ReturnAdminService, returnAdminFilters, returnAdminDecision } from '../src/return-admin.service.js';
 
-const admin = {id:randomUUID(),roles:['platform_admin']};
+const admin = testAdmin();
 const buyer = {id:randomUUID(),roles:['buyer']};
 const validId = randomUUID();
 
@@ -43,7 +44,7 @@ test('PostgreSQL admin returns: state, evidence, audit atomicity, concurrency an
     const url = new URL(process.env.ADMIN_RETURNS_TEST_DATABASE_URL);
     if(!url.pathname.endsWith('_test')) throw new Error('Tests require a dedicated *_test database.');
     const pool = new pg.Pool({connectionString:url.href});
-    const order = {pool,inventory:async () => {throw Error('No seller membership in this fixture');}};
+    const order = {pool,adminActor:async()=>admin,inventory:async () => {throw Error('No seller membership in this fixture');}};
     const returns = new ReturnService(order);
     const service = new ReturnAdminService(returns);
     const fixtures = [];
@@ -121,7 +122,7 @@ test('PostgreSQL admin returns: state, evidence, audit atomicity, concurrency an
       await t.test('audit failure rolls back return status, public history and outbox',async () => {
         const data = await fixture();
         await service.decide(admin,data.id,{action:'review',version:1,reason:'Prepare for audit atomicity check'});
-        const wrapped = {pool:{connect:async () => {
+        const wrapped = {order,pool:{query:(...args)=>pool.query(...args),connect:async () => {
           const db = await pool.connect();
           return {release:() => db.release(),query:(sql,args) => {
             if(sql.includes('INSERT INTO order_service.admin_return_actions')) throw Error('Simulated audit failure');
@@ -166,7 +167,7 @@ test('PostgreSQL admin returns: state, evidence, audit atomicity, concurrency an
           VALUES($1,$2,$3,$4,'image/png',$5)`,[imageId,data.id,buyer.id,`admin-return-test/${imageId}`,Buffer.from('private')]);
         await pool.query('UPDATE order_service.admin_cases SET assignee_id=$1 WHERE id=$2',[admin.id,data.id]);
         const access=await service.cases.issueEvidence(admin,data.id,imageId,'Review this private return evidence');
-        const wrapped = new ReturnAdminService({pool:{connect:async()=>{
+        const wrapped = new ReturnAdminService({pool:{query:(...args)=>pool.query(...args),connect:async()=>{
           const db=await pool.connect();return {release:()=>db.release(),query:(sql,args)=>{
             if(sql.includes('INSERT INTO order_service.admin_return_actions'))throw Error('Evidence audit failed');
             return db.query(sql,args);

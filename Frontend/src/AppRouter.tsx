@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Layout from "./Layouts/Layout";
 import PlatformAdminShell from "./pages/Admin/PlatformAdminShell";
+import StaffAccess from "./pages/Admin/StaffAccess";
+import PlatformApprovals from "./pages/Admin/PlatformApprovals";
 import AdminLogin from "./pages/Admin/AdminLogin";
 import PlatformOverview from "./pages/Admin/PlatformOverview";
 import PlatformRecords from "./pages/Admin/PlatformRecords";
@@ -91,6 +93,8 @@ const AppRouter = () => (
 
     <Route path="/s" element={<Navigate to="/login" />} />
     <Route path="/admin" element={<AdminRoute><PlatformAdminShell /></AdminRoute>}>
+      <Route path="staff-access" element={<StaffAccess/>}/>
+      <Route path="approvals" element={<PlatformApprovals/>}/>
       <Route index element={<PlatformOverview />} />
       <Route path="users" element={<PlatformRecords key="users" resource="users" />} />
       <Route path="stores" element={<PlatformRecords key="stores" resource="stores" />} />

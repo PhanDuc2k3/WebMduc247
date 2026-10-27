@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { adminRequestId } from '../../api/adminCommand';
 import { adminCaseApi } from '../../api/adminCaseApi';
+import ApprovalSelector from './ApprovalSelector';
+import {useAdminSession} from './AdminSession';
+import {hasAdminPermission} from './adminPolicy';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowUpRight, ChevronLeft, ChevronRight, Eye, LockKeyhole, Package, RefreshCw, Search, ShieldCheck, Store, UnlockKeyhole, Users } from 'lucide-react';
 import { platformAdminApi, type AdminHistory, type AdminPage, type AdminRecord, type AdminResource } from '../../api/platformAdminApi';
@@ -22,6 +25,8 @@ const filters:Record<AdminResource,[string,string][]>={
 };
 
 export function RecordDialog({resource,id,close,changed}:{resource:AdminResource;id:string;close:()=>void;changed:()=>void}) {
+  const user=useAdminSession(),canModerate=hasAdminPermission(user,`${resource}.moderate`);
+  const [approvalId,setApprovalId]=useState('');
   const attempt=useRef({signature:'',requestId:''});
   const [canCancelBlocked,setCanCancelBlocked]=useState(false);
   useEffect(()=>{let active=true;if(resource==='orders')void adminCaseApi.capabilities().then(result=>{if(active)setCanCancelBlocked(result.permissions.includes('orders.cancel_blocked'));}).catch(()=>{if(active)setCanCancelBlocked(false);});return()=>{active=false;};},[resource]);
@@ -43,8 +48,8 @@ export function RecordDialog({resource,id,close,changed}:{resource:AdminResource
     setBusy(true);setError('');
     try{
       const action=suspended?'restore':'suspend';
-      const requestId=adminRequestId(attempt.current,{resource,id,action,reason:reason.trim(),version:record.version});
-      if(resource==='orders')await platformAdminApi.cancelBlockedSeller(record,reason.trim(),requestId);
+      const requestId=adminRequestId(attempt.current,{resource,id,action,reason:reason.trim(),version:record.version,approvalId});
+      if(resource==='orders')await platformAdminApi.cancelBlockedSeller(record,reason.trim(),requestId,approvalId||undefined);
       else await platformAdminApi.moderate(resource,record,action,reason.trim(),requestId);
       setNotice(resource==='orders'?'Đã hủy đơn. Nghĩa vụ tiền được xử lý theo phương thức thanh toán của đơn.':suspended?'Đã khôi phục đối tượng.':'Đã áp dụng thao tác và lưu nhật ký.');
       setConfirm(false);setReason('');setRevision(value=>value+1);changed();
@@ -86,6 +91,7 @@ export function RecordDialog({resource,id,close,changed}:{resource:AdminResource
             {entry.reason&&<p>{entry.reason}</p>}<small>{entry.actor_name||(entry.actor_id?`Quản trị viên ${entry.actor_id.slice(0,8)}`:'Hệ thống')}</small></li>)}</ol>:<p className="pa-detail-muted">Chưa có thao tác được ghi nhận.</p>}</div>
         {protectedAdmin&&<p className="pa-detail-muted">Tài khoản quản trị được bảo vệ. Việc cấp hoặc thu hồi quyền thực hiện qua quy trình quản trị riêng.</p>}
         {confirm?<form className="pa-confirm-box" onSubmit={moderate}><h3>Xác nhận {actionTitle.toLowerCase()}</h3>
+          {resource==='orders'&&<ApprovalSelector operation="cancel_paid_order" targetId={record.id} version={record.version} value={approvalId} onChange={setApprovalId}/>}
           {resource==='orders'&&<p>Chỉ áp dụng khi shop hoặc tài khoản chủ shop bị sàn khóa và đơn chưa bàn giao vận chuyển. Hệ thống sẽ trả tồn và chuyển nghĩa vụ hoàn tiền sang Payment.</p>}
           {resource!=='orders'&&<p>{suspended?resource==='users'?'Tài khoản sẽ được gỡ khóa. Email chưa xác minh vẫn cần được xác minh trước khi đăng nhập.':'Đối tượng sẽ được gỡ chặn của sàn. Trạng thái bán/nhận đơn vẫn phụ thuộc thiết lập của shop.':resource==='users'?'Tài khoản sẽ không thể đăng nhập và các phiên hiện tại sẽ bị thu hồi.':'Đối tượng sẽ ngừng xuất hiện hoặc nhận giao dịch mới trên sàn. Các đơn đã tạo vẫn được giữ nguyên.'}</p>}
           {!suspended&&['users','stores'].includes(resource)&&<p>Đơn hàng, hoàn tiền và hồ sơ hỗ trợ đang mở vẫn cần được xử lý. Dùng hàng chờ hồ sơ và quyền can thiệp hậu mãi khi người bán không thể tiếp tục.</p>}
@@ -93,7 +99,7 @@ export function RecordDialog({resource,id,close,changed}:{resource:AdminResource
           <div className="pa-dialog-actions"><button type="button" className="pa-button pa-button-light" onClick={()=>setConfirm(false)} disabled={busy}>Hủy</button>
             <button type="submit" className={`pa-button ${suspended?'':'pa-button-danger'}`} disabled={busy||reason.trim().length<8}>{busy?'Đang xử lý…':'Xác nhận'}</button></div></form>:
           <div className="pa-dialog-actions">
-            {resource!=='orders'&&!protectedAdmin&&<button type="button" className={`pa-button ${suspended?'':'pa-button-danger'}`} onClick={()=>{setConfirm(true);setReason('');setError('');setNotice('');}}>
+            {resource!=='orders'&&canModerate&&!protectedAdmin&&<button type="button" className={`pa-button ${suspended?'':'pa-button-danger'}`} onClick={()=>{setConfirm(true);setReason('');setError('');setNotice('');}}>
               {suspended?<UnlockKeyhole size={16}/>:<LockKeyhole size={16}/>} {actionTitle}</button>}
             {resource==='stores'&&!suspended&&record.status==='active'&&<Link to={`/store/${record.slug}`} target="_blank" rel="noreferrer" className="pa-button pa-button-light">Trang cửa hàng <ArrowUpRight size={15}/></Link>}
             {resource==='products'&&!suspended&&['active','published'].includes(record.status)&&<Link to={`/products/${record.id}`} target="_blank" rel="noreferrer" className="pa-button pa-button-light">Trang sản phẩm <ArrowUpRight size={15}/></Link>}

@@ -1,8 +1,11 @@
-import { randomUUID } from 'node:crypto';
-import { OrderError } from './service.js';
-import { normalizeImage } from '../../../packages/contracts/image-validation.js';
-import { scanWithClamAv } from '../../identity-service/src/services/clam-scanner.service.js';
-import { requireCasePermission, caseError, caseAudit } from './case-contract.js';
+import {randomUUID} from 'node:crypto';
+import {OrderError} from './service.js';
+import {normalizeImage} from '../../../packages/contracts/image-validation.js';
+import {scanWithClamAv} from '../../identity-service/src/services/clam-scanner.service.js';
+import {caseError, caseAudit} from './case-contract.js';
+import {requireAdminScope} from '../../../packages/contracts/admin-rbac.js';
+import {approvalFingerprint} from '../../../packages/contracts/approval-binding.js';
+import {verifyApprovalBinding, requireIndependentApprover} from '../../../packages/contracts/approval-binding.js';
 
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const fail=(status,code,message)=>new OrderError(status,code,message);
@@ -28,6 +31,57 @@ export class ReturnService {
   constructor(order,options={}){this.order=order;this.pool=order.pool;
     this.paymentUrl=options.paymentUrl||'http://127.0.0.1:5104';this.paymentToken=options.paymentToken||'';
     this.scanner=options.scanner||null;}
+  async approvalSnapshot(db,order,input){
+    const ordered=(await db.query('SELECT id,quantity,line_total_minor FROM order_service.order_items WHERE order_id=$1 ORDER BY id',[order.id])).rows;
+    const previous=(await db.query(`SELECT ri.order_item_id,sum(ri.quantity)::int AS used_quantity,sum(ri.eligible_refund_minor)::bigint AS used_amount
+      FROM order_service.return_items ri JOIN order_service.return_requests r ON r.id=ri.request_id
+      WHERE r.shop_order_id=$1 AND r.status<>'REJECTED' AND r.reservation_released_at IS NULL GROUP BY ri.order_item_id`,[order.id])).rows;
+    let amount=0;
+    for(const line of input.items){const item=ordered.find(i=>i.id===line.orderItemId),prior=previous.find(p=>p.order_item_id===line.orderItemId);
+      if(!item)throw fail(400,'ITEM_NOT_IN_ORDER','Sản phẩm không thuộc đơn hàng.');
+      amount+=proratedRefund(Number(item.line_total_minor),item.quantity,line.quantity,prior?.used_quantity||0,Number(prior?.used_amount||0));
+    }
+    if(!previous.length&&ordered.every(item=>input.items.some(i=>i.orderItemId===item.id&&i.quantity===item.quantity))&&['DAMAGED','WRONG_ITEM'].includes(input.reasonCode))amount+=Number(order.shipping_estimate_minor);
+    return {orderId:order.id,orderVersion:Number(order.version),recipientId:order.user_id,storeId:order.store_id,
+      amountMinor:amount,lines:ordered.map(i=>({...i,line_total_minor:String(i.line_total_minor)})),
+      reservations:previous.map(i=>({...i,used_amount:String(i.used_amount)})).sort((a,b)=>a.order_item_id.localeCompare(b.order_item_id)),payload:input};
+  }
+  async verifyAdminRefundAuthorization(row){
+    const resource={storeId:row.store_id,caseKind:'RETURN'};
+    if(row.exception_id){
+      const exception=(await this.pool.query('SELECT * FROM order_service.return_exceptions WHERE id=$1',[row.exception_id])).rows[0];
+      if(!exception?.approval_snapshot||exception.status!=='CONSUMED'||exception.buyer_id!==row.buyer_id||
+        Number(exception.approval_snapshot.amountMinor)!==Number(row.eligible_refund_minor)||exception.policy_version!==row.policy_version)
+        throw caseError(409,'EXCEPTION_SNAPSHOT_STALE','Ngoại lệ không còn khớp dữ liệu hoàn tiền.');
+      requireIndependentApprover(exception.requested_by,exception.approved_by);
+      const creator=await this.order.adminActor(exception.requested_by),approver=await this.order.adminActor(exception.approved_by);
+      requireAdminScope(creator,'refunds.create',{...resource,assigneeId:creator.id});
+      requireAdminScope(approver,'refunds.approve',{...resource,assigneeId:approver.id});
+    }
+    const authorization=row.admin_authorization;if(!authorization)return;
+    if(authorization.amountMinor!==Number(row.eligible_refund_minor)||authorization.recipientId!==row.buyer_id||
+      authorization.storeId!==row.store_id||authorization.policyVersion!==row.policy_version)
+      throw caseError(409,'APPROVAL_STALE','Dữ liệu hoàn tiền khác với dữ liệu đã được duyệt.');
+    const actor=await this.order.adminActor(authorization.actorId);
+    const context=(await this.pool.query('SELECT assignee_id FROM order_service.admin_cases WHERE id=$1',[row.id])).rows[0];
+    const scope={...resource,assigneeId:context?.assignee_id};
+    requireAdminScope(actor,'refunds.execute',scope);
+    if(!authorization.approvalId){
+      if(!Number.isSafeInteger(authorization.approvalThresholdMinor)||Number(row.eligible_refund_minor)>authorization.approvalThresholdMinor)
+        throw caseError(409,'INDEPENDENT_APPROVAL_REQUIRED','Cần duyệt độc lập trước khi hoàn tiền.');
+      return;
+    }
+    const approval=(await this.pool.query('SELECT * FROM order_service.admin_approvals WHERE id=$1',[authorization.approvalId])).rows[0];
+    if(!approval||approval.status!=='EXECUTED')throw caseError(409,'APPROVAL_REQUIRED','Không có biên nhận thực thi hợp lệ.');
+    if(approval.snapshot.amountMinor!==Number(row.eligible_refund_minor)||approval.snapshot.recipientId!==row.buyer_id||
+      approval.snapshot.storeId!==row.store_id||approval.snapshot.returnPolicyVersion!==row.policy_version)
+      throw caseError(409,'APPROVAL_STALE','Đối tượng hoàn tiền khác snapshot đã duyệt.');
+    if(authorization.approvalPolicyVersion!==approval.policy_version)throw caseError(409,'APPROVAL_STALE','Biên nhận chính sách không khớp với lần thực thi.');
+    verifyApprovalBinding(approval,{operation:'return_approve',targetId:row.id,snapshot:approval.snapshot,policyVersion:approval.policy_version});
+    requireIndependentApprover(approval.created_by,approval.reviewed_by);
+    requireAdminScope(await this.order.adminActor(approval.created_by),'refunds.create',scope);
+    requireAdminScope(await this.order.adminActor(approval.reviewed_by),'refunds.approve',scope);
+  }
   dto(row){return {id:row.id,shopOrderId:row.shop_order_id,buyerId:row.buyer_id,storeId:row.store_id,
     reason:row.reason,reasonCode:row.reason_code,resolution:row.resolution,status:row.status,version:row.version,
     sellerResponse:row.seller_response,adminResponse:row.admin_response || null,eligibleRefundMinor:Number(row.eligible_refund_minor),
@@ -54,12 +108,17 @@ export class ReturnService {
       if(expired&&!exceptionContext) throw fail(409,'RETURN_WINDOW_CLOSED',`Đã quá ${policy.window_days} ngày từ khi giao hàng.`);
       if(exceptionContext){
         const exception=(await db.query('SELECT * FROM order_service.return_exceptions WHERE id=$1 FOR UPDATE',[exceptionContext.id])).rows[0];
-        await requireCasePermission(db,exceptionContext.actorId,'exception.approve');
+        const approver=await this.order.adminActor(exceptionContext.actorId);
+        requireAdminScope(approver,'refunds.approve',{storeId:order.store_id,caseKind:'RETURN',assigneeId:approver.id});
         if(!expired||!exception||exception.status!=='REQUESTED'||exception.version!==exceptionContext.version||
           exception.shop_order_id!==shopOrderId||exception.buyer_id!==buyerId||exception.requested_by===exceptionContext.actorId||
           buyerId===exceptionContext.actorId||JSON.stringify(validateReturnInput(exception.request_payload))!==JSON.stringify(input))
           throw caseError(409,'INVALID_RETURN_EXCEPTION','Ngoại lệ không hợp lệ, đã được xử lý hoặc người duyệt không độc lập.');
-        await requireCasePermission(db,exception.requested_by,'exception.request');
+        const creator=await this.order.adminActor(exception.requested_by);
+        requireAdminScope(creator,'refunds.create',{storeId:order.store_id,caseKind:'RETURN',assigneeId:creator.id});
+        const snapshot=await this.approvalSnapshot(db,order,input);
+        if(!exception.approval_snapshot||approvalFingerprint(snapshot)!==approvalFingerprint(exception.approval_snapshot))
+          throw caseError(409,'EXCEPTION_SNAPSHOT_STALE','Đơn, số tiền, người nhận hoặc phiên bản đã thay đổi; cần lập đề nghị ngoại lệ mới.');
         if(exception.policy_version!==policy.id||new Date(exception.delivered_at_snapshot).getTime()!==new Date(delivered.occurred_at).getTime())
           throw caseError(409,'EXCEPTION_POLICY_CHANGED','Mốc giao hàng hoặc chính sách đã thay đổi; cần lập đề nghị mới.');
       }
@@ -216,6 +275,7 @@ export class ReturnService {
         WHERE i.request_id=r.id ORDER BY created_at DESC,id DESC LIMIT 1)='ACCEPTED'`,[id])).rows[0];
     if(!row||row.payment_method==='COD'||row.payment_status!=='PAID'||!this.paymentToken||
       row.refund_attempts>=3) return;
+    await this.verifyAdminRefundAuthorization(row);
     if(row.payment_method==='MOMO'&&Number(row.eligible_refund_minor)<1000){
       await this.pool.query(`UPDATE order_service.return_requests SET refund_attempts=3,
         last_refund_error='Provider minimum; manual refund required' WHERE id=$1`,[id]);
@@ -239,12 +299,13 @@ export class ReturnService {
   }
   async refundContext(id){
     if(!uuid.test(String(id))) throw fail(404,'RETURN_NOT_FOUND','Không tìm thấy yêu cầu.');
-    const row=(await this.pool.query(`SELECT r.id,r.shop_order_id,r.status,r.eligible_refund_minor,o.group_id,
+    const row=(await this.pool.query(`SELECT r.*,o.group_id,
       ((SELECT condition FROM order_service.return_inspections i WHERE i.request_id=r.id ORDER BY created_at DESC,id DESC LIMIT 1)='ACCEPTED') AS receipt_verified
       FROM order_service.return_requests r JOIN order_service.orders o ON o.id=r.shop_order_id
       WHERE r.id=$1`,[id])).rows[0];
     if(!row) throw fail(404,'RETURN_NOT_FOUND','Không tìm thấy yêu cầu.');
     if(row.status==='REFUND_PENDING'&&!row.receipt_verified)throw fail(409,'REFUND_NOT_READY','Chưa xác minh nhận hàng/kiểm tra chấp nhận.');
+    if(row.status==='REFUND_PENDING')await this.verifyAdminRefundAuthorization(row);
     return {id:row.id,shopOrderId:row.shop_order_id,groupId:row.group_id,status:row.status,
       amountMinor:Number(row.eligible_refund_minor)};
   }

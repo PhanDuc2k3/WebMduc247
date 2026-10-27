@@ -20,6 +20,7 @@ export function loadConfig(env = process.env) {
     mailKey: Buffer.from(required(env, 'IDENTITY_MAIL_KEY'), 'base64'),
     trustedProxyIp: env.TRUSTED_PROXY_IP || null,
     catalogSyncSecret: env.CATALOG_SYNC_SECRET || null,
+    adminAuthorizationToken: env.ADMIN_AUTHORIZATION_TOKEN || null,
     notificationIdentityToken: env.NOTIFICATION_IDENTITY_TOKEN || null,
     eventWebhookUrl: env.IDENTITY_EVENT_WEBHOOK_URL || null,
     eventWebhookToken: env.IDENTITY_EVENT_WEBHOOK_TOKEN || null,

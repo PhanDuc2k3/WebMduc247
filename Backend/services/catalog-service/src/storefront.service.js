@@ -1,6 +1,7 @@
-import {requirePlatformAdmin,PlatformAdminError,adminMutation} from '../../../packages/contracts/platform-admin.js';
+import {requireAdminScope} from '../../../packages/contracts/admin-rbac.js';
+import {PlatformAdminError, adminMutation} from '../../../packages/contracts/platform-admin.js';
 import {adminCommand} from '../../../packages/contracts/admin-command.js';
-import {defaultStorefront,flattenStorefrontCategories,resolveStorefront,validateStorefront} from './storefront-config.js';
+import {defaultStorefront, flattenStorefrontCategories, resolveStorefront, validateStorefront} from './storefront-config.js';
 export class StorefrontService {
   constructor(catalog){this.catalog=catalog;this.pool=catalog.pool;}
   async categories(){return flattenStorefrontCategories((await this.catalog.categories()).categories);}
@@ -10,7 +11,7 @@ export class StorefrontService {
     const row=result.rows[0];return {layout:resolveStorefront(row?.published||defaultStorefront(categories),categories),configured:Boolean(row?.published),version:Number(row?.version||0),publishedAt:row?.published_at||null};
   }
   async read(actor){
-    requirePlatformAdmin(actor);
+    requireAdminScope(actor,'storefront.read',{});
     const [categories,result,history]=await Promise.all([this.categories(),this.pool.query('SELECT * FROM catalog.storefront_settings WHERE id=1'),
       this.pool.query('SELECT id,actor_id,action,version,created_at,reason,read_version,correlation_id FROM catalog.storefront_changes ORDER BY id DESC LIMIT 20')]);
     const row=result.rows[0],draft=row?.draft||row?.published||defaultStorefront(categories);
@@ -31,7 +32,7 @@ export class StorefrontService {
     return config;
   }
   async save(actor,input,publish=false){
-    requirePlatformAdmin(actor);
+    requireAdminScope(actor,publish?'storefront.approve':'storefront.update',{});
     if(!input||Object.keys(input).some(key=>!['version','config','reason','requestId'].includes(key)))
       throw new PlatformAdminError(400,'INVALID_STOREFRONT','Phiên bản cấu hình không hợp lệ.');
     const mutation=adminMutation(input), validated=validateStorefront(input.config);
@@ -49,9 +50,9 @@ export class StorefrontService {
       return {draft:config,version,publishedAt:result.rows[0].published_at,change:change.rows[0]};
     }));
   }
-  async preview(actor){requirePlatformAdmin(actor);const data=await this.read(actor);return this.catalog.home(data.draft);}
+  async preview(actor){requireAdminScope(actor,'storefront.read',{});const data=await this.read(actor);return this.catalog.home(data.draft);}
   async choices(actor,query){
-    requirePlatformAdmin(actor);
+    requireAdminScope(actor,'storefront.read',{});
     if(!query||Object.keys(query).some(key=>!['resource','q'].includes(key))||!['products','stores'].includes(query.resource)||
       typeof (query.q||'')!=='string'||(query.q||'').length>100||/[\u0000-\u001f]/.test(query.q||''))throw new PlatformAdminError(400,'INVALID_FILTER','Bộ lọc lựa chọn không hợp lệ.');
     const q=(query.q||'').trim();
@@ -59,7 +60,7 @@ export class StorefrontService {
     return {items:(found.products||found.stores).map(item=>({id:item.id,name:item.name}))};
   }
   async createCategory(actor,input){
-    requirePlatformAdmin(actor);
+    requireAdminScope(actor,'storefront.create',{});
     if(!input||Object.keys(input).some(key=>!['name','slug','parentId','version','reason','requestId'].includes(key)))throw new PlatformAdminError(400,'INVALID_CATEGORY','Dữ liệu danh mục không hợp lệ.');
     const mutation=adminMutation(input);
     return this.catalog.transaction(db=>adminCommand(db,'catalog',actor,'storefront:category',input,async()=>{

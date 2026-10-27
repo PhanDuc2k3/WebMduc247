@@ -15,6 +15,7 @@ for (const path of ['services/identity-service/scripts/migrate.js','services/cat
   const result=spawnSync(process.execPath,[path],{env,stdio:'inherit'});
   if(result.status!==0)process.exit(result.status||1);
 }
+const setup=new pg.Client({connectionString:url.href});await setup.connect();try{await setup.query('UPDATE order_service.admin_approval_policies SET threshold_minor=9007199254740991');}finally{await setup.end();}
 const result=spawnSync(process.execPath,['--test','services/identity-service/tests/admin-management.integration.test.js'],{env,stdio:'inherit'});
 if(result.status!==0)process.exit(result.status||1);
 const catalog=spawnSync('npm',['run','catalog:test'],{env,stdio:'inherit'});

@@ -1,3 +1,4 @@
+import {testAdmin,syncTestAdmin} from './admin-fixture.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
@@ -22,20 +23,20 @@ test('case resolution mutations deny buyers before database access',async()=>{
 test('ADM-CASE-009..018 PostgreSQL and HTTP',{skip:!process.env.ADMIN_RETURNS_TEST_DATABASE_URL},async t=>{
   const url=new URL(process.env.ADMIN_RETURNS_TEST_DATABASE_URL);if(!url.pathname.endsWith('_test'))throw Error('Dedicated *_test database required');
   const pool=new pg.Pool({connectionString:url.href}),fixtures=[],storeStates=new Map(),inboxIds=[];
-  const actors=[0,1,2].map(()=>({id:randomUUID(),roles:['platform_admin']})),[admin,reviewer,appealReviewer]=actors,seller=randomUUID();
-  const order={pool,transaction:async fn=>{const db=await pool.connect();try{await db.query('BEGIN');const result=await fn(db);await db.query('COMMIT');return result;}catch(e){await db.query('ROLLBACK');throw e;}finally{db.release();}},
+  const actors=[0,1,2].map(()=>testAdmin()),[admin,reviewer,appealReviewer]=actors,seller=randomUUID();
+  const order={pool,adminActor:async id=>{const actor=await syncTestAdmin(pool,actors.find(a=>a.id===id)||testAdmin(id));return {...actor,status:id===seller&&[...storeStates.values()].some(s=>s.accountBlocked)?'suspended':'active'};},transaction:async fn=>{const db=await pool.connect();try{await db.query('BEGIN');const result=await fn(db);await db.query('COMMIT');return result;}catch(e){await db.query('ROLLBACK');throw e;}finally{db.release();}},
     inventory:async path=>{const storeId=path.split('/')[2],state=storeStates.get(storeId);if(!state)throw Object.assign(Error('Unknown store'),{status:404});
       if(path.endsWith('/aftersales-status'))return state;
       if(path.endsWith(seller)&&!state.platformSuspended&&!state.accountBlocked)return {role:'owner'};
       throw Object.assign(Error('Not a member'),{status:403});},
-    identity:async path=>({record:{id:path.split('/').at(-1),status:path.endsWith(seller)&&[...storeStates.values()].some(s=>s.accountBlocked)?'suspended':'active',roles:['platform_admin']}})};
+    identity:async path=>({items:actors.map(a=>({id:a.id,name:'Test staff'})),record:{id:path.split('/').at(-1),status:path.endsWith(seller)&&[...storeStates.values()].some(s=>s.accountBlocked)?'suspended':'active',roles:['platform_admin']}})};
   const returns=new ReturnService(order,{scanner:async()=>{}}),cases=new CaseService(returns),service=new CaseResolutionService(cases),adminReturns=new ReturnAdminService(returns),lifecycle=new OrderLifecycle(order);
   const basis={responsibleParty:'SELLER',policyVersion:'CASE_RESOLUTION_V1',basisSummary:'Review original snapshot, inspection and supplied party statements.',evidenceRefs:[]};
   const cv=async id=>(await cases.detail(admin,id)).record.caseVersion;
   const rv=async id=>(await pool.query('SELECT version FROM order_service.return_requests WHERE id=$1',[id])).rows[0].version;
   const future=()=>new Date(Date.now()+86400000).toISOString();
   async function grant(user,permission){await pool.query(`INSERT INTO order_service.case_permissions(user_id,permission,granted_by,reason)
-    VALUES($1,$2,'resolution-test','Dedicated resolution integration test') ON CONFLICT(user_id,permission) DO UPDATE SET revoked_at=NULL`,[user.id,permission]);}
+    VALUES($1,$2,'resolution-test','Dedicated resolution integration test') ON CONFLICT(user_id,permission) DO UPDATE SET revoked_at=NULL`,[user.id,permission]);await syncTestAdmin(pool,user);}
   async function fixture({online=false,storeId=randomUUID(),categoryId=randomUUID(),quantity=2}={}){
     const [orderId,buyerId,groupId,quoteId,itemId]=Array.from({length:5},()=>randomUUID()),f={orderId,buyerId,groupId,quoteId,itemId,storeId,categoryId};fixtures.push(f);
     storeStates.set(storeId,{ownerId:seller,memberIds:[seller],platformSuspended:false,accountBlocked:false});
@@ -119,7 +120,7 @@ test('ADM-CASE-009..018 PostgreSQL and HTTP',{skip:!process.env.ADMIN_RETURNS_TE
       const account=await fixture(),accountReturn=await newReturn(account);await decide(accountReturn);await returns.transition(account.buyerId,accountReturn,'ship',{expectedVersion:await rv(accountReturn)});
       storeStates.get(account.storeId).accountBlocked=true;
       const accountProof=await service.statement(account.buyerId,accountReturn,{requestedResolution:'REFUND',content:'Verified courier receipt for a case whose seller account is suspended',clientRequestId:randomUUID()});
-      await assert.rejects(service.intervene(reviewer,accountReturn,{action:'inspect',version:await cv(accountReturn),returnVersion:await rv(accountReturn),reason:'No intervention without the specifically granted permission',condition:'ACCEPTED',evidenceRefs:[{kind:'STATEMENT',id:accountProof.id}]},'test'),{code:'CASE_PERMISSION_REQUIRED'});
+      await assert.rejects(service.intervene(reviewer,accountReturn,{action:'inspect',version:await cv(accountReturn),returnVersion:await rv(accountReturn),reason:'No intervention without the specifically granted permission',condition:'ACCEPTED',evidenceRefs:[{kind:'STATEMENT',id:accountProof.id}]},'test'),{code:'ADMIN_PERMISSION_REQUIRED'});
       await service.intervene(admin,accountReturn,{action:'inspect',version:await cv(accountReturn),returnVersion:await rv(accountReturn),reason:'Continue verified aftersales while the seller account stays suspended',condition:'ACCEPTED',evidenceRefs:[{kind:'STATEMENT',id:accountProof.id}]},'test');
       assert.equal(storeStates.get(account.storeId).accountBlocked,true);assert.equal(storeStates.get(account.storeId).platformSuspended,false);
       storeStates.get(account.storeId).accountBlocked=false;
@@ -135,7 +136,7 @@ test('ADM-CASE-009..018 PostgreSQL and HTTP',{skip:!process.env.ADMIN_RETURNS_TE
       const f=await fixture(),id=await dispute(f),statement=await service.statement(f.buyerId,id,{requestedResolution:'REFUND',content:'Buyer requests examination of damage at delivery',clientRequestId:randomUUID()});
       const p=await service.propose(admin,id,{version:await cv(id),reason:'Assess both parties before deciding responsibility',...basis,evidenceRefs:[{kind:'STATEMENT',id:statement.id}],outcome:'NO_COMPENSATION'});
       await grant(admin,'case.decision.approve');await assert.rejects(service.review(admin,id,p.id,{action:'publish',version:await cv(id),reason:'A proposer must never approve their own dispute'}),{code:'INDEPENDENT_REVIEW_REQUIRED'});
-      await grant({id:seller},'case.decision.approve');await assert.rejects(service.review({id:seller,roles:['platform_admin']},id,p.id,{action:'publish',version:await cv(id),reason:'A shop member is not an independent reviewer'}),{code:'PARTY_REVIEW_FORBIDDEN'});
+      await grant({id:seller},'case.decision.approve');await assert.rejects(service.review(await syncTestAdmin(pool,testAdmin(seller)),id,p.id,{action:'publish',version:await cv(id),reason:'A shop member is not an independent reviewer'}),{code:'PARTY_REVIEW_FORBIDDEN'});
       await service.statement(seller,id,{requestedResolution:'REJECT_CLAIM',content:'Seller provides additional information about packing',clientRequestId:randomUUID()});
       await assert.rejects(service.review(reviewer,id,p.id,{action:'publish',version:await cv(id),reason:'New information must invalidate the previous proposal'}),{code:'DECISION_SNAPSHOT_STALE'});
       await service.review(admin,id,p.id,{action:'withdraw',version:await cv(id),reason:'Withdraw stale proposal without overwriting old facts'});
@@ -180,7 +181,7 @@ test('ADM-CASE-009..018 PostgreSQL and HTTP',{skip:!process.env.ADMIN_RETURNS_TE
       await assert.rejects(service.publicEvidence(randomUUID(),id,uploaded.id),{status:403});
       const access=await service.imageGrant(admin,id,uploaded.id,'Inspect scanned evidence before proposing a decision'),token=new URL(access.url,'http://test').searchParams.get('grant');
       assert.equal((await service.image(admin,id,uploaded.id,token)).mimeType,'image/webp');await assert.rejects(service.image(admin,id,uploaded.id,token),{code:'EVIDENCE_GRANT_EXPIRED'});
-      const brokenCases=new CaseService({pool:{connect:async()=>{const db=await pool.connect();return {release:()=>db.release(),query:(sql,args)=>{if(sql.includes('INSERT INTO order_service.case_events'))throw Error('Audit unavailable');return db.query(sql,args);}};}}});
+      const brokenCases=new CaseService({pool:{query:(...args)=>pool.query(...args),connect:async()=>{const db=await pool.connect();return {release:()=>db.release(),query:(sql,args)=>{if(sql.includes('INSERT INTO order_service.case_events'))throw Error('Audit unavailable');return db.query(sql,args);}};}}});
       await assert.rejects(new CaseResolutionService(brokenCases).propose(admin,id,{version:await cv(id),reason:'This proposal must roll back if the audit is unavailable',...basis,evidenceRefs:[{kind:'CASE_EVIDENCE',id:uploaded.id}],outcome:'NO_COMPENSATION'}),/Audit unavailable/);
       assert.equal((await service.detail(admin,id)).decisions.length,0);
     });

@@ -37,7 +37,7 @@ export const platformAdminApi = {
   recentOrders: () => authorizedRequest<RecentOrders>(`${order}/api/v2/admin/orders/recent`),
   list:(resource:AdminResource,filters:AdminFilters)=>entityRequest<AdminPage<AdminRecord>>(resource,`?${queryString(filters)}`),
   detail:(resource:AdminResource,id:string)=>entityRequest<{record:AdminRecord;history:AdminHistory[]}>(resource,`/${encodeURIComponent(id)}`),
-  cancelBlockedSeller:(record:AdminRecord,reason:string,requestId:string)=>entityRequest<{id:string;status:string;version:number}>('orders',`/${record.id}/cancel-blocked-seller`,{method:'POST',body:{version:record.version,reason,requestId}}),
+  cancelBlockedSeller:(record:AdminRecord,reason:string,requestId:string,approvalId?:string)=>entityRequest<{id:string;status:string;version:number}>('orders',`/${record.id}/cancel-blocked-seller`,{method:'POST',body:{version:record.version,reason,requestId,...(approvalId?{approvalId}:{})}}),
   moderate:(resource:Exclude<AdminResource,'orders'>,record:AdminRecord,action:'suspend'|'restore',reason:string,requestId:string)=>
     entityRequest<{id:string;status:string;version:number}>(resource,`/${record.id}/status`,{method:'PATCH',body:{action,reason,version:record.version,requestId}}),
   audit:(source:'identity'|'catalog',filters:AdminFilters)=>source==='identity'?

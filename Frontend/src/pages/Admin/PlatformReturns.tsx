@@ -9,6 +9,9 @@ import './admin-returns.css';
 import CaseWorkspace from './CaseWorkspace';
 import CaseQueueFilters from './CaseQueueFilters';
 import type {EvidenceRef} from '../../api/caseResolutionApi';
+import ApprovalSelector from './ApprovalSelector';
+import {useAdminSession} from './AdminSession';
+import {hasAdminPermission} from './adminPolicy';
 
 const statuses = [
   ['REQUESTED','Mới tiếp nhận'],['UNDER_REVIEW','Đang xem xét'],['APPROVED','Đã chấp nhận'],
@@ -44,6 +47,8 @@ function Evidence({requestId,id,createdAt}:{requestId:string;id:string;createdAt
 }
 
 function ReturnDetail({id,close,changed}:{id:string;close:()=>void;changed:()=>void}) {
+  const user=useAdminSession(),canModerate=hasAdminPermission(user,'returns.moderate');
+  const [approvalId,setApprovalId]=useState('');
   const [data,setData] = useState<AdminReturnDetail|null>(null), [loading,setLoading] = useState(true);
   const [error,setError] = useState(''), [notice,setNotice] = useState(''), [revision,setRevision] = useState(0);
   const [action,setAction] = useState<ReturnDecision|null>(null), [reason,setReason] = useState('');
@@ -60,7 +65,7 @@ function ReturnDetail({id,close,changed}:{id:string;close:()=>void;changed:()=>v
     event.preventDefault(); if(!data || !action || busy || mustRefresh) return;
     setBusy(true); setError(''); setNotice('');
     try {
-      await adminReturnApi.decide(data.record,action,reason.trim(),action==='review'?undefined:{responsibleParty,policyVersion:'CASE_RESOLUTION_V1',basisSummary:basisSummary.trim(),evidenceRefs});
+      await adminReturnApi.decide(data.record,action,reason.trim(),action==='review'?undefined:{responsibleParty,policyVersion:'CASE_RESOLUTION_V1',basisSummary:basisSummary.trim(),evidenceRefs},approvalId||undefined);
       setNotice('Đã cập nhật yêu cầu và lưu lịch sử quản trị.'); setRevision(value => value+1); changed();
     } catch(cause) {
       setError(message(cause));
@@ -117,12 +122,13 @@ function ReturnDetail({id,close,changed}:{id:string;close:()=>void;changed:()=>v
             {!data.audit.length && <li>Chưa có thao tác quản trị.</li>}
           </ol>
         </section>
-        {!action && <div className="pa-dialog-actions">
+        {!action && canModerate && <div className="pa-dialog-actions">
           <button className="pa-button pa-button-light" disabled={busy} onClick={() => setRevision(value => value+1)}><RefreshCw size={15}/>Làm mới chi tiết</button>
           {record.status === 'REQUESTED' && record.resolution === 'REFUND' && <button className="pa-button" disabled={mustRefresh || busy} onClick={() => setAction('review')}>Bắt đầu xem xét</button>}
           {record.status === 'UNDER_REVIEW' && record.resolution === 'REFUND' && <><button className="pa-button pa-button-danger" disabled={mustRefresh || busy} onClick={() => setAction('reject')}>Từ chối yêu cầu</button><button className="pa-button" disabled={mustRefresh || busy} onClick={() => setAction('approve')}>Chấp nhận trả hàng</button></>}
         </div>}
         {action && <form className="pa-confirm-box" onSubmit={decide}><h3>{actions[action]}</h3>
+          {action==='approve'&&<ApprovalSelector operation="return_approve" targetId={record.id} version={record.version} value={approvalId} onChange={setApprovalId}/>}
           <p>Áp dụng cho yêu cầu #{record.id.slice(0,8).toUpperCase()} của {record.storeName}. Nội dung phản hồi được lưu trong lịch sử và hiển thị cho người mua, cửa hàng.</p>
           <label htmlFor="return-decision-reason">Lý do / phản hồi (10–500 ký tự)<textarea id="return-decision-reason" value={reason} onChange={event => setReason(event.target.value)} minLength={10} maxLength={500} required disabled={busy}/></label>
           {action!=='review'&&<><label>Bên chịu trách nhiệm<select id="return-responsible-party" required value={responsibleParty} onChange={event=>setResponsibleParty(event.target.value)}><option value="">Chọn bên</option><option value="BUYER">Người mua</option><option value="SELLER">Shop</option><option value="CARRIER">Vận chuyển</option><option value="PLATFORM">Sàn</option><option value="UNDETERMINED">Chưa xác định</option></select></label><p className="pa-detail-muted">Policy xử lý: CASE_RESOLUTION_V1. Chính sách trả hàng gốc được giữ nguyên trong snapshot.</p><label>Cơ sở bằng chứng / lý do thiếu chứng cứ<textarea id="return-basis-summary" required minLength={10} maxLength={2000} value={basisSummary} onChange={event=>setBasisSummary(event.target.value)}/></label>{record.evidence?.map(image=><label key={image.id}><input type="checkbox" checked={evidenceRefs.some(ref=>ref.id===image.id)} onChange={event=>setEvidenceRefs(current=>event.target.checked?[...current,{kind:'RETURN_EVIDENCE',id:image.id}]:current.filter(ref=>ref.id!==image.id))}/> Dùng ảnh #{image.id.slice(0,8)} làm căn cứ</label>)}</>}
