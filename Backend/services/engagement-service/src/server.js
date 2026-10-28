@@ -8,6 +8,7 @@ import { NotificationService } from './notification.service.js';
 import nodemailer from 'nodemailer';
 import { Server } from 'socket.io';
 import { attachNotificationSockets } from './notification.socket.js';
+import {storeRatingSummary} from './store-admin.service.js';
 
 const port=Number(process.env.ENGAGEMENT_PORT||5105);
 const databaseUrl=process.env.ENGAGEMENT_DATABASE_URL||process.env.IDENTITY_DATABASE_URL;
@@ -160,6 +161,8 @@ export function createHandler(promotion=service,reviewService=reviews,notifier=n
       if(['POST','PATCH','DELETE'].includes(req.method)&&origin!==frontendOrigin)
         throw new PromotionError(403,'ORIGIN_DENIED','Origin không hợp lệ.');
       const user=await promotion.identity(req.headers.authorization);
+      const adminStoreRating=/^\/admin\/stores\/([0-9a-f-]{36})\/rating-summary$/i.exec(path);
+      if(req.method==='GET'&&adminStoreRating)return send(res,200,await storeRatingSummary(promotion.pool,user,adminStoreRating[1],Object.fromEntries(url.searchParams)));
       if(req.method==='GET'&&path==='/notifications')
         return send(res,200,await notifier.list(user.id,Object.fromEntries(url.searchParams)));
       if(req.method==='GET'&&path==='/notifications/unread-count')

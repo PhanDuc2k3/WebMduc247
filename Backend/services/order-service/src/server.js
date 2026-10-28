@@ -12,6 +12,11 @@ import { CaseService } from './case.service.js';
 import {CaseResolutionService} from './case-resolution.service.js';
 import { PlatformAdminError } from '../../../packages/contracts/platform-admin.js';
 import {AdminApprovalService} from './admin-approval.service.js';
+import {WorkQueueService} from './work-queue.service.js';
+import {WorkQueueWorker} from './work-queue.worker.js';
+import {userOrderImpact} from './user-impact.service.js';
+import {storeOrderImpact} from './store-admin.service.js';
+import {requireAdminPermission} from '../../../packages/contracts/admin-rbac.js';
 
 const port = Number(process.env.ORDER_PORT || 5103);
 const dbUrl = process.env.ORDER_DATABASE_URL || process.env.IDENTITY_DATABASE_URL;
@@ -67,13 +72,14 @@ async function imageBody(req){
   return Buffer.concat(chunks);
 }
 export function createHandler(orderService = service, orderLifecycle = lifecycle, returnService = returns) {
+  const queueWorker=new WorkQueueWorker(orderService);
   return async (req,res) => {
     const origin = req.headers.origin;
     if (origin === frontendOrigin) {
       res.setHeader('Access-Control-Allow-Origin',origin);
       res.setHeader('Access-Control-Allow-Credentials','true');
       res.setHeader('Access-Control-Allow-Headers','Content-Type, Authorization');
-      res.setHeader('Access-Control-Allow-Methods','GET, POST, PATCH, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Methods','GET, POST, PUT, PATCH, DELETE, OPTIONS');
       res.setHeader('Vary','Origin');
     }
     if (req.method === 'OPTIONS') { res.writeHead(origin === frontendOrigin ? 204 : 403); res.end(); return; }
@@ -137,13 +143,34 @@ export function createHandler(orderService = service, orderLifecycle = lifecycle
         if (req.method==='GET' && quote) return send(res,200,await orderLifecycle.promotionQuoteStatus(quote[1]));
         throw new OrderError(404,'NOT_FOUND','Không tìm thấy API nội bộ.');
       }
-      if (['POST','PATCH','DELETE'].includes(req.method) && origin !== frontendOrigin)
+      if (['POST','PUT','PATCH','DELETE'].includes(req.method) && origin !== frontendOrigin)
         throw new OrderError(403,'ORIGIN_DENIED','Origin không hợp lệ.');
       if (!/^Bearer\s+\S+$/i.test(req.headers.authorization || ''))
         throw new OrderError(401,'UNAUTHORIZED','Vui lòng đăng nhập.');
       const { user } = await orderService.identity('/auth/me',req.headers.authorization);
       const query = Object.fromEntries(url.searchParams);
       if (path.startsWith('/admin/')) {
+        const storeImpact=/^\/admin\/stores\/([0-9a-f-]{36})\/impact$/i.exec(path);
+        if(req.method==='GET'&&storeImpact)return send(res,200,await storeOrderImpact(orderService.pool,user,storeImpact[1],query));
+        const userImpact=/^\/admin\/user-impact\/([0-9a-f-]{36})$/i.exec(path);
+        if(req.method==='GET'&&userImpact)return send(res,200,await userOrderImpact(orderService,user,userImpact[1],req.headers.authorization));
+        const queue=new WorkQueueService(orderService);
+        const queueRetry=/^\/admin\/work-queue\/retry\/(orders|cases|payment|chat)$/.exec(path);
+        if(req.method==='POST'&&queueRetry){
+          requireAdminPermission(user,{orders:'orders.read',cases:'cases.read',payment:'refunds.read',chat:'moderation.read'}[queueRetry[1]]);
+          return send(res,200,await queueWorker.run(queueRetry[1]));
+        }
+        if(req.method==='GET'&&path==='/admin/work-queue')return send(res,200,await queue.list(user,query));
+        if(req.method==='GET'&&path==='/admin/work-queue/attention')return send(res,200,await queue.attention(user));
+        if(req.method==='GET'&&path==='/admin/work-queue/settings')return send(res,200,await queue.settings(user));
+        if(req.method==='GET'&&path==='/admin/work-queue/notifications')return send(res,200,await queue.notifications(user));
+        const queueRead=/^\/admin\/work-queue\/notifications\/(\d+)\/read$/.exec(path);
+        if(req.method==='POST'&&queueRead)return send(res,200,await queue.markRead(user,queueRead[1]));
+        const queuePolicy=/^\/admin\/work-queue\/settings\/(ORDER|RETURN|TICKET|DISPUTE|REFUND|ABUSE_REPORT)$/.exec(path);
+        if(req.method==='PUT'&&queuePolicy)return send(res,200,await queue.updateSettings(user,queuePolicy[1],await body(req)));
+        const queueItem=/^\/admin\/work-queue\/([0-9a-f-]{36})(\/actions)?$/i.exec(path);
+        if(req.method==='GET'&&queueItem&&!queueItem[2])return send(res,200,await queue.detail(user,queueItem[1]));
+        if(req.method==='POST'&&queueItem&&queueItem[2])return send(res,200,await queue.action(user,queueItem[1],await body(req)));
         const approvals=new AdminApprovalService(orderService);
         if(req.method==='GET'&&path==='/admin/approvals')return send(res,200,await approvals.list(user,query.operation));
         if(req.method==='POST'&&path==='/admin/approvals')return send(res,201,await approvals.create(user,await body(req)));
@@ -209,8 +236,8 @@ export function createHandler(orderService = service, orderLifecycle = lifecycle
         }
         const evidenceAccess=/^\/admin\/returns\/([0-9a-f-]{36})\/evidence\/([0-9a-f-]{36})\/access$/i.exec(path);
         if(req.method==='POST'&&evidenceAccess)return send(res,200,await cases.issueEvidence(user,evidenceAccess[1],evidenceAccess[2],(await body(req)).reason));
-        if(req.method==='GET'&&path==='/admin/orders/summary')return send(res,200,await admin.summary(user));
-        if(req.method==='GET'&&path==='/admin/orders/recent')return send(res,200,await admin.recent(user));
+        if(req.method==='GET'&&path==='/admin/orders/summary')return send(res,200,await admin.summary(user,query));
+        if(req.method==='GET'&&path==='/admin/orders/recent')return send(res,200,await admin.recent(user,query));
         if(req.method==='GET'&&path==='/admin/orders')return send(res,200,await admin.list(user,query));
         const record = /^\/admin\/orders\/([0-9a-f-]{36})$/i.exec(path);
         if(req.method==='GET'&&record)return send(res,200,await admin.detail(user,record[1]));
@@ -309,6 +336,9 @@ export function startServer() {
   const cancellationTimer = setInterval(() => lifecycle.reconcileCancellations().catch(()=>console.error('Cancellation reconciliation failed:')),10000);
   const paymentExpiryTimer = setInterval(() => lifecycle.expireUnpaidOnline().catch(()=>console.error('Unpaid order expiry failed:')),60000);
   const returnTimer = setInterval(() => returns.reconcile().catch(()=>console.error('Return reconciliation failed:')),30000);
+  const queueWorker=new WorkQueueWorker(service);
+  const updateQueue=()=>queueWorker.run().catch(()=>console.error('Admin work queue sync failed'));
+  void updateQueue();const queueTimer=setInterval(updateQueue,30000);
   let publishing = false;
   const outboxTimer = setInterval(() => {
     if (publishing || !eventWebhookUrl) return;
@@ -329,6 +359,7 @@ export function startServer() {
   process.on('SIGTERM',() => { clearInterval(timer); clearInterval(cancellationTimer);
     clearInterval(paymentExpiryTimer);
     clearInterval(returnTimer);
+    clearInterval(queueTimer);
     clearInterval(outboxTimer); clearInterval(notificationTimer);
     server.close(); void pool.end(); });
   return server;

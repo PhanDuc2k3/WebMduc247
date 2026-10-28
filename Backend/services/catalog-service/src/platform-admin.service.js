@@ -1,12 +1,17 @@
-import {requireAdminPermission, adminScopeSql, requireAdminScope} from '../../../packages/contracts/admin-rbac.js';
+import {requireAdminPermission, adminScopeSql, requireAdminScope, permissionGrants} from '../../../packages/contracts/admin-rbac.js';
+import {dashboardRange, dashboardMeta, metricComparison, listDateRange} from '../../../packages/contracts/admin-dashboard.js';
 import {adminId, adminQuery, adminPage, adminMoney, adminAction, checkAdminVersion, PlatformAdminError} from '../../../packages/contracts/platform-admin.js';
 import {adminCommand} from '../../../packages/contracts/admin-command.js';
 import {maskEmail} from '../../../packages/contracts/admin-privacy.js';
+import {requireUserImpact} from '../../../packages/contracts/user-impact.js';
+import {notifyStoreDecision} from './store-governance.service.js';
 
 const storeDto = row => ({ id:row.id,name:row.name,slug:row.slug,description:row.description,
   ownerId:row.owner_user_id,category:row.category,status:row.platform_suspended?'suspended':row.status,
   suspended:row.platform_suspended,suspensionReason:row.platform_suspension_reason,
-  version:Number(row.admin_version),acceptingOrders:row.accepting_orders,productCount:row.product_count,createdAt:row.created_at });
+  version:Number(row.admin_version),acceptingOrders:row.accepting_orders,
+  effectiveAcceptingOrders:row.status==='active'&&!row.platform_suspended&&Boolean(row.accepting_orders),
+  registrationStatus:row.registration_status,reputationBadgeUntil:row.reputation_badge_until,productCount:row.product_count,createdAt:row.created_at });
 const productDto = row => ({ id:row.id,name:row.name,slug:row.slug,brand:row.brand,description:row.description,
   storeName:row.store_name,storeSlug:row.store_slug,categoryName:row.category_name,
   status:row.platform_suspended?'suspended':row.status,publicationStatus:row.status,suspended:row.platform_suspended,
@@ -22,32 +27,43 @@ const variantTotals = `LEFT JOIN LATERAL (SELECT min(CASE WHEN v.sale_price_mino
   WHERE v.product_id=p.id AND v.status='active') vt ON true`;
 
 export class CatalogAdminService {
-  constructor(pool, catalog = null) { this.pool = pool; this.catalog = catalog; }
+  constructor(pool, catalog = null, {impactLoader=null}={}) { this.pool = pool; this.catalog = catalog; this.impactLoader=impactLoader; }
   async transaction(fn) {
     const db = await this.pool.connect();
     try { await db.query('BEGIN'); const result = await fn(db); await db.query('COMMIT'); return result; }
     catch (error) { await db.query('ROLLBACK'); throw error; }
     finally { db.release(); }
   }
-  async summary(user) {
-    requireAdminScope(user,'stores.read',{});
-    requireAdminScope(user,'products.read',{});
-    const [stores, products] = await Promise.all([
-      this.pool.query(`SELECT count(*)::int AS total,count(*) FILTER(WHERE status='active' AND NOT platform_suspended)::int AS active,
-        count(*) FILTER(WHERE status='paused' OR platform_suspended)::int AS paused FROM catalog.stores`),
-      this.pool.query(`SELECT count(*)::int AS total,
+  async summary(user, query = {}) {
+    if (!permissionGrants(user,'stores.read').length && !permissionGrants(user,'products.read').length) requireAdminPermission(user,'stores.read');
+    const range=dashboardRange(query), result={...dashboardMeta(range), comparisons:{}, definitions:{}};
+    for (const resource of ['stores','products']) {
+      if (!permissionGrants(user,`${resource}.read`).length) continue;
+      const args=[range.start,range.end,range.previousStart];
+      const scope=adminScopeSql(user,`${resource}.read`,{storeIds:resource==='stores'?'s.id::text':'s.store_id::text'},args);
+      const {rows}=await this.pool.query(`SELECT count(*)::int AS total,
         count(*) FILTER(WHERE status IN ('active','published') AND NOT platform_suspended)::int AS active,
-        count(*) FILTER(WHERE status='draft')::int AS draft,
-        count(*) FILTER(WHERE status='hidden')::int AS hidden FROM catalog.products`),
-    ]);
-    return { stores: stores.rows[0], products: products.rows[0] };
+        count(*) FILTER(WHERE status='paused' OR platform_suspended)::int AS paused,
+        count(*) FILTER(WHERE status='draft' AND NOT platform_suspended)::int AS draft,
+        count(*) FILTER(WHERE created_at>=$1 AND created_at<$2)::int AS in_period,
+        count(*) FILTER(WHERE created_at>=$3 AND created_at<$1)::int AS previous
+        FROM catalog.${resource} s WHERE ${scope}`,args);
+      result[resource]={...rows[0],inPeriod:rows[0].in_period};
+      result.comparisons[resource]=metricComparison(rows[0].in_period,rows[0].previous);
+      result.definitions[resource]='Đếm theo ngày tạo trong kỳ, gồm mọi trạng thái, trong phạm vi được giao. Bản nháp/tạm ngừng là số tồn hiện tại.';
+    }
+    return result;
   }
+  async userImpact(actor,id){requireUserImpact(actor);adminId(id);const {rows}=await this.pool.query('SELECT id FROM catalog.stores WHERE owner_user_id=$1 ORDER BY id',[id]);return {ownedStoreIds:rows.map(row=>row.id),ownedStores:rows.length};}
   async stores(user, query) {
     requireAdminPermission(user,'stores.read'); const options = adminQuery(query,{statuses:['active','paused','suspended']});
     const args = [options.pattern,options.status];
+    const range=listDateRange(query);args.push(range.start,range.end);
     const scope = adminScopeSql(user,'stores.read',{storeIds:'s.id::text'},args);
-    const where = `WHERE (s.name ILIKE $1 OR s.slug ILIKE $1) AND ${scope} AND ($2='' OR
-      ($2='suspended' AND s.platform_suspended) OR ($2<>'suspended' AND NOT s.platform_suspended AND s.status=$2))`;
+    args.push(query.ownerId||null);const owner=`($${args.length}::uuid IS NULL OR s.owner_user_id=$${args.length})`;
+    const where = `WHERE ${owner} AND ($3::timestamptz IS NULL OR s.created_at>=$3) AND ($4::timestamptz IS NULL OR s.created_at<$4) AND (s.name ILIKE $1 OR s.slug ILIKE $1) AND ${scope} AND ($2='' OR
+      ($2='suspended' AND s.platform_suspended) OR ($2<>'suspended' AND NOT s.platform_suspended AND s.status=$2))
+      AND ($2<>'paused' OR EXISTS(SELECT 1 FROM catalog.store_settings settings WHERE settings.store_id=s.id AND NOT settings.accepting_orders))`;
     const [count,list] = await Promise.all([
       this.pool.query(`SELECT count(*)::int AS total FROM catalog.stores s ${where}`,args),
       this.pool.query(`SELECT s.*,st.accepting_orders,(SELECT count(*)::int FROM catalog.products p WHERE p.store_id=s.id) AS product_count
@@ -59,8 +75,9 @@ export class CatalogAdminService {
   async products(user, query) {
     requireAdminPermission(user,'products.read'); const options = adminQuery(query,{statuses:['active','published','draft','hidden','discontinued','suspended']});
     const args = [options.pattern,options.status];
+    const range=listDateRange(query);args.push(range.start,range.end);
     const scope = adminScopeSql(user,'products.read',{storeIds:'p.store_id::text'},args);
-    const where = `WHERE (p.name ILIKE $1 OR coalesce(p.brand,'') ILIKE $1 OR s.name ILIKE $1) AND ${scope} AND ($2='' OR
+    const where = `WHERE ($3::timestamptz IS NULL OR p.created_at>=$3) AND ($4::timestamptz IS NULL OR p.created_at<$4) AND (p.name ILIKE $1 OR coalesce(p.brand,'') ILIKE $1 OR s.name ILIKE $1) AND ${scope} AND ($2='' OR
       ($2='suspended' AND p.platform_suspended) OR ($2<>'suspended' AND NOT p.platform_suspended AND p.status=$2))`;
     const [count,list] = await Promise.all([
       this.pool.query(`SELECT count(*)::int AS total ${productFrom} ${where}`,args),
@@ -81,7 +98,8 @@ export class CatalogAdminService {
         ${productFrom} ${variantTotals} WHERE p.id=$1 AND ${scope}`,args);
     const row = rows[0];
     if (!row) throw new PlatformAdminError(404,'NOT_FOUND','Không tìm thấy đối tượng.');
-    let record = kind === 'stores' ? {...storeDto(row),contactEmail:maskEmail(row.contact_info?.email)} : productDto(row);
+    let record = kind === 'stores' ? {...storeDto(row),contactEmail:maskEmail(row.contact_info?.email),
+      owner:{id:row.owner_user_id},supportPath:`/admin/cases?storeId=${row.id}`} : productDto(row);
     if (kind === 'products' && this.catalog) {
       const full = await this.catalog.detail(row);
       record = {...record,priceMinor:adminMoney(full.priceMinor),stock:full.stock,imageUrl:full.imageUrl,variants:full.variants,attributes:full.attributes};
@@ -91,7 +109,7 @@ export class CatalogAdminService {
       [id,kind==='stores'?'store':'product']);
     return { record, history:history.rows };
   }
-  async moderate(actor, kind, id, input) {
+  async moderate(actor, kind, id, input, bearer) {
     requireAdminPermission(actor,`${kind}.moderate`); adminId(id); const action = adminAction(input);
     if (!['stores','products'].includes(kind)) throw new PlatformAdminError(404,'NOT_FOUND','Không tìm thấy đối tượng.');
     return this.transaction(async db => {
@@ -106,10 +124,11 @@ export class CatalogAdminService {
         checkAdminVersion(row,action);
         const suspended = action.action === 'suspend';
         if (Boolean(row.platform_suspended) === suspended) throw new PlatformAdminError(409,'INVALID_TRANSITION','Thao tác không phù hợp với trạng thái hiện tại.');
+        const impact=kind==='stores'&&suspended&&this.impactLoader?await this.impactLoader(actor,id,bearer):null;
         let status;
         if (kind === 'stores') {
           const settings = await db.query('SELECT accepting_orders FROM catalog.store_settings WHERE store_id=$1 FOR UPDATE',[id]);
-          status = suspended || !settings.rows[0]?.accepting_orders ? 'paused' : 'active';
+          status = suspended || !settings.rows[0]?.accepting_orders || !['NOT_REQUIRED','APPROVED'].includes(row.registration_status) ? 'paused' : 'active';
         } else {
           status = suspended ? 'hidden' : row.platform_previous_status || 'hidden';
           if (!suspended && ['active','published'].includes(status)) {
@@ -129,6 +148,11 @@ export class CatalogAdminService {
           kind==='stores'?'StoreStatusChanged.v1':'ProductUpdated.v1',
           kind==='stores'?{storeId:id,status,platformSuspended:suspended,correlationId:action.requestId}:{productId:id,storeId:row.store_id,status,platformSuspended:suspended,correlationId:action.requestId},
         ]);
+        if(kind==='stores'){
+          const decision=await notifyStoreDecision(db,row,actor,action.action,action.reason,{impact});
+          await db.query('UPDATE catalog.stores SET current_suspension_decision_id=$2 WHERE id=$1',[id,suspended?decision.id:null]);
+          if(suspended&&row.reputation_badge_until){await db.query('UPDATE catalog.stores SET reputation_badge_until=NULL,reputation_badge_evidence=NULL WHERE id=$1',[id]);await notifyStoreDecision(db,row,actor,'BADGE_REVOKED','Thu hồi badge do cửa hàng bị sàn đình chỉ.');}
+        }
         return {id,status:suspended?'suspended':status,version:Number(row.admin_version)+1};
       });
     });

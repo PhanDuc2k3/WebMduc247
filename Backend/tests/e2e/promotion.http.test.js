@@ -310,6 +310,7 @@ test('Voucher quota, Flash Sale server time, order allocations and cancellation 
       await pool.query('DELETE FROM catalog.store_audit_logs WHERE store_id=$1',[storeId]);
       await pool.query(`DELETE FROM catalog.store_outbox WHERE payload->>'storeId'=$1::text
         OR payload->>'variantId' IN (SELECT id::text FROM catalog.product_variants WHERE store_id=$1::uuid)`,[storeId]);
+      await pool.query('DELETE FROM catalog.store_profile_versions WHERE store_id=$1',[storeId]);
       await pool.query('DELETE FROM catalog.stores WHERE id=$1',[storeId]);
     }
     if(categoryIds.length) await pool.query('DELETE FROM catalog.categories WHERE id=ANY($1::uuid[])',[categoryIds]);

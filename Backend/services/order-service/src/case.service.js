@@ -35,6 +35,7 @@ export class CaseService {
     const args=[f.kind,f.pattern,f.status,f.from,f.to,f.storeId,f.paymentMethod,f.reasonCode,
       f.assigneeId==='unassigned'?null:f.assigneeId||null,f.assigneeId==='unassigned',f.due];
     const scope=adminScopeSql(user,permission,{storeIds:'o.store_id::text',caseKinds:'c.kind',assigneeIds:'c.assignee_id::text'},args);
+    args.push(f.userId);const userFilter=`($${args.length}::uuid IS NULL OR o.user_id=$${args.length})`;
     const where=`${joins} WHERE ${scope} AND c.kind=$1 AND (c.id::text ILIKE $2 OR o.id::text ILIKE $2 OR o.group_id::text ILIKE $2
       OR coalesce(o.store_snapshot_json->>'name','') ILIKE $2 OR coalesce(t.subject,d.subject,'') ILIKE $2)
       AND ($3='' OR coalesce(r.status,t.status,d.status)=$3)
@@ -43,7 +44,7 @@ export class CaseService {
       AND ($6::uuid IS NULL OR o.store_id=$6) AND ($7='' OR o.payment_method=$7)
       AND ($8='' OR coalesce(r.reason_code,t.reason_code,d.reason_code,'OTHER')=$8)
       AND ($9::uuid IS NULL OR c.assignee_id=$9) AND (NOT $10::boolean OR c.assignee_id IS NULL)
-      AND ($11='' OR ($11='overdue' AND c.due_at<now()) OR ($11='upcoming' AND c.due_at>=now()))`;
+      AND ${userFilter} AND ($11='' OR ($11='overdue' AND c.due_at<now()) OR ($11='upcoming' AND c.due_at>=now()))`;
     const [count,list]=await Promise.all([this.pool.query(`SELECT count(*)::int AS total ${where}`,args),
       this.pool.query(`SELECT ${columns} ${where} ORDER BY c.created_at DESC,c.id DESC LIMIT $${args.length+1} OFFSET $${args.length+2}`,[...args,f.limit,f.offset])]);
     return adminPage(list.rows.map(row=>this.map(row)),count.rows[0].total,f);

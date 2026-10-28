@@ -142,6 +142,28 @@ export class ChatRepository {
     const result=await this.abuse_reports.insertOne(row);
     return {id:String(result.insertedId),status:'OPEN'};
   }
+  async adminQueueFeed(after) {
+    if(after&&!objectId(after))throw Object.assign(Error('Con trỏ không hợp lệ.'),{status:400,code:'INVALID_CURSOR'});
+    const rows=await this.abuse_reports.aggregate([
+      {$match:after?{_id:{$gt:objectId(after)}}:{}},{$sort:{_id:1}},{$limit:500},
+      {$lookup:{from:'conversations',localField:'conversationId',foreignField:'_id',as:'conversation'}},
+      {$project:{conversationId:1,messageId:1,reason:1,status:1,createdAt:1,storeId:{$arrayElemAt:['$conversation.storeId',0]}}},
+    ]).toArray();
+    return {items:rows.map(row=>({sourceId:String(row._id),conversationId:String(row.conversationId),messageId:row.messageId?String(row.messageId):null,
+      storeId:row.storeId||null,reason:row.reason,status:row.status,active:row.status==='OPEN',createdAt:row.createdAt})),next:rows.length===500?String(rows.at(-1)._id):null};
+  }
+  async storeReportSummary(storeId){
+    const rows=await this.conversations.aggregate([
+      {$match:{storeId}},
+      {$lookup:{from:'abuse_reports',let:{conversation:'$_id'},pipeline:[
+        {$match:{$expr:{$eq:['$conversationId','$$conversation']}}},
+        {$group:{_id:null,total:{$sum:1},open:{$sum:{$cond:[{$eq:['$status','OPEN']},1,0]}}}},
+      ],as:'reports'}},
+      {$unwind:'$reports'},{$group:{_id:null,total:{$sum:'$reports.total'},open:{$sum:'$reports.open'}}},
+    ]).toArray();
+    return {storeId,total_reports:rows[0]?.total||0,open_reports:rows[0]?.open||0,updatedAt:new Date().toISOString(),
+      definition:'Số báo cáo hội thoại liên quan shop, OPEN là đang mở. Báo cáo chưa kết luận không đồng nghĩa vi phạm; nhiều báo cáo có thể cùng một sự việc. Không trả nội dung hội thoại.'};
+  }
 }
 export function encodeCursor(date,id){return Buffer.from(JSON.stringify([date.toISOString(),String(id)])).toString('base64url');}
 export function decodeCursor(raw){
@@ -156,5 +178,6 @@ export async function connectMongo(uri,retentionDays){
   const connection=mongoose.createConnection(uri,{serverSelectionTimeoutMS:5000});
   await connection.asPromise();
   const repo=new ChatRepository(connection.db,retentionDays);
-  await repo.indexes();return {connection,repo};
+  try {await repo.indexes();return {connection,repo};}
+  catch(error){await connection.close();throw error;}
 }

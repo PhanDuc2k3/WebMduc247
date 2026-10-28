@@ -26,6 +26,8 @@ export default function StorePage() {
   const [tab, setTab] = useState<Tab>("categories");
   const [loading, setLoading] = useState(true);
   const [openingChat, setOpeningChat] = useState(false);
+  const [badgeCriteria,setBadgeCriteria]=useState('');
+  useEffect(()=>{let active=true;catalogApi.reputationPolicy().then(policy=>{if(active)setBadgeCriteria(policy.criteria);}).catch(()=>{});return()=>{active=false;};},[]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -81,6 +83,7 @@ export default function StorePage() {
   return <div className="store-detail-page">
     <ContentBreadcrumb items={[{ label: "Cửa hàng", to: "/store" }, { label: store?.name || "Chi tiết cửa hàng" }]} />
     {loading ? <div className="store-detail-state" role="status">Đang tải cửa hàng...</div> : !store ? <div className="store-detail-state"><h1>Không thể hiển thị cửa hàng</h1><p>{error || "Không tìm thấy cửa hàng."}</p><Link to="/store">Xem các cửa hàng khác</Link></div> : <>
+      {store.reputationBadge&&<details className="mb-4 rounded-xl border border-green-200 bg-green-50 p-4"><summary className="font-bold text-green-800">{store.reputationBadge.label} · Có hiệu lực đến {new Date(store.reputationBadge.expiresAt).toLocaleDateString('vi-VN',{timeZone:'Asia/Bangkok'})}</summary><p className="mt-2 text-sm">{badgeCriteria||'Chưa tải được điều kiện badge. Vui lòng tải lại trang để xem điều kiện công khai.'}</p></details>}
       <section className="store-detail-hero" aria-labelledby="store-detail-name"><div className="store-detail-hero__banner">{banner ? <img src={banner} alt="" onError={showImageFallback} /> : <Package size={120} strokeWidth={1.4} />}</div><div className="store-detail-hero__content"><div className="store-detail-hero__identity"><span className="store-detail-hero__logo">{logo ? <img src={logo} alt="" onError={showImageFallback} /> : <StoreIcon size={38} />}</span><div><div className="store-detail-hero__name"><h1 id="store-detail-name">{store.name}</h1><span><StoreIcon size={13} /> {store.category || "Gian hàng"}</span></div><p>{store.description || "Khám phá sản phẩm của cửa hàng này."}</p></div><div className="store-detail-hero__actions"><button type="button" disabled={openingChat} onClick={() => void openChat()}><MessageCircle size={18} /> {openingChat ? "Đang mở..." : "Chat ngay"}</button><button type="button" disabled title="Theo dõi cửa hàng chưa khả dụng"><Heart size={17} /> Yêu thích</button></div></div><div className="store-detail-stats"><div><strong>{store.rating != null ? <><Star size={16} /> {store.rating.toFixed(1)}</> : "—"}</strong><span>Đánh giá</span></div><div><strong>{store.productCount ?? products.length}</strong><span><Package size={13} /> Sản phẩm</span></div><div><strong>{store.followers ?? "—"}</strong><span><Heart size={13} /> Người theo dõi</span></div><div><strong>{new Date(store.createdAt).toLocaleDateString("vi-VN")}</strong><span><CalendarDays size={13} /> Ngày tạo</span></div></div></div></section>
       <nav className="store-detail-tabs" role="tablist" aria-label="Nội dung cửa hàng">{tabs.map(item => <button type="button" role="tab" key={item.value} className={tab === item.value ? "is-active" : ""} aria-selected={tab === item.value} onClick={() => setTab(item.value)}>{item.label}</button>)}</nav>
       <section className="store-detail-content" role="tabpanel">

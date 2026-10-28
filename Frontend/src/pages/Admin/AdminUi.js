@@ -7,6 +7,7 @@ export const date = (value, withTime = false) => value ? new Intl.DateTimeFormat
     dateStyle: 'short', ...(withTime ? { timeStyle: 'short' } : {}), timeZone: 'Asia/Bangkok',
 }).format(new Date(value)) : '—';
 const statuses = {
+    WAITING_RESPONSE: ['Chờ phản hồi', 'amber'], AWAITING_APPROVAL: ['Chờ phê duyệt', 'purple'],
     active: ['Đang hoạt động', 'green'], published: ['Đang bán', 'green'], pending_verification: ['Chờ xác minh', 'amber'],
     suspended: ['Sàn tạm khóa', 'red'], paused: ['Tạm ngừng', 'amber'], draft: ['Bản nháp', 'gray'], hidden: ['Đã ẩn', 'gray'], discontinued: ['Ngừng kinh doanh', 'gray'],
     PENDING_INVENTORY: ['Đang giữ hàng', 'amber'], PENDING_PAYMENT: ['Chờ thanh toán', 'amber'], PLACED: ['Đơn mới', 'blue'],

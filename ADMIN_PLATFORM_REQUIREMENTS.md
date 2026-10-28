@@ -224,55 +224,67 @@ Các ô CORE hoàn thành bên dưới xác nhận phạm vi hiện có; quy t�
 
 ## 7. Dashboard và hàng chờ công việc
 
+> **Rà soát lại 27/10/2026: chưa hoàn tất toàn bộ.** Đã tái hiện lỗi hạn SLA không nhất quán ở ADM-QUEUE-004; nguồn Payment/Chat và trưởng nhóm chuyển cấp trong local còn thiếu cấu hình. Xem [báo cáo rà soát mục 7 và 8](ADMIN_SECTIONS_7_8_REVIEW.md). Các dấu `[x]` còn lại là phạm vi triển khai/kiểm thử, không xác nhận vận hành đầy đủ.
+
+> Đã triển khai và kiểm tra local ngày 27/10/2026. Phạm vi, định nghĩa số liệu, cấu hình SLA/trưởng nhóm và bằng chứng: [nghiệm thu Dashboard & Queue](ADMIN_DASHBOARD_QUEUE_ACCEPTANCE.md). Các ô hoàn thành dưới đây xác nhận phạm vi local, chưa xác nhận production.
+
 ### 7.1. Tổng quan
 
-- [ ] **ADM-DASH-001 — P0:** Lọc hôm nay, 7/30 ngày và khoảng tùy chọn; hiển thị múi giờ và thời điểm dữ liệu cập nhật.
-- [ ] **ADM-DASH-002 — P0:** Bấm thẻ số liệu, lát biểu đồ hoặc đơn gần đây mở đúng danh sách/chi tiết với bộ lọc được giữ lại.
-- [ ] **ADM-DASH-003 — P0:** Hiển thị đơn quá hạn xử lý, trả hàng chờ xử lý, hoàn tiền lỗi/chờ xác minh và báo cáo vi phạm chưa phân công.
-- [ ] **ADM-DASH-004 — P0:** Mỗi chỉ số có định nghĩa: đếm shop order hay checkout group; theo ngày tạo hay ngày thanh toán; có loại đơn hủy hay không.
-- [ ] **ADM-DASH-005 — P0:** Tách giá trị đặt hàng, tiền thanh toán thành công, tiền hoàn thành công và doanh thu phí sàn nếu nghiệp vụ đã có.
-- [ ] **ADM-DASH-006 — P1:** So sánh cùng độ dài kỳ trước, thể hiện giá trị tuyệt đối khi kỳ trước bằng 0; không hiển thị phần trăm vô nghĩa.
-- [ ] **ADM-DASH-007 — P1:** Theo vai trò chỉ hiển thị số liệu có quyền xem; CSKH không mặc nhiên thấy doanh thu toàn sàn.
-- [ ] **ADM-DASH-008 — P1:** Chỉ rõ module lỗi hoặc số liệu đang trễ; có nút thử lại theo khu vực thay vì làm mất toàn bộ dashboard.
+- [x] **ADM-DASH-001 — P0:** Lọc hôm nay, 7/30 ngày và khoảng tùy chọn; hiển thị múi giờ và thời điểm dữ liệu cập nhật.
+- [x] **ADM-DASH-002 — P0:** Bấm thẻ số liệu, lát biểu đồ hoặc đơn gần đây mở đúng danh sách/chi tiết với bộ lọc được giữ lại.
+- [x] **ADM-DASH-003 — P0:** Hiển thị đơn quá hạn xử lý, trả hàng chờ xử lý, hoàn tiền lỗi/chờ xác minh và báo cáo vi phạm chưa phân công.
+- [x] **ADM-DASH-004 — P0:** Mỗi chỉ số có định nghĩa: đếm shop order hay checkout group; theo ngày tạo hay ngày thanh toán; có loại đơn hủy hay không.
+- [x] **ADM-DASH-005 — P0:** Tách giá trị đặt hàng, tiền thanh toán thành công, tiền hoàn thành công và doanh thu phí sàn nếu nghiệp vụ đã có.
+- [x] **ADM-DASH-006 — P1:** So sánh cùng độ dài kỳ trước, thể hiện giá trị tuyệt đối khi kỳ trước bằng 0; không hiển thị phần trăm vô nghĩa.
+- [x] **ADM-DASH-007 — P1:** Theo vai trò chỉ hiển thị số liệu có quyền xem; CSKH không mặc nhiên thấy doanh thu toàn sàn.
+- [x] **ADM-DASH-008 — P1:** Chỉ rõ module lỗi hoặc số liệu đang trễ; có nút thử lại theo khu vực thay vì làm mất toàn bộ dashboard.
 
 ### 7.2. Hàng chờ
 
-- [ ] **ADM-QUEUE-001 — P0:** Danh sách việc cần xử lý gồm loại, mức ưu tiên, đối tượng, người/nhóm phụ trách, hạn xử lý và trạng thái.
-- [ ] **ADM-QUEUE-002 — P0:** Nhận việc, phân công, chuyển nhóm và ghi lý do chuyển; xử lý trường hợp hai người cùng nhận.
-- [ ] **ADM-QUEUE-003 — P0:** Bộ lọc việc của tôi, chưa phân công, quá hạn, cần phản hồi và chờ phê duyệt.
+- [x] **ADM-QUEUE-001 — P0:** Danh sách việc cần xử lý gồm loại, mức ưu tiên, đối tượng, người/nhóm phụ trách, hạn xử lý và trạng thái.
+- [x] **ADM-QUEUE-002 — P0:** Nhận việc, phân công, chuyển nhóm và ghi lý do chuyển; xử lý trường hợp hai người cùng nhận.
+- [x] **ADM-QUEUE-003 — P0:** Bộ lọc việc của tôi, chưa phân công, quá hạn, cần phản hồi và chờ phê duyệt.
 - [ ] **ADM-QUEUE-004 — P0:** Có quy tắc SLA theo loại việc; phân biệt thời hạn phản hồi và giải quyết, ghi rõ lúc nào đồng hồ tạm dừng.
-- [ ] **ADM-QUEUE-005 — P1:** Nhắc hạn và chuyển cấp cho trưởng nhóm; tránh tạo nhiều thông báo trùng cho cùng một mốc.
-- [ ] **ADM-QUEUE-006 — P1:** Khối “Cần chú ý” ưu tiên việc admin có thể hành động; tách bản nháp sản phẩm và tài khoản chờ xác minh thành số liệu tham khảo.
+  - **Ghi chú tạm — 27/10/2026, chưa sửa:** Sau tạm dừng/tiếp tục, hạn giải quyết ở hàng chờ được cộng thời gian dừng nhưng hạn hồ sơ gốc không đổi; đã tái hiện lệch 2 giờ. Cần thống nhất hạn SLA giữa queue và case, bổ sung regression test trước khi đánh dấu hoàn thành. Chi tiết: [lỗi SLA trong báo cáo rà soát](ADMIN_SECTIONS_7_8_REVIEW.md#2-adm-queue-004--hạn-sla-hàng-chờ-lệch-hồ-sơ-nguồn).
+- [x] **ADM-QUEUE-005 — P1:** Nhắc hạn và chuyển cấp cho trưởng nhóm; tránh tạo nhiều thông báo trùng cho cùng một mốc.
+- [x] **ADM-QUEUE-006 — P1:** Khối “Cần chú ý” ưu tiên việc admin có thể hành động; tách bản nháp sản phẩm và tài khoản chờ xác minh thành số liệu tham khảo.
 
 ## 8. Quản lý người dùng
 
-- [ ] **ADM-USER-001 — P0:** Tra cứu theo ID, tên, email và dữ liệu liên hệ được phép; dữ liệu nhạy cảm không đưa toàn bộ vào danh sách.
-- [ ] **ADM-USER-002 — P0:** Hồ sơ liên kết cửa hàng sở hữu, đơn, ticket, khiếu nại và quyết định kiểm duyệt; mỗi liên kết kiểm tra quyền module đích.
-- [ ] **ADM-USER-003 — P0:** Bổ sung lý do chuẩn cho khóa/khôi phục, phạm vi hạn chế, thời hạn nếu khóa tạm thời và số lần vi phạm.
-- [ ] **ADM-USER-004 — P0:** Hiển thị tác động trước khi khóa: phiên sẽ thu hồi, đơn đang xử lý và yêu cầu hậu mãi còn mở.
-- [ ] **ADM-USER-005 — P0:** Giữ quy tắc không bỏ qua xác minh email khi khôi phục; không cho admin tùy ý đặt trạng thái đã xác minh.
-- [ ] **ADM-USER-006 — P0:** Không có nút xem mật khẩu, token hoặc mã OTP; hỗ trợ gửi luồng đặt lại mật khẩu theo quyền và giới hạn tần suất.
-- [ ] **ADM-USER-007 — P1:** Ghi chú nội bộ có tác giả/thời gian, chỉ nhóm được giao xem; không lẫn với nội dung gửi khách hàng.
-- [ ] **ADM-USER-008 — P1:** Tiếp nhận kháng nghị khóa tài khoản, dẫn tới quyết định gốc và người đánh giá khác khi chính sách yêu cầu.
-- [ ] **ADM-USER-009 — P1:** Xem/thu hồi phiên người dùng theo quyền riêng và lý do; log ghi nhận phiên bị thu hồi nhưng không lộ token.
+> **Rà soát lại 27/10/2026: chưa hoàn tất toàn bộ.** ADM-USER-010 có lỗi chuyển trạng thái khi chờ cleanup; xử lý dữ liệu tự động hiện giới hạn Identity. Quyền và nhóm nhân sự local còn cần cấu hình. Xem [báo cáo rà soát mục 7 và 8](ADMIN_SECTIONS_7_8_REVIEW.md).
+
+> Đã triển khai và kiểm tra local ngày 27/10/2026. Chi tiết quyền, phạm vi khóa, luồng kháng nghị/yêu cầu dữ liệu, ngoại lệ lưu trữ và bằng chứng: [nghiệm thu quản lý người dùng](ADMIN_USER_MANAGEMENT_ACCEPTANCE.md). Các ô hoàn thành dưới đây xác nhận phạm vi local mô tả trong tài liệu, chưa xác nhận production.
+
+- [x] **ADM-USER-001 — P0:** Tra cứu theo ID, tên, email và dữ liệu liên hệ được phép; dữ liệu nhạy cảm không đưa toàn bộ vào danh sách.
+- [x] **ADM-USER-002 — P0:** Hồ sơ liên kết cửa hàng sở hữu, đơn, ticket, khiếu nại và quyết định kiểm duyệt; mỗi liên kết kiểm tra quyền module đích.
+- [x] **ADM-USER-003 — P0:** Bổ sung lý do chuẩn cho khóa/khôi phục, phạm vi hạn chế, thời hạn nếu khóa tạm thời và số lần vi phạm.
+- [x] **ADM-USER-004 — P0:** Hiển thị tác động trước khi khóa: phiên sẽ thu hồi, đơn đang xử lý và yêu cầu hậu mãi còn mở.
+- [x] **ADM-USER-005 — P0:** Giữ quy tắc không bỏ qua xác minh email khi khôi phục; không cho admin tùy ý đặt trạng thái đã xác minh.
+- [x] **ADM-USER-006 — P0:** Không có nút xem mật khẩu, token hoặc mã OTP; hỗ trợ gửi luồng đặt lại mật khẩu theo quyền và giới hạn tần suất.
+- [x] **ADM-USER-007 — P1:** Ghi chú nội bộ có tác giả/thời gian, chỉ nhóm được giao xem; không lẫn với nội dung gửi khách hàng.
+- [x] **ADM-USER-008 — P1:** Tiếp nhận kháng nghị khóa tài khoản, dẫn tới quyết định gốc và người đánh giá khác khi chính sách yêu cầu.
+- [x] **ADM-USER-009 — P1:** Xem/thu hồi phiên người dùng theo quyền riêng và lý do; log ghi nhận phiên bị thu hồi nhưng không lộ token.
 - [ ] **ADM-USER-010 — P1:** Xử lý yêu cầu truy cập, chỉnh sửa hoặc xóa/ẩn danh dữ liệu qua hồ sơ công việc riêng, có kiểm tra danh tính và ngoại lệ lưu trữ.
-- [ ] **ADM-USER-011 — P2:** Phát hiện tài khoản có dấu hiệu trùng/lạm dụng chỉ như tín hiệu điều tra; không tự gộp danh tính hoặc tự khóa chỉ vì chung IP.
+  - **Ghi chú tạm — 27/10/2026, chưa sửa:** Hồ sơ ẩn danh ở `WAITING_CLEANUP` vẫn có thể bị chuyển sang trạng thái khác; worker xóa ảnh xong có thể đánh dấu job hoàn thành nhưng để hồ sơ bị kẹt. Cần chặn chuyển trạng thái không hợp lệ và cập nhật job/hồ sơ nhất quán, kèm regression test. Chi tiết: [lỗi cleanup trong báo cáo rà soát](ADMIN_SECTIONS_7_8_REVIEW.md#1-adm-user-010--trạng-thái-hồ-sơ-ẩn-danh-có-thể-bị-kẹt).
+- [x] **ADM-USER-011 — P2:** Phát hiện tài khoản có dấu hiệu trùng/lạm dụng chỉ như tín hiệu điều tra; không tự gộp danh tính hoặc tự khóa chỉ vì chung IP.
 
 **Nghiệm thu:** khóa thu hồi phiên như hiện tại; dữ liệu đơn vẫn truy vết được; xem dữ liệu liên hệ đầy đủ phải có quyền và được ghi log.
 
 ## 9. Quản lý cửa hàng và người bán
 
-- [ ] **ADM-STORE-001 — P0:** Hồ sơ tổng hợp chủ shop, thông tin cửa hàng, trạng thái hiệu lực, ý định nhận đơn của seller, lý do chặn và lịch sử.
-- [ ] **ADM-STORE-002 — P0:** Thống kê đơn mở, đơn quá hạn, trả hàng và báo cáo liên quan để đánh giá tác động trước khi tạm ngừng.
-- [ ] **ADM-STORE-003 — P0:** Tách rõ “shop tự tạm ngừng” và “sàn đình chỉ”; khôi phục không tự bật nhận đơn trái ý định seller.
-- [ ] **ADM-STORE-004 — P0:** Gửi quyết định đình chỉ/khôi phục cho người bán, có phạm vi ảnh hưởng và kênh kháng nghị.
-- [ ] **ADM-STORE-005 — P1:** Nếu có chính sách duyệt shop: hàng chờ đăng ký, hồ sơ, yêu cầu bổ sung, duyệt/từ chối và lịch sử phiên bản hồ sơ.
-- [ ] **ADM-STORE-006 — P1:** Quyết định hồ sơ phải có lý do; yêu cầu bổ sung không được đồng nghĩa từ chối vĩnh viễn.
-- [ ] **ADM-STORE-007 — P1:** Xem hiệu quả theo kỳ: tỷ lệ hủy do shop, chậm xử lý, trả hàng, điểm đánh giá và khiếu nại có kết luận.
-- [ ] **ADM-STORE-008 — P1:** Quản lý chuỗi vi phạm, cảnh cáo, hạn khắc phục và kháng nghị; tránh tính cùng một sự việc thành nhiều vi phạm.
-- [ ] **ADM-STORE-009 — P1:** Có quy trình chuyển chủ hoặc khôi phục quyền truy cập shop nếu được cho phép; cần xác minh, phê duyệt và không sửa lịch sử đơn.
+- [x] **ADM-STORE-001 — P0:** Hồ sơ tổng hợp chủ shop, thông tin cửa hàng, trạng thái hiệu lực, ý định nhận đơn của seller, lý do chặn và lịch sử.
+- [x] **ADM-STORE-002 — P0:** Thống kê đơn mở, đơn quá hạn, trả hàng và báo cáo liên quan để đánh giá tác động trước khi tạm ngừng.
+- [x] **ADM-STORE-003 — P0:** Tách rõ “shop tự tạm ngừng” và “sàn đình chỉ”; khôi phục không tự bật nhận đơn trái ý định seller.
+- [x] **ADM-STORE-004 — P0:** Gửi quyết định đình chỉ/khôi phục cho người bán, có phạm vi ảnh hưởng và kênh kháng nghị.
+- [x] **ADM-STORE-005 — P1:** Nếu có chính sách duyệt shop: hàng chờ đăng ký, hồ sơ, yêu cầu bổ sung, duyệt/từ chối và lịch sử phiên bản hồ sơ.
+- [x] **ADM-STORE-006 — P1:** Quyết định hồ sơ phải có lý do; yêu cầu bổ sung không được đồng nghĩa từ chối vĩnh viễn.
+- [x] **ADM-STORE-007 — P1:** Xem hiệu quả theo kỳ: tỷ lệ hủy do shop, chậm xử lý, trả hàng, điểm đánh giá và khiếu nại có kết luận.
+- [x] **ADM-STORE-008 — P1:** Quản lý chuỗi vi phạm, cảnh cáo, hạn khắc phục và kháng nghị; tránh tính cùng một sự việc thành nhiều vi phạm.
+- [x] **ADM-STORE-009 — P1:** Có quy trình chuyển chủ hoặc khôi phục quyền truy cập shop nếu được cho phép; cần xác minh, phê duyệt và không sửa lịch sử đơn.
 - [ ] **ADM-STORE-010 — P2:** Xác minh giấy tờ người bán khi mô hình kinh doanh yêu cầu; xác định dữ liệu cần thu, nơi lưu, quyền xem và thời hạn lưu trước khi triển khai.
-- [ ] **ADM-STORE-011 — P2:** Badge shop xác minh/uy tín có điều kiện công khai, thời hạn và thu hồi; không gắn badge chỉ vì người bán mua quyền hoặc tự chọn.
+- [x] **ADM-STORE-011 — P2:** Badge shop xác minh/uy tín có điều kiện công khai, thời hạn và thu hồi; không gắn badge chỉ vì người bán mua quyền hoặc tự chọn.
+
+**Cập nhật 27/10/2026:** Đã triển khai 001–009 và 011 trong phạm vi [nghiệm thu mục 9](ADMIN_STORE_MANAGEMENT_ACCEPTANCE.md). Duyệt đăng ký/chuyển chủ có công tắc chính sách, mặc định tắt; không tự cấp quyền cho tài khoản thật. Quyết định gửi qua hộp thông báo trong ứng dụng. `ADM-STORE-010` còn mở: chưa thu/xác minh giấy tờ, đã ghi thiết kế dữ liệu, nơi lưu, quyền xem và thời hạn dự kiến để chốt trước triển khai. Xem [thiết kế và giới hạn](Backend/docs/store-governance.md).
 
 **Nghiệm thu:** seller không bỏ chặn bằng cập nhật shop; đơn cũ vẫn có đầu mối xử lý; shop tự ngừng trước khi bị chặn vẫn ngừng sau khi sàn khôi phục.
 

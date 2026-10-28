@@ -8,6 +8,8 @@ import { ChatService,ChatError } from './service.js';
 import { ClaudeProxy } from './claude-proxy.js';
 import { connectMongo,objectId } from './repository.js';
 import { ChatStorage,AttachmentService,scannerFromEnv } from './media.js';
+import {adminId} from '../../../packages/contracts/platform-admin.js';
+import {requireAdminScope} from '../../../packages/contracts/admin-rbac.js';
 
 const localEnv=fileURLToPath(new URL('../../../.env.development.local',import.meta.url));
 const env=process.env;
@@ -54,6 +56,11 @@ export function createHandler(chat,attachments,io){
     try{
       const url=new URL(req.url,'http://localhost');
       const path=url.pathname.replace(/^\/api\/v2/,'');
+      if(req.method==='GET'&&path==='/internal/admin-queue'){
+        const expected=Buffer.from(env.ADMIN_AUTHORIZATION_TOKEN||''),actual=Buffer.from(String(req.headers['x-admin-authorization-token']||''));
+        if(!expected.length||expected.length!==actual.length||!timingSafeEqual(expected,actual))throw invalid(403,'FORBIDDEN','Không có quyền đồng bộ hàng chờ.');
+        return send(res,200,await chat.repo.adminQueueFeed(url.searchParams.get('after')));
+      }
       if(req.method==='GET'&&path==='/health')return send(res,200,{ok:true});
       if(req.method==='GET'&&path==='/internal/notification/metrics'){
         const expected=Buffer.from(env.CHAT_NOTIFICATION_WEBHOOK_TOKEN||'');
@@ -88,6 +95,8 @@ export function createHandler(chat,attachments,io){
         return send(res,200,await chat.botMessage(user,botMessage[1],
           req.headers['x-bot-session-token'],await body(req),user?.id||req.socket.remoteAddress,bearer));}
       const user=await chat.identity(bearer);
+      const storeReports=/^\/admin\/stores\/([0-9a-f-]{36})\/report-summary$/i.exec(path);
+      if(req.method==='GET'&&storeReports){adminId(storeReports[1]);requireAdminScope(user,'stores.read',{storeId:storeReports[1]});return send(res,200,await chat.repo.storeReportSummary(storeReports[1]));}
       if(req.method==='GET'&&path==='/conversations')return send(res,200,await chat.list(user,bearer));
       if(req.method==='POST'&&path==='/conversations')return send(res,201,
         await chat.create(user,(await body(req)).storeId));

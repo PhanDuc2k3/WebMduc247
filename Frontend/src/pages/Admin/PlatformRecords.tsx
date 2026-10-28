@@ -2,6 +2,10 @@ import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { adminRequestId } from '../../api/adminCommand';
 import { adminCaseApi } from '../../api/adminCaseApi';
 import ApprovalSelector from './ApprovalSelector';
+import UserWorkspace from './UserWorkspace';
+import UserContactSearch from './UserContactSearch';
+import StoreWorkspace, {registrationLabels} from './StoreWorkspace';
+import StoreApplicationQueue from './StoreApplicationQueue';
 import {useAdminSession} from './AdminSession';
 import {hasAdminPermission} from './adminPolicy';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -18,13 +22,16 @@ const adminTitles:Record<AdminResource,{title:string;noun:string;description:str
 const roles:Record<string,string>={buyer:'Khách hàng',seller:'Người bán',platform_admin:'Quản trị sàn'};
 const filters:Record<AdminResource,[string,string][]>={
   users:[['active','Đang hoạt động'],['pending_verification','Chờ xác minh'],['suspended','Sàn tạm khóa']],
-  stores:[['active','Đang hoạt động'],['paused','Shop tạm ngừng'],['suspended','Sàn tạm khóa']],
+  stores:[['active','Đang hoạt động'],['paused','Seller tự ngừng'],['suspended','Sàn tạm khóa']],
   products:[['active','Đang bán'],['published','Đã đăng bán'],['draft','Bản nháp'],['hidden','Shop đã ẩn'],['discontinued','Ngừng kinh doanh'],['suspended','Sàn đã ẩn']],
   orders:[['PENDING_INVENTORY','Đang giữ hàng'],['PENDING_PAYMENT','Chờ thanh toán'],['PLACED','Đơn mới'],['CONFIRMED','Đã xác nhận'],
     ['PREPARING','Đang chuẩn bị'],['READY_TO_SHIP','Chờ lấy hàng'],['SHIPPING','Đang giao'],['DELIVERED','Đã giao'],['COMPLETED','Hoàn tất'],['CANCEL_PENDING','Đang hủy'],['CANCELLED','Đã hủy']],
 };
 
-export function RecordDialog({resource,id,close,changed}:{resource:AdminResource;id:string;close:()=>void;changed:()=>void}) {
+export function RecordDialog(props:{resource:AdminResource;id:string;close:()=>void;changed:()=>void}) {
+  return props.resource==='users'?<UserWorkspace id={props.id} close={props.close} changed={props.changed}/>:props.resource==='stores'?<StoreWorkspace id={props.id} close={props.close} changed={props.changed}/>:<ResourceRecordDialog {...props}/>;
+}
+function ResourceRecordDialog({resource,id,close,changed}:{resource:AdminResource;id:string;close:()=>void;changed:()=>void}) {
   const user=useAdminSession(),canModerate=hasAdminPermission(user,`${resource}.moderate`);
   const [approvalId,setApprovalId]=useState('');
   const attempt=useRef({signature:'',requestId:''});
@@ -113,36 +120,46 @@ export function RecordDialog({resource,id,close,changed}:{resource:AdminResource
 }
 
 export default function PlatformRecords({resource}:{resource:AdminResource}) {
+  const actor=useAdminSession();
   const [params,setParams]=useSearchParams();const q=params.get('q')||'',status=params.get('status')||'',role=params.get('role')||'',selected=params.get('id');
+  const from=params.get('from')||'',to=params.get('to')||'',statusGroup=params.get('statusGroup')||'',excludeCancelled=params.get('excludeCancelled')||'';
+  const ownerId=params.get('ownerId')||'',buyerId=params.get('buyerId')||'',storeId=params.get('storeId')||'';
   const rawPage=Number(params.get('page')||1),page=Number.isSafeInteger(rawPage)&&rawPage>0?rawPage:1;
   const [draft,setDraft]=useState(q),[data,setData]=useState<AdminPage<AdminRecord>|null>(null),[loading,setLoading]=useState(true);
   const [error,setError]=useState(''),[revision,setRevision]=useState(0);const config=adminTitles[resource];
   useEffect(()=>setDraft(q),[q,resource]);
   useEffect(()=>{
     let active=true;setLoading(true);setError('');setData(null);
-    platformAdminApi.list(resource,{q,status,role:resource==='users'?role:undefined,page,limit:12}).then(result=>{
+    platformAdminApi.list(resource,{q,status,role:resource==='users'?role:undefined,page,limit:12,from,to,...(resource==='stores'?{ownerId}:{}),...(resource==='orders'?{statusGroup,excludeCancelled,buyerId,storeId}:{})}).then(result=>{
       if(!active)return;
       if(result.totalPages>0&&page>result.totalPages){const next=new URLSearchParams(params);next.set('page',String(result.totalPages));setParams(next,{replace:true});return;}
       setData(result);
     }).catch(cause=>{if(active)setError(cause instanceof Error?cause.message:'Chưa tải được danh sách.');}).finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
-  },[resource,q,status,role,page,revision,params,setParams]);
+  },[resource,q,status,role,page,from,to,statusGroup,excludeCancelled,ownerId,buyerId,storeId,revision,params,setParams]);
   function filter(key:string,value:string){const next=new URLSearchParams(params);if(value)next.set(key,value);else next.delete(key);if(key!=='page'&&key!=='id')next.delete('page');if(key!=='id')next.delete('id');setParams(next);}
   function search(event:FormEvent){event.preventDefault();filter('q',draft.trim());}
   const heads=resource==='users'?['Người dùng','Vai trò','Trạng thái','Ngày tham gia']:resource==='stores'?['Cửa hàng','Sản phẩm','Trạng thái','Ngày tạo']:
     resource==='products'?['Sản phẩm / cửa hàng','Giá hiện tại','Tồn kho','Trạng thái']:['Mã đơn / cửa hàng','Giá trị đơn','Trạng thái','Ngày đặt'];
   return <div className="pa-page"><div className="pa-page-heading"><div><span className="pa-eyebrow">QUẢN LÝ VẬN HÀNH</span><h1>{config.title}</h1><p>{config.description}</p></div>
     <button className="pa-button pa-button-light" disabled={loading} onClick={()=>setRevision(value=>value+1)}><RefreshCw size={16} className={loading?'animate-spin':''}/>Làm mới</button></div>
+    {resource==='users'&&hasAdminPermission(actor,'users.view_sensitive')&&<UserContactSearch select={id=>filter('id',id)}/>}
+    {resource==='stores'&&<StoreApplicationQueue select={id=>filter('id',id)} revision={revision}/>}
+    {storeId&&<p className="pa-warning">Đang lọc đơn theo cửa hàng #{storeId.slice(0,8)}. <button className="pa-text-link" onClick={()=>filter('storeId','')}>Bỏ bộ lọc cửa hàng</button></p>}
+    {(ownerId||buyerId)&&<p className="pa-warning">Đang lọc theo người dùng #{(ownerId||buyerId).slice(0,8)}. <button className="pa-text-link" onClick={()=>filter(ownerId?'ownerId':'buyerId','')}>Bỏ bộ lọc người dùng</button></p>}
     <section className="pa-panel pa-records"><div className="pa-records-top"><div><h2>Danh sách {config.noun}</h2><span className="pa-count-chip">{data?formatNumber(data.total):'—'}</span></div>
-      <form className="pa-search" onSubmit={search}><Search size={17}/><input aria-label={`Tìm ${config.noun}`} value={draft} onChange={event=>setDraft(event.target.value)} maxLength={100} placeholder={resource==='users'?'Tìm tên hoặc email…':resource==='orders'?'Tìm mã đơn, cửa hàng, sản phẩm…':'Tìm kiếm…'}/><button type="submit">Tìm kiếm</button></form></div>
+      <form className="pa-search" onSubmit={search}><Search size={17}/><input aria-label={`Tìm ${config.noun}`} value={draft} onChange={event=>setDraft(event.target.value)} maxLength={100} placeholder={resource==='users'?'Tìm ID, tên hoặc email…':resource==='orders'?'Tìm mã đơn, cửa hàng, sản phẩm…':'Tìm kiếm…'}/><button type="submit">Tìm kiếm</button></form></div>
       <div className="pa-filters"><label><span className="sr-only">Trạng thái</span><select value={status} onChange={event=>filter('status',event.target.value)}><option value="">Tất cả trạng thái</option>{filters[resource].map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
+        <label>Từ ngày<input type="date" value={from} onChange={event=>filter('from',event.target.value)}/></label><label>Đến ngày<input type="date" value={to} min={from} onChange={event=>filter('to',event.target.value)}/></label>
+        {statusGroup&&<span>Nhóm: {({pending:'Chờ xử lý',delivered:'Đã giao / hoàn tất',cancelled:'Đã hủy',other:'Trạng thái khác'} as Record<string,string>)[statusGroup]||statusGroup}<button className="pa-text-link" onClick={()=>filter('statusGroup','')}>Bỏ</button></span>}
+        {excludeCancelled&&<span>Loại đơn đã hủy<button className="pa-text-link" onClick={()=>filter('excludeCancelled','')}>Bỏ</button></span>}
         {resource==='users'&&<label><span className="sr-only">Vai trò</span><select value={role} onChange={event=>filter('role',event.target.value)}><option value="">Tất cả vai trò</option>{Object.entries(roles).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>}
-        {(q||status||role)&&<button className="pa-text-link" onClick={()=>setParams({})}>Xóa bộ lọc</button>}</div>
+        {(q||status||role||from||to||statusGroup||excludeCancelled)&&<button className="pa-text-link" onClick={()=>setParams({})}>Xóa bộ lọc</button>}</div>
       {error&&<div className="pa-error pa-record-error" role="alert">{error}<button className="pa-text-link" onClick={()=>setRevision(value=>value+1)}>Thử lại</button></div>}
       <div className="pa-table-scroll" aria-busy={loading}><table className="pa-table"><thead><tr>{heads.map(head=><th key={head}>{head}</th>)}<th><span className="sr-only">Thao tác</span></th></tr></thead><tbody>
         {data?.items.map(row=><tr key={row.id}>
           {resource==='users'&&<><td><div className="pa-user-cell"><span className="pa-table-avatar">{row.fullName?.slice(0,1).toUpperCase()||<Users size={17}/>}</span><div><strong className="pa-row-title">{row.fullName}</strong><small>{row.email}</small></div></div></td><td><div className="pa-role-list">{row.roles?.map(role=><span className={`pa-role ${role==='platform_admin'?'pa-role-admin':''}`} key={role}>{role==='platform_admin'&&<ShieldCheck size={11}/>} {roles[role]||role}</span>)}</div></td><td><StatusBadge status={row.status}/></td><td>{date(row.createdAt)}</td></>}
-          {resource==='stores'&&<><td><div className="pa-user-cell"><span className="pa-table-avatar pa-avatar-green"><Store size={19}/></span><div><strong className="pa-row-title">{row.name}</strong><small>/{row.slug}</small></div></div></td><td>{formatNumber(row.productCount)} sản phẩm</td><td><StatusBadge status={row.status}/></td><td>{date(row.createdAt)}</td></>}
+          {resource==='stores'&&<><td><div className="pa-user-cell"><span className="pa-table-avatar pa-avatar-green"><Store size={19}/></span><div><strong className="pa-row-title">{row.name}</strong><small>/{row.slug}</small></div></div></td><td>{formatNumber(row.productCount)} sản phẩm</td><td><StatusBadge status={row.status}/><small>{row.acceptingOrders?'Seller muốn nhận đơn':'Seller tự ngừng'} · {registrationLabels[row.registrationStatus||'NOT_REQUIRED']}</small></td><td>{date(row.createdAt)}</td></>}
           {resource==='products'&&<><td><div className="pa-user-cell"><span className="pa-table-avatar pa-avatar-purple"><Package size={19}/></span><div><strong className="pa-row-title">{row.name}</strong><small>{row.storeName}</small></div></div></td><td className="pa-table-money">{money(row.priceMinor)}</td><td>{formatNumber(row.stock)}</td><td><StatusBadge status={row.status}/></td></>}
           {resource==='orders'&&<><td><strong className="pa-row-title">#{row.id.slice(0,8).toUpperCase()}</strong><small>{row.storeName}</small></td><td className="pa-table-money">{money(row.totalMinor)}</td><td><StatusBadge status={row.status}/><small>{row.paymentStatus==='PAID'?'Đã thanh toán':row.paymentStatus==='REFUNDED'?'Đã hoàn tiền':row.paymentMethod}</small></td><td>{date(row.createdAt,true)}</td></>}
           <td><button className="pa-row-action" onClick={()=>filter('id',row.id)} aria-label={`Xem chi tiết ${row.fullName||row.name||row.id}`}><Eye size={16}/><span>Chi tiết</span></button></td>

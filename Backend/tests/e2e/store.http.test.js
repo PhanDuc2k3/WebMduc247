@@ -125,6 +125,7 @@ test('HTTP store and catalog flow across identity, seller and public APIs', { sk
         WHERE i.variant_id=v.id AND v.store_id=$1`, [storeId]);
       await pool.query('DELETE FROM catalog.store_audit_logs WHERE store_id=$1', [storeId]);
       await pool.query("DELETE FROM catalog.store_outbox WHERE payload->>'storeId'=$1", [storeId]);
+      await pool.query('DELETE FROM catalog.store_profile_versions WHERE store_id=$1',[storeId]);
       await pool.query('DELETE FROM catalog.stores WHERE id=$1', [storeId]);
     }
     if (categoryId) await pool.query('DELETE FROM catalog.categories WHERE id=$1', [categoryId]);

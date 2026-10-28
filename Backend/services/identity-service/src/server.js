@@ -13,6 +13,8 @@ import { AvatarStorage } from './services/avatar-storage.service.js';
 import { LocalAvatarStorage } from './services/local-avatar-storage.service.js';
 import { scanWithClamAv } from './services/clam-scanner.service.js';
 import { createPhoneSender } from './services/phone-sender.service.js';
+import {UserAdminService} from './services/user-admin.service.js';
+import {UserAdminWorker} from './services/user-admin.worker.js';
 
 const config = loadConfig();
 const repo = new IdentityRepository(config.databaseUrl);
@@ -55,6 +57,9 @@ const profileService = new ProfileService({
   otpKey: createHmac('sha256', config.jwtSecret).update('phone-otp-v1').digest(),
 });
 const server = http.createServer(createRequestHandler(service, profileService, config));
+const userWorker=new UserAdminWorker(new UserAdminService(service,profileService,config));
+const runUserWorker=()=>userWorker.run().catch(()=>console.error('User administration worker failed'));
+void runUserWorker();const userTimer=setInterval(runUserWorker,30000);
 
 server.listen(config.port, () => console.log(`Identity service listening on ${config.port}`));
 const mailTimer = setInterval(() => repo.deliverEmails(mailer.deliver).catch(() => console.error('Email delivery worker failed')), 5000);
@@ -71,6 +76,7 @@ process.on('SIGTERM', async () => {
   clearInterval(mailTimer);
   clearInterval(eventTimer);
   clearInterval(cleanupTimer);
+  clearInterval(userTimer);
   server.close();
   await repo.close();
 });

@@ -85,6 +85,11 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       CATALOG_SYNC_SECRET: ${CATALOG_SYNC_SECRET:?Set CATALOG_SYNC_SECRET in .env}
       ADMIN_AUTHORIZATION_TOKEN: ${ADMIN_AUTHORIZATION_TOKEN:-}
+      IDENTITY_CATALOG_URL: http://catalog-service:5102
+      IDENTITY_ORDER_URL: http://order-service:5103
+      USER_TEMP_SUSPENSION_MAX_DAYS: ${USER_TEMP_SUSPENSION_MAX_DAYS:-366}
+      USER_SIGNAL_WINDOW_DAYS: ${USER_SIGNAL_WINDOW_DAYS:-30}
+      USER_PRIVACY_ARTIFACT_HOURS: ${USER_PRIVACY_ARTIFACT_HOURS:-168}
       NOTIFICATION_IDENTITY_TOKEN: ${NOTIFICATION_IDENTITY_TOKEN:-}
       IDENTITY_EVENT_WEBHOOK_URL: http://engagement-service:5105/api/v2/internal/notifications/identity-events
       IDENTITY_EVENT_WEBHOOK_TOKEN: ${IDENTITY_EVENT_WEBHOOK_TOKEN:?Set IDENTITY_EVENT_WEBHOOK_TOKEN in .env}
@@ -103,6 +108,11 @@ services:
     environment:
       CATALOG_DATABASE_URL: ${CATALOG_DATABASE_URL:?Set CATALOG_DATABASE_URL in .env}
       CATALOG_IDENTITY_URL: http://identity-service:5101
+      CATALOG_ORDER_URL: http://order-service:5103
+      CATALOG_ENGAGEMENT_URL: http://engagement-service:5105
+      CATALOG_CHAT_URL: http://chat-service:5106
+      STORE_APPROVAL_REQUIRED: ${STORE_APPROVAL_REQUIRED:-false}
+      STORE_OWNERSHIP_ENABLED: ${STORE_OWNERSHIP_ENABLED:-false}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?Set FRONTEND_ORIGIN in .env}
       CATALOG_PORT: 5102
       CATALOG_SYNC_SECRET: ${CATALOG_SYNC_SECRET:?Set CATALOG_SYNC_SECRET in .env}
@@ -139,6 +149,7 @@ services:
       ADMIN_AUTHORIZATION_TOKEN: ${ADMIN_AUTHORIZATION_TOKEN:-}
       ORDER_CATALOG_URL: http://catalog-service:5102
       ORDER_PAYMENT_URL: http://payment-service:5104
+      ORDER_CHAT_URL: http://chat-service:5106
       ORDER_ENGAGEMENT_URL: http://engagement-service:5105
       ORDER_PORT: 5103
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:?Set FRONTEND_ORIGIN in .env}
@@ -173,6 +184,7 @@ services:
     environment:
       PAYMENT_DATABASE_URL: postgresql://identity:${POSTGRES_PASSWORD}@identity-db:5432/identity
       PAYMENT_IDENTITY_URL: http://identity-service:5101
+      ADMIN_AUTHORIZATION_TOKEN: ${ADMIN_AUTHORIZATION_TOKEN:-}
       PAYMENT_ORDER_URL: http://order-service:5103
       PAYMENT_PUBLIC_URL: ${PAYMENT_PUBLIC_URL:-http://localhost:5104}
       PAYMENT_PORT: 5104
@@ -255,6 +267,7 @@ services:
     environment:
       CHAT_MONGO_URL: mongodb://${CHAT_MONGO_USER:-chatdev}:${CHAT_MONGO_PASSWORD:-local-chat-password-change-me}@chat-mongo:27017/mduc247_chat?authSource=admin
       CHAT_IDENTITY_URL: http://identity-service:5101
+      ADMIN_AUTHORIZATION_TOKEN: ${ADMIN_AUTHORIZATION_TOKEN:-}
       CHAT_CATALOG_URL: http://catalog-service:5102
       CHAT_ORDER_URL: http://order-service:5103
       CHAT_ENGAGEMENT_URL: http://engagement-service:5105

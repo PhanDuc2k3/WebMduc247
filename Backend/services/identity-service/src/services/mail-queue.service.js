@@ -15,6 +15,8 @@ export function createMailQueue(repository, transport, { key, from, frontendOrig
     if (row.purpose === 'verify_email') {
       const url = `${frontendOrigin}/verify-email?email=${encodeURIComponent(row.recipient)}#token=${encodeURIComponent(value)}`;
       await transport.sendMail({ from, to: row.recipient, subject: 'Xác minh email', text: `Mở liên kết trong 15 phút: ${url}` });
+    } else if(row.purpose==='account_support') {
+      await transport.sendMail({from,to:row.recipient,subject:'Xác minh yêu cầu tài khoản MDUC247',text:`Mã xác minh yêu cầu hỗ trợ tài khoản của bạn: ${value}\nMã có hiệu lực 10 phút, dùng một lần tại ${frontendOrigin}/account-help. Mã này không dùng để đăng nhập hoặc đặt lại mật khẩu.`});
     } else if(row.purpose==='security_notice') {
       await transport.sendMail({from,to:row.recipient,subject:'Thông báo bảo mật quản trị MDUC247',text:value});
     } else {
@@ -34,6 +36,7 @@ export function createMailQueue(repository, transport, { key, from, frontendOrig
   return {
     verification: (email, token) => queue(email, 'verify_email', token, 15 * 60_000),
     passwordReset: (email, token) => queue(email, 'reset_password', token, 10 * 60_000),
+    accountSupport: (email, code) => queue(email,'account_support',code,10*60_000),
     deliver,
   };
 }

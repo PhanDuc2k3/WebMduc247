@@ -9,7 +9,7 @@ export type CaseRecord={id:string;kind:CaseKind;shopOrderId:string;buyerId:strin
 export type CaseDetail={record:CaseRecord;links:{id:string;kind:CaseKind}[];canViewEvidence:boolean;informationRequests:InformationRequest[];
   events:{id:string;actorId:string;action:string;reason:string;metadata:Record<string,unknown>;createdAt:string}[]};
 export type CaseFilters={kind?:CaseKind;q?:string;status?:string;reasonCode?:string;storeId?:string;assigneeId?:string;due?:string;
-  paymentMethod?:string;from?:string;to?:string;page?:number;limit?:number};
+  paymentMethod?:string;from?:string;to?:string;page?:number;limit?:number;userId?:string};
 export type ReturnException={id:string;shopOrderId:string;requestedBy:string;reason:string;status:string;version:number;
   approvalSnapshot?:{amountMinor:number;recipientId:string;orderVersion:number}|null;
   payload:ReturnPayload;deliveredAt:string;approvedBy:string|null;decisionReason:string|null;resultReturnId:string|null;policyVersion:string;createdAt:string};

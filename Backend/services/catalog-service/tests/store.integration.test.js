@@ -70,6 +70,7 @@ test('store onboarding, slug rules, membership and pause policy', { skip: !proce
         WHERE i.variant_id=v.id AND v.store_id=$1`, [item.id]);
       await pool.query('DELETE FROM catalog.store_audit_logs WHERE store_id=$1', [item.id]);
       await pool.query("DELETE FROM catalog.store_outbox WHERE payload->>'storeId'=$1", [item.id]);
+      await pool.query('DELETE FROM catalog.store_profile_versions WHERE store_id=$1',[item.id]);
       await pool.query('DELETE FROM catalog.stores WHERE id=$1', [item.id]);
     }
     await pool.end();

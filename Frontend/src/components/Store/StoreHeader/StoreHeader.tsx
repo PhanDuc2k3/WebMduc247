@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { StoreType } from "../../../types/store";
-import { Star, Heart, MessageCircle, Loader2, Store, CheckCircle, Package, Users, Calendar } from "lucide-react";
+import { Star, Heart, MessageCircle, Loader2, Store, Package, Users, Calendar } from "lucide-react";
 import favoriteApi from "../../../api/favoriteApi";
 import axiosClient from "../../../api/axiosClient";
 import { toast } from "react-toastify";
@@ -198,14 +198,6 @@ const StoreHeader: React.FC<StoreInfoProps> = ({ store }) => {
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                     {store.name}
                   </h2>
-                  <span className="text-[10px] md:text-xs bg-[#4B5563]/10 text-[#4B5563] px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm flex items-center gap-1">
-                    <Store className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                    <span>Mall</span>
-                  </span>
-                  <span className="text-[10px] md:text-xs bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-2 py-0.5 md:px-3 md:py-1 rounded-full font-bold shadow-sm flex items-center gap-1">
-                    <CheckCircle className="w-2.5 h-2.5 md:w-3 md:h-3" />
-                    <span>Chính hãng</span>
-                  </span>
                 </div>
                 <p className="text-sm md:text-base text-gray-600 mb-1.5 md:mb-2 line-clamp-2">{store.description}</p>
               </div>

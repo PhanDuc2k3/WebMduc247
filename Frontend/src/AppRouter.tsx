@@ -6,6 +6,10 @@ import StaffAccess from "./pages/Admin/StaffAccess";
 import PlatformApprovals from "./pages/Admin/PlatformApprovals";
 import AdminLogin from "./pages/Admin/AdminLogin";
 import PlatformOverview from "./pages/Admin/PlatformOverview";
+import UserWorkflows from "./pages/Admin/UserWorkflows";
+import AccountHelp from "./pages/AuthV2/AccountHelp";
+import PlatformWorkQueue from "./pages/Admin/PlatformWorkQueue";
+import PlatformFinance from "./pages/Admin/PlatformFinance";
 import PlatformRecords from "./pages/Admin/PlatformRecords";
 import PlatformAudit from "./pages/Admin/PlatformAudit";
 import PlatformReturns from "./pages/Admin/PlatformReturns";
@@ -52,6 +56,7 @@ const AppRouter = () => (
     <Route path="/forgot-password" element={<ForgotPasswordV2 />} />
     <Route path="/reset-password" element={<ResetPasswordV2 />} />
     <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/account-help" element={<AccountHelp />} />
     <Route path="/admin/storefront/preview" element={<AdminRoute><StorefrontPreview /></AdminRoute>} />
 
     <Route element={<Layout />}>  
@@ -98,7 +103,10 @@ const AppRouter = () => (
       <Route path="staff-access" element={<StaffAccess/>}/>
       <Route path="approvals" element={<PlatformApprovals/>}/>
       <Route index element={<PlatformOverview />} />
+      <Route path="work-queue" element={<PlatformWorkQueue />} />
+      <Route path="finance" element={<PlatformFinance />} />
       <Route path="users" element={<PlatformRecords key="users" resource="users" />} />
+      <Route path="user-workflows" element={<UserWorkflows />} />
       <Route path="stores" element={<PlatformRecords key="stores" resource="stores" />} />
       <Route path="products" element={<PlatformRecords key="products" resource="products" />} />
       <Route path="orders" element={<PlatformRecords key="orders" resource="orders" />} />

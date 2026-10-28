@@ -7,6 +7,9 @@
     "dev": "vite",
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "build": "npm run typecheck && vite build",
+    "test:dashboard:browser": "node scripts/verify-dashboard-queue.browser.mjs",
+    "test:users:browser": "node scripts/verify-users.browser.mjs",
+    "test:stores:browser": "node scripts/verify-stores.browser.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

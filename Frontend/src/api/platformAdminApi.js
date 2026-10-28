@@ -9,10 +9,10 @@ function entityRequest(resource, path, options) {
 const queryString = (filters) => new URLSearchParams(Object.entries(filters).filter(([, v]) => v !== '' && v !== undefined)
     .map(([key, value]) => [key, String(value)])).toString();
 export const platformAdminApi = {
-    identitySummary: () => identityAuthorizedRequest('/admin/identity/summary'),
-    catalogSummary: () => authorizedRequest(`${catalog}/api/v2/admin/catalog/summary`),
-    orderSummary: () => authorizedRequest(`${order}/api/v2/admin/orders/summary`),
-    recentOrders: () => authorizedRequest(`${order}/api/v2/admin/orders/recent`),
+    identitySummary: (range = {}) => identityAuthorizedRequest(`/admin/identity/summary?${new URLSearchParams(range)}`),
+    catalogSummary: (range = {}) => authorizedRequest(`${catalog}/api/v2/admin/catalog/summary?${new URLSearchParams(range)}`),
+    orderSummary: (range = {}) => authorizedRequest(`${order}/api/v2/admin/orders/summary?${new URLSearchParams(range)}`),
+    recentOrders: (range = {}) => authorizedRequest(`${order}/api/v2/admin/orders/recent?${new URLSearchParams(range)}`),
     list: (resource, filters) => entityRequest(resource, `?${queryString(filters)}`),
     detail: (resource, id) => entityRequest(resource, `/${encodeURIComponent(id)}`),
     cancelBlockedSeller: (record, reason, requestId, approvalId) => entityRequest('orders', `/${record.id}/cancel-blocked-seller`, { method: 'POST', body: { version: record.version, reason, requestId, ...(approvalId ? { approvalId } : {}) } }),

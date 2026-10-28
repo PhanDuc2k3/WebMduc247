@@ -62,7 +62,7 @@ export const caseStatuses={
 };
 export function caseFilters(query={},user={}) {
   if(!query||typeof query!=='object'||Array.isArray(query)||Object.keys(query).some(key=>
-    !['q','status','page','limit','kind','from','to','storeId','paymentMethod','reasonCode','assigneeId','due'].includes(key)))
+    !['q','status','page','limit','kind','from','to','storeId','paymentMethod','reasonCode','assigneeId','due','userId'].includes(key)))
     throw caseError(400,'INVALID_ADMIN_FILTER','Bộ lọc không hợp lệ.');
   const kind=query.kind||'RETURN';
   if(!Object.hasOwn(caseStatuses,kind)) throw caseError(400,'INVALID_ADMIN_FILTER','Loại hồ sơ không hợp lệ.');
@@ -77,13 +77,14 @@ export function caseFilters(query={},user={}) {
   }
   if(dates.from&&dates.to&&dates.from>dates.to) throw caseError(400,'INVALID_ADMIN_FILTER','Khoảng ngày không hợp lệ.');
   if(query.storeId)adminId(query.storeId);
+    if(query.userId)adminId(query.userId);
   let assigneeId=query.assigneeId||'';
   if(assigneeId==='me')assigneeId=adminId(user.id);
   if(assigneeId&&assigneeId!=='unassigned')adminId(assigneeId);
   if(query.paymentMethod&&!['COD','MOMO','VIETQR'].includes(query.paymentMethod)||
     query.reasonCode&&!['DAMAGED','WRONG_ITEM','NOT_AS_DESCRIBED','PAYMENT','SERVICE','OTHER'].includes(query.reasonCode)||
     query.due&&!['overdue','upcoming'].includes(query.due))throw caseError(400,'INVALID_ADMIN_FILTER','Bộ lọc không hợp lệ.');
-  return {...options,kind,assigneeId,storeId:query.storeId||null,paymentMethod:query.paymentMethod||'',reasonCode:query.reasonCode||'',due:query.due||'',
+    return {...options,kind,assigneeId,userId:query.userId||null,storeId:query.storeId||null,paymentMethod:query.paymentMethod||'',reasonCode:query.reasonCode||'',due:query.due||'',
     from:dates.from?`${dates.from}T00:00:00+07:00`:null,
     to:dates.to?new Date(Date.parse(`${dates.to}T00:00:00+07:00`)+86400000).toISOString():null};
 }

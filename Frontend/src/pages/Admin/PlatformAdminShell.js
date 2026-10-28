@@ -9,7 +9,10 @@ import AdminSessionGuard from './AdminSessionGuard';
 import './platform-admin.css';
 const links = [
     { path: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
+    { path: '/admin/work-queue', label: 'Hàng chờ công việc', icon: ScrollText },
+    { path: '/admin/finance', label: 'Giao dịch thành công', icon: ShoppingBag },
     { path: '/admin/users', label: 'Người dùng', icon: Users },
+    { path: '/admin/user-workflows', label: 'Kháng nghị & dữ liệu', icon: ShieldCheck },
     { path: '/admin/stores', label: 'Cửa hàng', icon: Store },
     { path: '/admin/products', label: 'Sản phẩm', icon: Package },
     { path: '/admin/orders', label: 'Đơn hàng', icon: ShoppingBag },

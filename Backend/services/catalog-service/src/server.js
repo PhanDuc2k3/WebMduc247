@@ -10,6 +10,9 @@ import { InventoryService } from './inventory.service.js';
 import { CatalogAdminService } from './platform-admin.service.js';
 import { PlatformAdminError } from '../../../packages/contracts/platform-admin.js';
 import { StorefrontService } from './storefront.service.js';
+import {StoreGovernanceService} from './store-governance.service.js';
+import {requireAdminScope} from '../../../packages/contracts/admin-rbac.js';
+import {REPUTATION_POLICY} from './store-policy.js';
 
 const port = Number(process.env.CATALOG_PORT || 5102);
 const databaseUrl = process.env.CATALOG_DATABASE_URL || process.env.IDENTITY_DATABASE_URL;
@@ -22,6 +25,45 @@ const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
 if (!databaseUrl) throw new Error('CATALOG_DATABASE_URL is required');
 const pool = new pg.Pool({ connectionString: databaseUrl });
 const service = new StoreService(pool);
+async function loadStoreImpact(actor,id,bearer){
+  requireAdminScope(actor,'stores.moderate',{storeId:id});
+  try{
+    const [data,reports]=await Promise.all([
+      remoteAdmin(process.env.CATALOG_ORDER_URL||'http://127.0.0.1:5103',`/api/v2/admin/stores/${id}/impact`,bearer),
+      remoteAdmin(process.env.CATALOG_CHAT_URL||'http://127.0.0.1:5106',`/api/v2/admin/stores/${id}/report-summary`,bearer),
+    ]);
+    if(data.storeId!==id||['open_orders','overdue_orders','open_returns','open_cases'].some(key=>!Number.isSafeInteger(data[key])||data[key]<0))throw new Error('Invalid source');
+    if(reports.storeId!==id||['open_reports','total_reports'].some(key=>!Number.isSafeInteger(reports[key])||reports[key]<0))throw new Error('Invalid report source');
+    return {...data,chatReports:reports};
+  }catch{throw new PlatformAdminError(503,'STORE_IMPACT_UNAVAILABLE','Chưa lấy đủ tác động từ Order/Chat. Hãy thử lại trước khi đình chỉ cửa hàng.');}
+}
+async function remoteAdmin(base,path,bearer){
+  try{const response=await fetch(new URL(path,base),{headers:{Authorization:bearer},signal:AbortSignal.timeout(5000)});
+    if(!response.ok)throw new PlatformAdminError(response.status>=500?503:response.status,'SOURCE_UNAVAILABLE','Nguồn xác minh chưa sẵn sàng hoặc ngoài quyền truy cập.');return await response.json();
+  }catch(error){if(error instanceof PlatformAdminError)throw error;throw new PlatformAdminError(503,'SOURCE_UNAVAILABLE','Không kết nối được nguồn xác minh.');}
+}
+async function loadReputation(actor,id,bearer){
+  requireAdminScope(actor,'stores.moderate',{storeId:id});
+  const today=new Date(Date.now()+7*3600000).toISOString().slice(0,10),from=new Date(Date.now()+7*3600000-89*86400000).toISOString().slice(0,10);
+  const query=new URLSearchParams({from,to:today});
+  const [impact,ratings]=await Promise.all([
+    remoteAdmin(process.env.CATALOG_ORDER_URL||'http://127.0.0.1:5103',`/api/v2/admin/stores/${id}/impact?${query}`,bearer),
+    remoteAdmin(process.env.CATALOG_ENGAGEMENT_URL||'http://127.0.0.1:5105',`/api/v2/admin/stores/${id}/rating-summary?${query}`,bearer),
+  ]);
+  if(impact.storeId!==id||['period_orders','completed_orders','seller_cancelled','delayed_orders','period_returns'].some(key=>!Number.isSafeInteger(impact[key])||impact[key]<0)||
+    !Number.isSafeInteger(ratings.review_count)||ratings.review_count<0||ratings.average_rating!==null&&(typeof ratings.average_rating!=='number'||ratings.average_rating<1||ratings.average_rating>5))throw new PlatformAdminError(503,'INVALID_SOURCE','Số liệu xét badge không hợp lệ.');
+  return {impact,ratings};
+}
+async function loadOwnershipTarget(actor,targetId,bearer,verificationRef,storeId){
+  requireAdminScope(actor,'users.read',{});requireAdminScope(actor,'cases.read',{storeId,caseKind:'TICKET'});
+  const [identity,proof]=await Promise.all([
+    remoteAdmin(identityUrl,`/api/v2/admin/users/${targetId}`,bearer),
+    remoteAdmin(process.env.CATALOG_ORDER_URL||'http://127.0.0.1:5103',`/api/v2/admin/cases/${verificationRef.slice(5)}`,bearer),
+  ]);
+  if(proof.record?.storeId!==storeId||proof.record?.buyerId!==targetId||proof.record?.kind!=='TICKET'||!['RESOLVED','CLOSED'].includes(proof.record?.status))throw new PlatformAdminError(409,'VERIFICATION_REQUIRED','Hồ sơ xác minh phải là ticket đã kết luận của tài khoản đích, liên quan đúng shop.');
+  return identity.record;
+}
+const governanceFor=stores=>new StoreGovernanceService(stores,{targetLoader:loadOwnershipTarget,reputationLoader:loadReputation});
 const storage = await createCatalogStorage(process.env);
 const catalog = new CatalogService(pool, service, storage);
 const media = new MediaService(pool, catalog, storage, configuredScanner(process.env));
@@ -161,10 +203,20 @@ export function createHandler(storeService = service, catalogService = catalog, 
       if (['POST', 'PATCH', 'DELETE'].includes(req.method) && origin !== frontendOrigin &&
         !path.startsWith('/internal/') && !path.startsWith('/inventory/')) throw new StoreError(403, 'ORIGIN_DENIED', 'Origin không hợp lệ.');
       const query = Object.fromEntries(target.searchParams);
+      if(req.method==='GET'&&path==='/stores/reputation-policy')return send(res,200,REPUTATION_POLICY);
       if(req.method==='GET'&&path==='/storefront')return send(res,200,await new StorefrontService(catalogService).publicConfig());
       if (path.startsWith('/admin/')) {
         const user = await authenticate(req);
-        const admin = new CatalogAdminService(storeService.pool,catalogService);
+        const admin = new CatalogAdminService(storeService.pool,catalogService,{impactLoader:loadStoreImpact});
+        const governance=governanceFor(storeService);
+        const profileContact=/^\/admin\/stores\/([0-9a-f-]{36})\/profile-contact$/i.exec(path);
+        if(profileContact&&req.method==='POST')return send(res,200,await governance.profileContact(user,profileContact[1],await body(req)));
+        if(req.method==='GET'&&path==='/admin/store-applications')return send(res,200,await governance.queue(user,query));
+        const governancePath=/^\/admin\/stores\/([0-9a-f-]{36})\/governance$/i.exec(path);
+        if(governancePath&&req.method==='GET')return send(res,200,await governance.read(user,governancePath[1]));
+        if(governancePath&&req.method==='POST')return send(res,200,await governance.command(user,governancePath[1],await body(req),req.headers.authorization));
+        const userImpact=/^\/admin\/user-impact\/([0-9a-f-]{36})$/i.exec(path);
+        if(req.method==='GET'&&userImpact)return send(res,200,await admin.userImpact(user,userImpact[1]));
         const storefront=new StorefrontService(catalogService);
         if(req.method==='GET'&&path==='/admin/storefront')return send(res,200,await storefront.read(user));
         if(req.method==='GET'&&path==='/admin/storefront/preview')return send(res,200,await storefront.preview(user));
@@ -172,13 +224,13 @@ export function createHandler(storeService = service, catalogService = catalog, 
         if(req.method==='POST'&&path==='/admin/storefront/draft')return send(res,200,await storefront.save(user,await body(req,131072),false));
         if(req.method==='POST'&&path==='/admin/storefront/publish')return send(res,200,await storefront.save(user,await body(req,131072),true));
         if(req.method==='POST'&&path==='/admin/storefront/categories')return send(res,201,await storefront.createCategory(user,await body(req)));
-        if (req.method === 'GET' && path === '/admin/catalog/summary') return send(res,200,await admin.summary(user));
+        if (req.method === 'GET' && path === '/admin/catalog/summary') return send(res,200,await admin.summary(user,query));
         if (req.method === 'GET' && path === '/admin/stores') return send(res,200,await admin.stores(user,query));
         if (req.method === 'GET' && path === '/admin/products') return send(res,200,await admin.products(user,query));
         if (req.method === 'GET' && path === '/admin/catalog/audit') return send(res,200,await admin.audit(user,query));
         const record = /^\/admin\/(stores|products)\/([0-9a-f-]{36})(\/status)?$/i.exec(path);
         if(record && req.method==='GET' && !record[3])return send(res,200,await admin.detail(user,record[1],record[2]));
-        if(record && req.method==='PATCH' && record[3])return send(res,200,await admin.moderate(user,record[1],record[2],await body(req)));
+        if(record && req.method==='PATCH' && record[3])return send(res,200,await admin.moderate(user,record[1],record[2],await body(req),req.headers.authorization));
         throw new StoreError(404,'NOT_FOUND','Không tìm thấy API quản trị.');
       }
       if (path.startsWith('/inventory/')) {
@@ -264,6 +316,10 @@ export function createHandler(storeService = service, catalogService = catalog, 
       if (req.method === 'GET' && /^\/stores\/[a-z0-9-]+\/products$/.test(path)) return send(res, 200, await catalogService.listProducts({ store: path.split('/')[2], page: 1, limit: 50, inStock: 'true' }));
       if (req.method === 'GET' && /^\/stores\/[a-z0-9-]+$/.test(path)) return send(res, 200, { store: await storeService.publicBySlug(path.slice(8)) });
       const user = await authenticate(req);
+      if(req.method==='GET'&&path==='/seller/former-store-decisions')return send(res,200,{items:(await storeService.pool.query(`SELECT d.id,d.action,d.reason,d.scope,d.created_at,s.name AS store_name
+        FROM catalog.store_decisions d JOIN catalog.stores s ON s.id=d.store_id WHERE d.recipient_id=$1
+        AND NOT EXISTS(SELECT 1 FROM catalog.store_members m WHERE m.store_id=s.id AND m.user_id=$1 AND m.role='owner' AND m.status='active')
+        ORDER BY d.created_at DESC,d.id DESC LIMIT 30`,[user.id])).rows});
       const sellerInventory = /^\/seller\/variants\/([0-9a-f-]{36})\/(inventory|inventory-adjustments)$/i.exec(path);
       if (sellerInventory) {
         if (req.method === 'GET' && sellerInventory[2] === 'inventory') return send(res, 200,
@@ -317,6 +373,9 @@ export function createHandler(storeService = service, catalogService = catalog, 
         if (req.method === 'DELETE' && memberPath[2]) return send(res, 200, await storeService.removeMember(memberPath[1], user.id, memberPath[2]));
       }
       if (invitationPath && req.method === 'POST') return send(res, 201, await storeService.invite(invitationPath[1], user.id, await body(req)));
+      const sellerGovernance=/^\/seller\/stores\/([0-9a-f-]{36})\/governance$/i.exec(path);
+      if(sellerGovernance&&req.method==='GET')return send(res,200,await new StoreGovernanceService(storeService).sellerRead(user,sellerGovernance[1]));
+      if(sellerGovernance&&req.method==='POST')return send(res,200,await new StoreGovernanceService(storeService).sellerCommand(user,sellerGovernance[1],await body(req)));
       const match = /^\/seller\/stores\/([0-9a-f-]{36})(?:\/(settings|overview))?$/i.exec(path);
       if (match) {
         const [, id, section] = match;

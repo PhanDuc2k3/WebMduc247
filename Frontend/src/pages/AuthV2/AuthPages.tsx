@@ -46,7 +46,7 @@ export function LoginV2() {
     <Field label="Mật khẩu" type="password" value={password} onChange={setPassword} />
     {new URLSearchParams(window.location.search).has("registered") && <p role="status" className="text-sm text-green-700">Tài khoản đã được tạo. Bạn có thể đăng nhập.</p>}
     <Feedback error={error} message={message} /><Submit busy={busy}>Đăng nhập</Submit>
-  </form><div className="flex justify-between text-sm text-slate-700"><Link to="/forgot-password" className="underline">Quên mật khẩu?</Link><Link to="/register" className="underline">Tạo tài khoản</Link></div><Link to={`/verify-email?email=${encodeURIComponent(email.trim())}`} className="block text-center text-sm text-slate-700 underline">Chưa xác minh email? Gửi lại liên kết</Link><Link to="/admin/login" className="block border-t pt-4 text-center text-xs text-slate-500">Đăng nhập quản trị sàn →</Link></Card>;
+  </form><div className="flex justify-between text-sm text-slate-700"><Link to="/forgot-password" className="underline">Quên mật khẩu?</Link><Link to="/register" className="underline">Tạo tài khoản</Link></div><Link to={`/verify-email?email=${encodeURIComponent(email.trim())}`} className="block text-center text-sm text-slate-700 underline">Chưa xác minh email? Gửi lại liên kết</Link><Link to="/account-help" className="block text-center text-sm text-slate-700 underline">Kháng nghị khóa tài khoản / yêu cầu dữ liệu cá nhân</Link><Link to="/admin/login" className="block border-t pt-4 text-center text-xs text-slate-500">Đăng nhập quản trị sàn →</Link></Card>;
 }
 
 export function RegisterV2() {

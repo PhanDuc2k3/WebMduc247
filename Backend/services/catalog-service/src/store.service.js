@@ -33,11 +33,12 @@ const publicStore = row => ({
   logoUrl: row.logo_url, bannerUrl: row.banner_url, category: row.category,
   createdAt: row.created_at, status: row.status,
   productCount: row.product_count == null ? null : Number(row.product_count), rating: null, followers: null,
+  reputationBadge:!row.platform_suspended&&Date.parse(row.reputation_badge_until)>Date.now()?{label:'Shop uy tín',expiresAt:row.reputation_badge_until,policyId:'REPUTATION_V1'}:null,
   ...(row.contact_info ? { contactInfo: row.contact_info } : {}),
   ...(row.business_hours ? { businessHours: row.business_hours } : {}),
 });
 export class StoreService {
-  constructor(pool) { this.pool = pool; }
+  constructor(pool, { approvalRequired = process.env.STORE_APPROVAL_REQUIRED === 'true' } = {}) { this.pool = pool; this.approvalRequired = approvalRequired; }
   async transaction(fn) {
     const db = await this.pool.connect();
     try { await db.query('BEGIN'); const result = await fn(db); await db.query('COMMIT'); return result; }
@@ -51,7 +52,16 @@ export class StoreService {
     return rows[0].role;
   }
   async owner(db, storeId, userId) {
+    // All owner mutations serialize with ownership transfers before checking membership.
+    if(db!==this.pool){if(!uuid.test(storeId))throw new StoreError(404,'STORE_NOT_FOUND','Không tìm thấy cửa hàng.');await db.query('SELECT id FROM catalog.stores WHERE id=$1 FOR UPDATE',[storeId]);}
     if (await this.role(db, storeId, userId) !== 'owner') throw new StoreError(403, 'OWNER_REQUIRED', 'Chỉ chủ cửa hàng được thực hiện thao tác này.');
+  }
+  async snapshotPendingProfile(db,storeId,userId){
+    const row=(await db.query(`SELECT s.*,t.contact_info,a.pickup_address,a.return_address FROM catalog.stores s
+      JOIN catalog.store_settings t ON t.store_id=s.id JOIN catalog.store_addresses a ON a.store_id=s.id
+      WHERE s.id=$1 AND s.registration_status='PENDING'`,[storeId])).rows[0];
+    if(row)await db.query('INSERT INTO catalog.store_profile_versions(store_id,submitted_by,profile) VALUES($1,$2,$3)',[storeId,userId,
+      {name:row.name,description:row.description,category:row.category,contactEmail:row.contact_info.email,contactPhone:row.contact_info.phone,pickupAddress:row.pickup_address,returnAddress:row.return_address}]);
   }
   async create(user, body) {
     if (!user?.emailVerifiedAt) throw new StoreError(403, 'EMAIL_VERIFICATION_REQUIRED', 'Vui lòng xác minh email trước khi tạo cửa hàng.');
@@ -73,13 +83,14 @@ export class StoreService {
       const slug = cleanSlug(base.slice(0, 60 - suffix.length).replace(/-$/g, '') + suffix);
       try {
         return await this.transaction(async db => {
-          const { rows } = await db.query(`INSERT INTO catalog.stores(id,owner_user_id,slug,name,description,logo_url,banner_url,category)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`, [storeId, user.id, slug, name, description, logoUrl, bannerUrl, category]);
+          const { rows } = await db.query(`INSERT INTO catalog.stores(id,owner_user_id,slug,name,description,logo_url,banner_url,category,registration_status)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`, [storeId, user.id, slug, name, description, logoUrl, bannerUrl, category, this.approvalRequired ? 'PENDING' : 'NOT_REQUIRED']);
           await db.query("INSERT INTO catalog.store_members(store_id,user_id,role) VALUES ($1,$2,'owner')", [storeId, user.id]);
           await db.query('INSERT INTO catalog.store_addresses(store_id,pickup_address,return_address) VALUES ($1,$2,$3)', [storeId, pickupAddress, returnAddress]);
           await db.query('INSERT INTO catalog.store_settings(store_id,contact_info) VALUES ($1,$2)', [storeId, { email: contactEmail, phone: contactPhone }]);
+          await db.query('INSERT INTO catalog.store_profile_versions(store_id,submitted_by,profile) VALUES ($1,$2,$3)', [storeId,user.id,{name,description,category,contactEmail,contactPhone,pickupAddress,returnAddress}]);
           await db.query('INSERT INTO catalog.store_audit_logs(store_id,actor_id,action,changed_fields) VALUES ($1,$2,$3,$4)', [storeId, user.id, 'created', JSON.stringify(['name', 'slug', 'contactInfo', 'pickupAddress'])]);
-          await db.query('INSERT INTO catalog.store_outbox(event_type,payload) VALUES ($1,$2)', ['StoreCreated.v1', { storeId, ownerUserId: user.id, status: 'active' }]);
+          await db.query('INSERT INTO catalog.store_outbox(event_type,payload) VALUES ($1,$2)', ['StoreCreated.v1', { storeId, ownerUserId: user.id, status: rows[0].status }]);
           return publicStore(rows[0]);
         });
       } catch (error) {
@@ -135,10 +146,10 @@ export class StoreService {
   }
   async checkoutPolicy(storeId) {
     if (!uuid.test(storeId)) throw new StoreError(404, 'STORE_NOT_FOUND', 'Không tìm thấy cửa hàng.');
-    const { rows } = await this.pool.query(`SELECT s.status,t.accepting_orders FROM catalog.stores s
+    const { rows } = await this.pool.query(`SELECT s.status,s.platform_suspended,s.registration_status,t.accepting_orders FROM catalog.stores s
       JOIN catalog.store_settings t ON t.store_id=s.id WHERE s.id=$1`, [storeId]);
     if (!rows[0]) throw new StoreError(404, 'STORE_NOT_FOUND', 'Không tìm thấy cửa hàng.');
-    return { storeId, acceptingOrders: rows[0].status === 'active' && rows[0].accepting_orders };
+    return { storeId, acceptingOrders: rows[0].status === 'active' && !rows[0].platform_suspended && ['NOT_REQUIRED','APPROVED'].includes(rows[0].registration_status) && rows[0].accepting_orders };
   }
   async mine(userId) {
     const { rows } = await this.pool.query(`SELECT s.*,m.role FROM catalog.stores s JOIN catalog.store_members m ON m.store_id=s.id
@@ -150,7 +161,9 @@ export class StoreService {
     const { rows } = await this.pool.query(`SELECT s.*,a.pickup_address,a.return_address,t.accepting_orders,t.business_hours,t.contact_info
       FROM catalog.stores s JOIN catalog.store_addresses a ON a.store_id=s.id JOIN catalog.store_settings t ON t.store_id=s.id WHERE s.id=$1`, [storeId]);
     return { ...publicStore(rows[0]), role, pickupAddress: rows[0].pickup_address, returnAddress: rows[0].return_address,
-      acceptingOrders: rows[0].accepting_orders, businessHours: rows[0].business_hours, contactInfo: rows[0].contact_info };
+      acceptingOrders: rows[0].accepting_orders, platformSuspended: rows[0].platform_suspended,
+      suspensionReason: rows[0].platform_suspension_reason, registrationStatus: rows[0].registration_status,
+      businessHours: rows[0].business_hours, contactInfo: rows[0].contact_info };
   }
   async update(storeId, userId, body) {
     const allowed = ['name', 'description', 'logoUrl', 'bannerUrl', 'category', 'pickupAddress', 'returnAddress'];
@@ -166,11 +179,14 @@ export class StoreService {
     if ('returnAddress' in body) values.return_address = string(body.returnAddress, 5, 500);
     await this.transaction(async db => {
       await this.owner(db, storeId, userId);
+      await db.query('SELECT id FROM catalog.stores WHERE id=$1 FOR UPDATE',[storeId]);
       const mainKeys = Object.keys(values).filter(key => !key.endsWith('_address'));
       if (mainKeys.length) await db.query(`UPDATE catalog.stores SET ${mainKeys.map((key, i) => `${key}=$${i + 2}`).join(',')},updated_at=now() WHERE id=$1`, [storeId, ...mainKeys.map(key => values[key])]);
       const addressKeys = Object.keys(values).filter(key => key.endsWith('_address'));
       if (addressKeys.length) await db.query(`UPDATE catalog.store_addresses SET ${addressKeys.map((key, i) => `${key}=$${i + 2}`).join(',')} WHERE store_id=$1`, [storeId, ...addressKeys.map(key => values[key])]);
       await db.query('INSERT INTO catalog.store_audit_logs(store_id,actor_id,action,changed_fields) VALUES ($1,$2,$3,$4)', [storeId, userId, 'updated', JSON.stringify(fields)]);
+      await db.query('UPDATE catalog.stores SET admin_version=admin_version+1,updated_at=now() WHERE id=$1',[storeId]);
+      await this.snapshotPendingProfile(db,storeId,userId);
     });
     return this.manage(storeId, userId);
   }
@@ -194,11 +210,13 @@ export class StoreService {
         throw new StoreError(409,'PLATFORM_SUSPENDED','Cửa hàng đang bị sàn tạm ngừng. Vui lòng liên hệ quản trị viên để mở lại.');
       const columns = { acceptingOrders: 'accepting_orders', businessHours: 'business_hours', contactInfo: 'contact_info' };
       await db.query(`UPDATE catalog.store_settings SET ${fields.map((key, i) => `${columns[key]}=$${i + 2}`).join(',')} WHERE store_id=$1`, [storeId, ...fields.map(key => body[key])]);
+      await db.query('UPDATE catalog.stores SET admin_version=admin_version+1,updated_at=now() WHERE id=$1',[storeId]);
       if ('acceptingOrders' in body) {
         const status = body.acceptingOrders ? 'active' : 'paused';
-        await db.query('UPDATE catalog.stores SET status=$2,updated_at=now() WHERE id=$1', [storeId, status]);
-        await db.query('INSERT INTO catalog.store_outbox(event_type,payload) VALUES ($1,$2)', ['StoreStatusChanged.v1', { storeId, status, acceptingOrders: body.acceptingOrders }]);
+        const effective=await db.query('UPDATE catalog.stores SET status=$2,updated_at=now() WHERE id=$1 RETURNING status,platform_suspended', [storeId, status]);
+        await db.query('INSERT INTO catalog.store_outbox(event_type,payload) VALUES ($1,$2)', ['StoreStatusChanged.v1', { storeId, status:effective.rows[0].status,platformSuspended:effective.rows[0].platform_suspended,acceptingOrders: body.acceptingOrders }]);
       }
+      if('contactInfo' in body)await this.snapshotPendingProfile(db,storeId,userId);
       await db.query('INSERT INTO catalog.store_audit_logs(store_id,actor_id,action,changed_fields) VALUES ($1,$2,$3,$4)', [storeId, userId, 'settings_updated', JSON.stringify(fields)]);
     });
     return this.manage(storeId, userId);

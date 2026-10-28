@@ -9,6 +9,8 @@ export type CatalogStore = {
   productCount: number | null; rating: number | null; followers: number | null;
   role?: "owner" | "staff"; pickupAddress?: string; returnAddress?: string;
   acceptingOrders?: boolean; businessHours?: Record<string, unknown>;
+  platformSuspended?:boolean;suspensionReason?:string;registrationStatus?:string;
+  reputationBadge?:{label:string;expiresAt:string;policyId:string}|null;
   contactInfo?: { email?: string; phone?: string };
 };
 export type StoreInput = {
@@ -69,6 +71,7 @@ export const catalogApi = {
   storeCategories: () => publicGet<{ categories: string[] }>("/stores/categories"),
   featured: () => publicGet<{ stores: CatalogStore[] }>(`/stores/featured?limit=8`),
   store: (slug: string) => publicGet<{ store: CatalogStore }>(`/stores/${encodeURIComponent(slug)}`),
+  reputationPolicy:()=>publicGet<{id:string;criteria:string}>('/stores/reputation-policy'),
   publicProducts: (slug: string) => publicGet<{ products: CatalogItem[] }>(`/stores/${encodeURIComponent(slug)}/products`),
   mine: () => seller<{ stores: CatalogStore[] }>("/stores"),
   manage: (id: string) => seller<{ store: CatalogStore }>(`/stores/${id}`),

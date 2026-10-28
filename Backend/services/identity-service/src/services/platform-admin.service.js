@@ -2,6 +2,7 @@ import {requireAdminScope} from '../../../../packages/contracts/admin-rbac.js';
 import {adminId, adminQuery, adminPage, adminAction, checkAdminVersion, PlatformAdminError} from '../../../../packages/contracts/platform-admin.js';
 import {adminCommand} from '../../../../packages/contracts/admin-command.js';
 import {maskEmail, maskName} from '../../../../packages/contracts/admin-privacy.js';
+import {dashboardRange, dashboardMeta, metricComparison, listDateRange} from '../../../../packages/contracts/admin-dashboard.js';
 
 const userDto = row => ({ id: row.id, email: maskEmail(row.email), fullName: maskName(row.full_name), status: row.status,
   roles: row.roles, emailVerifiedAt: row.email_verified_at, createdAt: row.created_at, version: Number(row.admin_version) });
@@ -10,25 +11,31 @@ const columns = `u.id,u.email,u.full_name,u.status,u.email_verified_at,u.created
 
 export class IdentityAdminService {
   constructor(repository) { this.repo = repository; }
-  async summary(user) {
+  async summary(user, query = {}) {
     requireAdminScope(user,'users.read',{});
+    const range = dashboardRange(query);
     const { rows } = await this.repo.pool.query(`SELECT count(*)::int AS total,
       count(*) FILTER (WHERE status='active')::int AS active,
       count(*) FILTER (WHERE status='suspended')::int AS suspended,
       count(*) FILTER (WHERE status='pending_verification')::int AS pending,
-      count(*) FILTER (WHERE created_at>=now()-interval '7 days')::int AS new_week FROM users`);
+      count(*) FILTER (WHERE created_at>=$1 AND created_at<$2)::int AS new_week,
+      count(*) FILTER (WHERE created_at>=$3 AND created_at<$1)::int AS previous FROM users`, [range.start,range.end,range.previousStart]);
     return { users: { total: rows[0].total, active: rows[0].active, suspended: rows[0].suspended,
-      pending: rows[0].pending, newWeek: rows[0].new_week } };
+      pending: rows[0].pending, newWeek: rows[0].new_week, inPeriod: rows[0].new_week },
+      comparison: metricComparison(rows[0].new_week, rows[0].previous), ...dashboardMeta(range),
+      definition: 'Đếm tài khoản theo ngày tạo trong kỳ, gồm mọi trạng thái. Chờ xác minh là số tồn hiện tại.' };
   }
   async list(user, query) {
     requireAdminScope(user,'users.read',{});
     const options = adminQuery(query, { statuses: ['active','suspended','pending_verification'], roles: ['buyer','seller','platform_admin'] });
-    const where = `WHERE (u.full_name ILIKE $1 OR u.email ILIKE $1) AND ($2='' OR u.status=$2)
+    const where = `WHERE (u.id::text ILIKE $1 OR u.full_name ILIKE $1 OR u.email ILIKE $1) AND ($2='' OR u.status=$2)
       AND ($3='' OR EXISTS(SELECT 1 FROM user_roles r WHERE r.user_id=u.id AND r.role=$3))`;
-    const args = [options.pattern, options.status, options.role];
+    const range=listDateRange(query);
+    const args = [options.pattern, options.status, options.role,range.start,range.end];
+    const datedWhere = where + ' AND ($4::timestamptz IS NULL OR u.created_at >= $4) AND ($5::timestamptz IS NULL OR u.created_at < $5)';
     const [count, list] = await Promise.all([
-      this.repo.pool.query(`SELECT count(*)::int AS total FROM users u ${where}`, args),
-      this.repo.pool.query(`SELECT ${columns} FROM users u ${where} ORDER BY u.created_at DESC,u.id DESC LIMIT $4 OFFSET $5`,
+      this.repo.pool.query(`SELECT count(*)::int AS total FROM users u ${datedWhere}`, args),
+      this.repo.pool.query(`SELECT ${columns} FROM users u ${datedWhere} ORDER BY u.created_at DESC,u.id DESC LIMIT $6 OFFSET $7`,
         [...args, options.limit, options.offset]),
     ]);
     return adminPage(list.rows.map(userDto), count.rows[0].total, options);

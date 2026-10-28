@@ -262,6 +262,7 @@ test('HTTP Review and Return flow across Identity, Catalog, Order and Engagement
           WHERE i.variant_id=v.id AND v.store_id=$1`,[storeId]);
         await pool.query("DELETE FROM catalog.store_outbox WHERE payload->>'storeId'=$1",[storeId]);
         await pool.query('DELETE FROM catalog.store_audit_logs WHERE store_id=$1',[storeId]);
+        await pool.query('DELETE FROM catalog.store_profile_versions WHERE store_id=$1',[storeId]);
         await pool.query('DELETE FROM catalog.stores WHERE id=$1',[storeId]);
       }
       for(const user of users) await pool.query('DELETE FROM users WHERE id=$1',[user]);

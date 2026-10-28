@@ -20,6 +20,7 @@ export const catalogApi = {
     storeCategories: () => publicGet("/stores/categories"),
     featured: () => publicGet(`/stores/featured?limit=8`),
     store: (slug) => publicGet(`/stores/${encodeURIComponent(slug)}`),
+    reputationPolicy: () => publicGet('/stores/reputation-policy'),
     publicProducts: (slug) => publicGet(`/stores/${encodeURIComponent(slug)}/products`),
     mine: () => seller("/stores"),
     manage: (id) => seller(`/stores/${id}`),

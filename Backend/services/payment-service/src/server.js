@@ -3,6 +3,8 @@ import pg from 'pg';
 import { timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { PaymentError, PaymentService } from './service.js';
+import {PaymentDashboardService} from './admin-dashboard.service.js';
+import {PlatformAdminError} from '../../../packages/contracts/platform-admin.js';
 
 const port=Number(process.env.PAYMENT_PORT||5104);
 const databaseUrl=process.env.PAYMENT_DATABASE_URL||process.env.IDENTITY_DATABASE_URL;
@@ -80,6 +82,11 @@ export function createHandler(payment=service) {
     try {
       const url=new URL(req.url,'http://localhost');
       const path=url.pathname.replace(/^\/api\/v2/,'');
+      if(req.method==='GET'&&path==='/internal/admin-queue'){
+        if(!secretValid(req.headers['x-admin-authorization-token'],process.env.ADMIN_AUTHORIZATION_TOKEN||''))
+          throw new PaymentError(403,'FORBIDDEN','Không có quyền đồng bộ hàng chờ.');
+        return send(res,200,await new PaymentDashboardService(payment.pool).queueFeed(Object.fromEntries(url.searchParams)));
+      }
       if(req.method==='GET'&&path==='/internal/notification/metrics'){
         if(!secretValid(req.headers['x-payment-notification-token'],notificationWebhookToken))
           throw new PaymentError(403,'FORBIDDEN','Không có quyền xem notification metrics.');
@@ -122,6 +129,8 @@ export function createHandler(payment=service) {
       if (['POST','PATCH','DELETE'].includes(req.method) && origin!==frontendOrigin)
         throw new PaymentError(403,'ORIGIN_DENIED','Origin không hợp lệ.');
       const user=await payment.identity(req.headers.authorization);
+      if(req.method==='GET'&&path==='/admin/finance/summary')return send(res,200,await new PaymentDashboardService(payment.pool).summary(user,Object.fromEntries(url.searchParams)));
+      if(req.method==='GET'&&path==='/admin/finance/entries')return send(res,200,await new PaymentDashboardService(payment.pool).entries(user,Object.fromEntries(url.searchParams)));
       if (req.method==='GET' && path==='/payments/methods')
         return send(res,200,payment.methods());
       if (req.method==='POST' && path==='/payments/intents')
@@ -132,7 +141,7 @@ export function createHandler(payment=service) {
       if (req.method==='GET' && group) return send(res,200,await payment.orderPayments(group[1],user.id));
       throw new PaymentError(404,'NOT_FOUND','Không tìm thấy API.');
     } catch (error) {
-      const known=error instanceof PaymentError;
+      const known=error instanceof PaymentError || error instanceof PlatformAdminError;
       if (!known) console.error('Payment request failed:');
       send(res,known?error.status:500,{ code:known?error.code:'INTERNAL_ERROR',
         message:known?error.message:'Không thể xử lý thanh toán.',

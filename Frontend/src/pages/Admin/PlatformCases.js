@@ -56,12 +56,13 @@ export default function PlatformCases() {
     const kind = params.get('kind') === 'TICKET' ? 'TICKET' : 'DISPUTE';
     const q = params.get('q') || '', status = params.get('status') || '', reasonCode = params.get('reasonCode') || '', storeId = params.get('storeId') || '', assigneeId = params.get('assigneeId') || '', due = params.get('due') || '', paymentMethod = params.get('paymentMethod') || '';
     const from = params.get('from') || '', to = params.get('to') || '', selected = params.get('id') || '', creating = params.get('new') === '1', rawPage = Number(params.get('page') || 1), page = Number.isSafeInteger(rawPage) && rawPage > 0 && rawPage <= 10000 ? rawPage : 1;
+    const userId = params.get('userId') || '';
     const [draft, setDraft] = useState(q), [data, setData] = useState(null), [loading, setLoading] = useState(true), [error, setError] = useState(''), [revision, setRevision] = useState(0);
     useEffect(() => setDraft(q), [q]);
-    useEffect(() => { let active = true; setLoading(true); setData(null); setError(''); adminCaseApi.list({ kind, q, status, reasonCode, storeId, assigneeId, due, paymentMethod, from, to, page, limit: 12 }).then(result => { if (active)
+    useEffect(() => { let active = true; setLoading(true); setData(null); setError(''); adminCaseApi.list({ kind, q, status, reasonCode, storeId, assigneeId, due, paymentMethod, from, to, page, limit: 12, userId }).then(result => { if (active)
         setData(result); }).catch(cause => { if (active)
         setError(message(cause)); }).finally(() => { if (active)
-        setLoading(false); }); return () => { active = false; }; }, [kind, q, status, reasonCode, storeId, assigneeId, due, paymentMethod, from, to, page, revision]);
+        setLoading(false); }); return () => { active = false; }; }, [kind, q, status, reasonCode, storeId, assigneeId, due, paymentMethod, from, to, page, userId, revision]);
     function filter(key, value) { const next = new URLSearchParams(params); if (value)
         next.set(key, value);
     else

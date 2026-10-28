@@ -14,7 +14,9 @@ export const adminId = value => {
 };
 export function adminQuery(query = {}, { statuses = [], roles = [], kinds = [] } = {}) {
   const fail = () => new PlatformAdminError(400, 'INVALID_ADMIN_FILTER', 'Bộ lọc không hợp lệ.');
-  if (!query || Object.keys(query).some(key => !['q','status','role','kind','page','limit'].includes(key))) throw fail();
+  if (!query || Object.keys(query).some(key => !['q','status','role','kind','page','limit','from','to','statusGroup','excludeCancelled','ownerId','buyerId','storeId'].includes(key))) throw fail();
+  if(query.ownerId)adminId(query.ownerId);if(query.buyerId)adminId(query.buyerId);if(query.storeId)adminId(query.storeId);
+  if (query.statusGroup && !['pending','delivered','cancelled','other'].includes(query.statusGroup) || query.excludeCancelled && query.excludeCancelled !== 'true') throw fail();
   const q = query.q ?? '', status = query.status ?? '', role = query.role ?? '', kind = query.kind ?? '';
   if (typeof q !== 'string' || q.length > 100 || /[\u0000-\u001f\u007f]/.test(q) ||
     typeof status !== 'string' || status && !statuses.includes(status) || typeof role !== 'string' || role && !roles.includes(role) ||

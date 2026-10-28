@@ -3,6 +3,8 @@ export function isPlatformAdmin(user) {
 }
 export function hasAdminPermission(user, permission) { return Boolean(user?.adminAccess?.permissions.includes(permission)); }
 const routePermissions = {
+    '/admin/user-workflows': ['users.appeals.read', 'privacy.read', 'users.notes.manage'],
+    '/admin/work-queue': ['orders.read', 'cases.read', 'returns.read', 'refunds.read', 'moderation.read'], '/admin/finance': ['finance.view_sensitive'],
     '/admin/users': ['users.read'], '/admin/stores': ['stores.read'], '/admin/products': ['products.read'], '/admin/orders': ['orders.read'],
     '/admin/returns': ['returns.read'], '/admin/cases': ['cases.read'], '/admin/return-exceptions': ['refunds.read'],
     '/admin/case-reports': ['reports.read'], '/admin/storefront': ['storefront.read'], '/admin/storefront/preview': ['storefront.read'],

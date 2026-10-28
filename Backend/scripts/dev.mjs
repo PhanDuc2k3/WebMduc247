@@ -71,6 +71,8 @@ function ensureProfileDevEnv() {
     PHONE_OTP_MODE: 'email',
     CATALOG_SYNC_SECRET: randomBytes(32).toString('hex'),
     INVENTORY_INTERNAL_TOKEN: randomBytes(32).toString('hex'),
+    ADMIN_AUTHORIZATION_TOKEN: randomBytes(32).toString('hex'),
+    ORDER_CHAT_URL: 'http://127.0.0.1:5106',
     ORDER_DELIVERY_TOKEN: randomBytes(32).toString('hex'),
     ORDER_PAYMENT_TOKEN: randomBytes(32).toString('hex'),
     PAYMENT_INTERNAL_TOKEN: randomBytes(32).toString('hex'),
