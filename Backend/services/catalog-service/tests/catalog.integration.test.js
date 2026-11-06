@@ -56,9 +56,9 @@ test('catalog categories, variants, prices, media and public visibility', { skip
     assert.equal(visible.total, 1);
     assert.equal(visible.products[0].priceMinor, 80000);
     assert.equal(visible.products[0].priceOriginalMinor, 100000);
-    await catalog.updateCategory(root.id, { isActive: false });
-    assert.equal((await catalog.listProducts({ store: store.slug })).total, 0);
-    await assert.rejects(catalog.publicProduct(id), { status: 404 });
+    await assert.rejects(catalog.updateCategory(root.id, { isActive: false }), {code:'CATEGORY_IN_USE'});
+    assert.equal((await catalog.listProducts({ store: store.slug })).total, 1);
+    assert.equal((await catalog.publicProduct(id)).product.id,id);
     await catalog.updateCategory(root.id, { isActive: true });
     assert.equal((await catalog.listProducts({ store: store.slug, minPrice: '80001' })).total, 0);
     assert.equal((await catalog.listProducts({ store: store.slug, sale: 'true', inStock: 'true' })).total, 1);

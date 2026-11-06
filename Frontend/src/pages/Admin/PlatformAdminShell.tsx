@@ -10,10 +10,15 @@ const links = [
   { path: '/admin', label: 'Tổng quan', icon: LayoutDashboard },
   { path: '/admin/work-queue', label: 'Hàng chờ công việc', icon: ScrollText },
   { path: '/admin/finance', label: 'Giao dịch thành công', icon: ShoppingBag },
+  { path: '/admin/payments', label: 'Thanh toán', icon: ShoppingBag },
+  { path: '/admin/refunds', label: 'Hoàn tiền', icon: Undo2 },
+  { path: '/admin/inventory', label: 'Tồn kho & giữ hàng', icon: Package },
+  { path: '/admin/chat-reports', label: 'Báo cáo hội thoại', icon: ShieldCheck },
   { path: '/admin/users', label: 'Người dùng', icon: Users },
   { path: '/admin/user-workflows', label: 'Kháng nghị & dữ liệu', icon: ShieldCheck },
   { path: '/admin/stores', label: 'Cửa hàng', icon: Store },
   { path: '/admin/products', label: 'Sản phẩm', icon: Package },
+  { path: '/admin/categories', label: 'Danh mục & thương hiệu', icon: Package },
   { path: '/admin/orders', label: 'Đơn hàng', icon: ShoppingBag },
   { path: '/admin/returns', label: 'Trả hàng', icon: Undo2 },
   { path: '/admin/cases', label: 'Ticket & khiếu nại', icon: ScrollText },
@@ -24,6 +29,7 @@ const links = [
   { path: '/admin/staff-access', label: 'Nhân sự & quyền', icon: Users },
   { path: '/admin/approvals', label: 'Yêu cầu phê duyệt', icon: ShieldCheck },
   { path: '/admin/security', label: 'Bảo mật & phiên', icon: ShieldCheck },
+  { path: '/admin/setup', label: 'Thiết lập vận hành', icon: ShieldCheck },
 ];
 export default function PlatformAdminShell() {
   const user = useAdminSession(), location = useLocation(), navigate = useNavigate();

@@ -14,6 +14,7 @@ export type AdminRecord = { id:string; name?:string; fullName?:string; email?:st
   slug?:string; description?:string; category?:string; categoryName?:string; ownerId?:string; acceptingOrders?:boolean;
   effectiveAcceptingOrders?:boolean;registrationStatus?:string;
   reputationBadgeUntil?:string|null;
+  storeId?:string;categoryId?:string;publicationStatus?:string;moderationStatus?:string;reviewStatus?:string;
   contactEmail?:string|null; productCount?:number; storeName?:string; storeSlug?:string; priceMinor?:number; stock?:number;
   brand?:string; imageUrl?:string|null; attributes?:Record<string,string[]>;
   variants?:{id:string;sku:string;priceMinor:number;stock:number;status:string;attributes:Record<string,string>}[];
@@ -25,7 +26,7 @@ export type AdminHistory = {id?:string;action?:string;actor_name?:string|null;ac
   next_status:string;reason?:string|null;created_at:string;read_version?:number|null;result_version?:number|null;correlation_id?:string|null};
 export type AuditRecord = AdminHistory & {id:string;target_id:string;target_type:'user'|'store'|'product';target_name?:string|null};
 export type AdminPage<T> = {items:T[];total:number;page:number;limit:number;totalPages:number};
-export type AdminFilters = {q?:string;status?:string;role?:string;kind?:string;page?:number;limit?:number;from?:string;to?:string;statusGroup?:string;excludeCancelled?:string;ownerId?:string;buyerId?:string;storeId?:string};
+export type AdminFilters = {q?:string;status?:string;role?:string;kind?:string;page?:number;limit?:number;from?:string;to?:string;statusGroup?:string;excludeCancelled?:string;ownerId?:string;buyerId?:string;storeId?:string;categoryId?:string;brand?:string;stock?:string;moderation?:string;publicationStatus?:string};
 const catalog = import.meta.env.VITE_CATALOG_API_URL || 'http://localhost:5102';
 const order = import.meta.env.VITE_ORDER_API_URL || 'http://localhost:5103';
 function entityRequest<T>(resource:AdminResource,path:string,options?:{method?:string;body?:unknown}) {

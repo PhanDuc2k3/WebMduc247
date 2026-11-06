@@ -5,6 +5,7 @@ import {adminCommand} from '../../../packages/contracts/admin-command.js';
 import {maskEmail} from '../../../packages/contracts/admin-privacy.js';
 import {requireUserImpact} from '../../../packages/contracts/user-impact.js';
 import {notifyStoreDecision} from './store-governance.service.js';
+import {ProductModerationService} from './product-moderation.service.js';
 
 const storeDto = row => ({ id:row.id,name:row.name,slug:row.slug,description:row.description,
   ownerId:row.owner_user_id,category:row.category,status:row.platform_suspended?'suspended':row.status,
@@ -13,8 +14,9 @@ const storeDto = row => ({ id:row.id,name:row.name,slug:row.slug,description:row
   effectiveAcceptingOrders:row.status==='active'&&!row.platform_suspended&&Boolean(row.accepting_orders),
   registrationStatus:row.registration_status,reputationBadgeUntil:row.reputation_badge_until,productCount:row.product_count,createdAt:row.created_at });
 const productDto = row => ({ id:row.id,name:row.name,slug:row.slug,brand:row.brand,description:row.description,
-  storeName:row.store_name,storeSlug:row.store_slug,categoryName:row.category_name,
-  status:row.platform_suspended?'suspended':row.status,publicationStatus:row.status,suspended:row.platform_suspended,
+  storeId:row.store_id,categoryId:row.category_id,storeName:row.store_name,storeSlug:row.store_slug,categoryName:row.category_name,
+  status:row.platform_suspended?'suspended':row.status,publicationStatus:row.seller_status,reviewStatus:row.review_status,suspended:row.platform_suspended,
+  moderationStatus:row.platform_suspended?'BLOCKED':row.remedy_status==='OPEN'?'NEEDS_CHANGES':row.remedy_status==='SUBMITTED'?'REMEDY_SUBMITTED':'CLEAR',
   suspensionReason:row.platform_suspension_reason,version:Number(row.admin_version),
   priceMinor:adminMoney(row.display_price ?? row.price_minor),stock:Number(row.available_stock ?? 0),createdAt:row.created_at });
 const productFrom = `FROM catalog.products p JOIN catalog.stores s ON s.id=p.store_id
@@ -25,6 +27,9 @@ const variantTotals = `LEFT JOIN LATERAL (SELECT min(CASE WHEN v.sale_price_mino
   coalesce(sum(coalesce(i.on_hand-i.reserved,v.stock)),0) AS available_stock
   FROM catalog.product_variants v LEFT JOIN catalog.inventory i ON i.variant_id=v.id
   WHERE v.product_id=p.id AND v.status='active') vt ON true`;
+const productRemedy=`LEFT JOIN LATERAL (SELECT r.status AS remedy_status FROM catalog.product_remedies r
+  JOIN catalog.product_decisions d ON d.id=r.decision_id WHERE d.product_id=p.id AND r.status IN ('OPEN','SUBMITTED')
+  ORDER BY d.created_at DESC LIMIT 1) rm ON true`;
 
 export class CatalogAdminService {
   constructor(pool, catalog = null, {impactLoader=null}={}) { this.pool = pool; this.catalog = catalog; this.impactLoader=impactLoader; }
@@ -73,16 +78,32 @@ export class CatalogAdminService {
     return adminPage(list.rows.map(storeDto),count.rows[0].total,options);
   }
   async products(user, query) {
-    requireAdminPermission(user,'products.read'); const options = adminQuery(query,{statuses:['active','published','draft','hidden','discontinued','suspended']});
+    requireAdminPermission(user,'products.read');
+    const {categoryId='',brand='',stock='',moderation='',publicationStatus='',...base}=query;
+    if(categoryId)adminId(categoryId);
+    if(typeof brand!=='string'||brand.length>120||stock&&!['in_stock','out_of_stock'].includes(stock)||
+      moderation&&!['BLOCKED','CLEAR','NEEDS_CHANGES','REMEDY_SUBMITTED','REVIEW_PENDING','REVIEW_NEEDS_CHANGES'].includes(moderation)||
+      publicationStatus&&!['active','published','draft','hidden','discontinued'].includes(publicationStatus))
+      throw new PlatformAdminError(400,'INVALID_ADMIN_FILTER','Bộ lọc sản phẩm không hợp lệ.');
+    const options = adminQuery(base,{statuses:['active','published','draft','hidden','discontinued','suspended']});
     const args = [options.pattern,options.status];
     const range=listDateRange(query);args.push(range.start,range.end);
     const scope = adminScopeSql(user,'products.read',{storeIds:'p.store_id::text'},args);
-    const where = `WHERE ($3::timestamptz IS NULL OR p.created_at>=$3) AND ($4::timestamptz IS NULL OR p.created_at<$4) AND (p.name ILIKE $1 OR coalesce(p.brand,'') ILIKE $1 OR s.name ILIKE $1) AND ${scope} AND ($2='' OR
+    const extra=[query.storeId||null,categoryId||null,brand,stock,moderation,publicationStatus].map(value=>{args.push(value);return `$${args.length}`;});
+    const [shop,category,brandArg,stockArg,moderationArg,publicationArg]=extra;
+    const where = `WHERE (${shop}::uuid IS NULL OR p.store_id=${shop}) AND (${category}::uuid IS NULL OR p.category_id=${category})
+      AND (${brandArg}='' OR lower(p.brand)=lower(${brandArg}))
+      AND (${stockArg}='' OR (${stockArg}='in_stock' AND vt.available_stock>0) OR (${stockArg}='out_of_stock' AND vt.available_stock<=0))
+      AND (${publicationArg}='' OR p.seller_status=${publicationArg})
+      AND (${moderationArg}='' OR (${moderationArg}='BLOCKED' AND p.platform_suspended) OR (${moderationArg}='CLEAR' AND NOT p.platform_suspended AND rm.remedy_status IS NULL)
+        OR (${moderationArg}='NEEDS_CHANGES' AND rm.remedy_status='OPEN') OR (${moderationArg}='REMEDY_SUBMITTED' AND rm.remedy_status='SUBMITTED')
+        OR (${moderationArg}='REVIEW_PENDING' AND p.review_status='PENDING') OR (${moderationArg}='REVIEW_NEEDS_CHANGES' AND p.review_status='NEEDS_CHANGES'))
+      AND ($3::timestamptz IS NULL OR p.created_at>=$3) AND ($4::timestamptz IS NULL OR p.created_at<$4) AND (p.name ILIKE $1 OR coalesce(p.brand,'') ILIKE $1 OR s.name ILIKE $1) AND ${scope} AND ($2='' OR
       ($2='suspended' AND p.platform_suspended) OR ($2<>'suspended' AND NOT p.platform_suspended AND p.status=$2))`;
     const [count,list] = await Promise.all([
-      this.pool.query(`SELECT count(*)::int AS total ${productFrom} ${where}`,args),
-      this.pool.query(`SELECT p.*,s.name AS store_name,s.slug AS store_slug,c.name AS category_name,vt.display_price,vt.available_stock
-        ${productFrom} ${variantTotals} ${where} ORDER BY p.created_at DESC,p.id DESC LIMIT $${args.length+1} OFFSET $${args.length+2}`,
+      this.pool.query(`SELECT count(*)::int AS total ${productFrom} ${variantTotals} ${productRemedy} ${where}`,args),
+      this.pool.query(`SELECT p.*,s.name AS store_name,s.slug AS store_slug,c.name AS category_name,vt.display_price,vt.available_stock,rm.remedy_status
+        ${productFrom} ${variantTotals} ${productRemedy} ${where} ORDER BY p.created_at DESC,p.id DESC LIMIT $${args.length+1} OFFSET $${args.length+2}`,
         [...args,options.limit,options.offset]),
     ]);
     return adminPage(list.rows.map(productDto),count.rows[0].total,options);
@@ -102,7 +123,7 @@ export class CatalogAdminService {
       owner:{id:row.owner_user_id},supportPath:`/admin/cases?storeId=${row.id}`} : productDto(row);
     if (kind === 'products' && this.catalog) {
       const full = await this.catalog.detail(row);
-      record = {...record,priceMinor:adminMoney(full.priceMinor),stock:full.stock,imageUrl:full.imageUrl,variants:full.variants,attributes:full.attributes};
+      record = {...record,priceMinor:adminMoney(full.priceMinor),stock:full.stock,imageUrl:full.imageUrl,images:full.images,variants:full.variants,attributes:full.attributes};
     }
     const history = await this.pool.query(`SELECT id,actor_id,action,previous_status,next_status,reason,created_at,read_version,result_version,correlation_id
       FROM catalog.platform_admin_actions WHERE target_id=$1 AND target_type=$2 ORDER BY created_at DESC,id DESC LIMIT 30`,
@@ -110,6 +131,7 @@ export class CatalogAdminService {
     return { record, history:history.rows };
   }
   async moderate(actor, kind, id, input, bearer) {
+    if(kind==='products')return new ProductModerationService({pool:this.pool,transaction:fn=>this.transaction(fn)},this.catalog).command(actor,id,input,bearer);
     requireAdminPermission(actor,`${kind}.moderate`); adminId(id); const action = adminAction(input);
     if (!['stores','products'].includes(kind)) throw new PlatformAdminError(404,'NOT_FOUND','Không tìm thấy đối tượng.');
     return this.transaction(async db => {

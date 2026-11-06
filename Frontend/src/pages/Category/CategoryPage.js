@@ -1,12 +1,13 @@
 import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowRight, BatteryCharging, Cable, Headphones, Package, RotateCcw, ShieldCheck, Smartphone, Truck, Watch } from "lucide-react";
 import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 import LiveProductCard from "../../components/Home/CanvaHome/LiveProductCard";
 import { catalogApi } from "../../api/catalogApi";
 import { categoryPages } from "./categoryData";
+import { taxonomyApi } from '../../api/taxonomyApi';
 import "../../components/Home/CanvaHome/CanvaHome.css";
 import "./CategoryPage.css";
 const findCategory = (items, slug) => {
@@ -22,6 +23,7 @@ const findCategory = (items, slug) => {
 const phoneIcons = [Smartphone, Smartphone, Headphones, Cable, BatteryCharging, Watch];
 export default function CategoryPage() {
     const { slug = "" } = useParams();
+    const navigate = useNavigate(), location = useLocation();
     const config = categoryPages[slug];
     const actualSlug = config?.apiCategory || slug;
     const [category, setCategory] = useState(null);
@@ -32,9 +34,13 @@ export default function CategoryPage() {
         setLoading(true);
         setCategory(null);
         setProducts([]);
-        Promise.all([catalogApi.categories(), catalogApi.listProducts({ category: actualSlug, page: 1, limit: 50 })])
-            .then(([tree, listing]) => { if (active) {
-            setCategory(findCategory(tree.categories, actualSlug));
+        Promise.all([catalogApi.categories(), catalogApi.listProducts({ category: actualSlug, page: 1, limit: 50 }), taxonomyApi.resolve(actualSlug)])
+            .then(([tree, listing, resolution]) => { if (active) {
+            if (resolution.redirected) {
+                navigate(resolution.canonicalPath + location.search + location.hash, { replace: true });
+                return;
+            }
+            setCategory(findCategory(tree.categories, resolution.category.slug));
             setProducts(listing.products);
         } })
             .catch(error => { if (active)
@@ -42,7 +48,7 @@ export default function CategoryPage() {
             .finally(() => { if (active)
             setLoading(false); });
         return () => { active = false; };
-    }, [actualSlug]);
+    }, [actualSlug, navigate, location.search, location.hash]);
     const title = config?.title || category?.name || slug;
     const shortcuts = config?.subcategories || category?.children.map(item => item.name) || [];
     const catalogLink = `/products?category=${actualSlug}`;

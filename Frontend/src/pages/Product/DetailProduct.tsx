@@ -7,6 +7,7 @@ import { catalogApi, type CatalogItem, type Variant } from "../../api/catalogApi
 import { orderV2Api, notifyCartChanged, vnd } from "../../api/orderV2Api";
 import { engagementApi, type FlashSaleItem } from "../../api/engagementApi";
 import ReviewSection from "../../components/ReviewReturn/ReviewSection";
+import ProductReport from '../../components/ProductDetail/ProductReport';
 import "./DetailProduct.css";
 
 export default function DetailProduct() {
@@ -91,6 +92,7 @@ export default function DetailProduct() {
     <div className="product-detail__layout">
       <div className="product-detail__gallery"><div className="product-detail__main-image"><img src={activeImage} alt={product.name} /></div><div className="product-detail__thumbnails">{(media.length ? media : ["/visual-placeholder.svg"]).map((url, index) => <button type="button" key={`${variantId}-${index}`} className={activeImage === url ? "is-active" : ""} onClick={() => setImageUrl(url)} aria-label={`Xem ảnh sản phẩm ${index + 1}`}><img src={url} alt="" /></button>)}</div></div>
       <section className="product-detail__info"><h1>{product.name}</h1><p className="product-detail__rating">{product.rating != null ? <><span><Star size={17} fill="currentColor" /> {product.rating.toFixed(1)}</span><small>({product.reviewCount} đánh giá)</small></> : <small>Chưa có đánh giá</small>}</p>
+        <ProductReport productId={product.id}/>
         <div className="product-detail__prices"><strong>{vnd(current)}</strong>{original > current && <del>{vnd(original)}</del>}</div>{discount > 0 && <span className="product-detail__discount"><Flame size={15} /> Giảm {discount}%</span>}
         {flash && <p className="product-detail__flash">Flash Sale · Còn {Math.min(flash.availableStock, flashQuota)} suất · Kết thúc sau {[Math.floor(flashRemaining / 3600), Math.floor(flashRemaining / 60) % 60, flashRemaining % 60].map(value => String(value).padStart(2, "0")).join(":")}</p>}
         {showOptions && <div className="product-detail__options"><h2>Chọn phiên bản</h2><div>{optionList.map(item => <button type="button" key={item.id} className={item.id === variantId ? "is-active" : ""} onClick={() => { setVariantId(item.id); setQuantity(1); setImageUrl(product.images?.find(image => image.variantId === item.id)?.url || product.imageUrl || ""); }}>{Object.values(item.attributes).join(" · ") || item.sku}</button>)}</div></div>}

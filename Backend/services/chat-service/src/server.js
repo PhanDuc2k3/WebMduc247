@@ -10,6 +10,7 @@ import { connectMongo,objectId } from './repository.js';
 import { ChatStorage,AttachmentService,scannerFromEnv } from './media.js';
 import {adminId} from '../../../packages/contracts/platform-admin.js';
 import {requireAdminScope} from '../../../packages/contracts/admin-rbac.js';
+import {AdminChatReports} from './admin-reports.service.js';
 
 const localEnv=fileURLToPath(new URL('../../../.env.development.local',import.meta.url));
 const env=process.env;
@@ -95,6 +96,13 @@ export function createHandler(chat,attachments,io){
         return send(res,200,await chat.botMessage(user,botMessage[1],
           req.headers['x-bot-session-token'],await body(req),user?.id||req.socket.remoteAddress,bearer));}
       const user=await chat.identity(bearer);
+      const reportRoute=/^\/admin\/chat-reports(?:\/([0-9a-f]{24})\/(view|decision))?$/i.exec(path);
+      if(reportRoute){
+        const admin=new AdminChatReports(chat.repo),[,id,action]=reportRoute;
+        if(req.method==='GET'&&!id)return send(res,200,await admin.list(user,Object.fromEntries(url.searchParams)));
+        if(req.method==='POST'&&action==='view')return send(res,200,await admin.detail(user,id,await body(req)));
+        if(req.method==='POST'&&action==='decision')return send(res,200,await admin.decide(user,id,await body(req)));
+      }
       const storeReports=/^\/admin\/stores\/([0-9a-f-]{36})\/report-summary$/i.exec(path);
       if(req.method==='GET'&&storeReports){adminId(storeReports[1]);requireAdminScope(user,'stores.read',{storeId:storeReports[1]});return send(res,200,await chat.repo.storeReportSummary(storeReports[1]));}
       if(req.method==='GET'&&path==='/conversations')return send(res,200,await chat.list(user,bearer));

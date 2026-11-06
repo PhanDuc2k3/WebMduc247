@@ -9,7 +9,7 @@ const withClause = `WITH RECURSIVE active_categories AS (
   UNION ALL SELECT c.id,c.slug FROM catalog.categories c
     JOIN active_categories a ON c.parent_id=a.id WHERE c.is_active=true
 ), selected_categories AS (
-  SELECT id FROM active_categories WHERE slug=$3 OR id=$9::uuid
+  SELECT id FROM active_categories WHERE slug=$3 OR id=$9::uuid OR id=(SELECT category_id FROM catalog.category_slug_aliases WHERE slug=$3)
   UNION ALL SELECT c.id FROM catalog.categories c
     JOIN selected_categories a ON c.parent_id=a.id WHERE c.is_active=true
 ), query_terms AS (
@@ -67,7 +67,8 @@ const from = searching => `FROM catalog.products p
     AND (($3='' AND $9::uuid IS NULL) OR p.category_id IN (SELECT id FROM selected_categories))
     AND ($5='' OR s.id::text=$5 OR s.slug=$5)
     AND ($10::uuid IS NULL OR s.id=$10::uuid)
-    AND ($11='' OR catalog.normalize_search_text(p.brand)=catalog.normalize_search_text($11))
+    AND ($11='' OR catalog.normalize_search_text(p.brand)=catalog.normalize_search_text(coalesce(
+      (SELECT b.name FROM catalog.brand_names n JOIN catalog.brands b ON b.id=n.brand_id WHERE n.name_key=lower(trim($11))),$11)))
     AND ($6=false OR vp.total_stock>0)
     AND ($7=false OR vp.on_sale=true)
     AND ($8::numeric=0 OR coalesce(rs.average_rating,0)>=$8)`;

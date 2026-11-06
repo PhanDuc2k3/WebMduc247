@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { randomUUID,createHash } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -77,8 +77,8 @@ export class MediaService {
         }
         const primary = isPrimary || count.rows[0].total === 0;
         if (primary) await db.query('UPDATE catalog.product_images SET is_primary=false WHERE product_id=$1', [productId]);
-        const { rows } = await db.query(`INSERT INTO catalog.product_images(product_id,variant_id,object_key,position,is_primary)
-          VALUES ($1,$2,$3,$4,$5) RETURNING *`, [productId, variantId, key, index, primary]);
+        const { rows } = await db.query(`INSERT INTO catalog.product_images(product_id,variant_id,object_key,position,is_primary,content_hash)
+          VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`, [productId, variantId, key, index, primary,createHash('sha256').update(processed).digest('hex')]);
         await db.query('INSERT INTO catalog.store_outbox(event_type,payload) VALUES ($1,$2)', ['ProductUpdated.v1', { productId, storeId: store.store_id }]);
         return rows[0];
       });
@@ -99,7 +99,7 @@ export class MediaService {
         SELECT id FROM catalog.product_images WHERE product_id=$1 ORDER BY position,id LIMIT 1)`, [productId]);
       return rows[0];
     });
-    await this.storage.remove(image.object_key).catch(() => {});
+    // Retain the object referenced by immutable moderation revisions and order snapshots.
     return { removed: true };
   }
   async reorder(productId, userId, ids, primaryId) {

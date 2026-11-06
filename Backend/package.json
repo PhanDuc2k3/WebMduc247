@@ -4,6 +4,8 @@
   "type": "module",
   "version": "0.1.0",
   "scripts": {
+    "admin:basic:test": "node scripts/test-basic-admin.mjs",
+    "admin:basic:check": "node scripts/check-basic-admin.mjs",
     "dev": "node scripts/dev.mjs",
     "dev:stop": "node scripts/dev.mjs --stop",
     "dev:identity": "node --env-file=.env node_modules/nodemon/bin/nodemon.js --config nodemon.json",
@@ -16,6 +18,8 @@
     "catalog:migrate": "npm --workspace @backend-v2/catalog-service run migrate",
     "catalog:test": "npm --workspace @backend-v2/catalog-service run test",
     "stores:test": "node services/catalog-service/scripts/test-store-admin.mjs",
+    "products:test": "node services/catalog-service/scripts/test-product-moderation.mjs",
+    "taxonomy:test": "node services/catalog-service/scripts/test-taxonomy.mjs",
     "catalog:seed": "node services/catalog-service/scripts/seed.js",
     "catalog:seed:reset": "node services/catalog-service/scripts/seed.js --reset",
     "order:start": "npm --workspace @backend-v2/order-service run start",

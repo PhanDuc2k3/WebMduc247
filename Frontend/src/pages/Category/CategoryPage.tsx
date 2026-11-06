@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams,useNavigate,useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { ArrowRight, BatteryCharging, Cable, Headphones, Package, RotateCcw, ShieldCheck, Smartphone, Truck, Watch } from "lucide-react";
 import ContentBreadcrumb from "../../components/ui/ContentBreadcrumb";
 import LiveProductCard from "../../components/Home/CanvaHome/LiveProductCard";
 import { catalogApi, type CatalogItem, type CategoryNode } from "../../api/catalogApi";
 import { categoryPages } from "./categoryData";
+import {taxonomyApi} from '../../api/taxonomyApi';
 import "../../components/Home/CanvaHome/CanvaHome.css";
 import "./CategoryPage.css";
 
@@ -21,6 +22,7 @@ const phoneIcons = [Smartphone, Smartphone, Headphones, Cable, BatteryCharging, 
 
 export default function CategoryPage() {
   const { slug = "" } = useParams();
+  const navigate=useNavigate(),location=useLocation();
   const config = categoryPages[slug];
   const actualSlug = config?.apiCategory || slug;
   const [category, setCategory] = useState<CategoryNode | null>(null);
@@ -29,12 +31,12 @@ export default function CategoryPage() {
   useEffect(() => {
     let active = true;
     setLoading(true); setCategory(null); setProducts([]);
-    Promise.all([catalogApi.categories(), catalogApi.listProducts({ category: actualSlug, page: 1, limit: 50 })])
-      .then(([tree, listing]) => { if (active) { setCategory(findCategory(tree.categories, actualSlug)); setProducts(listing.products); } })
+    Promise.all([catalogApi.categories(), catalogApi.listProducts({ category: actualSlug, page: 1, limit: 50 }),taxonomyApi.resolve(actualSlug)])
+      .then(([tree, listing,resolution]) => { if (active) { if(resolution.redirected){navigate(resolution.canonicalPath+location.search+location.hash,{replace:true});return;}setCategory(findCategory(tree.categories,resolution.category.slug)); setProducts(listing.products); } })
       .catch(error => { if (active) toast.error(error instanceof Error ? error.message : "Không thể tải danh mục.", { containerId: "general-toast" }); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [actualSlug]);
+  }, [actualSlug,navigate,location.search,location.hash]);
 
   const title = config?.title || category?.name || slug;
   const shortcuts = config?.subcategories || category?.children.map(item => item.name) || [];

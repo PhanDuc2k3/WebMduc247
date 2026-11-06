@@ -38,6 +38,8 @@ export class UserWorkflowService {
     const cmd=userCommand(input,['action','assigneeId','module','disposition','basisReference','retainUntil']);
     if(!['claim','assign','start','reject','uphold','overturn','retention','execute'].includes(cmd.action))throw invalidUser();
     const meta=await this.readCase(actor,id,this.pool,{write:true});if(cmd.action==='execute'){if(meta.kind==='APPEAL')throw invalidUser();requireAdminScope(actor,'privacy.execute',{});}
+    if(meta.status==='WAITING_CLEANUP'&&!['claim','assign','retention'].includes(cmd.action))
+      throw new PlatformAdminError(409,'CLEANUP_IN_PROGRESS','Đã thực hiện ẩn danh; hồ sơ đang chờ xóa ảnh.');
     if(cmd.action==='assign'){adminId(cmd.assigneeId);const {loadAdminAccess}=await import('./admin-access.service.js');const target={id:cmd.assigneeId,adminAccess:await loadAdminAccess(this.pool,cmd.assigneeId)};requireAdminScope(target,permission(meta.kind,true),{});}
     let exportData=null,impact=null;
     if(cmd.action==='execute'){
@@ -57,6 +59,8 @@ export class UserWorkflowService {
       const row=await this.readCase(actor,id,db,{write:true,lock:true});if(row.version!==cmd.version)throw conflict();
       const terminal=['COMPLETED','REJECTED','CANCELLED'].includes(row.status);
       if(terminal&&cmd.action!=='retention')throw conflict();
+      if(row.status==='WAITING_CLEANUP'&&!['claim','assign','retention'].includes(cmd.action))
+        throw new PlatformAdminError(409,'CLEANUP_IN_PROGRESS','Đã thực hiện ẩn danh; hồ sơ đang chờ xóa ảnh. Không thể bắt đầu lại hoặc từ chối.');
       if(!['claim','assign'].includes(cmd.action)&&row.assignee_id!==actor.id)throw new PlatformAdminError(403,'WORKFLOW_ASSIGNEE_REQUIRED','Nhận hoặc được phân công hồ sơ trước khi xử lý.');
       if(row.kind==='APPEAL'&&['reject','uphold','overturn'].includes(cmd.action)){
         const original=(await db.query('SELECT actor_reference FROM user_admin_decisions WHERE id=$1',[row.original_decision_id])).rows[0];
@@ -89,7 +93,7 @@ export class UserWorkflowService {
         if(cmd.disposition==='RETAIN'){retainUntil=new Date(cmd.retainUntil);if(!Number.isFinite(retainUntil.getTime())||retainUntil<=new Date())throw invalidUser();}
         await db.query(`INSERT INTO user_retention_reviews(case_id,module,disposition,basis_reference,reason,retain_until,reviewed_by)
           VALUES($1,$2,$3,$4,$5,$6,$7) ON CONFLICT(case_id,module) DO UPDATE SET disposition=$3,basis_reference=$4,reason=$5,retain_until=$6,reviewed_by=$7,reviewed_at=now()`,[id,cmd.module,cmd.disposition,reference,cmd.reason,retainUntil,actor.id]);
-        if(!terminal)status='WAITING_RETENTION';
+        if(!terminal&&row.status!=='WAITING_CLEANUP')status='WAITING_RETENTION';
       }else if(cmd.action==='execute'){
         const user=await this.users.target(db,row.user_id,{protect:true,lock:true});
         if(!row.identity_verified_at)throw new PlatformAdminError(409,'IDENTITY_NOT_VERIFIED','Chưa xác minh danh tính.');

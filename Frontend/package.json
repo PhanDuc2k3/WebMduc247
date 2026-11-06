@@ -8,8 +8,11 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "build": "npm run typecheck && vite build",
     "test:dashboard:browser": "node scripts/verify-dashboard-queue.browser.mjs",
+    "test:admin:basic:browser": "node scripts/sync-basic-admin-javascript.mjs && node scripts/verify-basic-admin.browser.mjs",
     "test:users:browser": "node scripts/verify-users.browser.mjs",
     "test:stores:browser": "node scripts/verify-stores.browser.mjs",
+    "test:products:browser": "node scripts/sync-product-javascript.mjs && node scripts/verify-products.browser.mjs",
+    "test:taxonomy:browser": "node scripts/sync-taxonomy-javascript.mjs && node scripts/verify-taxonomy.browser.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

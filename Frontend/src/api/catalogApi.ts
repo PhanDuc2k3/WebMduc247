@@ -28,11 +28,14 @@ export type ProductInput = {
   imageUrl?: string; status?: CatalogProduct["status"];
 };
 export type CategoryNode = { id: string; parentId: string | null; name: string; slug: string; iconKey: string | null;
+  description?:string;version?:number;aliases?:string[];
   imageKey: string | null; iconUrl?: string | null; imageUrl?: string | null; sortOrder: number; isActive: boolean; children: CategoryNode[] };
 export type Variant = { id: string; sku: string; attributes: Record<string, string>; priceOriginalMinor: number;
   priceMinor: number; salePriceMinor: number | null; saleStartsAt: string | null; saleEndsAt: string | null;
   stock: number; status: "active" | "inactive"; currency: "VND" };
 export type CatalogItem = { id: string; slug: string; name: string; title: string; description?: string; brand: string | null;
+  brandId?:string|null;specifications?:Record<string,unknown>;
+  version:number;platformSuspended?:boolean;suspensionReason?:string;publicationStatus?:string;reviewStatus?:string;reviewContentVersion?:number;approvedContentVersion?:number|null;
   storeId: string; store: { id?: string; slug: string; name: string; logoUrl?: string | null };
   categoryId: string | null; status?: "draft" | "active" | "hidden" | "discontinued";
   currency: "VND"; priceMinor: number; priceOriginalMinor: number; stock: number; inStock: boolean;
@@ -40,6 +43,7 @@ export type CatalogItem = { id: string; slug: string; name: string; title: strin
   variants?: Variant[]; attributes?: Record<string, string[]>; rating: number | null; reviewCount: number | null;
   soldCount: number | null; createdAt: string };
 export type CatalogProductInput = { title: string; description?: string; brand?: string; categoryId?: string | null;
+  specifications?:Record<string,unknown>;
   priceMinor?: number; stock?: number; variants?: { sku: string; attributes?: Record<string, string>; priceMinor: number;
     salePriceMinor?: number | null; saleStartsAt?: string | null; saleEndsAt?: string | null; stock: number; status?: "active" | "inactive" }[];
   attributes?: Record<string, string[]> };

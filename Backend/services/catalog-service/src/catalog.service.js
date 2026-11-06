@@ -3,6 +3,7 @@ import { StoreError } from './store.service.js';
 import { ProductSearchService } from './product-search.service.js';
 import { StorefrontService } from './storefront.service.js';
 import { flattenStorefrontCategories,resolveStorefront } from './storefront-config.js';
+import {validateCategory,validateSpecifications,resolveBrand,taxMedia} from './taxonomy-contract.js';
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const bad = (code = 'INVALID_CATALOG', message = 'Dữ liệu catalog không hợp lệ.') => new StoreError(400, code, message);
@@ -58,7 +59,7 @@ const variantDto = row => ({
   stock: row.available ?? row.stock, status: row.status, currency: 'VND',
 });
 const categoryDto = row => ({ id: row.id, parentId: row.parent_id, name: row.name, slug: row.slug,
-  iconKey: row.icon_key, imageKey: row.image_key, sortOrder: row.sort_order, isActive: row.is_active });
+  description:row.description,version:Number(row.admin_version),aliases:row.aliases||[],iconKey: row.icon_key, imageKey: row.image_key, sortOrder: row.sort_order, isActive: row.is_active });
 
 export class CatalogService {
   constructor(pool, storeService, storage = null) {
@@ -66,10 +67,14 @@ export class CatalogService {
     this.productSearch = new ProductSearchService(pool, key => this.imageUrl(key));
   }
   async transaction(fn) { return this.stores.transaction(fn); }
-  async imageUrl(key) { return key && this.storage ? this.storage.signedUrl(key) : null; }
+  async imageUrl(key) {
+    if(typeof key==='string'&&(/^https:\/\//.test(key)||/^\/(category|assets|home)\//.test(key)))return key;
+    if(typeof key==='string'&&/^[a-z][a-z0-9-]*$/.test(key))return null;
+    return key && this.storage ? this.storage.signedUrl(key) : null;
+  }
 
   async categories() {
-    const { rows } = await this.pool.query('SELECT * FROM catalog.categories WHERE is_active=true ORDER BY sort_order,name,id');
+    const { rows } = await this.pool.query('SELECT c.*,(SELECT array_agg(slug) FROM catalog.category_slug_aliases a WHERE a.category_id=c.id) AS aliases FROM catalog.categories c WHERE is_active=true ORDER BY sort_order,name,id');
     const entries = await Promise.all(rows.map(async row => [row.id, { ...categoryDto(row),
       iconUrl: await this.imageUrl(row.icon_key), imageUrl: await this.imageUrl(row.image_key), children: [] }])); 
     const map = new Map(entries);
@@ -86,8 +91,8 @@ export class CatalogService {
     const parentId = body.parentId || null;
     if (parentId && !uuid.test(parentId)) throw bad('INVALID_PARENT');
     const sortOrder = body.sortOrder == null ? 0 : integer(body.sortOrder, 'Thứ tự', 10_000);
-    const { rows } = await db.query(`INSERT INTO catalog.categories(parent_id,name,slug,icon_key,image_key,sort_order)
-      VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`, [parentId, title, categorySlug, body.iconKey || null, body.imageKey || null, sortOrder]).catch(error => {
+    const { rows } = await db.query(`INSERT INTO catalog.categories(parent_id,name,slug,icon_key,image_key,sort_order,description,is_active)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`, [parentId, title, categorySlug, taxMedia(body.iconKey,true), taxMedia(body.imageKey), sortOrder,body.description||'',body.isActive??true]).catch(error => {
       if (error.code === '23505') throw new StoreError(409, 'CATEGORY_SLUG_TAKEN', 'Slug danh mục đã tồn tại.');
       throw error;
     });
@@ -95,16 +100,17 @@ export class CatalogService {
   }
   async updateCategory(id, body) {
     if (!uuid.test(id) || !body || typeof body !== 'object' || !Object.keys(body).length) throw bad();
-    const allowed = ['name', 'slug', 'parentId', 'sortOrder', 'isActive', 'iconKey', 'imageKey'];
+    const allowed = ['name', 'slug', 'description', 'parentId', 'sortOrder', 'isActive', 'iconKey', 'imageKey'];
     if (Object.keys(body).some(key => !allowed.includes(key))) throw bad();
     const fields = {};
     if ('name' in body) fields.name = name(body.name, 2, 120);
+    if ('description' in body) fields.description=name(body.description,0,5000);
     if ('slug' in body) fields.slug = slug(body.slug);
     if ('parentId' in body) { if (body.parentId != null && !uuid.test(body.parentId)) throw bad('INVALID_PARENT'); fields.parent_id = body.parentId; }
     if ('sortOrder' in body) fields.sort_order = integer(body.sortOrder, 'Thứ tự', 10_000);
     if ('isActive' in body) { if (typeof body.isActive !== 'boolean') throw bad(); fields.is_active = body.isActive; }
-    if ('iconKey' in body) fields.icon_key = body.iconKey || null;
-    if ('imageKey' in body) fields.image_key = body.imageKey || null;
+    if ('iconKey' in body) fields.icon_key = taxMedia(body.iconKey,true);
+    if ('imageKey' in body) fields.image_key = taxMedia(body.imageKey);
     const keys = Object.keys(fields);
     try {
       const { rows } = await this.pool.query(`UPDATE catalog.categories SET ${keys.map((key, i) => `${key}=$${i + 2}`).join(',')} WHERE id=$1 RETURNING *`, [id, ...keys.map(key => fields[key])]);
@@ -112,13 +118,14 @@ export class CatalogService {
       return { category: categoryDto(rows[0]) };
     } catch (error) {
       if (error.code === '23514' && String(error.message).includes('CATEGORY_CYCLE')) throw bad('CATEGORY_CYCLE', 'Danh mục không thể là con của chính nó.');
+      if (error.code === '23514' && /CATEGORY_IN_USE|CATEGORY_PARENT_UNAVAILABLE/.test(String(error.message))) throw new StoreError(409,'CATEGORY_IN_USE','Danh mục còn sản phẩm hoặc cha đã ngừng; cần xem trước và chọn danh mục thay thế.');
       if (error.code === '23505') throw new StoreError(409, 'CATEGORY_SLUG_TAKEN', 'Slug danh mục đã tồn tại.');
       throw error;
     }
   }
 
   async createProduct(storeId, userId, body) {
-    const allowed = ['title', 'name', 'slug', 'description', 'brand', 'categoryId', 'priceMinor', 'stock', 'variants', 'attributes'];
+    const allowed = ['title', 'name', 'slug', 'description', 'brand', 'categoryId', 'priceMinor', 'stock', 'variants', 'attributes', 'specifications'];
     if (!body || typeof body !== 'object' || Array.isArray(body) || Object.keys(body).some(key => !allowed.includes(key))) throw bad();
     await this.stores.role(this.pool, storeId, userId);
     const title = name(body.title || body.name, 3, 200);
@@ -147,11 +154,14 @@ export class CatalogService {
       const productSlug = slug(base.slice(0, 80 - suffix.length).replace(/-$/g, '') + suffix);
       try {
         const productId = await this.transaction(async db => {
+          await db.query('SELECT catalog.taxonomy_read_lock()');
           await this.stores.role(db, storeId, userId);
-          const { rows } = await db.query(`INSERT INTO catalog.products(store_id,name,slug,description,brand,category_id,status,price,price_minor,stock)
-            VALUES ($1,$2,$3,$4,$5,$6,'draft',$7,$8,$9) RETURNING *`, [storeId, title, productSlug, description, brand, categoryId,
+          await validateCategory(db,categoryId);await validateSpecifications(db,categoryId,body.specifications||{});
+          const canonicalBrand=await resolveBrand(db,brand);
+          const { rows } = await db.query(`INSERT INTO catalog.products(store_id,name,slug,description,brand,category_id,status,price,price_minor,stock,brand_id,specifications_json)
+            VALUES ($1,$2,$3,$4,$5,$6,'draft',$7,$8,$9,$10,$11) RETURNING *`, [storeId, title, productSlug, description, canonicalBrand.name, categoryId,
             Math.min(...variants.map(item => item.priceMinor)), Math.min(...variants.map(item => item.priceMinor)),
-            variants.reduce((sum, item) => sum + item.stock, 0)]);
+            variants.reduce((sum, item) => sum + item.stock, 0),canonicalBrand.id,body.specifications||{}]);
           const product = rows[0];
           for (const variant of variants) {
             const inserted = await db.query(`INSERT INTO catalog.product_variants(product_id,store_id,sku,attributes_json,price_minor,sale_price_minor,sale_starts_at,sale_ends_at,stock,status)
@@ -196,7 +206,7 @@ export class CatalogService {
     return rows[0];
   }
   async updateProduct(productId, userId, body) {
-    const allowed = ['title', 'description', 'brand', 'categoryId'];
+    const allowed = ['title', 'description', 'brand', 'categoryId', 'specifications'];
     if (!body || typeof body !== 'object' || !Object.keys(body).length || Object.keys(body).some(key => !allowed.includes(key))) throw bad();
     const fields = {};
     if ('title' in body) fields.name = name(body.title, 3, 200);
@@ -209,10 +219,17 @@ export class CatalogService {
       if (body.categoryId && !uuid.test(body.categoryId)) throw bad('INVALID_CATEGORY');
       fields.category_id = body.categoryId || null;
     }
-    const keys = Object.keys(fields);
+    if('specifications' in body)fields.specifications_json=body.specifications;
+    let keys = Object.keys(fields);
     const store = await this.ownerStoreOfProduct(productId, userId);
     await this.transaction(async db => {
+      await db.query('SELECT catalog.taxonomy_read_lock()');
       await this.stores.role(db, store.store_id, userId);
+      const previous=(await db.query('SELECT * FROM catalog.products WHERE id=$1 FOR UPDATE',[productId])).rows[0];
+      const targetCategory='category_id' in fields?fields.category_id:previous.category_id;
+      if('category_id' in fields)await validateCategory(db,targetCategory);
+      await validateSpecifications(db,targetCategory,'specifications_json' in fields?fields.specifications_json:previous.specifications_json,{createdAt:previous.created_at});
+      if('brand' in fields){const resolved=await resolveBrand(db,fields.brand,{existingId:previous.brand_id});fields.brand=resolved.name;fields.brand_id=resolved.id;keys=Object.keys(fields);}
       if (fields.category_id) {
         const category = await db.query('SELECT 1 FROM catalog.categories WHERE id=$1 AND is_active=true', [fields.category_id]);
         if (!category.rowCount) throw bad('INVALID_CATEGORY');
@@ -227,17 +244,20 @@ export class CatalogService {
     if (!['active', 'hidden', 'discontinued', 'draft'].includes(status)) throw bad('INVALID_STATUS');
     const store = await this.ownerStoreOfProduct(productId, userId);
     await this.transaction(async db => {
+      await db.query('SELECT catalog.taxonomy_read_lock()');
       await this.stores.role(db, store.store_id, userId);
       const locked = await db.query('SELECT platform_suspended FROM catalog.products WHERE id=$1 FOR UPDATE',[productId]);
       if (locked.rows[0]?.platform_suspended)
         throw new StoreError(409,'PLATFORM_SUSPENDED','Sản phẩm đang bị sàn ẩn. Vui lòng liên hệ quản trị viên để khôi phục.');
       if (status === 'active') {
+        const product=(await db.query('SELECT * FROM catalog.products WHERE id=$1',[productId])).rows[0];
+        await validateCategory(db,product.category_id);await validateSpecifications(db,product.category_id,product.specifications_json,{createdAt:product.created_at});
         const available = await db.query("SELECT 1 FROM catalog.product_variants WHERE product_id=$1 AND status='active' LIMIT 1", [productId]);
         if (!available.rowCount) throw bad('VARIANT_REQUIRED', 'Sản phẩm cần ít nhất một biến thể.');
       }
-      await db.query('UPDATE catalog.products SET status=$2,updated_at=now() WHERE id=$1', [productId, status]);
+      const updated=(await db.query('UPDATE catalog.products SET seller_status=$2,status=$2,updated_at=now() WHERE id=$1 RETURNING status,seller_status,review_status', [productId, status])).rows[0];
       await db.query('INSERT INTO catalog.store_outbox(event_type,payload) VALUES ($1,$2)', [
-        status === 'active' ? 'ProductPublished.v1' : 'ProductUpdated.v1', { productId, storeId: store.store_id, status },
+        updated.status === 'active' ? 'ProductPublished.v1' : 'ProductUpdated.v1', { productId, storeId: store.store_id, status:updated.status,sellerStatus:updated.seller_status,reviewStatus:updated.review_status },
       ]);
     });
     return { product: await this.sellerProduct(productId, store.store_id, userId) };
@@ -248,6 +268,7 @@ export class CatalogService {
     return this.createProduct(store.store_id, userId, {
       title: `Bản sao ${original.name}`.slice(0, 200), description: original.description,
       brand: original.brand, categoryId: original.categoryId, attributes: original.attributes,
+      specifications:original.specifications,
       variants: original.variants.map(variant => ({
         sku: `${variant.sku.slice(0, 60)}-COPY-${randomUUID().slice(0, 8)}`,
         attributes: variant.attributes, priceMinor: variant.priceOriginalMinor,
@@ -319,6 +340,9 @@ export class CatalogService {
     return {
       id: row.id, storeId: row.store_id, slug: row.slug, name: row.name, title: row.name, description: row.description,
       brand: row.brand, categoryId: row.category_id, status: row.status === 'published' ? 'active' : row.status,
+      brandId:row.brand_id,specifications:row.specifications_json,
+      version:Number(row.admin_version),platformSuspended:row.platform_suspended,suspensionReason:row.platform_suspension_reason,
+      publicationStatus:row.seller_status,reviewStatus:row.review_status,reviewContentVersion:Number(row.review_content_version),approvedContentVersion:row.approved_content_version==null?null:Number(row.approved_content_version),
       currency: 'VND', priceMinor: cheapest ? effective(cheapest) : Number(row.price_minor),
       priceOriginalMinor: cheapest ? Number(cheapest.price_minor) : Number(row.price_minor),
       inStock: active.some(item => (item.available ?? item.stock) > 0),
@@ -342,7 +366,7 @@ export class CatalogService {
     )
       SELECT p.* FROM catalog.products p JOIN catalog.stores s ON s.id=p.store_id
       JOIN catalog.store_settings t ON t.store_id=s.id
-      WHERE p.id=$1 AND p.status IN ('active','published') AND s.status='active' AND t.accepting_orders=true
+      WHERE p.id=$1 AND p.status IN ('active','published') AND NOT p.platform_suspended AND s.status='active' AND NOT s.platform_suspended AND t.accepting_orders=true
         AND (p.category_id IS NULL OR p.category_id IN (SELECT id FROM active_categories))`, [id]);
     if (!rows[0]) throw new StoreError(404, 'PRODUCT_NOT_FOUND', 'Không tìm thấy sản phẩm.');
     return { product: await this.detail(rows[0]) };

@@ -4,6 +4,10 @@ export function isPlatformAdmin(user: AdminIdentity | null | undefined) {
 }
 export function hasAdminPermission(user:AdminIdentity|null|undefined,permission:string){return Boolean(user?.adminAccess?.permissions.includes(permission));}
 const routePermissions:Record<string,string[]>={
+  '/admin/setup':['staff.read'],
+  '/admin/payments':['finance.view_sensitive'],'/admin/refunds':['finance.view_sensitive'],
+  '/admin/inventory':['inventory.read'],'/admin/chat-reports':['moderation.read'],
+  '/admin/categories':['taxonomy.read'],
   '/admin/user-workflows':['users.appeals.read','privacy.read','users.notes.manage'],
   '/admin/work-queue':['orders.read','cases.read','returns.read','refunds.read','moderation.read'],'/admin/finance':['finance.view_sensitive'],
   '/admin/users':['users.read'],'/admin/stores':['stores.read'],'/admin/products':['products.read'],'/admin/orders':['orders.read'],

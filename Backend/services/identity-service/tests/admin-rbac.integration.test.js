@@ -230,6 +230,9 @@ test('RBAC PostgreSQL/HTTP: live permissions, query scopes and independent appro
     await pool.query('DELETE FROM order_service.orders WHERE id=ANY($1::uuid[])',[orderIds]);
     await pool.query('DELETE FROM order_service.order_groups WHERE id=ANY($1::uuid[])',[groupIds]);
     await pool.query('DELETE FROM order_service.checkout_quotes WHERE id=ANY($1::uuid[])',[quoteIds]);
+    await pool.query('UPDATE catalog.stores SET current_suspension_decision_id=NULL,current_registration_decision_id=NULL WHERE id=ANY($1::uuid[])',[stores]);
+    await pool.query('DELETE FROM catalog.store_decisions WHERE store_id=ANY($1::uuid[])',[stores]);
+    await pool.query('DELETE FROM catalog.store_profile_versions WHERE store_id=ANY($1::uuid[])',[stores]);
     await pool.query('DELETE FROM catalog.stores WHERE id=ANY($1::uuid[])',[stores]);
     await pool.query('DELETE FROM catalog.admin_commands WHERE actor_id=ANY($1::uuid[])',[users]);
     await pool.query('DELETE FROM catalog.platform_admin_actions WHERE target_id=ANY($1::uuid[])',[stores]);

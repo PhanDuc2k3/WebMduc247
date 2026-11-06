@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { PaymentError, PaymentService } from './service.js';
 import {PaymentDashboardService} from './admin-dashboard.service.js';
+import {PaymentAdminOperations} from './admin-operations.service.js';
 import {PlatformAdminError} from '../../../packages/contracts/platform-admin.js';
 
 const port=Number(process.env.PAYMENT_PORT||5104);
@@ -129,6 +130,12 @@ export function createHandler(payment=service) {
       if (['POST','PATCH','DELETE'].includes(req.method) && origin!==frontendOrigin)
         throw new PaymentError(403,'ORIGIN_DENIED','Origin không hợp lệ.');
       const user=await payment.identity(req.headers.authorization);
+      const operations=/^\/admin\/transactions\/(payments|refunds)(?:\/([0-9a-f-]{36})(\/recheck)?)?$/i.exec(path);
+      if(operations){
+        const admin=new PaymentAdminOperations(payment),[,kind,id,recheck]=operations;
+        if(req.method==='GET'&&!recheck)return send(res,200,id?await admin.detail(user,kind,id):await admin.list(user,kind,Object.fromEntries(url.searchParams)));
+        if(req.method==='POST'&&recheck)return send(res,202,await admin.recheck(user,kind,id,await body(req)));
+      }
       if(req.method==='GET'&&path==='/admin/finance/summary')return send(res,200,await new PaymentDashboardService(payment.pool).summary(user,Object.fromEntries(url.searchParams)));
       if(req.method==='GET'&&path==='/admin/finance/entries')return send(res,200,await new PaymentDashboardService(payment.pool).entries(user,Object.fromEntries(url.searchParams)));
       if (req.method==='GET' && path==='/payments/methods')

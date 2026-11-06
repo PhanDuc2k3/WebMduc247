@@ -182,6 +182,13 @@ test('ADM-USER PostgreSQL and HTTP acceptance',{skip:!process.env.ADMIN_USER_TES
       users.remote=async()=>({activeOrders:1,openCases:0,pendingRefunds:0,totalOrders:1,ownedStores:1});await assert.rejects(workflows.action(reviewer,id,command(row.version,{action:'execute'}),'Bearer test'),{code:'OPEN_OBLIGATIONS'});
       users.remote=async()=>({activeOrders:0,openCases:0,pendingRefunds:0,totalOrders:1,ownedStores:1});await pool.query('UPDATE user_profiles SET avatar_key=$2 WHERE user_id=$1',[target.id,'private-test-avatar']);
       await workflows.action(reviewer,id,command(row.version,{action:'execute'}),'Bearer test');assert.equal((await workflows.detail(reviewer,id)).record.status,'WAITING_CLEANUP');
+      for(const action of ['start','reject','execute']){
+        const current=(await workflows.detail(reviewer,id)).record;
+        await assert.rejects(workflows.action(reviewer,id,command(current.version,{action}),'Bearer test'),{code:'CLEANUP_IN_PROGRESS'});
+      }
+      row=(await workflows.detail(reviewer,id)).record;
+      await workflows.action(reviewer,id,command(row.version,{action:'retention',module:'identity',disposition:'RETAIN',basisReference:'Maintain the existing review while cleanup waits',retainUntil:new Date(Date.now()+86400000).toISOString()}));
+      assert.equal((await workflows.detail(reviewer,id)).record.status,'WAITING_CLEANUP');
       const after=(await pool.query('SELECT email,status,anonymized_at FROM users WHERE id=$1',[target.id])).rows[0];assert.ok(after.email.endsWith('@deleted.invalid'));assert.equal(after.status,'suspended');assert.ok(after.anonymized_at);
       const order=(await pool.query('SELECT user_id,shipping_address_json FROM order_service.orders WHERE id=$1',[orderId])).rows[0];assert.equal(order.user_id,target.id);assert.equal(order.shipping_address_json.receiverName,'Traceable buyer');
       const receipt=await support.state(token);assert.equal(receipt.receiptOnly,true);assert.equal(receipt.cases.find(row=>row.id===id).retention.length,6);
@@ -189,6 +196,9 @@ test('ADM-USER PostgreSQL and HTTP acceptance',{skip:!process.env.ADMIN_USER_TES
       await assert.rejects(workflows.ownArtifact(token,id),{status:401});
       profiles.avatarStorage={remove:async()=>{throw Error('storage down');}};await worker.cleanup();assert.equal((await workflows.detail(reviewer,id)).record.status,'WAITING_CLEANUP');
       profiles.avatarStorage={remove:async()=>{}};await worker.cleanup();assert.equal((await workflows.detail(reviewer,id)).record.status,'COMPLETED');
+      // Repair a receipt/case pair left inconsistent by the previous implementation.
+      await pool.query("UPDATE user_workflow_cases SET status='IN_REVIEW',resolved_at=NULL WHERE id=$1",[id]);
+      await worker.cleanup();assert.equal((await workflows.detail(reviewer,id)).record.status,'COMPLETED');
     });
     await t.test('HTTP user routes protect private data, support headers and exact write origin',async()=>{
       const fake=Object.create(identity);fake.authenticate=async header=>{if(!header)return identity.authenticate(header);return {user:header==='Bearer admin'?admin:member};};
@@ -197,6 +207,9 @@ test('ADM-USER PostgreSQL and HTTP acceptance',{skip:!process.env.ADMIN_USER_TES
         assert.equal((await fetch(`${base}/admin/users/${pending.id}/workspace`)).status,401);
         const response=await fetch(`${base}/admin/users/${pending.id}/workspace`,{headers:{Authorization:'Bearer admin'}});assert.equal(response.status,200);assert.doesNotMatch(JSON.stringify(await response.json()),/password_hash|token_hash|code_hash/);
         assert.equal((await fetch(`${base}/admin/users/${pending.id}/sessions`,{headers:{Authorization:'Bearer support'}})).status,403);
+        assert.equal((await fetch(`${base}/admin/setup`,{headers:{Authorization:'Bearer support'}})).status,403);
+        const setupResponse=await fetch(`${base}/admin/setup`,{headers:{Authorization:'Bearer admin'}});assert.equal(setupResponse.status,200);
+        const setupState=await setupResponse.json();assert.ok(Array.isArray(setupState.roles));assert.ok(Array.isArray(setupState.teams));assert.equal(setupState.canManageStaff,true);
         assert.equal((await fetch(`${base}/admin/users/${pending.id}/contact`,{method:'POST',headers:{Authorization:'Bearer admin',Origin:'https://foreign.example','Content-Type':'application/json'},body:JSON.stringify(command(await version(pending.id)))})).status,403);
         const preflight=await fetch(`${base}/account-support/state`,{method:'OPTIONS',headers:{Origin:config.frontendOrigin}});assert.ok(preflight.headers.get('access-control-allow-headers').includes('X-Account-Support-Token'));
         assert.equal((await fetch(`${base}/account-support/state`,{headers:{'X-Account-Support-Token':'invalid'}})).status,401);

@@ -11,14 +11,17 @@ import { createProfileRoutes } from './profile.routes.js';
 import { IdentityAdminService } from '../services/platform-admin.service.js';
 import { AdminAccessService, loadAdminAccess } from '../services/admin-access.service.js';
 import {createUserAdminRoutes} from './user-admin.routes.js';
+import {AdminSetupService} from '../services/admin-setup.service.js';
 
 export function createRequestHandler(service, profileService, config) {
   const controller = createAuthController(service, config);
   const authMiddleware = requireSession(service);
   const admin = new IdentityAdminService(service.repo);
   const access = new AdminAccessService(service.repo);
+  const setup = new AdminSetupService(service.repo?.pool);
   const routes = [...createUserAdminRoutes(service,profileService,config,authMiddleware),...createAuthRoutes(controller, authMiddleware), ...createProfileRoutes(createProfileController(profileService), authMiddleware),
     {method:'GET',path:'/api/v2/admin/staff',middleware:[authMiddleware],handler:async(req,res)=>sendJson(res,200,await access.staff(req.auth.user,Object.fromEntries(new URL(req.url,'http://localhost').searchParams)))},
+    {method:'GET',path:'/api/v2/admin/setup',middleware:[authMiddleware],handler:async(req,res)=>sendJson(res,200,await setup.read(req.auth.user))},
     {method:'GET',path:/^\/api\/v2\/admin\/staff\/([0-9a-f-]{36})\/access$/i,middleware:[authMiddleware],handler:async(req,res)=>sendJson(res,200,await access.preview(req.auth.user,req.params.id))},
     {method:'PUT',path:/^\/api\/v2\/admin\/staff\/([0-9a-f-]{36})\/access$/i,middleware:[authMiddleware],handler:async(req,res)=>sendJson(res,200,await access.replace(req.auth.user,req.params.id,req.body))},
     {method:'GET',path:'/api/v2/admin/identity/summary',middleware:[authMiddleware],handler:async(req,res)=>sendJson(res,200,await admin.summary(req.auth.user,Object.fromEntries(new URL(req.url,'http://localhost').searchParams)))},

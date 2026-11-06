@@ -79,7 +79,7 @@ const HomeFooter: React.FC = () => {
               </li>
               <li className="flex items-center gap-2 sm:gap-3 text-gray-400 text-xs sm:text-sm">
                 <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
-                <span>support@belibeli.com</span>
+                <span>support@mduc247.site</span>
               </li>
             </ul>
             {/* Newsletter */}

@@ -1,6 +1,6 @@
 # Dashboard và hàng chờ — nghiệm thu local 27/10/2026
 
-> **Đính chính sau rà soát:** chưa thể xác nhận mục 7 hoàn tất toàn bộ. Đã tái hiện lỗi SLA queue/case không nhất quán; Payment/Chat và trưởng nhóm chuyển cấp trong local chưa sẵn sàng. [Báo cáo rà soát mới](ADMIN_SECTIONS_7_8_REVIEW.md) được ưu tiên khi đối chiếu trạng thái; các kết quả test dưới đây không bao phủ hết các tình huống này.
+> **Cập nhật 28/10/2026:** Đã sửa đồng bộ hạn SLA queue/case bằng migration 025–026 và thêm regression cho hai hướng cập nhật cùng phiên bản case. Bộ PostgreSQL/API 12/12 qua. Order/Case/Payment/Chat local đều có timestamp, không có lỗi nguồn sau khi cập nhật stack. Trưởng nhóm vẫn cần được chỉ định theo nhân sự thực tế; xem [nghiệm thu admin cơ bản](ADMIN_BASIC_ACCEPTANCE.md). [Báo cáo rà soát 27/10](ADMIN_SECTIONS_7_8_REVIEW.md) giữ bằng chứng lỗi trước khi sửa.
 
 Phạm vi: ADM-DASH-001…008 và ADM-QUEUE-001…006. Đã triển khai giao diện, API, kiểm tra quyền, migration và kiểm thử local. Chưa xác nhận triển khai production.
 

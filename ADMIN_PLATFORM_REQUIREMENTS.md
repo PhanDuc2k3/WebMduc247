@@ -244,8 +244,8 @@ Các ô CORE hoàn thành bên dưới xác nhận phạm vi hiện có; quy t�
 - [x] **ADM-QUEUE-001 — P0:** Danh sách việc cần xử lý gồm loại, mức ưu tiên, đối tượng, người/nhóm phụ trách, hạn xử lý và trạng thái.
 - [x] **ADM-QUEUE-002 — P0:** Nhận việc, phân công, chuyển nhóm và ghi lý do chuyển; xử lý trường hợp hai người cùng nhận.
 - [x] **ADM-QUEUE-003 — P0:** Bộ lọc việc của tôi, chưa phân công, quá hạn, cần phản hồi và chờ phê duyệt.
-- [ ] **ADM-QUEUE-004 — P0:** Có quy tắc SLA theo loại việc; phân biệt thời hạn phản hồi và giải quyết, ghi rõ lúc nào đồng hồ tạm dừng.
-  - **Ghi chú tạm — 27/10/2026, chưa sửa:** Sau tạm dừng/tiếp tục, hạn giải quyết ở hàng chờ được cộng thời gian dừng nhưng hạn hồ sơ gốc không đổi; đã tái hiện lệch 2 giờ. Cần thống nhất hạn SLA giữa queue và case, bổ sung regression test trước khi đánh dấu hoàn thành. Chi tiết: [lỗi SLA trong báo cáo rà soát](ADMIN_SECTIONS_7_8_REVIEW.md#2-adm-queue-004--hạn-sla-hàng-chờ-lệch-hồ-sơ-nguồn).
+- [x] **ADM-QUEUE-004 — P0:** Có quy tắc SLA theo loại việc; phân biệt thời hạn phản hồi và giải quyết, ghi rõ lúc nào đồng hồ tạm dừng.
+  - **Cập nhật 28/10/2026:** Đã đồng bộ hạn queue/case qua migration Order 025–026; có regression cho pause/resume hai chiều và phiên bản trả về của case. Bộ PostgreSQL/API 12/12 qua. Chi tiết: [nghiệm thu admin cơ bản](ADMIN_BASIC_ACCEPTANCE.md).
 - [x] **ADM-QUEUE-005 — P1:** Nhắc hạn và chuyển cấp cho trưởng nhóm; tránh tạo nhiều thông báo trùng cho cùng một mốc.
 - [x] **ADM-QUEUE-006 — P1:** Khối “Cần chú ý” ưu tiên việc admin có thể hành động; tách bản nháp sản phẩm và tài khoản chờ xác minh thành số liệu tham khảo.
 
@@ -290,34 +290,38 @@ Các ô CORE hoàn thành bên dưới xác nhận phạm vi hiện có; quy t�
 
 ## 10. Sản phẩm và kiểm duyệt hàng hóa
 
-- [ ] **ADM-PROD-001 — P0:** Bổ sung lọc theo shop, danh mục, thương hiệu, ngày tạo, tồn kho và trạng thái kiểm duyệt; phân biệt trạng thái seller với trạng thái chặn của sàn.
-- [ ] **ADM-PROD-002 — P0:** Xem đủ ảnh, mô tả, SKU, thuộc tính, biến thể, giá bán, giá khuyến mãi và lịch sử thay đổi cần thiết cho kiểm duyệt.
-- [ ] **ADM-PROD-003 — P0:** Ẩn/khôi phục có mã lý do chuẩn, nội dung giải thích, bằng chứng và thông báo seller; giữ trạng thái bán trước khi ẩn.
-- [ ] **ADM-PROD-004 — P0:** Liên kết sản phẩm với báo cáo vi phạm và quyết định; không sửa snapshot của đơn đã đặt khi sửa hoặc ẩn sản phẩm.
-- [ ] **ADM-PROD-005 — P0:** Quy tắc vi phạm có thể cấu hình theo nhóm: nội dung sai lệch, hàng bị cấm theo chính sách, hình ảnh không phù hợp, giả mạo thương hiệu hoặc spam.
-- [ ] **ADM-PROD-006 — P1:** Nếu áp dụng duyệt trước đăng: hàng chờ sản phẩm mới/chỉnh sửa, phiên bản được xét duyệt và phạm vi thay đổi cần duyệt lại.
-- [ ] **ADM-PROD-007 — P1:** So sánh trước/sau khi seller sửa tên, ảnh, danh mục hoặc mô tả sau một quyết định kiểm duyệt.
-- [ ] **ADM-PROD-008 — P1:** Yêu cầu seller chỉnh sửa, đặt hạn và xác nhận đã khắc phục; sửa nội dung không tự bỏ cờ chặn của sàn.
-- [ ] **ADM-PROD-009 — P1:** Xử lý hàng loạt có bước xem trước danh sách, lý do chung, quyền từng bản ghi và báo cáo thành công/thất bại từng mục.
-- [ ] **ADM-PROD-010 — P1:** Hàng loạt phải giới hạn số mục, xử lý theo job khi lớn; không dùng một nút để ngầm chọn mọi bản ghi ngoài bộ lọc hiện tại.
-- [ ] **ADM-PROD-011 — P1:** Kháng nghị của seller gắn với quyết định và phiên bản sản phẩm; xét lại không xóa lịch sử vi phạm cũ.
-- [ ] **ADM-PROD-012 — P2:** Gợi ý sản phẩm trùng, ảnh đáng ngờ hoặc thay đổi giá bất thường để nhân viên kiểm tra; tín hiệu không tự trở thành kết luận vi phạm.
+- [x] **ADM-PROD-001 — P0:** Bổ sung lọc theo shop, danh mục, thương hiệu, ngày tạo, tồn kho và trạng thái kiểm duyệt; phân biệt trạng thái seller với trạng thái chặn của sàn.
+- [x] **ADM-PROD-002 — P0:** Xem đủ ảnh, mô tả, SKU, thuộc tính, biến thể, giá bán, giá khuyến mãi và lịch sử thay đổi cần thiết cho kiểm duyệt.
+- [x] **ADM-PROD-003 — P0:** Ẩn/khôi phục có mã lý do chuẩn, nội dung giải thích, bằng chứng và thông báo seller; giữ trạng thái bán trước khi ẩn.
+- [x] **ADM-PROD-004 — P0:** Liên kết sản phẩm với báo cáo vi phạm và quyết định; không sửa snapshot của đơn đã đặt khi sửa hoặc ẩn sản phẩm.
+- [x] **ADM-PROD-005 — P0:** Quy tắc vi phạm có thể cấu hình theo nhóm: nội dung sai lệch, hàng bị cấm theo chính sách, hình ảnh không phù hợp, giả mạo thương hiệu hoặc spam.
+- [x] **ADM-PROD-006 — P1:** Nếu áp dụng duyệt trước đăng: hàng chờ sản phẩm mới/chỉnh sửa, phiên bản được xét duyệt và phạm vi thay đổi cần duyệt lại.
+- [x] **ADM-PROD-007 — P1:** So sánh trước/sau khi seller sửa tên, ảnh, danh mục hoặc mô tả sau một quyết định kiểm duyệt.
+- [x] **ADM-PROD-008 — P1:** Yêu cầu seller chỉnh sửa, đặt hạn và xác nhận đã khắc phục; sửa nội dung không tự bỏ cờ chặn của sàn.
+- [x] **ADM-PROD-009 — P1:** Xử lý hàng loạt có bước xem trước danh sách, lý do chung, quyền từng bản ghi và báo cáo thành công/thất bại từng mục.
+- [x] **ADM-PROD-010 — P1:** Hàng loạt phải giới hạn số mục, xử lý theo job khi lớn; không dùng một nút để ngầm chọn mọi bản ghi ngoài bộ lọc hiện tại.
+- [x] **ADM-PROD-011 — P1:** Kháng nghị của seller gắn với quyết định và phiên bản sản phẩm; xét lại không xóa lịch sử vi phạm cũ.
+- [x] **ADM-PROD-012 — P2:** Gợi ý sản phẩm trùng, ảnh đáng ngờ hoặc thay đổi giá bất thường để nhân viên kiểm tra; tín hiệu không tự trở thành kết luận vi phạm.
 
 **Nghiệm thu:** seller không tự publish lại sản phẩm bị sàn ẩn; khôi phục bản nháp vẫn là bản nháp; thay đổi dữ liệu khi đang duyệt phải phát hiện xung đột.
 
+**Triển khai:** `/admin/products` và hồ sơ kiểm duyệt trong trang chỉnh sửa sản phẩm của seller. Duyệt trước đăng là tùy chọn, mặc định tắt; có hàng chờ và phiên bản nội dung khi bật. Hàng loạt giới hạn 200 mục/job, xử lý 20 mục/lượt, có xem trước và kết quả từng mục. Chi tiết API, migration và cách kiểm thử: [Backend/docs/product-moderation.md](Backend/docs/product-moderation.md).
+
 ## 11. Danh mục, thương hiệu và thuộc tính
 
-- [ ] **ADM-CAT-001 — P1:** Có trang quản lý cây danh mục riêng; tái sử dụng khả năng tạo danh mục gốc/con đang có.
-- [ ] **ADM-CAT-002 — P1:** Sửa tên, slug, mô tả, ảnh/icon, thứ tự, trạng thái và danh mục cha; kiểm tra trùng slug và chu trình cây ở backend.
-- [ ] **ADM-CAT-003 — P1:** Trước khi đổi cha hoặc ngừng danh mục, hiển thị số sản phẩm, danh mục con và tham chiếu trang chủ bị ảnh hưởng.
-- [ ] **ADM-CAT-004 — P1:** Không xóa danh mục đang được tham chiếu; có phương án chuyển sản phẩm sang danh mục thay thế và audit việc chuyển.
-- [ ] **ADM-CAT-005 — P1:** Đổi slug cần cập nhật liên kết nội bộ; nếu muốn hỗ trợ URL cũ phải có mapping chuyển hướng và kiểm tra trùng/chu trình.
-- [ ] **ADM-CAT-006 — P1:** Ngừng danh mục phải xác định tác động tới đăng sản phẩm mới, sản phẩm hiện hữu, tìm kiếm và ô nổi bật; tránh mất hàng hóa âm thầm.
-- [ ] **ADM-CAT-007 — P1:** Quản lý bộ thuộc tính theo nhóm hàng: kiểu dữ liệu, bắt buộc/tùy chọn, đơn vị và giá trị cho phép; có kế hoạch cho sản phẩm cũ thiếu thuộc tính.
-- [ ] **ADM-CAT-008 — P2:** Danh sách thương hiệu chuẩn, tên thay thế, logo, trạng thái và cách hợp nhất thương hiệu trùng.
-- [ ] **ADM-CAT-009 — P2:** Nhập danh mục/thuộc tính bằng CSV có kiểm tra trước, danh sách lỗi từng dòng và lịch sử; không tự tạo hàng loạt khi file không hợp lệ.
+- [x] **ADM-CAT-001 — P1:** Có trang quản lý cây danh mục riêng; tái sử dụng khả năng tạo danh mục gốc/con đang có.
+- [x] **ADM-CAT-002 — P1:** Sửa tên, slug, mô tả, ảnh/icon, thứ tự, trạng thái và danh mục cha; kiểm tra trùng slug và chu trình cây ở backend.
+- [x] **ADM-CAT-003 — P1:** Trước khi đổi cha hoặc ngừng danh mục, hiển thị số sản phẩm, danh mục con và tham chiếu trang chủ bị ảnh hưởng.
+- [x] **ADM-CAT-004 — P1:** Không xóa danh mục đang được tham chiếu; có phương án chuyển sản phẩm sang danh mục thay thế và audit việc chuyển.
+- [x] **ADM-CAT-005 — P1:** Đổi slug cần cập nhật liên kết nội bộ; nếu muốn hỗ trợ URL cũ phải có mapping chuyển hướng và kiểm tra trùng/chu trình.
+- [x] **ADM-CAT-006 — P1:** Ngừng danh mục phải xác định tác động tới đăng sản phẩm mới, sản phẩm hiện hữu, tìm kiếm và ô nổi bật; tránh mất hàng hóa âm thầm.
+- [x] **ADM-CAT-007 — P1:** Quản lý bộ thuộc tính theo nhóm hàng: kiểu dữ liệu, bắt buộc/tùy chọn, đơn vị và giá trị cho phép; có kế hoạch cho sản phẩm cũ thiếu thuộc tính.
+- [x] **ADM-CAT-008 — P2:** Danh sách thương hiệu chuẩn, tên thay thế, logo, trạng thái và cách hợp nhất thương hiệu trùng.
+- [x] **ADM-CAT-009 — P2:** Nhập danh mục/thuộc tính bằng CSV có kiểm tra trước, danh sách lỗi từng dòng và lịch sử; không tự tạo hàng loạt khi file không hợp lệ.
 
 **Nghiệm thu:** chuyển một nút vào hậu duệ của chính nó bị từ chối; ngừng danh mục có sản phẩm phải xử lý đúng chính sách tham chiếu đã chốt.
+
+**Triển khai:** `/admin/categories` quản lý cây, bộ thuộc tính kế thừa, thương hiệu/alias, CSV và audit. Ngừng toàn nhánh theo chính sách chuyển sản phẩm sang danh mục thay thế còn hoạt động hoặc từ chối; có preview tham chiếu trang chủ/banner cũ và phát hiện xung đột. URL cũ mapping trực tiếp về ID, được phân giải sang canonical URL trong SPA. Thuộc tính có chế độ chuyển tiếp cho hàng cũ. Chi tiết chính sách, API, migration và kiểm thử: [Backend/docs/taxonomy-administration.md](Backend/docs/taxonomy-administration.md).
 
 ## 12. Tồn kho và giữ hàng
 

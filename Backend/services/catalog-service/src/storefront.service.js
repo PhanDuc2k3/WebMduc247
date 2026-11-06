@@ -38,6 +38,7 @@ export class StorefrontService {
     const mutation=adminMutation(input), validated=validateStorefront(input.config);
     return this.catalog.transaction(db=>adminCommand(db,'catalog',actor,publish?'storefront:publish':'storefront:draft',
       {...mutation,config:validated},async()=>{
+      await db.query('SELECT catalog.taxonomy_read_lock()');
       const config=await this.checkReferences(validated);
       const row=(await db.query('SELECT * FROM catalog.storefront_settings WHERE id=1 FOR UPDATE')).rows[0];
       if(Number(row.version)!==input.version)throw new PlatformAdminError(409,'VERSION_CONFLICT','Bố cục đã được quản trị viên khác thay đổi. Hãy tải lại trước khi lưu.');
@@ -64,6 +65,7 @@ export class StorefrontService {
     if(!input||Object.keys(input).some(key=>!['name','slug','parentId','version','reason','requestId'].includes(key)))throw new PlatformAdminError(400,'INVALID_CATEGORY','Dữ liệu danh mục không hợp lệ.');
     const mutation=adminMutation(input);
     return this.catalog.transaction(db=>adminCommand(db,'catalog',actor,'storefront:category',input,async()=>{
+      await db.query('SELECT catalog.taxonomy_lock()');
       const row=(await db.query('SELECT version FROM catalog.storefront_settings WHERE id=1 FOR UPDATE')).rows[0];
       if(Number(row.version)!==mutation.version)throw new PlatformAdminError(409,'VERSION_CONFLICT','Cấu hình đã thay đổi. Hãy tải lại trước khi tạo danh mục.');
       if(input.parentId&&!(await this.categories()).some(category=>category.id===input.parentId))throw new PlatformAdminError(400,'INVALID_PARENT','Danh mục cha không hoạt động.');

@@ -28,14 +28,22 @@ export class UserAdminWorker {
       FROM privacy_requests p WHERE c.legacy_privacy_request_id=p.id AND p.status='CANCELLED' AND c.status IN ('NEW','IN_REVIEW','WAITING_RETENTION')`);
   }
   async cleanup(){
-    const jobs=(await this.pool.query('SELECT case_id,avatar_key FROM user_asset_cleanup WHERE completed_at IS NULL ORDER BY created_at LIMIT 20')).rows;
+    const jobs=(await this.pool.query(`SELECT j.case_id,j.avatar_key,j.completed_at FROM user_asset_cleanup j
+      JOIN user_workflow_cases c ON c.id=j.case_id JOIN users u ON u.id=c.user_id
+      WHERE j.completed_at IS NULL OR (u.anonymized_at IS NOT NULL AND c.status IN ('NEW','IN_REVIEW','WAITING_RETENTION','WAITING_CLEANUP'))
+      ORDER BY j.created_at LIMIT 20`)).rows;
     for(const job of jobs){
-      if(!this.users.profiles?.avatarStorage){await this.pool.query("UPDATE user_asset_cleanup SET attempts=attempts+1,last_error='STORAGE_UNAVAILABLE' WHERE case_id=$1",[job.case_id]);continue;}
+      if(!job.completed_at&&!this.users.profiles?.avatarStorage){await this.pool.query("UPDATE user_asset_cleanup SET attempts=attempts+1,last_error='STORAGE_UNAVAILABLE' WHERE case_id=$1",[job.case_id]);continue;}
       try{
-        await this.users.profiles.avatarStorage.remove(job.avatar_key);
+        if(!job.completed_at)await this.users.profiles.avatarStorage.remove(job.avatar_key);
         await this.repo.transaction(async db=>{
+          const current=(await db.query(`SELECT c.id,c.status,u.anonymized_at FROM user_workflow_cases c
+            JOIN users u ON u.id=c.user_id WHERE c.id=$1 FOR UPDATE OF c`,[job.case_id])).rows[0];
+          if(!current?.anonymized_at||!['NEW','IN_REVIEW','WAITING_RETENTION','WAITING_CLEANUP'].includes(current.status))return;
+          // Lock the case first, as workflow actions do. Repair receipts left by the old worker too.
+          await db.query("UPDATE user_workflow_cases SET status='WAITING_CLEANUP' WHERE id=$1",[job.case_id]);
           const result=await db.query('UPDATE user_asset_cleanup SET completed_at=now(),last_error=NULL,attempts=attempts+1 WHERE case_id=$1 AND completed_at IS NULL RETURNING case_id',[job.case_id]);
-          if(!result.rowCount)return;const row=(await db.query("UPDATE user_workflow_cases SET status='COMPLETED',version=version+1,resolved_at=now() WHERE id=$1 AND status='WAITING_CLEANUP' RETURNING user_id,legacy_privacy_request_id",[job.case_id])).rows[0];
+          if(!result.rowCount&&!job.completed_at)return;const row=(await db.query("UPDATE user_workflow_cases SET status='COMPLETED',version=version+1,resolved_at=now() WHERE id=$1 AND status='WAITING_CLEANUP' RETURNING user_id,legacy_privacy_request_id",[job.case_id])).rows[0];
           if(row){if(row.legacy_privacy_request_id)await db.query("UPDATE privacy_requests SET status='COMPLETED',resolved_at=now(),updated_at=now(),resolution_note='Đã ẩn danh Identity và xóa ảnh theo hồ sơ rà soát.' WHERE id=$1",[row.legacy_privacy_request_id]);await userEvent(db,row.user_id,null,'privacy_cleanup_completed','Đã xóa ảnh đại diện khỏi kho lưu trữ.',{caseId:job.case_id});}
         });
       }catch{await this.pool.query("UPDATE user_asset_cleanup SET attempts=attempts+1,last_error='DELETE_FAILED' WHERE case_id=$1",[job.case_id]);}

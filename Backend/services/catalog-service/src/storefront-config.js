@@ -56,14 +56,14 @@ export function validateStorefront(config){
   if(Buffer.byteLength(JSON.stringify(result))>65536)throw fail('Cấu hình quá lớn.');
   return result;
 }
-export function flattenStorefrontCategories(items,result=[]){for(const item of items){result.push({id:item.id,name:item.name,slug:item.slug,parentId:item.parentId});flattenStorefrontCategories(item.children||[],result);}return result;}
+export function flattenStorefrontCategories(items,result=[]){for(const item of items){result.push({id:item.id,name:item.name,slug:item.slug,parentId:item.parentId,aliases:item.aliases||[]});flattenStorefrontCategories(item.children||[],result);}return result;}
 export function defaultStorefront(categories){
   const definitions=[['electronics','Điện tử','laptop','blue'],['fashion','Thời trang','shirt','pink'],['home','Gia dụng','house','green'],
     ['beauty','Làm đẹp','sparkles','coral'],['sports','Thể thao','dumbbell','purple'],['food','Thực phẩm','apple','yellow'],['books','Sách','book','cyan']];
   const navigation=[['Tất cả danh mục','/products'],['Điện thoại & Phụ kiện','/category/phone'],['Điện tử','/category/electronics'],['Thời trang','/category/fashion'],
     ['Nhà cửa & Đời sống','/category/home'],['Làm đẹp','/category/beauty'],['Thể thao','/category/sports'],['Flash Sale','/flash-sale'],['Cửa hàng','/store']]
     .map(([label,targetUrl],index)=>({id:'nav-'+index,label,targetUrl,enabled:true}));
-  const featuredCategories=definitions.flatMap(([slug,label,icon,tone])=>{const category=categories.find(item=>item.slug===slug);return category?[{id:'tile-'+slug,categoryId:category.id,label,targetUrl:'/category/'+slug,icon,tone,enabled:true}]:[];});
+  const featuredCategories=definitions.flatMap(([slug,label,icon,tone])=>{const category=categories.find(item=>item.slug===slug||item.aliases?.includes(slug));return category?[{id:'tile-'+slug,categoryId:category.id,label,targetUrl:'/category/'+category.slug,icon,tone,enabled:true}]:[];});
   featuredCategories.push({id:'tile-sale',categoryId:null,label:'Ưu đãi',targetUrl:'/products?sale=true',icon:'tag',tone:'navy',enabled:true});
   const banners=[{id:'hero-shopping',kicker:'Mua sắm mỗi ngày',title:'Đại tiệc mua sắm MDUC247',description:'Khám phá sản phẩm từ nhiều gian hàng bạn yêu thích.',imageUrl:'/home/shopping-hero.png',imageAlt:'Bàn mua sắm với máy tính và hộp quà',targetUrl:'/products',buttonText:'Bắt đầu mua hàng',tone:'blue',enabled:true},
     {id:'hero-fashion',kicker:'Phong cách mỗi ngày',title:'Chọn món đồ bạn yêu',description:'Tìm cảm hứng mới cho phong cách của riêng bạn.',imageUrl:'/home/fashion-hero.png',imageAlt:'Túi tote vải canvas',targetUrl:'/category/fashion',buttonText:'Khám phá ngay',tone:'purple',enabled:true},
@@ -75,7 +75,9 @@ export function defaultStorefront(categories){
 }
 export function resolveStorefront(config,categories){
   const byId=new Map(categories.map(item=>[item.id,item]));
-  return {...config,navigation:config.navigation.filter(item=>item.enabled),banners:config.banners.filter(item=>item.enabled),
+  const bySlug=new Map(categories.flatMap(c=>[c.slug,...(c.aliases||[])].map(slug=>[slug,c])));
+  const resolveLink=item=>{const match=/^\/category\/([a-z0-9-]+)(.*)$/.exec(item.targetUrl||'');if(!match)return item;const category=bySlug.get(match[1]);return category?{...item,targetUrl:`/category/${category.slug}${match[2]}`}:{...item,enabled:false};};
+  return {...config,navigation:config.navigation.map(resolveLink).filter(item=>item.enabled),banners:config.banners.map(resolveLink).filter(item=>item.enabled),
     sections:config.sections.filter(item=>item.enabled),featuredCategories:config.featuredCategories.filter(item=>item.enabled&&(!item.categoryId||byId.has(item.categoryId)))
       .map(item=>({...item,targetUrl:item.categoryId?'/category/'+byId.get(item.categoryId).slug:item.targetUrl}))};
 }

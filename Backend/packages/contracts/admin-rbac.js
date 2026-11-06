@@ -3,6 +3,8 @@ import {ADMIN_SENSITIVE_PERMISSIONS,requireRecentAdmin} from './admin-auth-polic
 
 // Explicit allowlists: a new resource/action never inherits an existing role.
 export const ADMIN_PERMISSIONS = Object.freeze([
+  'inventory.read','finance.reconcile','moderation.view_sensitive',
+  'taxonomy.read','taxonomy.manage','taxonomy.import',
   'work_queue.update','work_queue.manage','moderation.read','moderation.update',
   'users.sessions.read','users.sessions.revoke','users.password_reset','users.notes.read','users.notes.create','users.notes.manage',
   'users.appeals.read','users.appeals.review','users.signals.read','privacy.read','privacy.review','privacy.execute',
@@ -16,18 +18,24 @@ export const ADMIN_PERMISSIONS = Object.freeze([
   'promotions.read','promotions.create','promotions.update','reports.read','audit.read',
   'finance.export','finance.view_sensitive','approval_policy.read','approval_policy.update',
 ]);
-export const ADMIN_ROLES = Object.freeze({
+const basicOperations=roles=>{
+  for(const role of ['operations','moderator','legacy_admin'])roles[role].permissions.push('inventory.read');
+  roles.finance.permissions.push('finance.reconcile');
+  roles.moderator.permissions.push('moderation.view_sensitive');
+  return roles;
+};
+export const ADMIN_ROLES = Object.freeze(basicOperations({
   system_admin: { label:'Quản trị hệ thống', permissions:['cases.read','stores.read','stores.ownership.approve','users.read','users.view_sensitive','users.sessions.read','users.sessions.revoke','users.password_reset','users.notes.manage','users.appeals.read','users.appeals.review','users.signals.read','privacy.read','privacy.review','privacy.execute','staff.read','staff.update','approval_policy.read','approval_policy.update','audit.read','mfa_recovery.approve'] },
-  operations: { label:'Vận hành sàn', permissions:['work_queue.update','work_queue.manage','stores.read','products.read','orders.read','orders.create','cases.read','cases.create','cases.update','returns.read','reports.read'] },
+  operations: { label:'Vận hành sàn', permissions:['taxonomy.read','work_queue.update','work_queue.manage','stores.read','products.read','orders.read','orders.create','cases.read','cases.create','cases.update','returns.read','reports.read'] },
   customer_support: { label:'Chăm sóc khách hàng', permissions:['users.read','users.password_reset','users.notes.read','users.notes.create','users.appeals.read','work_queue.update','orders.read','cases.read','cases.create','cases.update','cases.view_sensitive','returns.read'] },
-  moderator: { label:'Kiểm duyệt', permissions:['stores.ownership.request','users.read','users.moderate','users.notes.read','users.notes.create','users.appeals.read','users.appeals.review','users.signals.read','work_queue.update','work_queue.manage','moderation.read','moderation.update','stores.read','stores.moderate','products.read','products.moderate','cases.read','cases.update','cases.approve','cases.view_sensitive'] },
+  moderator: { label:'Kiểm duyệt', permissions:['taxonomy.read','taxonomy.manage','taxonomy.import','stores.ownership.request','users.read','users.moderate','users.notes.read','users.notes.create','users.appeals.read','users.appeals.review','users.signals.read','work_queue.update','work_queue.manage','moderation.read','moderation.update','stores.read','stores.moderate','products.read','products.moderate','cases.read','cases.update','cases.approve','cases.view_sensitive'] },
   finance: { label:'Tài chính', permissions:['work_queue.update','work_queue.manage','orders.read','orders.create','orders.approve','orders.execute','cases.read','cases.execute','returns.read','returns.moderate','returns.execute','refunds.read','refunds.create','refunds.approve','refunds.execute','finance.view_sensitive','approval_policy.read','reports.read'] },
   marketing: { label:'Marketing', permissions:['promotions.read','promotions.create','promotions.update','reports.read'] },
-  content_editor: { label:'Biên tập nội dung', permissions:['storefront.read','storefront.create','storefront.update','storefront.approve'] },
+  content_editor: { label:'Biên tập nội dung', permissions:['taxonomy.read','taxonomy.manage','taxonomy.import','storefront.read','storefront.create','storefront.update','storefront.approve'] },
   auditor: { label:'Kiểm tra/đọc báo cáo', permissions:['reports.read','audit.read','approval_policy.read'] },
   // One-time migration compatibility. No financial execution, exports or sensitive-data grant.
-  legacy_admin: { label:'Quản trị cũ (chuyển đổi)', permissions:['work_queue.update','users.read','users.moderate','stores.read','stores.moderate','products.read','products.moderate','orders.read','cases.read','cases.create','cases.update','returns.read','storefront.read','storefront.create','storefront.update','storefront.approve','reports.read','audit.read','staff.read'] },
-});
+  legacy_admin: { label:'Quản trị cũ (chuyển đổi)', permissions:['taxonomy.read','taxonomy.manage','taxonomy.import','work_queue.update','users.read','users.moderate','stores.read','stores.moderate','products.read','products.moderate','orders.read','cases.read','cases.create','cases.update','returns.read','storefront.read','storefront.create','storefront.update','storefront.approve','reports.read','audit.read','staff.read'] },
+}));
 export function normalizeScope(input = {}) {
   if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).some(k=>!['storeIds','caseKinds','assigneeIds'].includes(k)))
     throw new PlatformAdminError(400,'INVALID_ADMIN_SCOPE','Phạm vi không hợp lệ.');

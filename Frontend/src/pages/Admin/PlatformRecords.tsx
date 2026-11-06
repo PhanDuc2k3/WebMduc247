@@ -6,6 +6,8 @@ import UserWorkspace from './UserWorkspace';
 import UserContactSearch from './UserContactSearch';
 import StoreWorkspace, {registrationLabels} from './StoreWorkspace';
 import StoreApplicationQueue from './StoreApplicationQueue';
+import PlatformProducts from './PlatformProducts';
+import ProductWorkspace from './ProductWorkspace';
 import {useAdminSession} from './AdminSession';
 import {hasAdminPermission} from './adminPolicy';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -29,6 +31,7 @@ const filters:Record<AdminResource,[string,string][]>={
 };
 
 export function RecordDialog(props:{resource:AdminResource;id:string;close:()=>void;changed:()=>void}) {
+  if(props.resource==='products')return <ProductWorkspace id={props.id} close={props.close} changed={props.changed}/>;
   return props.resource==='users'?<UserWorkspace id={props.id} close={props.close} changed={props.changed}/>:props.resource==='stores'?<StoreWorkspace id={props.id} close={props.close} changed={props.changed}/>:<ResourceRecordDialog {...props}/>;
 }
 function ResourceRecordDialog({resource,id,close,changed}:{resource:AdminResource;id:string;close:()=>void;changed:()=>void}) {
@@ -86,6 +89,7 @@ function ResourceRecordDialog({resource,id,close,changed}:{resource:AdminResourc
         {record.suspensionReason&&<p className="pa-warning"><strong>Lý do sàn tạm khóa:</strong> {record.suspensionReason}</p>}
         {record.imageUrl&&<img className="pa-detail-image" src={record.imageUrl} alt={record.name||''}/>}
         <dl>{entries.map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value??'Chưa có dữ liệu'}</dd></div>)}</dl>
+        {resource==='orders'&&record.groupId&&hasAdminPermission(user,'finance.view_sensitive')&&<p><Link to={`/admin/payments?q=${record.groupId}`}>Tra cứu thanh toán của nhóm đơn</Link> · <Link to={`/admin/refunds?q=${record.id}`}>Tra cứu hoàn tiền của đơn</Link></p>}
         {record.description&&<div className="pa-detail-description"><h3>Mô tả</h3><p>{record.description}</p></div>}
         {!!record.variants?.length&&<div className="pa-detail-section"><h3>Biến thể sản phẩm</h3><div className="pa-table-scroll"><table className="pa-table"><thead><tr><th>SKU / thuộc tính</th><th>Giá</th><th>Tồn</th><th>Trạng thái</th></tr></thead><tbody>
           {record.variants.map(variant=><tr key={variant.id}><td>{variant.sku}<small>{Object.entries(variant.attributes||{}).map(([k,v])=>`${k}: ${v}`).join(', ')}</small></td><td>{money(variant.priceMinor)}</td><td>{variant.stock}</td><td>{variant.status==='active'?'Hoạt động':'Ngừng hoạt động'}</td></tr>)}
@@ -120,6 +124,9 @@ function ResourceRecordDialog({resource,id,close,changed}:{resource:AdminResourc
 }
 
 export default function PlatformRecords({resource}:{resource:AdminResource}) {
+  return resource==='products'?<PlatformProducts/>:<ResourceRecords resource={resource}/>;
+}
+function ResourceRecords({resource}:{resource:AdminResource}) {
   const actor=useAdminSession();
   const [params,setParams]=useSearchParams();const q=params.get('q')||'',status=params.get('status')||'',role=params.get('role')||'',selected=params.get('id');
   const from=params.get('from')||'',to=params.get('to')||'',statusGroup=params.get('statusGroup')||'',excludeCancelled=params.get('excludeCancelled')||'';

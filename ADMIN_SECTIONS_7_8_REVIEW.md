@@ -1,5 +1,7 @@
 # Rà soát lại mục 7 và 8 — 27/10/2026
 
+> **Cập nhật 28/10/2026:** Hai lỗi state cleanup và lệch SLA nêu dưới đây đã được sửa và thêm regression test; nguồn queue Payment/Chat local đã đồng bộ. Báo cáo này giữ bằng chứng lịch sử. Phạm vi privacy tự động vẫn thuộc Identity; việc gán nhân sự/nhóm cần người được chỉ định. Xem [nghiệm thu admin cơ bản](ADMIN_BASIC_ACCEPTANCE.md).
+
 **Kết luận: chưa xong hết.** Các suite hiện có qua không đủ để xác nhận toàn bộ luồng và cấu hình đang chạy. Rà soát đã phát hiện hai lỗi chức năng, một giới hạn phạm vi cần lưu ý và các điều kiện vận hành local chưa hoàn tất.
 
 Lần rà soát này kiểm tra mã, chạy lại test, đọc cấu hình/trạng thái tổng hợp của database local và tái hiện các tình huống bổ sung trong database `_test` với transaction được rollback. Không thay đổi quyền nhân sự, cấu hình trưởng nhóm hay dữ liệu nghiệp vụ.

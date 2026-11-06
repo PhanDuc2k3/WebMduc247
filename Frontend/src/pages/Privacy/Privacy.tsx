@@ -128,7 +128,7 @@ const Privacy: React.FC = () => {
               Nếu bạn có câu hỏi, yêu cầu hoặc khiếu nại về chính sách bảo mật này, vui lòng liên hệ với chúng tôi:
             </p>
             <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-              <p className="text-gray-700"><strong>Email:</strong> support@shopmduc247.com</p>
+              <p className="text-gray-700"><strong>Email:</strong> support@mduc247.site</p>
               <p className="text-gray-700"><strong>Địa chỉ:</strong> Trường Đại học Phenikaa, Hà Nội, Việt Nam</p>
             </div>
           </section>

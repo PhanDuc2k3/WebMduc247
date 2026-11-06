@@ -13,6 +13,10 @@ import { StorefrontService } from './storefront.service.js';
 import {StoreGovernanceService} from './store-governance.service.js';
 import {requireAdminScope} from '../../../packages/contracts/admin-rbac.js';
 import {REPUTATION_POLICY} from './store-policy.js';
+import {ProductModerationService} from './product-moderation.service.js';
+import {TaxonomyService} from './taxonomy.service.js';
+import {effectiveSchema} from './taxonomy-contract.js';
+import {InventoryAdminService} from './inventory-admin.service.js';
 
 const port = Number(process.env.CATALOG_PORT || 5102);
 const databaseUrl = process.env.CATALOG_DATABASE_URL || process.env.IDENTITY_DATABASE_URL;
@@ -203,11 +207,35 @@ export function createHandler(storeService = service, catalogService = catalog, 
       if (['POST', 'PATCH', 'DELETE'].includes(req.method) && origin !== frontendOrigin &&
         !path.startsWith('/internal/') && !path.startsWith('/inventory/')) throw new StoreError(403, 'ORIGIN_DENIED', 'Origin không hợp lệ.');
       const query = Object.fromEntries(target.searchParams);
+      if(req.method==='GET'&&path==='/product-report-reasons')return send(res,200,{items:(await storeService.pool.query("SELECT code,label FROM catalog.product_rules WHERE enabled=true AND violation_group<>'REMEDIATION' ORDER BY code")).rows});
       if(req.method==='GET'&&path==='/stores/reputation-policy')return send(res,200,REPUTATION_POLICY);
       if(req.method==='GET'&&path==='/storefront')return send(res,200,await new StorefrontService(catalogService).publicConfig());
       if (path.startsWith('/admin/')) {
         const user = await authenticate(req);
+        if(path==='/admin/inventory'&&req.method==='GET')return send(res,200,await new InventoryAdminService(storeService.pool).list(user,query));
+        const inventoryRecord=/^\/admin\/inventory\/([0-9a-f-]{36})$/i.exec(path);
+        if(inventoryRecord&&req.method==='GET')return send(res,200,await new InventoryAdminService(storeService.pool).detail(user,inventoryRecord[1]));
         const admin = new CatalogAdminService(storeService.pool,catalogService,{impactLoader:loadStoreImpact});
+        const taxonomy=new TaxonomyService(catalogService);
+        if(path==='/admin/taxonomy'&&req.method==='GET')return send(res,200,await taxonomy.read(user));
+        if(path==='/admin/taxonomy/preview'&&req.method==='POST')return send(res,200,await taxonomy.preview(user,await body(req,131072)));
+        if(path==='/admin/taxonomy/commit'&&req.method==='POST')return send(res,200,await taxonomy.commit(user,await body(req)));
+        if(path==='/admin/taxonomy/imports'&&req.method==='GET')return send(res,200,await taxonomy.imports(user));
+        if(path==='/admin/taxonomy/imports/preview'&&req.method==='POST')return send(res,200,await taxonomy.previewCsv(user,await body(req,300000)));
+        if(path==='/admin/taxonomy/imports/commit'&&req.method==='POST')return send(res,200,await taxonomy.commitCsv(user,await body(req)));
+        const products=new ProductModerationService(storeService,catalogService);
+        if(path==='/admin/product-rules'&&req.method==='GET')return send(res,200,await products.rules(user));
+        if(path==='/admin/product-rules'&&req.method==='POST')return send(res,200,await products.saveRule(user,await body(req)));
+        if(path==='/admin/product-review-policy'&&req.method==='POST')return send(res,200,await products.savePolicy(user,await body(req)));
+        if(path==='/admin/products/bulk/preview'&&req.method==='POST')return send(res,200,await products.preview(user,await body(req,65536)));
+        if(path==='/admin/products/bulk/jobs'&&req.method==='POST')return send(res,201,await products.createJob(user,await body(req)));
+        const productJob=/^\/admin\/products\/bulk\/jobs\/([0-9a-f-]{36})(\/run)?$/i.exec(path);
+        if(productJob&&((req.method==='POST'&&productJob[2])||(req.method==='GET'&&!productJob[2])))return send(res,200,await products.job(user,productJob[1],Boolean(productJob[2])));
+        const productModeration=/^\/admin\/products\/([0-9a-f-]{36})\/(moderation|signals)$/i.exec(path);
+        const productRevision=/^\/admin\/products\/([0-9a-f-]{36})\/revisions\/(\d+)$/i.exec(path);
+        if(productRevision&&req.method==='GET')return send(res,200,await products.revision(user,productRevision[1],productRevision[2]));
+        if(productModeration&&req.method==='GET')return send(res,200,await products[productModeration[2]==='signals'?'signals':'read'](user,productModeration[1]));
+        if(productModeration&&productModeration[2]==='moderation'&&req.method==='POST')return send(res,200,await products.command(user,productModeration[1],await body(req),req.headers.authorization));
         const governance=governanceFor(storeService);
         const profileContact=/^\/admin\/stores\/([0-9a-f-]{36})\/profile-contact$/i.exec(path);
         if(profileContact&&req.method==='POST')return send(res,200,await governance.profileContact(user,profileContact[1],await body(req)));
@@ -304,6 +332,10 @@ export function createHandler(storeService = service, catalogService = catalog, 
         if (req.method === 'PATCH' && categoryMatch) return send(res, 200, await catalogService.updateCategory(categoryMatch[1], await body(req)));
       }
       if (req.method === 'GET' && path === '/categories') return send(res, 200, await catalogService.categories());
+      if(req.method==='GET'&&path==='/categories/resolve')return send(res,200,await new TaxonomyService(catalogService).resolve(query.slug));
+      const categorySchema=/^\/categories\/([0-9a-f-]{36})\/attributes$/i.exec(path);
+      if(categorySchema&&req.method==='GET')return send(res,200,{schema:await effectiveSchema(storeService.pool,categorySchema[1])});
+      if(req.method==='GET'&&path==='/brands')return send(res,200,{items:(await storeService.pool.query("SELECT b.id,b.name,b.logo_url,(SELECT jsonb_agg(display_name ORDER BY display_name) FROM catalog.brand_names n WHERE n.brand_id=b.id) AS aliases FROM catalog.brands b WHERE status='ACTIVE' ORDER BY b.name")).rows});
       if (req.method === 'GET' && path === '/products') return send(res, 200, await catalogService.listProducts(query));
       if (req.method === 'GET' && path === '/products/search') return send(res, 200, await catalogService.productSearch.list(query, true));
       if (req.method === 'GET' && path === '/search') return send(res, 200, await catalogService.search(query));
@@ -316,6 +348,13 @@ export function createHandler(storeService = service, catalogService = catalog, 
       if (req.method === 'GET' && /^\/stores\/[a-z0-9-]+\/products$/.test(path)) return send(res, 200, await catalogService.listProducts({ store: path.split('/')[2], page: 1, limit: 50, inStock: 'true' }));
       if (req.method === 'GET' && /^\/stores\/[a-z0-9-]+$/.test(path)) return send(res, 200, { store: await storeService.publicBySlug(path.slice(8)) });
       const user = await authenticate(req);
+      const sellerTaxonomy=/^\/seller\/products\/([0-9a-f-]{36})\/taxonomy$/i.exec(path);
+      if(sellerTaxonomy&&req.method==='GET')return send(res,200,await new TaxonomyService(catalogService).sellerSchema(user,sellerTaxonomy[1]));
+      const productReport=/^\/products\/([0-9a-f-]{36})\/reports$/i.exec(path);
+      if(productReport&&req.method==='POST')return send(res,201,await new ProductModerationService(storeService,catalogService).report(user,productReport[1],await body(req)));
+      const sellerModeration=/^\/seller\/products\/([0-9a-f-]{36})\/moderation$/i.exec(path);
+      if(sellerModeration&&req.method==='GET')return send(res,200,await new ProductModerationService(storeService,catalogService).sellerRead(user,sellerModeration[1]));
+      if(sellerModeration&&req.method==='POST')return send(res,200,await new ProductModerationService(storeService,catalogService).sellerCommand(user,sellerModeration[1],await body(req)));
       if(req.method==='GET'&&path==='/seller/former-store-decisions')return send(res,200,{items:(await storeService.pool.query(`SELECT d.id,d.action,d.reason,d.scope,d.created_at,s.name AS store_name
         FROM catalog.store_decisions d JOIN catalog.stores s ON s.id=d.store_id WHERE d.recipient_id=$1
         AND NOT EXISTS(SELECT 1 FROM catalog.store_members m WHERE m.store_id=s.id AND m.user_id=$1 AND m.role='owner' AND m.status='active')

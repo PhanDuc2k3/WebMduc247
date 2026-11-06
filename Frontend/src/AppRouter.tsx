@@ -17,6 +17,9 @@ import PlatformCases from "./pages/Admin/PlatformCases";
 import ReturnExceptions from "./pages/Admin/ReturnExceptions";
 import CaseReports from "./pages/Admin/CaseReports";
 import StorefrontEditor from "./pages/Admin/StorefrontEditor";
+import PlatformTaxonomy from './pages/Admin/PlatformTaxonomy';
+import PlatformOperations from './pages/Admin/PlatformOperations';
+import AdminSetup from './pages/Admin/AdminSetup';
 import StorefrontPreview from "./pages/Admin/StorefrontPreview";
 import AdminRoute from "./components/Admin/AdminRoute";
 import { LoginV2, RegisterV2, VerifyEmailV2, ForgotPasswordV2, ResetPasswordV2 } from "./pages/AuthV2/AuthPages";
@@ -100,15 +103,21 @@ const AppRouter = () => (
     <Route path="/s" element={<Navigate to="/login" />} />
     <Route path="/admin" element={<AdminRoute><PlatformAdminShell /></AdminRoute>}>
       <Route path="security" element={<AdminSecurityPage/>}/>
+      <Route path="setup" element={<AdminSetup/>}/>
       <Route path="staff-access" element={<StaffAccess/>}/>
       <Route path="approvals" element={<PlatformApprovals/>}/>
       <Route index element={<PlatformOverview />} />
       <Route path="work-queue" element={<PlatformWorkQueue />} />
       <Route path="finance" element={<PlatformFinance />} />
+      <Route path="payments" element={<PlatformOperations kind="payments" />} />
+      <Route path="refunds" element={<PlatformOperations kind="refunds" />} />
+      <Route path="inventory" element={<PlatformOperations kind="inventory" />} />
+      <Route path="chat-reports" element={<PlatformOperations kind="chat-reports" />} />
       <Route path="users" element={<PlatformRecords key="users" resource="users" />} />
       <Route path="user-workflows" element={<UserWorkflows />} />
       <Route path="stores" element={<PlatformRecords key="stores" resource="stores" />} />
       <Route path="products" element={<PlatformRecords key="products" resource="products" />} />
+      <Route path="categories" element={<PlatformTaxonomy/>} />
       <Route path="orders" element={<PlatformRecords key="orders" resource="orders" />} />
       <Route path="returns" element={<PlatformReturns />} />
       <Route path="cases" element={<PlatformCases />} />

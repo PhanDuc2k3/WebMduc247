@@ -82,6 +82,17 @@ test('DASH/QUEUE PostgreSQL acceptance', {skip:!process.env.ADMIN_DASHBOARD_TEST
       current=(await queue.detail(admin,task.id)).record;
       await queue.action(admin,task.id,{action:'respond',version:current.version,reason:'Đã phản hồi yêu cầu của khách'});
       current=(await queue.detail(admin,task.id)).record;assert.equal(current.pausedAt,null);assert.ok(current.firstResponseAt);assert.ok(Date.parse(current.resolutionDueAt)>=original+7199000);assert.equal(Date.parse(current.responseDueAt),response);
+      const source=(await pool.query('SELECT due_at FROM order_service.admin_cases WHERE id=$1',[ids.case])).rows[0];
+      assert.equal(Date.parse(source.due_at),Date.parse(current.resolutionDueAt),'Case and queue must share the resumed deadline');
+      await pool.query('UPDATE order_service.admin_cases SET due_at=now()+interval \'3 days\',version=version+1 WHERE id=$1',[ids.case]);
+      current=(await queue.detail(admin,task.id)).record;
+      assert.equal(Date.parse((await pool.query('SELECT due_at FROM order_service.admin_cases WHERE id=$1',[ids.case])).rows[0].due_at),Date.parse(current.resolutionDueAt));
+      await pool.query("UPDATE order_service.admin_cases SET workflow_status='WAITING_INFORMATION',version=version+1 WHERE id=$1",[ids.case]);
+      await pool.query("UPDATE order_service.work_items SET paused_at=now()-interval '1 hour' WHERE id=$1",[task.id]);
+      const resumed=(await pool.query("UPDATE order_service.admin_cases SET workflow_status='IN_REVIEW',version=version+1 WHERE id=$1 RETURNING version",[ids.case])).rows[0];
+      assert.equal((await pool.query('SELECT version FROM order_service.admin_cases WHERE id=$1',[ids.case])).rows[0].version,resumed.version,'Source UPDATE RETURNING must not be invalidated by its own deadline echo');
+      current=(await queue.detail(admin,task.id)).record;
+      assert.equal(Date.parse((await pool.query('SELECT due_at FROM order_service.admin_cases WHERE id=$1',[ids.case])).rows[0].due_at),Date.parse(current.resolutionDueAt));
       await queue.action(admin,task.id,{action:'status',version:current.version,status:'AWAITING_APPROVAL',reason:'Chuyển hồ sơ chờ phê duyệt'});
       assert.ok((await queue.list(admin,{view:'awaiting_approval'})).items.some(item=>item.id===task.id));
     });

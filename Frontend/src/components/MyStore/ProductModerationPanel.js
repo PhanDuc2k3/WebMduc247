@@ -1,0 +1,32 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useEffect, useRef, useState } from 'react';
+import { productModerationApi as api } from '../../api/productModerationApi';
+import { adminRequestId } from '../../api/adminCommand';
+export default function ProductModerationPanel({ product, reload }) {
+    const [data, setData] = useState(null), [error, setError] = useState(''), [notice, setNotice] = useState(''), [busy, setBusy] = useState(false), [action, setAction] = useState('appeal'), [decisionId, setDecisionId] = useState(''), [reason, setReason] = useState(''), [evidence, setEvidence] = useState('');
+    const [revision, setRevision] = useState(0), attempt = useRef({ signature: '', requestId: '' });
+    useEffect(() => { let active = true; api.sellerRead(product.id).then(data => { if (active)
+        setData(data); }).catch(e => { if (active)
+        setError(e.message); }); return () => { active = false; }; }, [product.id, product.version, revision]);
+    async function submit(e) {
+        e.preventDefault();
+        setBusy(true);
+        setError('');
+        setNotice('');
+        const input = { action, decisionId, reason, version: product.version, evidence: evidence.split('\n').map(s => s.trim()).filter(Boolean) };
+        try {
+            await api.sellerCommand(product.id, { ...input, requestId: adminRequestId(attempt.current, input) });
+            setNotice(action === 'appeal' ? 'Đã gửi kháng nghị.' : 'Đã gửi xác nhận khắc phục, chờ sàn kiểm tra.');
+            setReason('');
+            setRevision(v => v + 1);
+            await reload();
+        }
+        catch (e) {
+            setError(e instanceof Error ? e.message : 'Không thể gửi yêu cầu.');
+        }
+        finally {
+            setBusy(false);
+        }
+    }
+    return _jsxs("section", { className: "rounded-2xl border border-[#e8edf5] bg-white p-5 shadow-sm", children: [_jsx("h2", { className: "text-lg font-bold", children: "Ki\u1EC3m duy\u1EC7t v\u00E0 th\u00F4ng b\u00E1o c\u1EE7a s\u00E0n" }), product.reviewStatus && ['PENDING', 'NEEDS_CHANGES'].includes(product.reviewStatus) && _jsxs("p", { className: "my-3 rounded-xl bg-amber-50 p-3 text-amber-800", children: [product.reviewStatus === 'PENDING' ? 'Sản phẩm đang chờ sàn duyệt trước khi xuất hiện công khai.' : 'Sản phẩm cần chỉnh sửa trước khi được duyệt đăng bán.', " Thay \u0111\u1ED5i t\u00EAn, \u1EA3nh, danh m\u1EE5c, m\u00F4 t\u1EA3, th\u01B0\u01A1ng hi\u1EC7u, gi\u00E1, bi\u1EBFn th\u1EC3 ho\u1EB7c thu\u1ED9c t\u00EDnh c\u1EA7n \u0111\u01B0\u1EE3c duy\u1EC7t l\u1EA1i."] }), product.platformSuspended && _jsxs("p", { className: "my-3 rounded-xl bg-red-50 p-3 text-red-700", children: ["S\u1EA3n ph\u1EA9m \u0111ang b\u1ECB s\u00E0n ch\u1EB7n: ", product.suspensionReason, ". Tr\u1EA1ng th\u00E1i seller tr\u01B0\u1EDBc khi ch\u1EB7n: ", product.publicationStatus, ". S\u1EEDa n\u1ED9i dung kh\u00F4ng t\u1EF1 kh\u00F4i ph\u1EE5c \u0111\u0103ng b\u00E1n."] }), error && _jsxs("p", { role: "alert", className: "text-red-700", children: [error, _jsx("button", { type: "button", className: "ml-3 underline", onClick: () => { setError(''); setRevision(v => v + 1); }, children: "T\u1EA3i l\u1EA1i" })] }), notice && _jsx("p", { role: "status", children: notice }), data?.notices.map(n => _jsxs("article", { className: "my-3 border-b pb-3", children: [_jsx("strong", { children: n.title }), _jsx("p", { children: n.body }), _jsx("small", { children: new Date(n.created_at).toLocaleString('vi-VN') })] }, n.id)), data?.decisions.map(d => _jsxs("article", { className: "my-3 border-b pb-3", children: [_jsxs("strong", { children: ["#", d.id.slice(0, 8), " \u00B7 ", d.reason_code, " \u00B7 ", d.action] }), _jsx("p", { children: d.reason }), _jsxs("small", { children: ["Phi\u00EAn b\u1EA3n \u0111\u01B0\u1EE3c x\u00E9t: ", d.product_version, d.remedy_by && ` · Hạn khắc phục: ${new Date(d.remedy_by).toLocaleString('vi-VN')}`] }), _jsx("div", { children: d.evidence.map(url => _jsx("a", { href: url, target: "_blank", rel: "noreferrer", className: "mr-3 underline", children: "B\u1EB1ng ch\u1EE9ng" }, url)) })] }, d.id)), data?.appeals.map(a => _jsxs("p", { children: ["Kh\u00E1ng ngh\u1ECB #", a.id.slice(0, 8), " \u00B7 ", a.status, " \u00B7 ", a.reason] }, a.id)), !!data?.decisions.some(d => ['suspend', 'request_changes', 'publication_changes_requested'].includes(d.action)) && _jsxs("form", { className: "mt-4 grid gap-3", onSubmit: submit, children: [_jsxs("label", { children: ["Y\u00EAu c\u1EA7u", _jsxs("select", { className: "ml-2 rounded border p-2", value: action, onChange: e => { setAction(e.target.value); setDecisionId(''); }, children: [_jsx("option", { value: "appeal", children: "Kh\u00E1ng ngh\u1ECB quy\u1EBFt \u0111\u1ECBnh" }), _jsx("option", { value: "submit_remedy", children: "X\u00E1c nh\u1EADn \u0111\u00E3 ch\u1EC9nh s\u1EEDa" })] })] }), _jsxs("label", { children: ["Quy\u1EBFt \u0111\u1ECBnh", _jsxs("select", { required: true, className: "ml-2 max-w-full rounded border p-2", value: decisionId, onChange: e => setDecisionId(e.target.value), children: [_jsx("option", { value: "", children: "Ch\u1ECDn quy\u1EBFt \u0111\u1ECBnh" }), data.decisions.filter(d => action === 'appeal' ? ['suspend', 'request_changes', 'publication_changes_requested'].includes(d.action) && !data.appeals.some(a => a.decision_id === d.id) : data.remedies.some(r => r.decision_id === d.id && ['OPEN', 'SUBMITTED'].includes(r.status))).map(d => _jsxs("option", { value: d.id, children: ["#", d.id.slice(0, 8), " \u00B7 ", d.reason_code] }, d.id))] })] }), _jsxs("label", { children: ["N\u1ED9i dung gi\u1EA3i th\u00EDch", _jsx("textarea", { className: "mt-1 w-full rounded border p-2", required: true, minLength: 8, maxLength: 500, value: reason, onChange: e => setReason(e.target.value) })] }), _jsxs("label", { children: ["B\u1EB1ng ch\u1EE9ng (m\u1ED7i d\u00F2ng m\u1ED9t li\u00EAn k\u1EBFt HTTP/HTTPS)", _jsx("textarea", { className: "mt-1 w-full rounded border p-2", value: evidence, onChange: e => setEvidence(e.target.value) })] }), _jsx("button", { className: "rounded-xl bg-[#476de4] px-4 py-2 text-sm font-bold text-white disabled:opacity-50", disabled: busy, children: busy ? 'Đang gửi…' : 'Gửi yêu cầu' })] }), !data?.decisions.length && !error && _jsx("p", { className: "mt-3 text-sm text-slate-500", children: "Ch\u01B0a c\u00F3 quy\u1EBFt \u0111\u1ECBnh ki\u1EC3m duy\u1EC7t." })] });
+}

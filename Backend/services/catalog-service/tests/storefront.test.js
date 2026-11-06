@@ -57,6 +57,8 @@ test('PostgreSQL storefront drafts, publication, references and rollback remain 
       await pool.query('UPDATE catalog.categories SET slug=$2 WHERE id=$1',[categoryId,'cms-updated-'+tag]);
       assert.equal((await cms.publicConfig()).layout.featuredCategories.find(item=>item.id==='cms-category').targetUrl,'/category/cms-updated-'+tag);
       await pool.query("UPDATE catalog.products SET status='hidden' WHERE id=$1",[productId]);
+      // Store effective status is derived from seller settings by the governance trigger.
+      await pool.query('UPDATE catalog.store_settings SET accepting_orders=false WHERE store_id=$1',[storeId]);
       await pool.query("UPDATE catalog.stores SET status='paused' WHERE id=$1",[storeId]);
       await pool.query('UPDATE catalog.categories SET is_active=false WHERE id=$1',[categoryId]);
       const home=await catalog.home();assert.deepEqual(home.featuredProducts,[]);assert.deepEqual(home.featuredStores,[]);
@@ -64,6 +66,7 @@ test('PostgreSQL storefront drafts, publication, references and rollback remain 
       const current=await cms.read(actor),updated=structuredClone(current.draft);updated.featuredCategories.find(item=>item.id==='cms-category').enabled=false;
       await cms.save(actor,{reason:"Storefront test change",requestId:randomUUID(),version:current.version,config:updated},true);
       assert.deepEqual((await catalog.home()).featuredProducts,[]);
+      await pool.query('UPDATE catalog.store_settings SET accepting_orders=true WHERE store_id=$1',[storeId]);
       await pool.query("UPDATE catalog.products SET status='active' WHERE id=$1",[productId]);await pool.query("UPDATE catalog.stores SET status='active' WHERE id=$1",[storeId]);
       await pool.query('UPDATE catalog.categories SET is_active=true WHERE id=$1',[categoryId]);
     });
@@ -104,6 +107,6 @@ test('PostgreSQL storefront drafts, publication, references and rollback remain 
     await pool.query('DELETE FROM catalog.admin_commands WHERE actor_id=$1',[actor.id]);
     await pool.query('UPDATE catalog.storefront_settings SET draft=$1,published=$2,version=$3,published_at=$4,updated_at=$5 WHERE id=1',[snapshot.draft,snapshot.published,snapshot.version,snapshot.published_at,snapshot.updated_at]);
     await pool.query('DELETE FROM catalog.storefront_changes WHERE actor_id=$1',[actor.id]);
-    await pool.query('DELETE FROM catalog.stores WHERE id=$1',[storeId]);if(categoryId)await pool.query('DELETE FROM catalog.categories WHERE id=$1',[categoryId]);await pool.end();
+    await pool.query('DELETE FROM catalog.stores WHERE id=$1',[storeId]);if(categoryId){await pool.query('DELETE FROM catalog.category_slug_aliases WHERE category_id=$1',[categoryId]);await pool.query('DELETE FROM catalog.categories WHERE id=$1',[categoryId]);}await pool.end();
   }
  });

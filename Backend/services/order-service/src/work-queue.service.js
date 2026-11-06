@@ -109,7 +109,7 @@ export class WorkQueueService {
       if(input.action==='claim'&&row.assignee_id&&row.assignee_id!==user.id)throw new PlatformAdminError(409,'WORK_ALREADY_CLAIMED','Công việc đã có người nhận.');
       if(['assign','transfer'].includes(input.action))requireAdminScope(user,'work_queue.manage',{storeId:row.store_id,caseKind:row.case_kind,assigneeId:row.assignee_id});
       else if(row.assignee_id!==user.id&&input.action!=='claim')requireAdminScope(user,'work_queue.manage',{storeId:row.store_id,caseKind:row.case_kind,assigneeId:row.assignee_id});
-      if(input.action==='status'&&input.status==='RESOLVED'&&row.kind!=='ABUSE_REPORT')throw new PlatformAdminError(409,'SOURCE_WORKFLOW_REQUIRED','Hoàn tất công việc tại luồng nghiệp vụ của đối tượng.');
+      if(input.action==='status'&&input.status==='RESOLVED')throw new PlatformAdminError(409,'SOURCE_WORKFLOW_REQUIRED','Hoàn tất công việc tại luồng nghiệp vụ của đối tượng.');
       if(caseKinds.includes(row.kind)&&['claim','assign','transfer'].includes(input.action)) {
         await requireCaseAccess(db,user,'cases.update',row.source_id);
         const assignee=input.action==='claim'?user.id:input.action==='assign'?input.assigneeId:null;
